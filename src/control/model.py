@@ -7,7 +7,7 @@ logging of all metadata
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017 Cornell University
+Copyright (C) 2009-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -260,21 +260,26 @@ class Model(object):
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
-        self.logger.debug("Starting image monitor")
+        if (self.settings["monitor"]):
 
-        # Shorten variable names
-        site = self.site
+            self.logger.debug("Starting image monitor")
 
-        if site.IMAGE_MONITOR:
-            # import image_monitor
-            image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
+            # Shorten variable names
+            site = self.site
 
-            # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor(
-                site=site,
-                notify=self.receive,
-                clean_start=self.settings.get("clean_start", False),
-                overwatch_id=self.overwatch_id)
+            if site.IMAGE_MONITOR:
+                # import image_monitor
+                image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
+
+                # Instantiate the monitor
+                self.image_monitor = image_monitor.Monitor(
+                    site=site,
+                    notify=self.receive,
+                    clean_start=self.settings.get("clean_start", False),
+                    overwatch_id=self.overwatch_id)
+
+        else:
+            self.logger.debug("NOT starting image monitor")
 
     def stop_image_monitor(self):
         """Stop the image listening process for core"""
@@ -286,19 +291,23 @@ class Model(object):
     def start_run_monitor(self):
         """Start up the run information listening process for core"""
 
-        self.logger.debug("Starting run monitor")
+        if (self.settings["monitor"]):
 
-        # Shorten variable names
-        site = self.site
+            self.logger.debug("Starting run monitor")
 
-        if site.RUN_MONITOR:
-            # Import the specific run monitor module
-            run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
-            self.run_monitor = run_monitor.Monitor(site=self.site,
-                                                   notify=self.receive,
-                                                   # Not using overwatch in run monitor
-                                                   # could if we wanted to
-                                                   overwatch_id=None)
+            # Shorten variable names
+            site = self.site
+
+            if site.RUN_MONITOR:
+                # Import the specific run monitor module
+                run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
+                self.run_monitor = run_monitor.Monitor(site=self.site,
+                                                       notify=self.receive,
+                                                       # Not using overwatch in run monitor
+                                                       # could if we wanted to
+                                                       overwatch_id=None)
+        else:
+            self.logger.debug("NOT starting run monitor")
 
     def stop_run_monitor(self):
         """Stop the run information listening process for core"""
@@ -395,7 +404,7 @@ class Model(object):
         """
         # Placeholder for site info not in image header
         site_header = {}
-        
+
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
@@ -452,7 +461,7 @@ class Model(object):
                         else:
                             site_data = self.site_adapter.get_image_data()
                         site_header = site_data
-                    
+
                     # Get all the image information
                     attempt_counter = 0
                     while attempt_counter < 5:

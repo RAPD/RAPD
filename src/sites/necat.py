@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -255,7 +255,7 @@ IMAGE_IGNORE_DIRECTORIES = (
     "/epu2/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     )
 # Images collected containing the following string will be ignored
-IMAGE_IGNORE_STRINGS = ("ignore", 
+IMAGE_IGNORE_STRINGS = ("ignore",
                         "priming_shot",
                         )
 

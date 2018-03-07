@@ -80,8 +80,8 @@ router.route('/image_jpeg/:image')
               // Make sure the directory exists
               mkdirp.sync(config.image_directory)
               // -jpeg_scale 0.6
-              let command = 'adxv -sa -colors '+params_image.view_color+' '+fullname+' '+jpeg_file;
-              // console.log(command);
+              let command = config.adxv+' -sa -colors '+params_image.view_color+' '+fullname+' '+jpeg_file;
+              console.log(command);
 
               exec(command, (error, stdout, stderr) => {
                 if (error) {
