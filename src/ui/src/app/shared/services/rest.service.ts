@@ -85,11 +85,19 @@ export class RestService {
     // console.log('error', error);
     let body = res.json();
 
-    // for (let user of body) {
-    //   // console.log(session);
-    //   session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
-    //   session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
-    // }
+    // Sort alphabetically by surname, if possible
+    body.groups.sort((g1, g2) => {
+      var s1 = g1.groupname.split(' ')[g1.groupname.split(' ').length-1];
+      var s2 = g2.groupname.split(' ')[g1.groupname.split(' ').length-1];
+      if (s1 > s2) {
+        return 1;
+      }
+      if (s1 < s2) {
+        return -1;
+      }
+      return 0;
+    });
+
     return body.groups || [];
   }
 
