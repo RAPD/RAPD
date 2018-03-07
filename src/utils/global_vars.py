@@ -54,7 +54,7 @@ CIF_CACHE = "/tmp/rapd_cache/cif_files"
 TEST_CACHE = "/tmp/rapd_cache/test_data"
 
 # NE-CAT PDBQ Server
-PDBQ_SERVER = "rapd.nec.aps.anl.gov/pdbq"
+PDBQ_SERVER = "https://rapd.nec.aps.anl.gov/pdbq"
 
 # Timeout for phaser MR process
 PHASER_TIMEOUT = 5000
