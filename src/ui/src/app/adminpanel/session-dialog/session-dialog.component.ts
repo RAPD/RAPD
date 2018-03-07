@@ -29,8 +29,7 @@ export class SessionDialogComponent implements OnInit {
   ngOnInit() {
 
     console.log(this.session);
-
-    console.log(this.globals_service.site.site_tags);
+    // console.log(this.globals_service.site.site_tags);
 
     this.model = Object.assign({}, this.session);
     if (this.model.group === null) {

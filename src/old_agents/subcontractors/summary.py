@@ -5,7 +5,7 @@ Routines for creating summaries fro user interfaces of some core agents
 __licenses__ = """
 This file is part of RAPD
 
-Copyright (C) 2011-2017, Cornell University
+Copyright (C) 2011-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
