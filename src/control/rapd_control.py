@@ -53,6 +53,12 @@ def get_commandline():
                         dest="clean_start",
                         help="Wipe input queues clean before starting")
 
+    # Run without monitoring the beamline
+    parser.add_argument("--no_monitor",
+                        action="store_false",
+                        dest="monitor",
+                        help="Don't monitor the beamline")
+
     return parser.parse_args()
 
 def main():

@@ -248,21 +248,26 @@ class Model(object):
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
-        self.logger.debug("Starting image monitor")
+        if (self.settings["monitor"]):
 
-        # Shorten variable names
-        site = self.site
+            self.logger.debug("Starting image monitor")
 
-        if site.IMAGE_MONITOR:
-            # import image_monitor
-            image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
+            # Shorten variable names
+            site = self.site
 
-            # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor(
-                site=site,
-                notify=self.receive,
-                clean_start=self.settings.get("clean_start", False),
-                overwatch_id=self.overwatch_id)
+            if site.IMAGE_MONITOR:
+                # import image_monitor
+                image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
+
+                # Instantiate the monitor
+                self.image_monitor = image_monitor.Monitor(
+                    site=site,
+                    notify=self.receive,
+                    clean_start=self.settings.get("clean_start", False),
+                    overwatch_id=self.overwatch_id)
+
+        else:
+            self.logger.debug("NOT starting image monitor")
 
     def stop_image_monitor(self):
         """Stop the image listening process for core"""
@@ -274,19 +279,23 @@ class Model(object):
     def start_run_monitor(self):
         """Start up the run information listening process for core"""
 
-        self.logger.debug("Starting run monitor")
+        if (self.settings["monitor"]):
 
-        # Shorten variable names
-        site = self.site
+            self.logger.debug("Starting run monitor")
 
-        if site.RUN_MONITOR:
-            # Import the specific run monitor module
-            run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
-            self.run_monitor = run_monitor.Monitor(site=self.site,
-                                                   notify=self.receive,
-                                                   # Not using overwatch in run monitor
-                                                   # could if we wanted to
-                                                   overwatch_id=None)
+            # Shorten variable names
+            site = self.site
+
+            if site.RUN_MONITOR:
+                # Import the specific run monitor module
+                run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
+                self.run_monitor = run_monitor.Monitor(site=self.site,
+                                                       notify=self.receive,
+                                                       # Not using overwatch in run monitor
+                                                       # could if we wanted to
+                                                       overwatch_id=None)
+        else:
+            self.logger.debug("NOT starting run monitor")
 
     def stop_run_monitor(self):
         """Stop the run information listening process for core"""
