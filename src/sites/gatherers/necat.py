@@ -443,6 +443,7 @@ class Gatherer(object):
                     # Get rid of trailing slash from beamline Redis.
                     #if dir[-1] == '/':
                     #    run_data['directory'] = dir[:-1]
+                    """
                     if self.tag == 'NECAT_E':
                         dir = "%s%s%s_%d_%06d" % (
                                           path_prefix,
@@ -451,6 +452,7 @@ class Gatherer(object):
                                           int(run_data['run_number']),
                                           int(run_data['start_image_number']))
                         run_data['directory'] = dir
+                    """
                     if self.ignored(run_data['directory']):
                         self.logger.debug("Directory %s is marked to be ignored - skipping", run_data['directory'])
                     else:

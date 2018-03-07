@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import re
 from pprint import pprint
+import inspect
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -28,11 +29,19 @@ def connect_redis_manager_HA(name="remote_master"):
     # Get the master redis instance
     return(sentinel.master_for(name))
     
-def connect_redis():
+def connect_sercat_redis():
 
     pool = redis.ConnectionPool(host="164.54.208.142",
     				port=6379,
     				db=0)
+    # Save the pool for a clean exit.
+    return redis.Redis(connection_pool=pool)
+
+def connect_ft_redis():
+
+    pool = redis.ConnectionPool(host="164.54.212.218",
+            port=6379,
+            db=0)
     # Save the pool for a clean exit.
     return redis.Redis(connection_pool=pool)
   
@@ -76,6 +85,31 @@ def processLocal(inp, logger=False, output=False):
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
+
+"""
+from utils.modules import load_module
+#import 
+DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
+             "NECAT_E":("NECAT_DECTRIS_EIGER16M", ""),
+             "NECAT_T":("NECAT_DECTRIS_EIGER16M", "")}
+site_ids = ("NECAT_C", 'NECAT_E')
+
+for site_id in site_ids:
+    detector, suffix = DETECTORS[site_id]
+    detector = detector.lower()
+    detectors[site_id.upper()] = load_module(
+        seek_module=detector,
+        directories=("sites.detectors", "detectors"))
+
+print detectors
+"""
+#import sites.detectors.necat_dectris_eiger16m as det
+#print hasattr(det, 'FileLocation')
+#rint inspect.isclass(det, 'FileLocation')
+   
+
+
+
 """
 jobs = {}
 l = ['cbf-worker', 'cbf-main', 'data-handler']
@@ -474,13 +508,18 @@ while True:
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
 red = connect_redis_manager_HA()
-#red = connect_redis()
+#red = connect_sercat_redis()
 #connection = connect_beamline()
+#red = connect_ft_redis()
+#print red.smembers('working')
 
 #red.delete('images_collected:NECAT_E')
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
-#time.sleep(1)
+red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000006.cbf')
+time.sleep(1)
+red = connect_ft_redis()
+print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
@@ -501,7 +540,7 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
-
+"""
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 #print red.llen('run_info_C')
@@ -527,9 +566,4 @@ print red.llen('RAPD_JOBS_WAITING')
 #red.delete('images_collected_T')
 print red.llen('images_collected_E')
 #red.close()
-
-"""
-n = float('1.300000011921')
-print 'this number: %3.7f'%n
-print 'percent: %3.1f %%'%n
 """

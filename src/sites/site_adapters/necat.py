@@ -56,6 +56,7 @@ class Adapter(object):
             bl_database = redis_database.Database(settings=self.settings)
         return bl_database.connect_redis_pool()
         
+    
     #
     # Put methods
     #

@@ -540,7 +540,4 @@ if __name__ == "__main__":
     #                  'DETECTOR_DIST_MIN': 150.0,
     #                  'EXPOSURE_TIME_MIN': 0.05}
     # calculate_flux(header, site_params)
-
-    # Test get_data_root_dir with new epu filenames
-    print get_data_root_dir("/epu2/rdma/gpfs2/users/stanford/feng_E_3426/images/minrui/snaps/ZH_PAIR_0_000144/ZH_PAIR_0_000144.cbf")
-    print get_data_root_dir("/gpfs1/users/ucsd/corbett_C_3425/images/Kevin/runs/2_9/0_0/2_9_1_0854.cbf")
+    pass

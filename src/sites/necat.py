@@ -262,7 +262,14 @@ IMAGE_IGNORE_STRINGS = ("ignore",
 # If image is not present, look in long term storage location.
 # Runs function detector.get_alt_path() to get new path
 # Set to False if not using.
+#ALT_IMAGE_LOCATION = True
+
+# If processing images in NFS shared RAMDISK with different path 
+# than long-term storage that was passed in. Check if they exist.
 ALT_IMAGE_LOCATION = True
+# Name of class in detector file that runs as server.
+# Set to False if not using server 
+ALT_IMAGE_SERVER_NAME = 'FileLocation'
 
 # Monitor for collected run information
 #RUN_MONITOR = "sites.monitors.run_monitors.necat_e"

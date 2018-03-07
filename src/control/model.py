@@ -75,7 +75,7 @@ class Model(object):
 
     server = None
     # return_address = None
-
+    alt_image_path_server = None
     image_monitor = None
     run_monitor = None
     cloud_monitor = None
@@ -123,6 +123,9 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
+        
+        # start the alt_image_path_server
+        self.start_image_path_server()
 
         # start launcher manager
         self.start_launcher_manager()
@@ -144,7 +147,6 @@ class Model(object):
 
         # Launch an echo
         self.send_echo()
-
 
     def init_site(self):
         """Process the site definitions to set up instance variables"""
@@ -232,6 +234,16 @@ class Model(object):
                 self.detectors[site_id.upper()] = load_module(
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
+
+    def start_image_path_server(self):
+        """Only start if self.site.ALT_IMAGE_SERVER_NAME is set"""
+        # Check if module or class exists to get path of images in RAMDISK
+        if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+            self.logger.debug("Starting image path server")
+            self.alt_image_path_server = {}
+            for site_id in self.detectors.keys():
+                if hasattr(self.detectors[site_id], self.site.ALT_IMAGE_SERVER_NAME):
+                    self.alt_image_path_server[site_id] = eval('self.detectors[site_id].%s()'%self.site.ALT_IMAGE_SERVER_NAME)
 
     def start_launcher_manager(self):
         """Start up the launcher manager to hand off jobs"""
@@ -394,10 +406,10 @@ class Model(object):
         detector = self.detectors[site_tag]
 
         # Check if it exists. May have been deleted from RAMDISK
-        if os.path.isfile(fullname) in (False, None):
-            if self.site.ALT_IMAGE_LOCATION:
-                fullname = detector.get_alt_path(fullname)
-
+        #if os.path.isfile(fullname) in (False, None):
+        #    if self.site.ALT_IMAGE_LOCATION:
+        #        fullname = detector.get_alt_path(fullname)
+        
         # Save some typing
         dirname = os.path.dirname(fullname)
 
@@ -433,7 +445,7 @@ class Model(object):
                 #print 'run_status: %s'%current_run.get("rapd_status", None)
                 # Right on time
                 if place_in_run == 1:
-                     # Grab extra data for the image and add to the header
+                    # Grab extra data for the image and add to the header
                     if self.site_adapter:
                         if self.site_adapter.settings.has_key(site_tag.upper()):
                             site_data = self.site_adapter.get_image_data(site_tag.upper())
@@ -765,6 +777,18 @@ class Model(object):
         Keyword argument
         image1 -- dict containing lots of image information
         """
+        def fix_fullname(inp, tag):
+            """Change fullname if using RAMDISK"""
+            if self.site.ALT_IMAGE_LOCATION:
+                if self.alt_image_path_server:
+                    if self.alt_image_path_server.has_key(tag):
+                        #if hasattr(self.alt_image_path_server[tag], 'get_alt_path'):
+                        inp.update({'fullname': self.alt_image_path_server[tag].get_alt_path(inp.get('fullname'))})
+                else:
+                    #if hasattr(self.detectors[tag], 'get_alt_path'):
+                    inp.update({'fullname': self.detectors[tag].get_alt_path(inp.get('fullname'))})
+                #inp.update({'fullname': fn})
+            return inp
 
         self.logger.debug(image1["fullname"])
 
@@ -772,6 +796,9 @@ class Model(object):
         site = self.site
         data_root_dir = image1["data_root_dir"]
         site_tag = image1["site_tag"].upper()
+
+        #if self.site.ALT_IMAGE_LOCATION:
+        #    fullname = detector.get_alt_path(fullname)
 
         if image1.get("collect_mode", None) == "SNAP":
 
@@ -801,7 +828,8 @@ class Model(object):
                            "status":0,
                        },
                        "directories":directories,
-                       "image1":image1,
+                       #"image1":image1,
+                       "image1":fix_fullname(image1, site_tag),
                        "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                        "preferences":{
                            "cleanup":False,
@@ -868,8 +896,10 @@ class Model(object):
                                    "status":0,
                                },
                                "directories":directories,
-                               "image1":image1,
-                               "image2":image2,
+                               #"image1":image1,
+                               "image1":fix_fullname(image1, site_tag),
+                               #"image2":image2,
+                               "image2":fix_fullname(image2, site_tag),
                                "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                                "preferences":{}
                               }
@@ -912,7 +942,8 @@ class Model(object):
                     },
                 "directories":directories,
                 "data": {
-                    "image_data":image1,
+                    #"image_data":image1,
+                    "image_data":fix_fullname(image1, site_tag),
                     "run_data":run_data
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
@@ -1014,6 +1045,29 @@ class Model(object):
         # Save the results for the plugin
         if "results" in message:
             __ = self.database.save_plugin_result(message)
+            # Release hold on dataset in RAMDISK
+            if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+                _id = False
+                if message.get('process', False):
+                    print 'gh'
+                    if message.get('process').get('status', 1) in (-1, 100):
+                        print 'gh0'
+                        # snaps
+                        if message.get('process').has_key('image1_id'):
+                            print 'gh2'
+                            _id = message.get('process').get('image1_id', False)
+                        # integration
+                        if message.get('process').has_key('image_id'):
+                            print 'gh3'
+                            _id = message.get('process').get('image_id', False)
+                        if _id:
+                            print 'gh4'
+                            # get the header from the DB
+                            header = self.database.get_image_by_image_id(image_id=_id)
+                            if self.alt_image_path_server.has_key(header.get('site_tag').upper()):
+                                print 'gh5'
+                                # send fullname to release_data
+                                self.alt_image_path_server[header.get('site_tag').upper()].release_data(header.get('fullname'))
 
     def receive(self, message):
         """
