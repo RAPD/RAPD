@@ -236,7 +236,7 @@ class RapdPlugin(multiprocessing.Process):
                     self.tprint("    Fetching %s" % cif_file, level=10, color="white")
                     try:
                         response = urllib2.urlopen(urllib2.Request(\
-                                   "%s/pdbq/entry/get_cif/%s" % \
+                                   "%s/entry/get_cif/%s" % \
                                    (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                    , timeout=60).read()
                     except urllib2.HTTPError as http_error:
@@ -258,7 +258,7 @@ class RapdPlugin(multiprocessing.Process):
                 self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
-                               "%s/pdbq/entry/get_cif/%s" % \
+                               "%s/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                                timeout=60).read()
                 except urllib2.HTTPError as http_error:

@@ -211,7 +211,7 @@ class PDBQuery(Process):
                     _d_[l1[x]] = [self.cell[l2[y][x]] - self.cell[l2[y][x]] * self.percent/2,
                                   self.cell[l2[y][x]] + self.cell[l2[y][x]] *self.percent/2]
                 # Query server
-                response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
+                response = urllib2.urlopen(urllib2.Request("%s/cell_search/" % \
                            PDBQ_SERVER, data=json.dumps(_d_))).read()
                 j = json.loads(response)
                 for k in j.keys():
@@ -419,7 +419,7 @@ class PDBQuery(Process):
                     self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                     try:
                         response = urllib2.urlopen(urllib2.Request(\
-                                   "http://%s/pdbq/entry/get_cif/%s" % \
+                                   "%s/entry/get_cif/%s" % \
                                    (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                    , timeout=60).read()
                     except urllib2.HTTPError as http_error:
@@ -442,7 +442,7 @@ class PDBQuery(Process):
                 self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
-                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               "%s/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                                timeout=60).read()
                 except urllib2.HTTPError as http_error:

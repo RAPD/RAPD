@@ -288,7 +288,7 @@ class RapdPlugin(multiprocessing.Process):
 
             # Query pdbq server
             try:
-                response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
+                response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
                            (PDBQ_SERVER, pdb_code))).read()
 
                 # Decode search result
@@ -355,8 +355,8 @@ class RapdPlugin(multiprocessing.Process):
                 print "search_params", search_params
 
                 # Query server
-                print "http://%s/pdb/rest/search/" % PDBQ_SERVER
-                response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
+                print "%s/search/" % PDBQ_SERVER
+                response = urllib2.urlopen(urllib2.Request("%s/cell_search/" % \
                            PDBQ_SERVER, data=json.dumps(search_params))).read()
 
                 # Decode search result
@@ -676,7 +676,7 @@ class RapdPlugin(multiprocessing.Process):
                 self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
-                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               "%s/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                , timeout=60).read()
                 except urllib2.HTTPError as http_error:
@@ -698,7 +698,7 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint("      Fetching %s" % cif_file, level=10, color="white")
             try:
                 response = urllib2.urlopen(urllib2.Request(\
-                           "http://%s/pdbq/entry/get_cif/%s" % \
+                           "%s/entry/get_cif/%s" % \
                            (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                            timeout=60).read()
             except urllib2.HTTPError as http_error:
