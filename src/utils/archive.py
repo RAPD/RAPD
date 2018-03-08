@@ -53,7 +53,7 @@ import tarfile
 def compress_dir(target):
     """Compress a target and return the result file name"""
 
-    print "compress_dir target:", target
+    # print "compress_dir target:", target
 
     # Save where we were
     start_dir = os.getcwd()

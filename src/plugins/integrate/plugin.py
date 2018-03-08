@@ -2481,6 +2481,14 @@ class RapdPlugin(Process):
             for mtz_file in glob.glob("*.mtz"):
                 os.remove(mtz_file)
 
+            # Erase the truncate files
+            for truncate_file in glob.glob("truncate.*"):
+                os.remove(truncate_file)
+
+            # Erase the freer files
+            for freer_file in glob.glob("freer.*"):
+                os.remove(freer_file)
+
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
