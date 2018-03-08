@@ -804,7 +804,7 @@ self.command["input_data"]["datafile"]
     def print_credits(self):
         """Print information on programs used to the terminal"""
 
-        self.tprint(rcredits.HEADER,
+        self.tprint(rcredits.HEADER.replace("RAPD", "RAPD analysis"),
                     level=99,
                     color="blue")
 

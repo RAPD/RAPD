@@ -109,40 +109,80 @@ def parse_aimless(logfile):
 	# the variable that should be created when that phrase is
 	# found, eliminating the problem where the program reports that
 	# the variable anomalous_report is referenced before assignment.
-    anomalous_report = ""
-
+    # anomalous_report = ""
+    int_results = {"anomalous_report": ""}
     for line in summary:
+        # print line, len(line)
         if "Space group" in line:
-            space_group = line.strip().split(": ")[-1]
+            int_results["scaling_spacegroup"] = line.strip().split(": ")[-1]
         elif "Average unit cell" in line:
-            unit_cell = [try_float(x) for x in line.split()[3:]]
+            int_results["scaling_unit_cell"] = [try_float(x) for x in line.split()[3:]]
         elif "Anomalous flag switched ON" in line:
-            anomalous_report = line
+            int_results["text2"] = line
+        elif "Low resolution limit" in line:
+            int_results["bins_low"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "High resolution limit" in line:
+            int_results["bins_high"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rmerge" in line and "within" in line:
+            int_results["rmerge_anom"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rmerge" in line and "all" in line:
+            int_results["rmerge_norm"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rmeas" in line and "within" in line:
+            int_results["rmeas_anom"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rmeas" in line and "all" in line:
+            int_results["rmeas_norm"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rpim" in line and "within" in line:
+            int_results["rpim_anom"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rpim" in line and "all" in line:
+            int_results["rpim_norm"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Rmerge in top intensity bin" in line:
+            int_results["rmerge_top"] = try_float(line.split()[-3], 0)
+        elif "Total number of observations" in line:
+            int_results["total_obs"] = [try_int(x, 0) for x in line.split()[-3:]]
+        elif "Total number unique" in line:
+            int_results["unique_obs"] = [try_int(x, 0) for x in line.split()[-3:]]
+        elif "Mean((I)/sd(I))" in line:
+            int_results["isigi"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Mn(I) half-set correlation CC(1/2)" in line:
+            int_results["cc-half"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Completeness" in line:
+            int_results["completeness"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Multiplicity" in line:
+            int_results["multiplicity"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Anomalous completeness" in line:
+            int_results["anom_completeness"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Anomalous multiplicity" in line:
+            int_results["anom_multiplicity"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "DelAnom correlation between half-sets" in line:
+            int_results["anom_correlation"] = [try_float(x, 0) for x in line.split()[-3:]]
+        elif "Mid-Slope of Anom Normal Probability" in line:
+            int_results["anom_slope"] = [try_float(x, 0) for x in line.split()[-3:]]
 
-    int_results = {
-        "bins_low": [try_float(x) for x in summary[3].split()[-3:]],
-        "bins_high": [try_float(x) for x in summary[4].split()[-3:]],
-        "rmerge_anom": [try_float(x) for x in summary[6].split()[-3:]],
-        "rmerge_norm": [try_float(x) for x in summary[7].split()[-3:]],
-        "rmeas_anom": [try_float(x) for x in summary[8].split()[-3:]],
-        "rmeas_norm": [try_float(x) for x in summary[9].split()[-3:]],
-        "rpim_anom": [try_float(x) for x in summary[10].split()[-3:]],
-        "rpim_norm": [try_float(x) for x in summary[11].split()[-3:]],
-        "rmerge_top": float(summary[12].split()[-3]),
-        "total_obs": [try_int(x) for x in summary[13].split()[-3:]],
-        "unique_obs": [try_int(x) for x in summary[14].split()[-3:]],
-        "isigi": [try_float(x) for x in summary[15].split()[-3:]],
-        "cc-half": [try_float(x) for x in summary[16].split()[-3:]],
-        "completeness": [try_float(x) for x in summary[17].split()[-3:]],
-        "multiplicity": [try_float(x) for x in summary[18].split()[-3:]],
-        "anom_completeness": [try_float(x) for x in summary[20].split()[-3:]],
-        "anom_multiplicity": [try_float(x) for x in summary[21].split()[-3:]],
-        "anom_correlation": [try_float(x) for x in summary[22].split()[-3:]],
-        "anom_slope": [try_float(summary[23].split()[-3])],
-        "scaling_spacegroup": space_group,
-        "scaling_unit_cell": unit_cell,
-        "text2": anomalous_report,
-        }
+    # This now unused due to shifting output
+    # int_results = {
+    #     "bins_low":           [try_float(x, 0) for x in summary[3].split()[-3:]],
+    #     "bins_high":          [try_float(x, 0) for x in summary[4].split()[-3:]],
+    #     "rmerge_anom":        [try_float(x, 0) for x in summary[6].split()[-3:]],
+    #     "rmerge_norm":        [try_float(x, 0) for x in summary[7].split()[-3:]],
+    #     "rmeas_anom":         [try_float(x, 0) for x in summary[8].split()[-3:]],
+    #     "rmeas_norm":         [try_float(x, 0) for x in summary[9].split()[-3:]],
+    #     "rpim_anom":          [try_float(x, 0) for x in summary[10].split()[-3:]],
+    #     "rpim_norm":          [try_float(x, 0) for x in summary[11].split()[-3:]],
+    #     "rmerge_top":         float(summary[12].split()[-3]),
+    #     "total_obs":          [try_int(x) for x in summary[13].split()[-3:]],
+    #     "unique_obs":         [try_int(x) for x in summary[14].split()[-3:]],
+    #     "isigi":              [try_float(x, 0) for x in summary[15].split()[-3:]],
+    #     "cc-half":            [try_float(x, 0) for x in summary[16].split()[-3:]],
+    #     "completeness":       [try_float(x, 0) for x in summary[17].split()[-3:]],
+    #     "multiplicity":       [try_float(x, 0) for x in summary[18].split()[-3:]],
+    #     "anom_completeness":  [try_float(x, 0) for x in summary[21].split()[-3:]],
+    #     "anom_multiplicity":  [try_float(x, 0) for x in summary[22].split()[-3:]],
+    #     "anom_correlation":   [try_float(x, 0) for x in summary[23].split()[-3:]],
+    #     "anom_slope":         [try_float(summary[24].split()[-3])],
+    #     "scaling_spacegroup": space_group,
+    #     "scaling_unit_cell":  unit_cell,
+    #     "text2":              anomalous_report,
+    #     }
     # Smartie can pull table information based on a regular
     # expression pattern that matches the table title from
     # the aimless log file.
@@ -894,7 +934,7 @@ def main():
     args = get_commandline()
     print args
 
-    parse_aimless(args.file)
+    pprint(parse_aimless(args.file))
 
 def get_commandline():
     """
@@ -904,28 +944,21 @@ def get_commandline():
     print "get_commandline"
 
     # Parse the commandline arguments
-    commandline_description = "Generate a generic RAPD file"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
+    commandline_description = "Parse an aimless log file"
+    parser = argparse.ArgumentParser(description=commandline_description)
 
-    # A True/False flag
-    my_parser.add_argument("-c", "--commandline",
-                           action="store_true",
-                           dest="commandline",
-                           help="Generate commandline argument parsing")
-
-    # File name to be generated
-    my_parser.add_argument(action="store",
-                           dest="file",
-                           nargs="?",
-                           default=False,
-                           help="Name of file to be generated")
+    # Directory or files
+    parser.add_argument(action="store",
+                        dest="file",
+                        default=False,
+                        help="Template for image files")
 
     # Print help message is no arguments
     if len(sys.argv[1:])==0:
-        my_parser.print_help()
-        my_parser.exit()
+        parser.print_help()
+        parser.exit()
 
-    return my_parser.parse_args()
+    return parser.parse_args()
 
 if __name__ == "__main__":
 

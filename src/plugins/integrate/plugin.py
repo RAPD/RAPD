@@ -175,7 +175,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -608,7 +608,7 @@ class RapdPlugin(Process):
 
         self.logger.debug("print_credits")
 
-        self.tprint(rcredits.HEADER,
+        self.tprint(rcredits.HEADER.replace("RAPD", "RAPD integrate"),
                     level=99,
                     color="blue")
 
