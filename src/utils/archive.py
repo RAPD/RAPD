@@ -80,6 +80,8 @@ def compress_file(target):
     """
     # print "compress_file", target
 
+    target = os.path.abspath(target)
+
     # Save where we were
     start_dir = os.getcwd()
     # print "start_dir", start_dir
