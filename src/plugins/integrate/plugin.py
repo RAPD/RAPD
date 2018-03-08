@@ -627,7 +627,7 @@ class RapdPlugin(Process):
         if self.preferences.get("analysis", False):
 
             self.logger.debug("Setting up analysis plugin")
-            self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+            self.tprint("\nLaunching analysis plugin", level=30, color="blue")
 
             # Make sure we are in the work directory
             start_dir = os.getcwd()
@@ -642,8 +642,6 @@ class RapdPlugin(Process):
                 sub_run_mode = "subprocess-interactive"
             elif self.preferences["run_mode"] == "server":
                 sub_run_mode = "subprocess"
-
-            print ">>>", sub_run_mode
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -1986,8 +1984,8 @@ class RapdPlugin(Process):
         """
 
         # Flags for file creation
-        scalepack = True
-        mosflm = True
+        scalepack = False
+        mosflm = False
 
         # Set up the method
         # Archive directory name
