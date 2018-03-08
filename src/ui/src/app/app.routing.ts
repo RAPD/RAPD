@@ -11,6 +11,7 @@ import { TaskspanelComponent } from './taskspanel';
 import { AdminpanelComponent } from './adminpanel';
 import { UnauthorizedpanelComponent } from './unauthorizedpanel/unauthorizedpanel.component';
 import { MxSessionpanelComponent } from './mx-sessionpanel';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component'
 
 const appRoutes: Routes = [
   { path: '',
@@ -34,9 +35,14 @@ const appRoutes: Routes = [
       component: MxSessionpanelComponent,
       canActivate: [ LoginGuard ],
       children: []},
+  // { path: 'project/mx/:project_id',
+  //     component: MxProjectpanelComponent,
+  //     canActivate: [ LoginGuard ],
+  //     children: []},
   { path: 'unauthorized',
-      component: UnauthorizedpanelComponent}
-  // { path: '**', component: PageNotFoundComponent }
+      component: UnauthorizedpanelComponent},
+  { path: '**',
+      component: PageNotFoundComponent },
 ];
 
 export const appRoutingProviders: any[] = [
