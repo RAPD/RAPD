@@ -441,8 +441,8 @@ class Gatherer(object):
                     # get the additional beamline params and put into nice dict.
                     run_data = self.get_run_data(current_run)
                     # Get rid of trailing slash from beamline Redis.
-                    #if dir[-1] == '/':
-                    #    run_data['directory'] = dir[:-1]
+                    if run_data['directory'][-1] == '/':
+                        run_data['directory'] = dir[:-1]
                     """
                     if self.tag == 'NECAT_E':
                         dir = "%s%s%s_%d_%06d" % (
@@ -551,9 +551,12 @@ class Gatherer(object):
         return_array = pipe.execute()
         # extend path with the '0_0' to path for Pilatus
         if self.tag == 'NECAT_C':
-            dir = os.path.join(return_array[0], "0_0")
+            #dir = os.path.join(return_array[0], "0_0")
+            dir = '%s%s'%(return_array[0], "0_0")
         else:
             dir = return_array[0]
+            if dir[-1] == '/':
+                dir = dir[:-1]
         # Standardize the run information
         run_data = {
             "anomalous":None,

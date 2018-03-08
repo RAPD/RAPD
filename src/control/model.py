@@ -786,16 +786,24 @@ class Model(object):
         Keyword argument
         image1 -- dict containing lots of image information
         """
-        def fix_fullname(inp, tag):
+        def fix_fullname(inp, tag, dir_help=False):
             """Change fullname if using RAMDISK"""
             if self.site.ALT_IMAGE_LOCATION:
+                fn = False
                 if self.alt_image_path_server:
                     if self.alt_image_path_server.has_key(tag):
-                        #if hasattr(self.alt_image_path_server[tag], 'get_alt_path'):
-                        inp.update({'fullname': self.alt_image_path_server[tag].get_alt_path(inp.get('fullname'))})
+                        if hasattr(self.alt_image_path_server[tag], 'get_alt_path'):
+                            fn = self.alt_image_path_server[tag].get_alt_path(inp.get('fullname'))
                 else:
-                    #if hasattr(self.detectors[tag], 'get_alt_path'):
-                    inp.update({'fullname': self.detectors[tag].get_alt_path(inp.get('fullname'))})
+                    if hasattr(self.detectors[tag], 'get_alt_path'):
+                        fn = self.detectors[tag].get_alt_path(inp.get('fullname'))
+                if fn:
+                    if inp.get('fullname', False):
+                        inp.update({'fullname': fn})
+                    if inp.get('directory', False):
+                        inp.update({'directory': os.path.dirname(fn)})
+                    if inp.get('run', False):
+                        inp['run'].update({'directory': os.path.dirname(fn)})
                 #inp.update({'fullname': fn})
             return inp
 
@@ -932,7 +940,9 @@ class Model(object):
 
             # Get the session id
             session_id = self.get_session_id(image1)
-
+            
+            # Fix for RDMA file locations
+            image1 = fix_fullname(image1, site_tag)
             # Pop out the run data
             run_data = image1.pop("run")
             xdsinp = image1.pop("xdsinp")
@@ -951,9 +961,10 @@ class Model(object):
                     },
                 "directories":directories,
                 "data": {
-                    #"image_data":image1,
-                    "image_data":fix_fullname(image1, site_tag),
+                    "image_data":image1,
+                    #"image_data":fix_fullname(image1, site_tag),
                     "run_data":run_data
+                    #"run_data":fix_fullname(run_data, site_tag)
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{

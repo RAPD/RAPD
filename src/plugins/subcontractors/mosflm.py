@@ -57,7 +57,7 @@ VERSIONS = {
     # "eiger2cbf": ("160415",)
 }
 
-def parse_strategy(inp, anom=False):
+def parse_strategy_OLD(inp, anom=False):
     """
     Parsing Mosflm strategy.
     """
@@ -86,7 +86,7 @@ def parse_strategy(inp, anom=False):
 
         # Append to log
         log.append(line)
-
+        
         if line.startswith(" Checking completeness of data"):
             in_strat = True
             index_start_line = line_number
@@ -99,11 +99,13 @@ def parse_strategy(inp, anom=False):
 
         if in_strat:
             # print line_number, line
-
+            
+            
             # mosflm_segments has been invoked
             if segments:
                 # Parse strategy
-                if line.startswith(" From phi="):
+                #if line.startswith(" From phi="):
+                if line.count('From ') and line.count('degrees'):
                     # print ">>>", line
                     run_number += 1
                     sline = line.split()
@@ -141,7 +143,7 @@ def parse_strategy(inp, anom=False):
                     start = float(sline[2])
                     end = float(sline[4])
                     # print "    start: %f  end: %f" % (start, end)
-
+            
             if line.startswith(" These segments contain"):
                 # Normal completeness
                 if "% of the unique data" in line:
@@ -191,6 +193,74 @@ def parse_strategy(inp, anom=False):
         "reflections_unique": reflections_unique
     }
     # pprint(strategy)
+
+    return {
+        "log": log,
+        "status": True,
+        "strategy": strategy,
+    }
+
+def parse_strategy(inp, anom=False):
+    """
+    Parsing Mosflm strategy.
+    """
+
+    # Handle list or string
+    if isinstance(inp, str):
+        if len(inp) < 50:
+            return False
+        in_lines = inp.split("\n")
+    elif isinstance(inp, list):
+        in_lines = inp
+    else:
+        return False
+
+    output = {}
+    log = []
+    strategy = {"sweeps":[],
+                "stats":{}}
+    anom_completeness = None
+    completeness = None
+
+    run_number = 0
+    for line_number, line in enumerate(in_lines):
+
+        # Append to log
+        log.append(line)
+        
+        if line.count('From ') and line.count('degrees') and not line.count('phi='):
+            # print ">>>", line
+            run_number += 1
+            sline = line.split()
+            start = float(sline[1])
+            end = float(sline[3])
+            # print "    run_number: %d start: %f  end: %f" % (run_number, start, end)
+            strategy["sweeps"].append({
+                "run_number": run_number,
+                "phi_start": start,
+                "phi_end": end,
+                "phi_range": end - start
+            })
+        if line.count('percent of the unique data for this spacegroup'):
+            completeness = line.split()[2]
+        if line.count('Completeness of anomalous pairs is'):
+            anom_completeness = line.split()[5][:-1]
+        if line.count("predicted reflections and"):
+            sline = line.split()
+            reflections_total = int(sline[3])
+            reflections_unique = int(sline[7])
+        if line.count("Mean multiplicity"):
+            multiplicity = line.split()[-1]
+
+    strategy["stats"] = {
+        "completeness_norm": completeness,
+        "completeness_anom": anom_completeness,
+        "percent_unique_data": completeness,
+        "multiplicity": multiplicity,
+        "reflections_total": reflections_total,
+        "reflections_unique": reflections_unique
+    }
+    pprint(strategy)
 
     return {
         "log": log,
