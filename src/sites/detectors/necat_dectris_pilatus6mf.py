@@ -133,7 +133,7 @@ def calculate_flux(header, site_params):
     aperture = header.get('md2_aperture')
     new_x = beam_size_x
     new_y = beam_size_y
-    
+
     if aperture < beam_size_x:
         new_x = aperture
     if aperture < beam_size_y:
@@ -192,10 +192,12 @@ def get_data_root_dir(fullname):
     inst   = False
     group  = False
     images = False
-    
+
     for p in path_split:
         if p.startswith('gpfs'):
             st = path_split.index(p)
+        else:
+            st = 0
     if path_split[st].startswith("gpfs"):
         gpfs = path_split[st]
         if path_split[st+1] == "users":
@@ -330,18 +332,18 @@ def read_header(fullname, beam_settings=False, extra_header=False):
     # If you are importing another detector, this should work
     header = detector.read_header(fullname)
     #header = base_read_header(fullname)
-    
+
     # Get additional beamline info not in header
     if extra_header:
         header.update(extra_header)
-    
+
     # Calculate flux, new beam size and add them to header
     if beam_settings:
         flux, x_size, y_size = calculate_flux(header, beam_settings)
         header['flux'] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
-    
+
     basename = os.path.basename(fullname)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
