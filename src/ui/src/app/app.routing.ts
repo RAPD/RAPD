@@ -14,6 +14,7 @@ import { MxSessionpanelComponent } from './mx-sessionpanel';
 
 const appRoutes: Routes = [
   { path: '',
+      pathMatch: 'full',
       component: WelcomepanelComponent },
   { path: 'admin',
       component: AdminpanelComponent,
@@ -39,7 +40,7 @@ const appRoutes: Routes = [
       children: []},
   { path: 'unauthorized',
       component: UnauthorizedpanelComponent},
-  { path: '**', 
+  { path: '**',
       component: WelcomepanelComponent }
 ];
 
@@ -50,14 +51,16 @@ export const appRoutingProviders: any[] = [
 // export const routing = RouterModule.forRoot(appRoutes);
 
 @NgModule({
-  imports: [ 
+  imports: [
     RouterModule.forRoot(
       appRoutes,
-      { enableTracing: true }
-    ) 
+      {
+        enableTracing: true,
+      }
+    )
   ],
-  exports: [ 
-    RouterModule 
+  exports: [
+    RouterModule
   ]
 })
 export class AppRoutingModule {}

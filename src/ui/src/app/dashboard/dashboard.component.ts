@@ -1,7 +1,6 @@
 import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
-
 import { User } from '../shared/classes/user';
 import { OverwatchesPanelComponent } from './overwatches-panel/overwatches-panel.component';
 
@@ -16,8 +15,7 @@ export class DashboardComponent implements OnInit {
   user: User;
   master_on: boolean = false;
 
-  constructor(/*public dialog: MdDialog,
-              public viewContainerRef: ViewContainerRef*/) { }
+  constructor() {}
 
   ngOnInit() {
 
