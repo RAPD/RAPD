@@ -87,6 +87,7 @@ import info
 VERSIONS = {
     "aimless": (
         "version 0.5",
+        "version 0.6"
         ),
     "freerflag": (
         "version 2.2",
@@ -106,10 +107,10 @@ VERSIONS = {
         "version 7.0",
     ),
     "xds": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
     "xds_par": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
 }
 
