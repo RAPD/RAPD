@@ -798,13 +798,15 @@ class Model(object):
                     if hasattr(self.detectors[tag], 'get_alt_path'):
                         fn = self.detectors[tag].get_alt_path(inp.get('fullname'))
                 if fn:
+                    # For snaps
                     if inp.get('fullname', False):
                         inp.update({'fullname': fn})
+                    # For integration
                     if inp.get('directory', False):
                         inp.update({'directory': os.path.dirname(fn)})
+                    # For integration
                     if inp.get('run', False):
                         inp['run'].update({'directory': os.path.dirname(fn)})
-                #inp.update({'fullname': fn})
             return inp
 
         self.logger.debug(image1["fullname"])
@@ -1069,23 +1071,17 @@ class Model(object):
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
                 _id = False
                 if message.get('process', False):
-                    print 'gh'
                     if message.get('process').get('status', 1) in (-1, 100):
-                        print 'gh0'
                         # snaps
                         if message.get('process').has_key('image1_id'):
-                            print 'gh2'
                             _id = message.get('process').get('image1_id', False)
                         # integration
                         if message.get('process').has_key('image_id'):
-                            print 'gh3'
                             _id = message.get('process').get('image_id', False)
                         if _id:
-                            print 'gh4'
                             # get the header from the DB
                             header = self.database.get_image_by_image_id(image_id=_id)
                             if self.alt_image_path_server.has_key(header.get('site_tag').upper()):
-                                print 'gh5'
                                 # send fullname to release_data
                                 self.alt_image_path_server[header.get('site_tag').upper()].release_data(header.get('fullname'))
 

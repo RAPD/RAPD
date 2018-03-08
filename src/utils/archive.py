@@ -82,21 +82,20 @@ def compress_file(target):
 
     # Save where we were
     start_dir = os.getcwd()
-    # print "start_dir", start_dir
+    #print "start_dir", start_dir
 
     # Move to target directory
     os.chdir(os.path.dirname(target))
-    # print os.getcwd()
+    #print os.getcwd()
 
     # Shorten the target from abspath
     my_target = os.path.basename(target)
-    # print my_target
+    #print my_target
 
     # Get hash of target file
     my_hash = get_hash(my_target)
 
     archive_name = os.path.abspath("%s.tar.bz2" % my_target)
-    # print archive_name
 
     with tarfile.open(archive_name, "w:bz2") as tar:
         tar.add(my_target)
