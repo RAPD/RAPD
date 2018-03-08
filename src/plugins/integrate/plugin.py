@@ -2120,8 +2120,8 @@ class RapdPlugin(Process):
             self.fixMtz2Sca("ANOM.sca")
             Utils.fixSCA(self, "ANOM.sca")
             # Move to archive
-            src_file = os.path.abspath("NATIVE.sca")
-            tgt_file = "%s_NATIVE.sca" % archive_files_prefix
+            src_file = os.path.abspath("ANOM.sca")
+            tgt_file = "%s_ANOM.sca" % archive_files_prefix
             shutil.copyfile(src_file, tgt_file)
             # files_to_archive.append("%s_ANOM.sca" % archive_files_prefix)
 
