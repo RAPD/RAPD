@@ -87,6 +87,7 @@ import info
 VERSIONS = {
     "aimless": (
         "version 0.5",
+        "version 0.6"
         ),
     "freerflag": (
         "version 2.2",
@@ -106,10 +107,10 @@ VERSIONS = {
         "version 7.0",
     ),
     "xds": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
     "xds_par": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
 }
 
@@ -175,7 +176,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -609,7 +610,7 @@ class RapdPlugin(Process):
 
         self.logger.debug("print_credits")
 
-        self.tprint(rcredits.HEADER,
+        self.tprint(rcredits.HEADER.replace("RAPD", "RAPD integrate"),
                     level=99,
                     color="blue")
 
@@ -627,7 +628,7 @@ class RapdPlugin(Process):
         if self.preferences.get("analysis", False):
 
             self.logger.debug("Setting up analysis plugin")
-            self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+            self.tprint("\nLaunching analysis plugin", level=30, color="blue")
 
             # Make sure we are in the work directory
             start_dir = os.getcwd()
@@ -642,8 +643,6 @@ class RapdPlugin(Process):
                 sub_run_mode = "subprocess-interactive"
             elif self.preferences["run_mode"] == "server":
                 sub_run_mode = "subprocess"
-
-            print ">>>", sub_run_mode
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -2491,6 +2490,14 @@ class RapdPlugin(Process):
             # Erase .mtz files
             for mtz_file in glob.glob("*.mtz"):
                 os.remove(mtz_file)
+
+            # Erase the truncate files
+            for truncate_file in glob.glob("truncate.*"):
+                os.remove(truncate_file)
+
+            # Erase the freer files
+            for freer_file in glob.glob("freer.*"):
+                os.remove(freer_file)
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""

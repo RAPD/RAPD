@@ -249,9 +249,9 @@ def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
 
     message = """
----------------
-RAPD Intgration
----------------"""
+----------------
+RAPD Integration
+----------------"""
     printer(message, 50, color="blue")
 
 

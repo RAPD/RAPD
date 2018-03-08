@@ -418,8 +418,8 @@ self.command["input_data"]["datafile"]
                                                         stderr=subprocess.PIPE,
                                                         shell=False)
                         _, stderr = convert_proc.communicate()
-                        print _
-                        print stderr
+                        # print _
+                        # print stderr
                         if stderr:
                             self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
                                         level=30,
@@ -438,8 +438,7 @@ self.command["input_data"]["datafile"]
                     if parsed_molrep_results["self_rotation_images"]:
                         break;
                 else:
-                    self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-    installed",
+                    self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
                                 level=30,
                                 color="red")
                     parsed_molrep_results["self_rotation_image"] = False
@@ -570,15 +569,15 @@ self.command["input_data"]["datafile"]
         elif run_mode == "json":
             pass
         elif run_mode == "server":
-            print "handle_return >> server"
+            # print "handle_return >> server"
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
         elif run_mode == "subprocess":
-            print "handle_return >> subprocess"
+            # print "handle_return >> subprocess"
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
         elif run_mode == "subprocess-interactive":
-            print "handle_return >> subprocess-interactive"
+            # print "handle_return >> subprocess-interactive"
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
 
@@ -804,7 +803,7 @@ self.command["input_data"]["datafile"]
     def print_credits(self):
         """Print information on programs used to the terminal"""
 
-        self.tprint(rcredits.HEADER,
+        self.tprint(rcredits.HEADER.replace("RAPD", "RAPD analysis"),
                     level=99,
                     color="blue")
 
