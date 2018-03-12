@@ -69,10 +69,12 @@ def compress_dir(target):
     with tarfile.open(archive_name, "w:bz2") as tar:
         tar.add(my_target)
 
+    output_name = os.path.abspath(archive_name)
+
     # Move bach to starting work directory
     os.chdir(start_dir)
 
-    return os.path.abspath(archive_name)
+    return output_name
 
 def compress_file(target):
     """
@@ -97,15 +99,18 @@ def compress_file(target):
     # Get hash of target file
     my_hash = get_hash(my_target)
 
-    archive_name = os.path.abspath("%s.tar.bz2" % my_target)
+    #archive_name = os.path.abspath("%s.tar.bz2" % my_target)
+    archive_name = "%s.tar.bz2" % my_target
 
     with tarfile.open(archive_name, "w:bz2") as tar:
         tar.add(my_target)
 
+    output_name = os.path.abspath(archive_name)
+
     # Move bach to starting work directory
     os.chdir(start_dir)
 
-    return (archive_name, my_hash)
+    return (output_name, my_hash)
 
 def create_archive(directory, archive_name=False):
     """

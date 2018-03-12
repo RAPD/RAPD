@@ -473,14 +473,13 @@ class RapdPlugin(Process):
                 full_integration_results = self.xds_total(xds_input, last=last)
 
         # Finish up with the data
-        #os.chdir(self.dirs['work'])
         final_results = self.finish_data(full_integration_results)
 
         # Set up the results for return
         self.results["process"]["status"] = 99
         self.results["results"].update(final_results)
 
-        self.send_results(self.results)
+        #self.send_results(self.results)
         os.chdir(self.dirs['work'])
 
     def get_current_images(self):
@@ -559,6 +558,10 @@ class RapdPlugin(Process):
         if self.preferences.get("run_mode") == "server":
 
             self.logger.debug("Sending back on redis")
+
+            #if results.get('results', False):
+            #    if results['results'].get('data_produced', False):
+            #        pprint(results['results'].get('data_produced'))
 
             # Transcribe results
             json_results = json.dumps(results)
@@ -2044,7 +2047,7 @@ class RapdPlugin(Process):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.wait()
-        
+
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
         #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
@@ -2081,8 +2084,6 @@ class RapdPlugin(Process):
             "description":"rfree"
         })
         #pprint(self.results["results"]["data_produced"])
-
-
 
         if scalepack:
             # Create the merged scalepack format file.

@@ -512,23 +512,31 @@ red = connect_redis_manager_HA()
 #connection = connect_beamline()
 #red = connect_ft_redis()
 #print red.smembers('working')
-
+"""
 red.delete('RAPD_QSUB_JOBS_0')
 red.delete("images_collected:NECAT_E")
 red.delete("images_collected:NECAT_C")
 red.delete("run_data:NECAT_C")
 red.delete("run_data:NECAT_E")
-
 red.delete('RAPD_JOBS_WAITING')
+time.sleep(2)
+"""
 #red.delete('images_collected:NECAT_E')
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
-time.sleep(2)
 red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
-time.sleep(1)
+#time.sleep(1)
+"""
 red = connect_ft_redis()
+l = red.smembers('working')
+print l
+for d in l:
+    red.srem('working', d)
+    #if d.count('/gpfs2/users/necat/necat_E_3100/images/Jon'):
+    #   red.srem('working', d)
 print red.smembers('working')
+"""
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
