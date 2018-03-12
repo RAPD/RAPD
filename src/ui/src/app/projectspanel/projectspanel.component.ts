@@ -32,7 +32,7 @@ export class ProjectspanelComponent implements OnInit {
     this.rest_service.getProjects()
       .subscribe(
         parameters => {
-          console.log(parameters);
+          // console.log(parameters);
           this.projects = parameters;
         }
       )
@@ -57,8 +57,6 @@ export class ProjectspanelComponent implements OnInit {
   }
 
   editProject(project, dialog_title:string) {
-
-    console.log()
 
     if (dialog_title !== "Create Project") {
       dialog_title = "Edit Project";
