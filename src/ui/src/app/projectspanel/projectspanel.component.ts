@@ -52,22 +52,16 @@ export class ProjectspanelComponent implements OnInit {
     project.project_type = 'mx';
     project.results = [];
     project.title = undefined;
-    project.dialog_title = "Create Project";
 
-    // let pseudo_event = {
-    //   type: 'click',
-    //   row: project
-    // };
-
-    this.editProject(project);
+    this.editProject(project, "Create Project");
   }
 
-  editProject(project) {
+  editProject(project, dialog_title:string) {
 
     console.log()
 
-    if (project.dialog_title !== "Create Project") {
-      project.dialog_title = "Edit Project";
+    if (dialog_title !== "Create Project") {
+      dialog_title = "Edit Project";
     }
 
     let config = new MatDialogConfig();
@@ -75,6 +69,7 @@ export class ProjectspanelComponent implements OnInit {
 
     this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
     this.dialogRef.componentInstance.project = project;
+    this.dialogRef.componentInstance.dialog_title = dialog_title;
 
     this.dialogRef.afterClosed().subscribe(result => {
       if (result) {
@@ -105,6 +100,10 @@ export class ProjectspanelComponent implements OnInit {
     if (index !== -1) {
       this.projects.splice(index, 1);
     }
+  }
+
+  selectProject(project:any) {
+    console.log('selectProject', project);
   }
 
 }

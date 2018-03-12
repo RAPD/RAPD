@@ -12,7 +12,7 @@
       </thead>
       <tbody>
         <ng-container *ngFor="let project of projects">
-          <tr>
+          <tr (click)="selectProject(project);">
             <td>{{project.title}}</td>
             <td>{{project.project_type}}</td>
             <td>{{project.description}}</td>
@@ -21,7 +21,7 @@
               <button
                 mat-button
                 color="primary"
-                (click)="editProject(project)">
+                (click)="editProject(project); $event.stopPropagation();">
                 <mat-icon>settings</mat-icon>
                 Edit
               </button>
