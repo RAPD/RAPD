@@ -101,8 +101,8 @@ class FileLocation():
         #threading.Thread.__init__ (self)
         #self.logger = logger
         self.ip = '164.54.212.218'
-        self.ram_prefix = '/epu2/rdma'
-        self.nvme_prefix = '/epu2/nvme'
+        self.ram_prefix = '/epu/rdma'
+        self.nvme_prefix = '/epu/nvme'
         self.ft_redis = self.redis_ft_connect()
 
     def redis_ft_connect(self):
@@ -123,12 +123,12 @@ class FileLocation():
         loc = self.ft_redis.get(dir)
         if loc == 'ram':
             # Tell file_tracker to not remove dataset!
-            self.hold_data(dir)
+            #self.hold_data(dir)
             # Pass back location in RAMDISK
             return os.path.join('%s%s'%(self.ram_prefix,dir), file_name)
         elif loc == 'nvme':
             # Tell file_tracker to not remove dataset!
-            self.hold_data(dir)
+            #self.hold_data(dir)
             # Pass back location on NMVe drive
             return os.path.join('%s%s'%(self.nvme_prefix,dir), file_name)
         else:

@@ -1069,7 +1069,11 @@ class Model(object):
 
             # Save the result
             __ = self.database.save_plugin_result(message)
+<<<<<<< HEAD
 
+=======
+            """
+>>>>>>> 4439f4974b474ee517b90d00adccefde4b77c9ca
             # Release hold on dataset in RAMDISK
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
                 _id = False
@@ -1087,7 +1091,7 @@ class Model(object):
                             if self.alt_image_path_server.has_key(header.get('site_tag').upper()):
                                 # send fullname to release_data
                                 self.alt_image_path_server[header.get('site_tag').upper()].release_data(header.get('fullname'))
-
+            """
     def receive(self, message):
         """
         Receive information from ControllerServer (self.SERVER) and handle accordingly.
