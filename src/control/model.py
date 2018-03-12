@@ -123,7 +123,7 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
-        
+
         # start the alt_image_path_server
         self.start_image_path_server()
 
@@ -418,7 +418,7 @@ class Model(object):
         #if os.path.isfile(fullname) in (False, None):
         #    if self.site.ALT_IMAGE_LOCATION:
         #        fullname = detector.get_alt_path(fullname)
-        
+
         # Save some typing
         dirname = os.path.dirname(fullname)
 
@@ -942,7 +942,7 @@ class Model(object):
 
             # Get the session id
             session_id = self.get_session_id(image1)
-            
+
             # Fix for RDMA file locations
             image1 = fix_fullname(image1, site_tag)
             # Pop out the run data
@@ -1066,7 +1066,10 @@ class Model(object):
 
         # Save the results for the plugin
         if "results" in message:
+
+            # Save the result
             __ = self.database.save_plugin_result(message)
+
             # Release hold on dataset in RAMDISK
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
                 _id = False

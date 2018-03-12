@@ -11,7 +11,7 @@ import { ProjectspanelComponent } from './projectspanel';
 import { TaskspanelComponent } from './taskspanel';
 import { UnauthorizedpanelComponent } from './unauthorizedpanel/unauthorizedpanel.component';
 import { MxSessionpanelComponent } from './mx-sessionpanel';
-import { PageNotFoundComponent } from './page-not-found/page-not-found.component'
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 const appRoutes: Routes = [
   { path: '',

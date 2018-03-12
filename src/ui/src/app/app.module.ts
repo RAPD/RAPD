@@ -33,6 +33,7 @@ import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
 import { WelcomepanelComponent } from './welcomepanel/welcomepanel.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { SummaryPanelComponent } from './dashboard/summary-panel/summary-panel.component';
@@ -69,6 +70,7 @@ import { DialogSelectProjectComponent } from './shared/components/dialog-select-
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
 
+
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
 }
@@ -78,6 +80,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppComponent,
     MaintoolbarComponent,
     WelcomepanelComponent,
+    PageNotFoundComponent,
     DashboardComponent,
     SummaryPanelComponent,
     OverwatchesPanelComponent,

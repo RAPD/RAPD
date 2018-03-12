@@ -47,43 +47,46 @@ export class ProjectspanelComponent implements OnInit {
     project.created = undefined;
     project.description = undefined;
     project.group = undefined;
-    project.last_action = undefined;
+    project.last_action = 'created';
     project.last_timestamp = undefined;
     project.project_type = 'mx';
     project.results = [];
     project.title = undefined;
+    project.dialog_title = "Create Project";
 
-    let pseudo_event = {
-      type: 'click',
-      row: project
-    };
+    // let pseudo_event = {
+    //   type: 'click',
+    //   row: project
+    // };
 
-    this.editProject(pseudo_event);
+    this.editProject(project);
   }
 
-  editProject(event) {
+  editProject(project) {
 
-    if (event.type === 'click') {
-      let project = event.row;
+    console.log()
 
-      let config = new MatDialogConfig();
-      config.viewContainerRef = this.viewContainerRef;
+    if (project.dialog_title !== "Create Project") {
+      project.dialog_title = "Edit Project";
+    }
 
-      this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
-      this.dialogRef.componentInstance.project = project;
+    let config = new MatDialogConfig();
+    config.viewContainerRef = this.viewContainerRef;
 
-      this.dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          if (result.success === true) {
-            if (result.operation === 'delete') {
-              this.removeProject(result._id);
-            } else {
-              this.addProject(result.project);
-            }
+    this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
+    this.dialogRef.componentInstance.project = project;
+
+    this.dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.success === true) {
+          if (result.operation === 'delete') {
+            this.removeProject(result._id);
+          } else {
+            this.addProject(result.project);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   addProject(new_project:Project) {
