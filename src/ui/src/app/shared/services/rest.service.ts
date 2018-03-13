@@ -221,6 +221,15 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
+  public getProject(id: string): Observable<any> {
+
+    console.log('getProject', id);
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects/'+id)
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
+  }
+
   public submitProject(project: Project): Observable<any> {
 
     console.log('submitProject', project);

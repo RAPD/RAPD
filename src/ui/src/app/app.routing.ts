@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule }   from '@angular/router';
+import { RouterModule, Routes }   from '@angular/router';
 
 import { LoginGuard } from './shared/guards/login-guard';
 
@@ -14,8 +14,7 @@ import { MxSessionpanelComponent } from './mx-sessionpanel';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 const appRoutes: Routes = [
-  { path: '',
-      pathMatch: 'full',
+  { path: 'welcome',
       component: WelcomepanelComponent },
   { path: 'admin',
       component: AdminpanelComponent,
@@ -39,6 +38,9 @@ const appRoutes: Routes = [
       component: MxSessionpanelComponent,
       canActivate: [ LoginGuard ],
       children: []},
+  { path: '',
+      pathMatch: 'full',
+      redirectTo: '/welcome' },
   // { path: 'project/mx/:project_id',
   //     component: MxProjectpanelComponent,
   //     canActivate: [ LoginGuard ],

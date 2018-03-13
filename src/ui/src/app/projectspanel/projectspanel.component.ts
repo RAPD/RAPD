@@ -1,6 +1,7 @@
 import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatDialog,
          MatDialogConfig,
          MatDialogRef,
@@ -22,7 +23,8 @@ export class ProjectspanelComponent implements OnInit {
 
   constructor(private rest_service: RestService,
               public viewContainerRef: ViewContainerRef,
-              public dialog: MatDialog) { }
+              public dialog: MatDialog,
+              private router: Router) { }
 
   ngOnInit() {
     this.getProjects();
@@ -101,7 +103,7 @@ export class ProjectspanelComponent implements OnInit {
   }
 
   selectProject(project:any) {
-    console.log('selectProject', project);
+    this.router.navigate(['project-'+project.project_type, project._id]);
   }
 
 }

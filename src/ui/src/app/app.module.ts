@@ -31,6 +31,8 @@ import { GlobalsService } from './shared/services/globals.service';
 import { Site } from './site';
 import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
+import { ProjectsModule } from './projects/projects.module';
+
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
 import { WelcomepanelComponent } from './welcomepanel/welcomepanel.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
@@ -69,6 +71,7 @@ import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-d
 import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
+
 
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
@@ -112,20 +115,21 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
-    DialogErrorComponent
+    DialogErrorComponent,
   ],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
     RapdMaterialModule,
     FlexLayoutModule,
     NgxDatatableModule,
-    ChartsModule
+    ChartsModule,
+    ProjectsModule,
+    AppRoutingModule
   ],
   providers: [ appRoutingProviders,
                LoginGuard,

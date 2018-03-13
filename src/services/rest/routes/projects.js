@@ -38,6 +38,27 @@ router.route('/projects')
   });
 
 router.route('/projects/:project_id')
+  // Get project data
+  .get(function(req, res) {
+    console.log(req.params.project_id)
+    Project.findOne({_id:req.params.project_id}).
+            exec(function(err, project) {
+              if (err) {
+                console.error(err);
+                res.status(500).json({
+                  success: false,
+                  message: err
+                });
+              } else {
+                console.log('Returning project', project);
+                res.status(200).json({
+                  success: true,
+                  project: project
+                });
+              }
+            });
+  })
+
   // route to add or modify project
   .put(function(req, res) {
 
