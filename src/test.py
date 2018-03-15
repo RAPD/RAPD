@@ -507,25 +507,30 @@ while True:
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-red = connect_redis_manager_HA()
+#red = connect_redis_manager_HA()
 #red = connect_sercat_redis()
 #connection = connect_beamline()
-#red = connect_ft_redis()
+red = connect_ft_redis()
+print red.llen('file-tracker-ram')
 #print red.smembers('working')
-"""
-red.delete('RAPD_QSUB_JOBS_0')
-red.delete("images_collected:NECAT_E")
-red.delete("images_collected:NECAT_C")
-red.delete("run_data:NECAT_C")
-red.delete("run_data:NECAT_E")
-red.delete('RAPD_JOBS_WAITING')
-time.sleep(2)
-"""
+for d in red.lrange('file-tracker-ram', 0, -1):
+    print d
+    #if d.count('E_3333'):
+        #print d
+
+#red.delete('RAPD_QSUB_JOBS_0')
+#red.delete("images_collected:NECAT_E")
+#red.delete("images_collected:NECAT_C")
+#red.delete("run_data:NECAT_C")
+#red.delete("run_data:NECAT_E")
+#red.delete('RAPD_JOBS_WAITING')
+#time.sleep(2)
+
 #red.delete('images_collected:NECAT_E')
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
-red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
 #time.sleep(1)
 """
 red = connect_ft_redis()
