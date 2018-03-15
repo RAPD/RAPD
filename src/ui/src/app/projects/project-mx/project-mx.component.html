@@ -8,12 +8,34 @@
       </div>
     </div>
   </mat-card-header>
-  <mat-card-content>
-    <div class="rapd-corral">
-      <ul>
-        <li>Data Set 1</li>
-        <li>Data Set 2</li>
-      </ul>
+  <mat-card-content class="rapd_result">
+    <div fxLayout="row" style="padding:10px;" fxLayoutGap="20px">
+      <div fxLayout="column" fxFlex="none">
+        <div fxFlex="none">
+          <div class="rapd-corral">
+            <div class="rapd-corral-heading">
+              Integrated Data
+            </div>
+            <div class="rapd-corral-content">
+              <ng-container *ngFor="let source_datum of project.source_data">
+                <div *ngIf="source_datum.plugin_type==='INTEGRATE'">{{source_datum.repr}}</div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+        <div fxFlex="none">
+          <div class="rapd-corral">
+            <div class="rapd-corral-heading">
+              Indexed Data
+            </div>
+            <div class="rapd-corral-content">
+              <ng-container *ngFor="let source_datum of project.source_data">
+                <div *ngIf="source_datum.plugin_type==='INDEX'">{{source_datum.repr}}</div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </mat-card-content>
 </mat-card>

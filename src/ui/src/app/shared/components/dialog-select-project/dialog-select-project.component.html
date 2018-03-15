@@ -2,32 +2,22 @@
   <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
     <mat-icon>close</mat-icon>
   </button>
-  <h2>
-    <div *ngIf="model._id;then edit_content else create_content"></div>
-    <ng-template #edit_content>Edit </ng-template>
-    <ng-template #create_content>Create </ng-template>
-    Add To Project
-  </h2>
+  <h2>Add To Project</h2>
 </div>
-<form [formGroup]="project_form">
-  <div class="form-group">
-    <p>
 
 <div *ngIf="! submit_error">
-  <div MatDialogTitle>
-    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
-      <mat-icon>close</mat-icon>
-    </button>
-    <h2>Add To Project</h2>
-  </div>
-  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+  <mat-dialog-content *ngIf="projects.length === 0">
+    Please create a project in the projects tab first.
+  </mat-dialog-content>
+
+  <mat-dialog-content *ngIf="projects.length > 0" [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="project_form">
       <mat-form-field>
         <mat-select [(ngModel)]="model._id"
-                   formControlName="_id">
-           <mat-option *ngFor="let project of projects" [value]="project._id">
+                  formControlName="_id">
+          <mat-option *ngFor="let project of projects" [value]="project._id">
             {{project.title}}
-           </mat-option>
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </form>
@@ -38,7 +28,8 @@
     <button mat-raised-button color="primary" (click)="submitProjectSelection()">Select</button>
   </mat-dialog-actions>
 </div>
-<div *ngIf="submit_error">
+
+<div *ngIf="submit_error">    
   <mat-dialog-content>
     <h2>Error</h2>
     {{submit_error}}

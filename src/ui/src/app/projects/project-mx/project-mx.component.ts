@@ -17,6 +17,7 @@ export class ProjectMxComponent implements OnInit {
 
   id: string;
   project: Project;
+  selected_integrated_data: [string];
 
   constructor(
     private route: ActivatedRoute,

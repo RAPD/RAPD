@@ -267,14 +267,14 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/projects/add_result',
+      this.globals_service.site.restApiUrl + '/projects_add_result',
       JSON.stringify({
         project_id:data._id,
         result:data.result
       }),
       {headers:header}
     )
-    // .map(res => res.json())
+    .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
