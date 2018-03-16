@@ -54,7 +54,8 @@ DETECTOR_SUFFIX = ".cbf"
 RUN_NUMBER_IN_TEMPLATE = False
 # Template for image name generation ? for frame number places
 if RUN_NUMBER_IN_TEMPLATE:
-    IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
+    #IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
+    IMAGE_TEMPLATE = "%s_%03d_??????.cbf" # prefix & run number
 else:
     IMAGE_TEMPLATE = "%s_??????.cbf" # prefix
 # This is a version number for internal RAPD use
@@ -93,6 +94,7 @@ def parse_file_name(fullname):
     image_number = int(sbase[-1])
     if RUN_NUMBER_IN_TEMPLATE:
         run_number = int(sbase[-2])
+        prefix = "_".join(sbase[0:-3])
     else:
         run_number = None
     return directory, basename, prefix, run_number, image_number
@@ -174,7 +176,8 @@ def read_header(input_file=False, beam_settings=False):
         
         # Add run_number (if used) and image template for processing
         if RUN_NUMBER_IN_TEMPLATE:
-            header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+            #header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+            header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
             header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
         else:
             header["run_number"] = None

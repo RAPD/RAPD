@@ -364,13 +364,17 @@ def analyze_data_sources(sources,
                         else:
                             return_data["hdf5_files"].append(source_abspath)
 
-                        #prefix = os.path.basename(source).replace("_master.h5", "")
-                        prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
+                        #prefix = convert_hdf5_cbf.get_h5_prefix(source_abspath)
+                        #prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
+                        #if os.path.basename(source).count('.') > 1:
+                        #    prefix = os.path.basename(source).replace("_master.h5", "").replace('.', '_')
+                        #else:
+                        #    prefix = os.path.basename(source).replace("_master.h5", "")
 
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
                             output_dir="cbf_files",
-                            prefix=prefix,
+                            #prefix=prefix,
                             #start_image=1,
                             start_image=len(return_data["hdf5_files"]),
                             #end_image=1,
@@ -416,9 +420,13 @@ def analyze_data_sources(sources,
                 return_data["hdf5_files"] = [source_abspath]
             else:
                 return_data["hdf5_files"].append(source_abspath)
-
-            #prefix = os.path.basename(sources).replace("_master.h5", "")
-            prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
+            
+            #prefix = convert_hdf5_cbf.get_h5_prefix(source_abspath)
+            #prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
+            #if os.path.basename(sources).count('.') > 1:
+            #    prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
+            #else:
+            #    prefix = os.path.basename(sources).replace("_master.h5", "")
 
             if not start_image:
                 start_image = 1
@@ -426,7 +434,7 @@ def analyze_data_sources(sources,
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                 master_file=source_abspath,
                 output_dir="cbf_files",
-                prefix=prefix,
+                #prefix=prefix,
                 start_image=start_image,
                 end_image=end_image,
                 overwrite=False,
@@ -490,12 +498,12 @@ def analyze_data_sources(sources,
 
             return return_data
 
-
 if __name__ == "__main__":
 
-    print "commandline_utils.py"
-    s = ['/gpfs6/users/necat/Jon/RAPD_test/Output/IDP07311-5.002_master.h5']
-    analyze_data_sources(s, 'integrate', )
+    #print "commandline_utils.py"
+    os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
+    s = ['/gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h.001_master.h5']
+    analyze_data_sources(s, 'index', )
 
     """
     parser = argparse.ArgumentParser(parents=[dp_parser],
