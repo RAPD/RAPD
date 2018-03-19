@@ -36,12 +36,11 @@ var ProjectSchema = new Schema({
     required: true,
     default: 'mx'
   },
-  // results: {
-  //   type: [Schema.Types.ObjectId],
-  //   required: false,
-  //   default: [],
-  //   ref: 'Result'
-  // },
+  results: {
+    type: [Schema.Types.ObjectId],
+    default: [],
+    ref: 'Result'
+  },
   source_data: {
     type: [Schema.Types.ObjectId],
     ref: 'Result',

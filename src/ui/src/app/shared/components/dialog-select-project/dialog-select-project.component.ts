@@ -8,6 +8,7 @@ import { FormGroup,
 import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
+import { Project } from '../../classes/project';
 import { RestService } from '../../../shared/services/rest.service';
 
 @Component({
@@ -32,7 +33,7 @@ export class DialogSelectProjectComponent implements OnInit {
     // Get available projects
     this.rest_service.getProjects().subscribe(
       parameters => {
-        // console.log(parameters);
+        console.log(parameters);
         this.projects = parameters;
       }
     )

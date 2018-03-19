@@ -17,6 +17,12 @@
   margin-top: 2em;
   max-width: 20em;
   min-width: 14em;
+  padding: 0.5em;
+}
+
+.rapd-corral-pen {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 3px; 
 }
 
 .rapd-corral-heading {
@@ -31,5 +37,16 @@
 }
 
 .rapd-corral-content {
-  padding: 10px;
+  background-color: rgba(255,255,255,1);
+}
+
+.background-green {
+  background-color: lightgreen;
+}
+
+.data-action-connector {
+    background-color: lightgreen;
+    height:74px;
+    margin:3em -2px 0 -2px;
+    width:30px;
 }

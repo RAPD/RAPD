@@ -6,11 +6,11 @@
 </div>
 
 <div *ngIf="! submit_error">
-  <mat-dialog-content *ngIf="projects.length === 0">
+  <mat-dialog-content *ngIf="(projects)?.length === 0">
     Please create a project in the projects tab first.
   </mat-dialog-content>
 
-  <mat-dialog-content *ngIf="projects.length > 0" [ngClass]="submitted ? 'overlay-grey': ''">
+  <mat-dialog-content *ngIf="(projects)?.length > 0" [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="project_form">
       <mat-form-field>
         <mat-select [(ngModel)]="model._id"

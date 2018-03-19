@@ -30,6 +30,7 @@ router.route('/projects')
           });
         } else {
           console.log('Returning', projects.length, 'projects');
+          console.log(projects);
           res.status(200).json({
             success: true,
             projects: projects
@@ -209,9 +210,9 @@ router.route('/projects_add_result')
     let project_id = req.body.project_id,
         result = req.body.result;
 
-    // console.log(project_id);
-    // console.log(result);
-    // console.log(req.decoded._doc);
+    console.log(project_id);
+    console.log(result);
+    console.log(req.decoded._doc);
     
     // For testing
     // req.decoded._doc.role = 'foo';

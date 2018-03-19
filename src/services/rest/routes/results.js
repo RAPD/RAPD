@@ -8,6 +8,27 @@ const Result   = mongoose.ctrl_conn.model('Result', require('../models/result').
 
 // on routes that end in /results
 // ----------------------------------------------------
+router.route('/results/:result_id')
+      .get(function(req, res) {
+        Result.findOne({_id:req.params.result_id}, function(err, result) {
+          if (err) {
+            console.error(err);
+            res.status(500).json({
+              success: false,
+              message: err
+            });
+          } else {
+            console.log('Returning result:', result);
+            res.status(200).json({
+              success: true,
+              result: result
+            });
+          }
+         });
+      });
+
+// resultsbysession
+// ----------------------------------------------------
 router.route('/resultsbysession/:session_id')
 
     // get the session with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
