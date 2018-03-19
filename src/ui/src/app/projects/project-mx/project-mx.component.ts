@@ -3,7 +3,12 @@ import { Component,
          OnInit,  
          ViewChild,
          ViewContainerRef } from '@angular/core';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { Router,
+         ActivatedRoute,
+         ParamMap } from '@angular/router';
+import {MatDialog,
+        MatDialogRef,
+        MAT_DIALOG_DATA} from '@angular/material';
 
 import 'rxjs/add/operator/switchMap';
 import { Observable } from 'rxjs/Observable';
@@ -11,6 +16,8 @@ import { Observable } from 'rxjs/Observable';
 import { Project } from '../../shared/classes/project';
 import { RestService } from '../../shared/services/rest.service';
 import { WebsocketService } from '../../shared/services/websocket.service';
+import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
+import { ErrorDialogComponent } from '../../shared/dialogs/error-dialog/error-dialog.component';
 
 // Import agent components here
 import * as mx from '../../plugin_components/mx';
@@ -33,7 +40,7 @@ export class ProjectMxComponent implements OnInit {
   selected_integrated_data: string[]=[];
   selected_integrate_action: string="";
   actions: any = {
-    'INTEGRATE': [['Display Result', 'ReIntegrate', 'MR', 'SAD', 'Remove'],['Merge', 'Remove']],
+    'INTEGRATE': [['Display Result', 'ReIntegrate', 'MR', 'SAD', 'Remove'],['Merge']],
     'INDEX': ['Display Result', 'Remove']
   }
   action_icons: any = {
@@ -53,7 +60,9 @@ export class ProjectMxComponent implements OnInit {
     private router: Router,
     private rest_service: RestService,
     private websocket_service: WebsocketService,
-    private componentfactoryResolver: ComponentFactoryResolver
+    private componentfactoryResolver: ComponentFactoryResolver,
+    public confirm_dialog: MatDialog,
+    public error_dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -84,6 +93,8 @@ export class ProjectMxComponent implements OnInit {
     // Remove id from selected array
     } else {
       this.selected_integrated_data.splice(index, 1);
+      // Clear the result display?
+      this.outlet.clear();
     }
   }
 
@@ -95,6 +106,9 @@ export class ProjectMxComponent implements OnInit {
         this.displayResult(this.selected_integrated_data[0]);
         break;
     
+      case 'Remove':
+        this.activateRemoveConfirm(this.selected_integrated_data[0]);
+
       default:
         break;
     }
@@ -126,30 +140,58 @@ export class ProjectMxComponent implements OnInit {
     );
   }
 
-  // A result has been selected - implement the agent interface
-  selectResult(event) {
+  activateRemoveConfirm(result_id:string) {
 
-    console.log('selectResult', event);
+    console.log('activateRemoveConfirm', result_id);
 
-    // Destroy the current component in the target view
-    this.target.clear();
+    let label = this.project.source_data.filter(function(obj){
+      return obj._id === result_id;
+    })[0].repr;
 
-    // Save the current displayed result
-    // this.current_result = event.value;
+    let dialogRef = this.confirm_dialog.open(ConfirmDialogComponent, {
+      data: { message: 'Are you sure you want to remove '+label+' from the project?' }
+    });
 
-    // Construct the component name from the result
-    // const component_name = (this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    dialogRef.afterClosed().subscribe(result => {
+      // console.log('The dialog was closed', result);
+      if (result == true) {
+        // console.log('Removing from project');
+        
+        // Remove from project
+        var index_to_remove = this.project.source_data.findIndex(function(element){
+          return element._id === result_id;
+        });
+        this.project.source_data.splice(index_to_remove, 1);
+        
+        // Remove from selected_integrated_data
+        var sid_index_to_remove = this.selected_integrated_data.findIndex(function(element){
+          return element === result_id;
+        });
+        if (sid_index_to_remove !== -1) {
+          this.selected_integrated_data.splice(sid_index_to_remove, 1);
+          // Clear the result display?
+          this.outlet.clear();
+        }
 
-    // console.log(component_name);
-    // console.log(mx_components);
-
-    // Create a componentfactoryResolver instance
-    // const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
-
-    // Create the component
-    // let component = this.target.createComponent(factory);
-
-    // Set the component current_result value
-    // component.instance.current_result = event.value;
+        // Update the database
+        this.rest_service.submitProject(this.project)
+                          .subscribe(
+                            params => {
+                              console.log(params);
+                              // A problem connecting to REST server
+                              // Submitted is over
+                              // this.submitted = false;
+                              // this.submit_error = params.error;
+                              if (params.success) {
+                                // this.dialogRef.close(params);
+                              } else {
+                                let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+                                  data: { message: params.message }
+                                });
+                              }
+                            });
+      }
+    });
   }
+
 }

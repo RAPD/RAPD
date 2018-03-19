@@ -296,7 +296,7 @@ export class RestService {
       JSON.stringify({project:project}),
       {headers:header}
     )
-    // .map(res => res.json())
+    .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 

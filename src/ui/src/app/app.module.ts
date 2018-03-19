@@ -70,7 +70,8 @@ import { MxImageComponent } from './plugin_components/mx/mx-image/mx-image.compo
 import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
 import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
-import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
+import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
+import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
 
 
 
@@ -115,7 +116,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
-    DialogErrorComponent,
+    ErrorDialogComponent,ErrorDialogComponent
+    ConfirmDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -166,6 +168,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     RunDialogComponent,
     SessionDialogComponent,
     UserDialogComponent,
+    ErrorDialogComponent,
+    ConfirmDialogComponent
   ],
   bootstrap: [AppComponent]
 })

@@ -44,8 +44,8 @@ router.route('/projects/:project_id')
   .get(function(req, res) {
     console.log(req.params.project_id)
     Project.findOne({_id:req.params.project_id}).
-            populate({path:'source_data', model:"Result"}).
-            // populate('results').
+            populate({path:'source_data', model:'Result'}).
+            populate({path:'results', model:'Result'}).
             exec(function(err, project) {
               if (err) {
                 console.error(err);
@@ -71,8 +71,9 @@ router.route('/projects/:project_id')
 
     // Updating
     if (project._id) {
-      Project.findByIdAndUpdate(user._id, user, {new:true})
-      .populate('results')
+      Project.findByIdAndUpdate(project._id, project, {new:true})
+      .populate({path:'source_data', model:"Result"})
+      .populate({path:'results', model:'Result'})
       .exec(function(err, return_project) {
         if (err) {
           console.error(err);
@@ -85,7 +86,7 @@ router.route('/projects/:project_id')
           res.status(200).json({
             success: true,
             operation: 'edit',
-            user: return_project
+            project: return_project
           });
         }
       });
