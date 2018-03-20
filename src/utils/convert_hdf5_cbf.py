@@ -134,7 +134,12 @@ class hdf5_to_cbf_converter(object):
 
         # Check prefix
         if not self.prefix:
-            self.prefix = self.master_file.replace("master.h5", "").rstrip("_")
+            #self.prefix = self.master_file.replace("master.h5", "").rstrip("_")
+            #self.prefix = os.path.basename(self.master_file)[:os.path.basename(self.master_file).find('.')]
+            if self.master_file.count('.') > 1:
+                self.prefix = os.path.basename(self.master_file).replace("_master.h5", "").replace('.', '_')
+            else:
+                self.prefix = os.path.basename(self.master_file).replace("_master.h5", "")
 
         # Check start_image - default to 1
         if not self.start_image:
@@ -364,7 +369,13 @@ class hdf5_to_cbf_converter(object):
             for k, g in groupby(enumerate(not_to_make_list), lambda (i, x):i - x):
                 self.ranges_not_to_make.append(map(itemgetter(1), g))
 
-
+def get_h5_prefix_OLD(fullname):
+    """Determine the image prefix for an h5 master file"""
+    if os.path.basename(fullname).count('.') > 1:
+        prefix = os.path.basename(fullname).replace("_master.h5", "").replace('.', '_')
+    else:
+        prefix = os.path.basename(fullname).replace("_master.h5", "")
+    return prefix
 
 def main(args):
     """
@@ -465,6 +476,7 @@ if __name__ == "__main__":
 
     # Get the commandline args
     commandline_args = get_commandline()
+    print os.getcwd()
 
     # Execute code
     main(args=commandline_args)

@@ -508,6 +508,7 @@ while True:
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
 red = connect_redis_manager_HA()
+
 #red = connect_sercat_redis()
 #connection = connect_beamline()
 #red = connect_ft_redis()
@@ -547,6 +548,7 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
+
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/sinai/jin_E_3213/images/babault/snaps/JJ1_A3_PAIR_0_000003/JJ1_A3_PAIR_0_000003.cbf')
@@ -558,29 +560,6 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
 """
-print red.llen('RAPD_QSUB_JOBS_0')
-#red.delete('RAPD_QSUB_JOBS_0')
-#print red.llen('run_info_C')
-print red.llen('RAPD_JOBS')
-#print red.llen("images_collected:SERCAT_ID")
-#red.delete("images_collected:SERCAT_ID")
-#print red.llen('run_data:SERCAT_ID')
-#red.delete("run_data:SERCAT_ID")
-print red.llen("images_collected:NECAT_E")
-#red.delete("images_collected:NECAT_E")
-print red.llen("images_collected:NECAT_C")
-#red.delete("images_collected:NECAT_C")
-print red.llen('run_data:NECAT_C')
-#red.delete("run_data:NECAT_C")
-print red.llen('run_data:NECAT_E')
-#red.delete("run_data:NECAT_E")
-#print red.llen('RAPD_RESULTS')
-#red.delete('RAPD_RESULTS')
-#print red.llen('run_info_T')
-print red.llen('RAPD_JOBS_WAITING')
-#red.delete('RAPD_JOBS_WAITING')
-#print red.lrange('run_info_T', 0, 5)
-#red.delete('images_collected_T')
-print red.llen('images_collected_E')
-#red.close()
-"""
+=======
+#red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
+
