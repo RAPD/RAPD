@@ -33,7 +33,7 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
-      console.log('ngOnInit >>', params);
+      // console.log('ngOnInit >>', params);
       this.session_id = params['session_id'];
       this.websocket_service.setSession(this.session_id, 'mx');
     });
@@ -44,8 +44,8 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
   }
 
   tabSelected(event) {
-    console.log('tab selected', event);
-    console.log('tab=', this.tabs_indexes[event.index]);
+    // console.log('tab selected', event);
+    // console.log('tab=', this.tabs_indexes[event.index]);
     // this.router.navigate(['mx', this.session_id]);
   }
 }

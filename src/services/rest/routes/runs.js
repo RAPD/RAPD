@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('../models/mongoose');
 
 // MongoDB model
-var Run = require('../models/run');
+const Run = mongoose.ctrl_conn.model('Run', require('../models/run').RunSchema);
 
 // Routes that end with runs
 // -----------------------------------------------------------------------------

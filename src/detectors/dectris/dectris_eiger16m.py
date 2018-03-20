@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2012-2017, Cornell University
+Copyright (C) 2012-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -49,7 +49,7 @@ XDSINP = [
     ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0') ,
     ('FRACTION_OF_POLARIZATION', '0.99') ,
     ('INCIDENT_BEAM_DIRECTION', '0 0 1') ,
-    ('INCLUDE_RESOLUTION_RANGE', '50.0 1.5') ,
+    ('INCLUDE_RESOLUTION_RANGE', '200.0 0.0') ,
     ('MAX_CELL_ANGLE_ERROR', '2.0') ,
     ('MAX_CELL_AXIS_ERROR', '0.03') ,
     ('MAX_FAC_Rmeas', '2.0') ,

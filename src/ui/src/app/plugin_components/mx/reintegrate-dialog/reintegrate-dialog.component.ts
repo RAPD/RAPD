@@ -28,7 +28,7 @@ export class ReintegrateDialogComponent implements OnInit {
     {val:'rna', label:'RNA'},
     {val:'peptide', label:'Peptide'}];
 
-  spacegroup_deciders:[any] = [
+  spacegroup_deciders = [
     {val:'auto', label:'Automatic'},
     {val:'xds', label:'XDS'},
     {val:'pointless', label:'Pointless'}
@@ -136,10 +136,10 @@ export class ReintegrateDialogComponent implements OnInit {
         .submitJob(request)
         .subscribe(
           parameters => {
-            // console.log(parameters);
+            console.log(parameters);
             if (parameters.success === true) {
               let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
-                duration: 2000,
+                duration: 10000,
               });
               this.dialogRef.close(parameters);
             } else {

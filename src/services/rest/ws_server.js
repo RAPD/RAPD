@@ -6,22 +6,23 @@ var http = require('http');
 var url = require('url');
 var WebSocketServer = require('ws').Server;
 // var SocketIo = require('socket.io');
-var mongoose = require('mongoose');
+var mongoose = require('./models/mongoose');
 Q = require('q');
 // Fix the promise issue in Mongoose
-mongoose.Promise = Q.Promise;
+// mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
 var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
 // Redis
-var redis = require('redis');
+var Redis = require('ioredis');
 
 // Import models
-var Activity = require('./models/activity');
-var Image    = require('./models/image');
-var Result   = require('./models/result');
+var mongoose   = require('./models/mongoose');
+const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
+const Image    = mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
+const Result   = mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
 
 // Definitions of result types
 var result_type_trans = {
@@ -40,9 +41,9 @@ var ws_connections = {};
 
 // Subscribe to redis updates
 try {
-  var sub = redis.createClient(config.redis_port, config.redis_host);
+  var sub = new Redis(config.redis_connection);
 } catch (e) {
-  console.error("Cannot connect to redis", config.redis_port, config.redis_host);
+  console.error("Cannot connect to redis", config.redis_connection);
   throw e;
 }
 
@@ -197,12 +198,7 @@ function Wss (opt, callback) {
       return new Wss(opt)
     }
 
-    // Params are optional
-    opt = opt || {}
-
-    wss = new WebSocketServer({ server: opt.server });
-    // var io = SocketIo(opt.server);
-
+    var wss = new WebSocketServer({ server: opt.server });
 
     wss.on('connection', function connection(ws) {
 
@@ -215,10 +211,18 @@ function Wss (opt, callback) {
       ws.id = uuid.v1();
       ws_connections[ws.id] = ws;
 
+      // Create a ping interval to keep websocket connection alive
+      let ping_timer = setInterval(function() {
+        ws.send('ping');
+      }, 45000);
+
       // Websocket has closed
       ws.on('close', function() {
 
         console.log('websocket closed');
+
+        // Cancel the ping interval
+        clearInterval(ping_timer);
 
         // Remove the websocket from the storage objects
         delete ws_connections[ws.id];
@@ -276,7 +280,7 @@ function Wss (opt, callback) {
               var data_type,
                   data_class;
 
-              [data_type, data_class] = data.data_type.split(':')
+              [data_type, data_class] = data.data_type.split(':');
 
               if (data_type === 'mx') {
 
@@ -288,8 +292,9 @@ function Wss (opt, callback) {
                     // populate('children').
                     sort('-timestamp').
                     exec(function(err, results) {
-                        if (err)
-                            return false;
+                        if (err) {
+                          return false;
+                        }
                         console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
@@ -303,8 +308,9 @@ function Wss (opt, callback) {
                     // populate('children').
                     sort('-timestamp').
                     exec(function(err, results) {
-                        if (err)
-                            return false;
+                        if (err) {
+                          return false;
+                        }
                         console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
@@ -318,12 +324,13 @@ function Wss (opt, callback) {
                     // populate('children').
                     sort('-timestamp').
                     exec(function(err, sessions) {
-                        if (err)
-                            return false;
-                        console.log('Found', results.length, 'results');
-                        // Send back over the websocket
-                        ws.send(JSON.stringify({msg_type:'results',
-                                                results:sessions}));
+                      if (err) {
+                        return false;
+                      }
+                      console.log('Found', sessions.length, 'results');
+                      // Send back over the websocket
+                      ws.send(JSON.stringify({msg_type:'results',
+                                              results:sessions}));
                     });
                 } else if (data_class === 'all') {
 
@@ -372,15 +379,15 @@ function Wss (opt, callback) {
             // Get result details
             case 'get_result_details':
 
-              console.log('get_result_details', data.data_type, data.plugin_type);
+              console.log('get_result_details', data);
 
               // Create a mongoose model for the result
               let name = data.data_type+'_'+ data.plugin_type +'_result';
               let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
               var ResultModel;
               try {
-                if (mongoose.model(collection_name)) {
-                  ResultModel = mongoose.model(collection_name);
+                if (mongoose.ctrl_conn.model(collection_name)) {
+                  ResultModel = mongoose.ctrl_conn.model(collection_name);
                 }
               } catch(e) {
                 if (e.name === 'MissingSchemaError') {
@@ -390,7 +397,8 @@ function Wss (opt, callback) {
                       auto: true
                       },
                     }, {strict:false});
-                  ResultModel = mongoose.model(collection_name, schema);
+                  // ResultModel = mongoose.model(collection_name, schema);
+                  ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
                 }
               }
 
@@ -486,83 +494,6 @@ function Wss (opt, callback) {
               break;
           }
         }
-
-
-
-
-        // if (data.request_type == 'detailed_result') {
-        //
-        //   console.log('detailed_result')
-        //
-        // } else {
-        //
-        //   var data_type,
-        //       data_class;
-        //
-        //   [data_type, data_class] = data.request_type.split(':')
-        //
-        //   if (data_type == 'mx') {
-        //
-        //     if (data_class == 'data') {
-        //
-        //       Result.
-        //         find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-        //         where('result_type').in(['mx:index+strategy', 'mx:integrate']).
-        //         sort('-timestamp').
-        //         exec(function(err, sessions) {
-        //             if (err)
-        //                 return false;
-        //             console.log(sessions);
-        //             // Send back over the websocket
-        //             ws.send(JSON.stringify({msg_type:'results',
-        //                                     results:sessions}));
-        //         });
-        //     } else if (data_class == 'snap') {
-        //
-        //       Result.
-        //         find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-        //         where('result_type').in(result_type_trans[data_type][data_class]).
-        //         sort('-timestamp').
-        //         exec(function(err, sessions) {
-        //             if (err)
-        //                 return false;
-        //             console.log(sessions);
-        //             // Send back over the websocket
-        //             ws.send(JSON.stringify({msg_type:'results',
-        //                                     results:sessions}));
-        //         });
-        //     } else if (data_class == 'sweep') {
-        //
-        //       Result.
-        //         find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-        //         where('result_type').in(result_type_trans[data_type][data_class]).
-        //         sort('-timestamp').
-        //         exec(function(err, sessions) {
-        //             if (err)
-        //                 return false;
-        //             console.log(sessions);
-        //             // Send back over the websocket
-        //             ws.send(JSON.stringify({msg_type:'results',
-        //                                     results:sessions}));
-        //         });
-        //     } else if (data_class == 'all') {
-        //
-        //       Result.
-        //         find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-        //         // where('result_type').in(['mx:index+strategy']).
-        //         sort('-timestamp').
-        //         exec(function(err, sessions) {
-        //             if (err)
-        //                 return false;
-        //             console.log(sessions);
-        //             // Send back over the websocket
-        //             ws.send(JSON.stringify({msg_type:'results',
-        //                                     results:sessions}));
-        //         });
-        //     }
-        //
-        //   }
-        // }
       });
     });
 }

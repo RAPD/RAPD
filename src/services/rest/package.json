@@ -5,7 +5,7 @@
   "main": "app_ldap.js",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node rest.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,6 +20,7 @@
     "find-remove": "^1.2.0",
     "gridfs-stream": "^1.1.1",
     "hbs": "~4.0.1",
+    "ioredis": "~3.2.2",
     "jsonwebtoken": "^7.4.3",
     "ldapjs": "^1.0.1",
     "mkdirp": "^0.5.1",

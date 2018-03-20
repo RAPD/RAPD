@@ -6,7 +6,7 @@ MongoDB instance
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -40,6 +40,7 @@ import datetime
 import logging
 import os
 from pprint import pprint
+# import shutil
 import threading
 
 import pymongo
@@ -101,7 +102,8 @@ class Database(object):
                  port=27017,
                  user=None,
                  password=None,
-                 settings=None):
+                 settings=None,
+                 string=None):
 
         """
         Initialize the adapter
@@ -124,6 +126,7 @@ class Database(object):
             self.db_port = settings["DATABASE_PORT"]
             self.db_user = settings["DATABASE_USER"]
             self.db_password = settings["DATABASE_PASSWORD"]
+            self.db_string = settings["DATABASE_STRING"]
             # self.db_data_name = settings["DATABASE_NAME_DATA"]
             # self.db_users_name = settings["DATABASE_NAME_USERS"]
             # self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
@@ -133,6 +136,7 @@ class Database(object):
             self.db_port = port
             self.db_user = user
             self.db_password = password
+            self.db_string = string
             # self.db_data_name = data_name
             # self.db_users_name = users_name
             # self.db_cloud_name = cloud_name
@@ -152,10 +156,14 @@ class Database(object):
         if not self.client:
             self.logger.debug("Connecting to MongDB at %s:%d", self.db_host, self.db_port)
             # Connect
-            self.client = pymongo.MongoClient(host=self.db_host,
-                                              port=self.db_port)
-
-            # Not using user/password for now
+            if self.db_string:
+                # When using login and pass.
+                self.client = pymongo.MongoClient(self.db_string)
+            else:
+                # Not using user/password for now
+                self.client = pymongo.MongoClient(host=self.db_host,
+                                                  port=self.db_port,
+                                                  )
 
         # Get the db
         db = self.client.rapd
@@ -213,6 +221,8 @@ class Database(object):
         session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
 
+        self.logger.debug("get_session_id data_root_dir: %s" % data_root_dir)
+
         # Connect
         db = self.get_db_connection()
 
@@ -238,6 +248,11 @@ class Database(object):
         group_id -- id for a group (default = None)
         session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
+
+        self.logger.debug("create_session")
+
+        # Logging
+        self.logger.debug("data_root_dir: %s", data_root_dir)
 
         # Connect
         db = self.get_db_connection()
@@ -350,6 +365,19 @@ class Database(object):
         #
         # Handle any file storage
         #
+        def remove_files_from_db(result_id, file_type):
+            """Remove old files from the db"""
+
+            self.logger.debug("Trying to remove files that match results_id:%s file_type:%s", result_id, file_type)
+
+            # Find files to remove
+            files_to_remove = fs.find({"metadata.result_id":result_id,
+                                       "metadata.type":file_type})
+            # Remove them
+            for file_to_remove in files_to_remove:
+                self.logger.debug("Removing file with _id:%s", file_to_remove["_id"])
+                fs.delete(file_to_remove["_id"])
+
         def add_raw_file_to_db(path, metadata=None):
             """Add files to MongoDB"""
             # Open the path
@@ -374,21 +402,42 @@ class Database(object):
             "data_produced":add_raw_file_to_db
         }
 
-        for key in ("archive_files", "data_produced"):
-            self.logger.debug('Looking for %s', key)
-            if plugin_result["results"].get(key, False):
-                self.logger.debug('Have %s', key)
-                for index in range(len(plugin_result["results"].get(key, []))):
-                    data = plugin_result["results"].get(key, [])[index]
-                    self.logger.debug(key, data)
+        for file_type in ("archive_files", "data_produced"):
+            self.logger.debug('Looking for %s', file_type)
+            if plugin_result["results"].get(file_type, False):
+
+                self.logger.debug('Have %s', file_type)
+
+                # Erase old files
+                remove_files_from_db(result_id=_result_id, file_type=file_type)
+
+                # Save the new
+                for index in range(len(plugin_result["results"].get(file_type, []))):
+                    data = plugin_result["results"].get(file_type, [])[index]
+
+                    # File exists - save it
                     if os.path.exists(data["path"]):
-                        grid_id = add_funcs[key](path=data["path"],
-                                                 metadata={"hash":data["hash"],
-                                                           "result_id":_result_id,
-                                                           "type":key})
-                        plugin_result["results"][key][index]["_id"] = grid_id
+
+                        _file = data["path"]
+
+                        # Upload the file to MongoDB
+                        grid_id = add_funcs[file_type](path=_file,
+                                                       metadata={"hash":data["hash"],
+                                                                 "result_id":_result_id,
+                                                                 "file_type":file_type})
+
+                        # This _id is important
+                        plugin_result["results"][file_type][index]["_id"] = grid_id
+
+                        # Remove the file from the system
+                        os.remove(_file)
+
+                        # Create a nicer path now that the original file is gone
+                        plugin_result["results"][file_type][index]["path"] = os.path.basename(_file)
+
+                    # File doesn't exist
                     else:
-                        plugin_result["results"][key][index]["_id"] = None
+                        plugin_result["results"][file_type][index]["_id"] = None
 
         #
         # Add to plugin-specific results

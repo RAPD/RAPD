@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -118,7 +118,6 @@ def local_subprocess(command,
     proc = subprocess.Popen(shlex.split(command),
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
-                            #stderr=STDOUT,
                             )
     # print "  running...", command
     # Send back PID if have pid_queue
@@ -156,7 +155,7 @@ def local_subprocess(command,
 
     # print "  finished...", command
 
-def mp_pool_FUTURE(nproc=8):
+def mp_pool(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
     pool = Pool(processes=nproc)
     return pool

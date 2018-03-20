@@ -5,7 +5,7 @@ Provides a simple launcher adapter that will launch processes via qsub
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -44,7 +44,8 @@ from utils.modules import load_module
 from utils.text import json
 from bson.objectid import ObjectId
 
-class LauncherAdapter(Thread):
+#class LauncherAdapter(Thread):
+class LauncherAdapter(object):
     """
     An adapter for launcher process.
 
@@ -60,7 +61,7 @@ class LauncherAdapter(Thread):
         message -- command from the control process
         settings --
         """
-        Thread.__init__(self)
+        #Thread.__init__(self)
 
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
@@ -86,7 +87,8 @@ class LauncherAdapter(Thread):
     
             # Adjust the message to this site
             # Get the new working directory. Message only has second part of the path.
-            self.message = cluster.fix_command(self.message)
+            #self.message = cluster.fix_command(self.message)
+            self.message = launch_tools.fix_command(self.message)
     
             # Get the new working directory
             work_dir = self.message["directories"]["work"]
@@ -111,7 +113,21 @@ class LauncherAdapter(Thread):
     
             # Determine which cluster queue to run
             queue = cluster.check_queue(self.message['command'])
-    
+            
+            Thread(target=cluster.process_cluster,
+                          kwargs={'command':command_line,
+                                  'work_dir':work_dir,
+                                  'logfile':False,
+                                  'batch_queue':queue,
+                                  'nproc':nproc,
+                                  'logger':self.logger,
+                                  'name':qsub_label,
+                                  'mp_event':False,
+                                  'timeout':False,
+                                  'pid_queue':False,
+                                  }).start()
+            
+            """
             # Setup a Queue to retreive the jobID.
             q = mp_Queue()
             #q = t_Queue()
@@ -139,7 +155,19 @@ class LauncherAdapter(Thread):
     
             #while job.is_alive():
             #    time.sleep(1)
-
+            
+            cluster.process_cluster(command=command_line,
+                                    work_dir=work_dir,
+                                    logfile=False,
+                                    batch_queue=queue,
+                                    nproc=nproc,
+                                    logger=self.logger,
+                                    name=qsub_label,
+                                    mp_event=False,
+                                    timeout=False,
+                                    pid_queue=False,
+                                    )
+            """
 if __name__ == "__main__":
     #import multiprocessing
     #import threading

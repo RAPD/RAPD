@@ -11,7 +11,7 @@
     "target": "es5",
     "types": [
       "hammerjs"
-    ]
+    ],
     "typeRoots": [
       "node_modules/@types"
     ],

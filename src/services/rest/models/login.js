@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 // var bcrypt = require('bcryptjs');
+
 var LoginSchema = new Schema({
   browser: {
     type: String,
@@ -36,4 +37,6 @@ var LoginSchema = new Schema({
   }
 }, {strict:false})
 
-module.exports = mongoose.model('Login', LoginSchema);
+// module.exports = mongoose.model('Login', LoginSchema);
+exports.Login = mongoose.model('Login', LoginSchema);
+exports.LoginSchema = LoginSchema;

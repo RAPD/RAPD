@@ -2,6 +2,7 @@
 Detector description for LS-CAT Eiger 9M
 Designed to read the CBF version of the Eiger file
 """
+#from detectors.adsc.adsc import header
 
 """
 This file is part of RAPD
@@ -34,6 +35,8 @@ from pprint import pprint
 import re
 import time
 import numpy
+import redis
+import threading
 
 # RAPD imports
 # commandline_utils
@@ -92,6 +95,60 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
+class FileLocation():
+    """Check if images are in RAMDISK or NMVe drive space."""
+    def __init__(self, logger=False, verbose=False):
+        #threading.Thread.__init__ (self)
+        #self.logger = logger
+        self.ip = '164.54.212.218'
+        self.ram_prefix = '/epu/rdma'
+        self.nvme_prefix = '/epu/nvme'
+        self.ft_redis = self.redis_ft_connect()
+
+    def redis_ft_connect(self):
+        """Connect to the Eiger file_tracker.py redis server."""
+        # Used for quick calls to beamline redis
+        return(redis.Redis(host=self.ip,
+                           port=6379,
+                           db=0))
+
+    def get_alt_path(self, img_path):
+        """
+        Check if image in RAMDISK and pass back new path,
+        Otherwise pass back img_path
+        """
+        file_name = os.path.basename(img_path)
+        dir = self.get_redis_key(img_path)
+        # Check if key in Redis DB. Should get False, 'ram', or 'nvme'.
+        loc = self.ft_redis.get(dir)
+        if loc == 'ram':
+            # Tell file_tracker to not remove dataset!
+            #self.hold_data(dir)
+            # Pass back location in RAMDISK
+            return os.path.join('%s%s'%(self.ram_prefix,dir), file_name)
+        elif loc == 'nvme':
+            # Tell file_tracker to not remove dataset!
+            #self.hold_data(dir)
+            # Pass back location on NMVe drive
+            return os.path.join('%s%s'%(self.nvme_prefix,dir), file_name)
+        else:
+            # None key, use GPFS location
+            return img_path
+
+    def get_redis_key(self, img_path):
+        """Return the redis key for the dataset"""
+        # In our case the key is the image path minus suffix.
+        return img_path[:img_path.rfind('.')]
+
+    def hold_data(self, dir):
+        """Make sure dataset is not deleted during processing."""
+        self.ft_redis.sadd('working', dir)
+        print 'holding: %s' %self.ft_redis.smembers('working')
+
+    def release_data(self, img_path):
+        """Allow dataset in RAMDISK to be deleted."""
+        self.ft_redis.srem('working', self.get_redis_key(img_path))
+        print 'release: %s' %self.ft_redis.smembers('working')
 
 def parse_file_name(fullname):
     """
@@ -155,7 +212,7 @@ def calculate_flux(header, site_params):
     aperture = header.get('md2_aperture')
     new_x = beam_size_x
     new_y = beam_size_y
-    
+
     if aperture < beam_size_x:
         new_x = aperture
     if aperture < beam_size_y:
@@ -198,10 +255,11 @@ def get_data_root_dir(fullname):
     inst   = False
     group  = False
     images = False
-    
+
     for p in path_split:
         if p.startswith('gpfs'):
             st = path_split.index(p)
+
     if path_split[st].startswith("gpfs"):
         gpfs = path_split[st]
         if path_split[st+1] == "users":
@@ -212,33 +270,14 @@ def get_data_root_dir(fullname):
                     group = path_split[st+3]
 
     if group:
-        data_root_dir = os.path.join("/",*path_split[1:st+4])
+        data_root_dir = os.path.join("/", *path_split[st:st+4])
     elif inst:
-        data_root_dir = os.path.join("/",*path_split[1:st+3])
+        data_root_dir = os.path.join("/", *path_split[st:st+3])
     else:
         data_root_dir = False
 
     #return the determined directory
     return data_root_dir
-
-def get_alt_path(image):
-    """Pass back the alternate path of image located in long term storage."""
-    prefix = ['/epu2/rdma', '/epu/rdma']
-    dirname, imagename = os.path.split(image)
-    for i in range(len(prefix)):
-        if image.startswith(prefix[i]):
-            newdir = dirname.replace(prefix[i],'')[:dirname.rfind('/')]
-            break
-    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
-    return newpath
-
-def get_alt_path_WORKING(image):
-    """Pass back the alternate path of image located in long term storage."""
-    prefix = ['/epu2/rdma', '/epu/rdma']
-    dirname, imagename = os.path.split(image)
-    newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
-    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
-    return newpath
 
 def base_read_header(image,
                      logger=False):
@@ -346,7 +385,7 @@ def base_read_header(image,
     #     if logger:
     #         logger.exception('Error reading the header for image %s' % image)
 
-def read_header(input_file=False, beam_settings=False):
+def read_header(input_file=False, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 
@@ -385,6 +424,27 @@ def read_header(input_file=False, beam_settings=False):
 
     # Return the header
     return header
+
+# functions for RDMA
+def get_alt_path(image):
+    """Pass back the alternate path of image located in long term storage."""
+    prefix = ['/epu2/rdma', '/epu/rdma']
+    dirname, imagename = os.path.split(image)
+    for i in range(len(prefix)):
+        if image.startswith(prefix[i]):
+            newdir = dirname.replace(prefix[i],'')[:dirname.rfind('/')]
+            break
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
+
+def get_alt_path_WORKING(image):
+    """Pass back the alternate path of image located in long term storage."""
+    dirname, imagename = os.path.split(image)
+    newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
+
+
 
 def get_commandline():
     """
@@ -437,25 +497,34 @@ if __name__ == "__main__":
     # Execute code
     #main(args=commandline_args)
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
-    header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
-    site_params = {'BEAM_APERTURE_SHAPE': 'circle',
-                     'BEAM_CENTER_DATE': '2017-3-02',
-                     'BEAM_CENTER_X': (163.2757684023,
-                                       0.0003178917,
-                                       -5.0236657815e-06,
-                                       5.8164218288e-09),
-                     'BEAM_CENTER_Y': (155.1904879862,
-                                       -0.0014631216,
-                                       8.60559283424e-07,
-                                       -2.5709929645e-10),
-                     'BEAM_FLUX': 1500000000000.0,
-                     'BEAM_GAUSS_X': 0.03,
-                     'BEAM_GAUSS_Y': 0.01,
-                     'BEAM_SHAPE': 'ellipse',
-                     'BEAM_SIZE_X': 0.05,
-                     'BEAM_SIZE_Y': 0.02,
-                     'DELTA_OMEGA_MIN': 0.05,
-                     'DETECTOR_DIST_MAX': 1000.0,
-                     'DETECTOR_DIST_MIN': 150.0,
-                     'EXPOSURE_TIME_MIN': 0.05}
-    calculate_flux(header, site_params)
+
+    # header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
+    # site_params = {'BEAM_APERTURE_SHAPE': 'circle',
+    #                  'BEAM_CENTER_DATE': '2017-3-02',
+    #                  'BEAM_CENTER_X': (163.2757684023,
+    #                                    0.0003178917,
+    #                                    -5.0236657815e-06,
+    #                                    5.8164218288e-09),
+    #                  'BEAM_CENTER_Y': (155.1904879862,
+    #                                    -0.0014631216,
+    #                                    8.60559283424e-07,
+    #                                    -2.5709929645e-10),
+    #                  'BEAM_FLUX': 1500000000000.0,
+    #                  'BEAM_GAUSS_X': 0.03,
+    #                  'BEAM_GAUSS_Y': 0.01,
+    #                  'BEAM_SHAPE': 'ellipse',
+    #                  'BEAM_SIZE_X': 0.05,
+    #                  'BEAM_SIZE_Y': 0.02,
+    #                  'DELTA_OMEGA_MIN': 0.05,
+    #                  'DETECTOR_DIST_MAX': 1000.0,
+    #                  'DETECTOR_DIST_MIN': 150.0,
+    #                  'EXPOSURE_TIME_MIN': 0.05}
+    # calculate_flux(header, site_params)
+
+    # Test get_data_root_dir with new epu filenames
+    #print get_data_root_dir("/epu2/rdma/gpfs2/users/stanford/feng_E_3426/images/minrui/snaps/ZH_PAIR_0_000144/ZH_PAIR_0_000144.cbf")
+    #print get_data_root_dir("/gpfs1/users/ucsd/corbett_C_3425/images/Kevin/runs/2_9/0_0/2_9_1_0854.cbf")
+    fl = FileLocation()
+    fl.test()
+    print fl.get_path('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
+    fl.release_data('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')

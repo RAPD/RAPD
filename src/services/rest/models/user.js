@@ -146,6 +146,7 @@ UserSchema.statics.getAuthenticated = function(email, password, cb) {
        populate('groups', 'groupname').
        exec(function(err, user) {
 
+         // Debugging
          console.log(err, user);
 
          if (err) {
@@ -205,4 +206,5 @@ UserSchema.statics.getAuthenticated = function(email, password, cb) {
        });
 };
 
-module.exports = mongoose.model('User', UserSchema);
+exports.User = mongoose.model('User', UserSchema);
+exports.UserSchema = UserSchema;

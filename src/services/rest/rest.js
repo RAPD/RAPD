@@ -25,44 +25,36 @@ let app = express();
 let server = http.createServer(app);
 
 // Routing
-const dashboard_routes = require('./routes/dashboard');
-const downloads_routes = require('./routes/downloads');
-const groups_routes =    require('./routes/groups');
-const images_routes =    require('./routes/images');
-const jobs_routes =      require('./routes/jobs');
-const overwatch_routes = require('./routes/overwatch');
-const projects_routes =  require('./routes/projects');
-const results_routes =   require('./routes/results');
-const runs_routes =      require('./routes/runs');
-const sessions_routes =  require('./routes/sessions');
-const users_routes =     require('./routes/users');
+const dashboard_routes =      require('./routes/dashboard');
+const downloads_routes =      require('./routes/downloads');
+const groups_routes =         require('./routes/groups');
+const images_routes =         require('./routes/images');
+const jobs_routes =           require('./routes/jobs');
+const overwatch_routes =      require('./routes/overwatch');
+const projects_routes =       require('./routes/projects');
+const results_routes =        require('./routes/results');
+const result_details_routes = require('./routes/result_details');
+const runs_routes =           require('./routes/runs');
+const sessions_routes =       require('./routes/sessions');
+const users_routes =          require('./routes/users');
+
 
 // Redis
-const redis =      require('redis');
-var redis_client = redis.createClient(config.redis_port, config.redis_host);
-
-// MongoDB Models
-const Activity = require('./models/activity');
-const User =     require('./models/user');
-const Group =    require('./models/group');
-const Login =    require('./models/login');
-const Result =   require('./models/result');
-const Run =      require('./models/run');
-const Session =  require('./models/session');
+var Redis = require('ioredis');
+var redis_client = new Redis(config.redis_connection);
 
 // MongoDB connection
-var mongoose = require('mongoose');
-// Fix the promise issue in Mongoose
-mongoose.Promise = require('q').Promise;
-// GridFS
-// var Grid = require('gridfs-stream');
-// Grid.mongo = mongoose.mongo;
-// Connect to MongoDB
-var conn = mongoose.connect(config.database, {
-  useMongoClient: true,
-}, function(error) {
-  console.error(error);
-});
+var mongoose = require('./models/mongoose');
+mongoose.set('debug', true);
+
+// Connect to ctrl_conn
+const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
+const Login =    mongoose.ctrl_conn.model('Login', require('./models/login').LoginSchema);
+
+// User and Group uses auth_conn
+const User =  mongoose.auth_conn.model('User', require('./models/user').UserSchema);
+const Group = mongoose.auth_conn.model('Group', require('./models/group').GroupSchema);
+
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {
@@ -79,7 +71,7 @@ var smtp_transport = nodemailer.createTransport(smtpTransport({
 
 // Add session handling
 let app_session = session({
-  store: new RedisStore({}),
+  store: new RedisStore({client:redis_client}),
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
@@ -590,6 +582,7 @@ app.use('/api', jobs_routes);
 app.use('/api', overwatch_routes);
 app.use('/api', projects_routes);
 app.use('/api', results_routes);
+app.use('/api', result_details_routes);
 app.use('/api', runs_routes);
 app.use('/api', sessions_routes);
 app.use('/api', users_routes);
