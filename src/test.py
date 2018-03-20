@@ -86,6 +86,22 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
+def clear_cluster():
+    l = []
+    inp = 'qstat'
+    myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    for line in myoutput.stdout:
+        split = line.split()
+        if len(split) == 8:
+            #print split
+            if split[2].count('INDEX'):
+                l.append(split[0])
+            if split[2].count('INTEGRATE_'):
+                l.append(split[0])
+    for pid in l:
+        os.system('qdel %s'%pid)
+
+#clear_cluster()
 """
 from utils.modules import load_module
 #import 
@@ -222,17 +238,7 @@ calc = (8.8E12)/(numpy.pi*0.035*0.015)
 print calc
 """
 """
-l = []
-inp = 'qstat'
-myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-for line in myoutput.stdout:
-    split = line.split()
-    if len(split) == 8:
-        #print split
-        if split[2].count('INDEX'):
-            l.append(split[0])
-for pid in l:
-    os.system('qdel %s'%pid)
+
 
 
 pool = redis.ConnectionPool(host="164.54.212.169",
@@ -507,16 +513,10 @@ while True:
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-#red = connect_redis_manager_HA()
+red = connect_redis_manager_HA()
 #red = connect_sercat_redis()
 #connection = connect_beamline()
-red = connect_ft_redis()
-print red.llen('file-tracker-ram')
-#print red.smembers('working')
-for d in red.lrange('file-tracker-ram', 0, -1):
-    print d
-    #if d.count('E_3333'):
-        #print d
+#red = connect_ft_redis()
 
 #red.delete('RAPD_QSUB_JOBS_0')
 #red.delete("images_collected:NECAT_E")
@@ -562,7 +562,7 @@ print red.smembers('working')
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
-"""
+
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 #print red.llen('run_info_C')
@@ -588,4 +588,3 @@ print red.llen('RAPD_JOBS_WAITING')
 #red.delete('images_collected_T')
 print red.llen('images_collected_E')
 #red.close()
-"""
