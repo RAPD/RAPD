@@ -369,14 +369,6 @@ class hdf5_to_cbf_converter(object):
             for k, g in groupby(enumerate(not_to_make_list), lambda (i, x):i - x):
                 self.ranges_not_to_make.append(map(itemgetter(1), g))
 
-def get_h5_prefix_OLD(fullname):
-    """Determine the image prefix for an h5 master file"""
-    if os.path.basename(fullname).count('.') > 1:
-        prefix = os.path.basename(fullname).replace("_master.h5", "").replace('.', '_')
-    else:
-        prefix = os.path.basename(fullname).replace("_master.h5", "")
-    return prefix
-
 def main(args):
     """
     The main process docstring
