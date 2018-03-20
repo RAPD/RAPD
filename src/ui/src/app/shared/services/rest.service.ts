@@ -202,7 +202,7 @@ export class RestService {
       JSON.stringify({request:request}),
       {headers:header}
     )
-    // .map(res => res.json())
+    .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -337,6 +337,15 @@ export class RestService {
   public getResult(_id:string): Observable<any> {
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/results/' + _id)
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
+  }
+
+  public getResultDetail(_id:string): Observable<any> {
+
+    console.log('getResultDetail', _id);
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/result_details/' + _id)
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }

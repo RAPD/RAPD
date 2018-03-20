@@ -25,17 +25,18 @@ let app = express();
 let server = http.createServer(app);
 
 // Routing
-const dashboard_routes = require('./routes/dashboard');
-const downloads_routes = require('./routes/downloads');
-const groups_routes =    require('./routes/groups');
-const images_routes =    require('./routes/images');
-const jobs_routes =      require('./routes/jobs');
-const overwatch_routes = require('./routes/overwatch');
-const projects_routes =  require('./routes/projects');
-const results_routes =   require('./routes/results');
-const runs_routes =      require('./routes/runs');
-const sessions_routes =  require('./routes/sessions');
-const users_routes =     require('./routes/users');
+const dashboard_routes =      require('./routes/dashboard');
+const downloads_routes =      require('./routes/downloads');
+const groups_routes =         require('./routes/groups');
+const images_routes =         require('./routes/images');
+const jobs_routes =           require('./routes/jobs');
+const overwatch_routes =      require('./routes/overwatch');
+const projects_routes =       require('./routes/projects');
+const results_routes =        require('./routes/results');
+const result_details_routes = require('./routes/result_details');
+const runs_routes =           require('./routes/runs');
+const sessions_routes =       require('./routes/sessions');
+const users_routes =          require('./routes/users');
 
 
 // Redis
@@ -581,6 +582,7 @@ app.use('/api', jobs_routes);
 app.use('/api', overwatch_routes);
 app.use('/api', projects_routes);
 app.use('/api', results_routes);
+app.use('/api', result_details_routes);
 app.use('/api', runs_routes);
 app.use('/api', sessions_routes);
 app.use('/api', users_routes);

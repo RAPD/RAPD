@@ -18,6 +18,7 @@ import { RestService } from '../../shared/services/rest.service';
 import { WebsocketService } from '../../shared/services/websocket.service';
 import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { ErrorDialogComponent } from '../../shared/dialogs/error-dialog/error-dialog.component';
+import { ReintegrateDialogComponent } from '../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
 
 // Import agent components here
 import * as mx from '../../plugin_components/mx';
@@ -42,7 +43,7 @@ export class ProjectMxComponent implements OnInit {
   actions: any = {
     'INTEGRATE': [['Display Result', 'ReIntegrate', 'MR', 'SAD', 'Remove'],['Merge']],
     'INDEX': ['Display Result', 'Remove']
-  }
+  };
   action_icons: any = {
     'Display Result': 'visibility',
     'Merge': 'call_merge',
@@ -50,7 +51,9 @@ export class ProjectMxComponent implements OnInit {
     'ReIntegrate': 'refresh',
     'Remove': 'delete',
     'SAD': 'search'
-  }
+  };
+
+  selected_indexed_data: string[]=[];
 
   // Where results got
   @ViewChild('output_outlet', { read: ViewContainerRef }) outlet;
@@ -62,7 +65,8 @@ export class ProjectMxComponent implements OnInit {
     private websocket_service: WebsocketService,
     private componentfactoryResolver: ComponentFactoryResolver,
     public confirm_dialog: MatDialog,
-    public error_dialog: MatDialog
+    public error_dialog: MatDialog,
+    public reintegrate_dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -83,18 +87,36 @@ export class ProjectMxComponent implements OnInit {
       )
   }
 
-  toggleSourceDataSelection(id:string) {
-    console.log('toggleSourceDataSelection', id);
+  toggleSourceDataIntegrateSelection(id:string) {
+    // console.log('toggleSourceDataSelection', id);
+
+    // Clear the result display?
+    this.outlet.clear();
 
     let index = this.selected_integrated_data.indexOf(id);
     // Add to selected data array
     if (index === -1) {
-      this.selected_integrated_data.push(id)
+      this.selected_integrated_data.push(id);
+      this.selected_indexed_data = [];
     // Remove id from selected array
     } else {
       this.selected_integrated_data.splice(index, 1);
-      // Clear the result display?
-      this.outlet.clear();
+    }
+  }
+
+  toggleSourceDataIndexSelection(id:string) {
+    let index = this.selected_indexed_data.indexOf(id);
+
+    // Clear the result display?
+    this.outlet.clear();
+
+    // Add to selected data array
+    if (index === -1) {
+      this.selected_indexed_data.push(id)
+      this.selected_integrated_data = [];
+    // Remove id from selected array
+    } else {
+      this.selected_indexed_data.splice(index, 1);
     }
   }
 
@@ -106,8 +128,28 @@ export class ProjectMxComponent implements OnInit {
         this.displayResult(this.selected_integrated_data[0]);
         break;
     
+      case 'ReIntegrate':
+        this.activateReintegration(this.selected_integrated_data[0]);
+        break;
+
       case 'Remove':
         this.activateRemoveConfirm(this.selected_integrated_data[0]);
+
+      default:
+        break;
+    }
+  }
+
+  selectSingleIndexAction(action:string) {
+    console.log('selectSingleIndexAction', action);
+
+    switch (action) {
+      case 'Display Result':
+        this.displayResult(this.selected_indexed_data[0]);
+        break;
+    
+      case 'Remove':
+        this.activateRemoveConfirm(this.selected_indexed_data[0]);
 
       default:
         break;
@@ -140,6 +182,31 @@ export class ProjectMxComponent implements OnInit {
     );
   }
 
+  activateReintegration(result_id:string) {
+
+    console.log('activateReintegration', result_id);
+
+    // Get the full result
+    this.rest_service.getResultDetail(result_id)
+        .subscribe(
+          parameters => {
+            console.log(parameters);
+            if (parameters.success === true) {
+              let dialogRef = this.reintegrate_dialog.open(ReintegrateDialogComponent, {
+                data: parameters.results
+              });
+            } else {
+              let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+                data: { message: parameters.message }
+              });
+            }
+          }
+        );
+
+    
+
+  }
+
   activateRemoveConfirm(result_id:string) {
 
     console.log('activateRemoveConfirm', result_id);
@@ -169,6 +236,16 @@ export class ProjectMxComponent implements OnInit {
         });
         if (sid_index_to_remove !== -1) {
           this.selected_integrated_data.splice(sid_index_to_remove, 1);
+          // Clear the result display?
+          this.outlet.clear();
+        }
+
+        // Remove from selected_indexed_data
+        var sid_index_to_remove = this.selected_indexed_data.findIndex(function(element){
+          return element === result_id;
+        });
+        if (sid_index_to_remove !== -1) {
+          this.selected_indexed_data.splice(sid_index_to_remove, 1);
           // Clear the result display?
           this.outlet.clear();
         }

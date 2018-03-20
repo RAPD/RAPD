@@ -136,10 +136,10 @@ export class ReintegrateDialogComponent implements OnInit {
         .submitJob(request)
         .subscribe(
           parameters => {
-            // console.log(parameters);
+            console.log(parameters);
             if (parameters.success === true) {
               let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
-                duration: 2000,
+                duration: 10000,
               });
               this.dialogRef.close(parameters);
             } else {
