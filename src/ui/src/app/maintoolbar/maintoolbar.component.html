@@ -1,9 +1,9 @@
 <mat-toolbar class="main-toolbar">
-  <div fxLayout="row" class="main-buttons">
-    <div fxFlex fxFlexAlign="start" style="padding-top:0.5em;">
+  <div fxLayout="row" fxLayoutAlign="space-between center" class="main-buttons">
+    <div style="padding-top:0.5em;">
       <span class="main-title" [style.color]= "globals_service.site_color ? globals_service.site_color : '#445A64'">RAPD @ {{globals_service.site.name}}</span>
     </div>
-    <div fxFlex fxFlexAlign="end" style="text-align:right;">
+    <div style="text-align:right;">
       <button mat-raised-button (click)="changeMode('sessions')">Sessions</button>
       <button mat-raised-button (click)="changeMode('projects')">Projects</button>
       <button mat-raised-button (click)="changeMode('dashboard')">Dashboard</button>

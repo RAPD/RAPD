@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -70,18 +70,19 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         #"INDEX"          : 'phase3.q',
-         "INDEX"          : 'phase1.q',
+         "INDEX"          : 'phase3.q',
+         #"INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
          "XDS"            : 'all.q',
-         "INTEGRATE"      : 'phase2.q'
+         #"INTEGRATE"      : 'phase2.q',
+         "INTEGRATE"      : 'phase3.q',
          }
     
     return(d[inp])
   
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 20)
+    return (4, 10)
   
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -90,7 +91,7 @@ def determine_nproc(command):
         nproc = 4
     return nproc
   
-def fix_command(message):
+def fix_command_OLD(message):
     """
     Adjust the command passed in in install-specific ways
     """
@@ -109,7 +110,7 @@ def fix_command(message):
             else:
                 i += 1
     # Now make the directory
-    if os.path.isdir(work_dir_candidate) == False:
+    if os.path.exists(work_dir_candidate) == False:
         os.makedirs(work_dir_candidate)
 
     # Modify command
@@ -154,8 +155,40 @@ def connectCluster(inp, job=True):
 #class Cluster_Event():
 #    def __init__(self):
 #        pass
+def mp_job(func):
+    """
+    wrapper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    
+    @wraps(func)
+    def wrapper(**kwargs):
+        #job = False
+        job = Process(target=func, kwargs=kwargs)
+        job.start()
+        job.join()
+    return wrapper
 
-def process_cluster_fix(func):
+def mp_job_NEW(func):
+    """
+    wrapper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    # If command starts with rapd.launch then mp.Process it.
+    @wraps(func)
+    def wrapper(**kwargs):
+        job = False
+        if kwargs['command'].count('rapd.launch '):
+            job = Process(target=func, kwargs=kwargs)
+            job.start()
+        # wait for the job to finish and join
+        if job:
+            job.join()
+        else:
+            return func(**kwargs)
+    return wrapper
+
+def process_cluster_fix_OLD(func):
     """
     wrapper to run processCluster in a multiprocessing.Process to avoid
     threading problems in DRMAA with multiple jobs sent to same session.
@@ -167,7 +200,6 @@ def process_cluster_fix(func):
         job = False
         for s in l:
             if kwargs['command'].count(s):
-                print 'GH'
                 job = Process(target=func, kwargs=kwargs)
                 job.start()
                 break
@@ -178,7 +210,7 @@ def process_cluster_fix(func):
             return func(**kwargs)
     return wrapper
 
-@process_cluster_fix
+@mp_job_NEW
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,
@@ -306,111 +338,6 @@ def process_cluster(command,
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     if s:
         s.exit()
-
-def processCluster_OLD(self, inp, output=False):
-    """
-    Submit job to cluster using DRMAA (when you are already on the cluster).
-    Main script should not end with os._exit() otherwise running jobs could be orphanned.
-    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    """
-
-    try:
-        s = False
-        jt = False
-        running = True
-        log = False
-        queue = False
-        smp = 1
-        name = False
-
-        # Check if self.running is setup... used for Best and Mosflm strategies
-        try:
-            temp = self.running
-        except AttributeError:
-            running = False
-
-        #Parse the input
-        if len(inp) == 1:
-            command = inp
-        elif len(inp) == 2:
-            command, log = inp
-        #queue is name of cluster queue.
-        elif len(inp) == 3:
-            command, log, queue = inp
-        #smp is parallel environment set to reserve a specific number of cores on a node.
-        elif len(inp) == 4:
-            command, log, smp, queue = inp
-        # name is a redis database name
-        else:
-            command, log, smp, queue, name = inp
-
-        #set default cluster queue. Some batch queues use general.q.
-        if queue == False:
-            queue = 'all.q'
-
-        #'-clear' can be added to the options to eliminate the general.q
-        options = '-clear -shell y -p -100 -q %s -pe smp %s' % (queue, smp)
-        s = drmaa.Session()
-        s.initialize()
-        jt = s.createJobTemplate()
-        jt.workingDirectory=os.getcwd()
-        jt.joinFiles=True
-        jt.nativeSpecification=options
-        jt.remoteCommand=command.split()[0]
-        if len(command.split()) > 1:
-            jt.args=command.split()[1:]
-        if log:
-            #the ':' is required!
-            jt.outputPath=':%s'%log
-        #submit the job to the cluster and get the job_id returned
-        job = s.runJob(jt)
-        #return job_id.
-        if output:
-            output.put(job)
-
-        #cleanup the input script from the RAM.
-        s.deleteJobTemplate(jt)
-
-        #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-        if running:
-            #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
-            decodestatus = {drmaa.JobState.UNDETERMINED: True,
-                            drmaa.JobState.QUEUED_ACTIVE: True,
-                            drmaa.JobState.SYSTEM_ON_HOLD: True,
-                            drmaa.JobState.USER_ON_HOLD: True,
-                            drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
-                            drmaa.JobState.RUNNING: True,
-                            drmaa.JobState.SYSTEM_SUSPENDED: False,
-                            drmaa.JobState.USER_SUSPENDED: False,
-                            drmaa.JobState.DONE: False,
-                            drmaa.JobState.FAILED: False,
-                           }
-            #Loop to keep hold process while job is running or ends when self.running event ends.
-            while decodestatus[s.jobStatus(job)]:
-                if self.running.is_set() == False:
-                    s.control(job,drmaa.JobControlAction.TERMINATE)
-                    self.logger.debug('job:%s terminated since script is done'%job)
-                    break
-            #time.sleep(0.2)
-            time.sleep(1)
-        #Otherwise just wait for it to complete.
-        else:
-            s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
-
-        #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-        s.exit()
-
-    except:
-        self.logger.exception('**ERROR in Utils.processCluster**')
-        #Cleanup if error.
-        if s:
-            if jt:
-                s.deleteJobTemplate(jt)
-            s.exit()
-    finally:
-        if name!= False:
-            self.red.lpush(name,1)
 
 def kill_job(inp, logger=False):
   """

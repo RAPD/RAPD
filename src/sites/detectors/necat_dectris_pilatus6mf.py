@@ -26,25 +26,10 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# datetime
-# glob
-# import json
-# logging
-# multiprocessing
 import os
 import pprint
-# pymongo
-# import re
-# redis
-# shutil
-# subprocess
-# sys
-# import time
-
-# RAPD imports
-# commandline_utils
-# detectors.detector_utils as detector_utils
-# utils
+import numpy
+import re
 
 # Dectris Pilatus 6M
 import detectors.dectris.dectris_pilatus6m as detector
@@ -137,7 +122,45 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
-def get_data_root_dir(fullname):
+def calculate_flux(header, site_params):
+    """
+    Calculate the flux as a function of transmission and aperture size.
+    """
+    print header
+    print site_params
+    beam_size_x = site_params.get('BEAM_SIZE_X')
+    beam_size_y = site_params.get('BEAM_SIZE_Y')
+    aperture = header.get('md2_aperture')
+    new_x = beam_size_x
+    new_y = beam_size_y
+
+    if aperture < beam_size_x:
+        new_x = aperture
+    if aperture < beam_size_y:
+        new_y = aperture
+
+    # Calculate area of full beam used to calculate the beamline flux
+    # Assume ellipse, but same equation works for circle.
+    # Assume beam is uniform
+    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+
+    # Calculate the new beam area (with aperture) divided by the full_beam_area.
+    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+    # then it would switch to circle
+    if beam_size_y <= aperture:
+        # ellipse
+        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    else:
+        # circle
+        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+
+    # Calculate the new_beam_area ratio to full_beam_area
+    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
+    # Return the flux and beam size
+    return (flux, new_x, new_y)
+
+def get_data_root_dir_OLD(fullname):
     """
     Derive the data root directory from the user directory
     The logic will most likely be unique for each site
@@ -153,7 +176,150 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
-def read_header(fullname, beam_settings=False):
+def get_data_root_dir(fullname):
+    """
+    Derive the data root directory from the user directory
+    The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
+    """
+    path_split    = fullname.split(os.path.sep)
+    data_root_dir = False
+
+    gpfs   = False
+    users  = False
+    inst   = False
+    group  = False
+    images = False
+
+    for p in path_split:
+        if p.startswith('gpfs'):
+            st = path_split.index(p)
+        else:
+            st = 0
+    if path_split[st].startswith("gpfs"):
+        gpfs = path_split[st]
+        if path_split[st+1] == "users":
+            users = path_split[st+1]
+            if path_split[st+2]:
+                inst = path_split[st+2]
+                if path_split[st+3]:
+                    group = path_split[st+3]
+
+    if group:
+        data_root_dir = os.path.join("/",*path_split[1:st+4])
+    elif inst:
+        data_root_dir = os.path.join("/",*path_split[1:st+3])
+    else:
+        data_root_dir = False
+
+    #return the determined directory
+    return data_root_dir
+
+def base_read_header_OLD(image,
+                     logger=False):
+    """
+    Given a full file name for a Piltus image (as a string), read the header and
+    return a dict with all the header info
+    """
+    # print "determine_flux %s" % image
+    if logger:
+        logger.debug("read_header %s" % image)
+
+    # Make sure the image is a full path image
+    image = os.path.abspath(image)
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
+
+    def mmorm(x):
+        d = float(x)
+        if (d < 2):
+            return (d*1000)
+        else:
+            return d
+
+    #item:(pattern,transform)
+    header_items = {
+        #"md2_aperture": ("^# MD2_aperture_size\s*(\d+) microns", lambda x: int(x)/1000),
+        "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
+        "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
+        "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
+        "detector_sn": ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
+        "date": ("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
+        "distance": ("^# Detector_distance\s*([\d\.]+) m", mmorm),
+        "excluded_pixels": ("^# Excluded_pixels\:\s*([\w\.]+)", lambda x: str(x)),
+        "flat_field": ("^# Flat_field\:\s*([\(\)\w\.]+)", lambda x: str(x)),
+        "gain": ("^# Gain_setting\:\s*([\s\(\)\w\.\-\=]+)", lambda x: str(x).rstrip()),
+        "n_excluded_pixels": ("^# N_excluded_pixels\s\=\s*(\d+)", lambda x: int(x)),
+        "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
+        "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+        "pixel_size": ("^# Pixel_size\s*([\.\d]+)e-6 m.*", lambda x: float(x)/1000.0),
+        "sensor_thickness": ("^#\sSilicon\ssensor\,\sthickness\s*([\d\.]+)\sm", lambda x: float(x)*1000),
+        "tau": ("^#\sTau\s\=\s*([\d\.]+e\-09) s", lambda x: float(x)),
+        "threshold": ("^#\sThreshold_setting\:\s*([\d\.]+)\seV", lambda x: float(x)),
+        "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
+        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
+        "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        #"ring_current": ("^# Ring_current\s*([\d\.]*)\s*mA", lambda x: float(x)),
+        #"sample_mounter_position": ("^#\sSample_mounter_position\s*([\w\.]+)", lambda x:str(x).rstrip()),
+        "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        }
+
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
+
+    parameters = {
+        "fullname": image,
+        "detector": "PILATUS",
+        "directory": os.path.dirname(image),
+        "image_prefix": "_".join(base.split("_")[0:-2]),
+        # "run_number": int(base.split("_")[-2]),
+        "image_number": int(base.split("_")[-1]),
+        "axis": "omega",
+        # "collect_mode": mode,
+        # "run_id": run_id,
+        # "place_in_run": place_in_run,
+        # "size1": 2463,
+        # "size2": 2527}
+        }
+
+    for label, pat in header_items.iteritems():
+        # print label
+        pattern = re.compile(pat[0], re.MULTILINE)
+        matches = pattern.findall(header)
+        if len(matches) > 0:
+            parameters[label] = pat[1](matches[-1])
+        else:
+            parameters[label] = None
+
+    #pprint(parameters)
+
+    # Put beam center into RAPD format mm
+    parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
+    parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
+
+    return parameters
+
+def read_header(fullname, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 
@@ -165,10 +331,30 @@ def read_header(fullname, beam_settings=False):
     # Perform the header read from the file
     # If you are importing another detector, this should work
     header = detector.read_header(fullname)
+    #header = base_read_header(fullname)
+
+    # Get additional beamline info not in header
+    if extra_header:
+        header.update(extra_header)
+
+    # Calculate flux, new beam size and add them to header
+    if beam_settings:
+        flux, x_size, y_size = calculate_flux(header, beam_settings)
+        header['flux'] = flux
+        header['x_beam_size'] = x_size
+        header['y_beam_size'] = y_size
+
+    basename = os.path.basename(fullname)
+    header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
+    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+
+    # Add tag for module to header
+    header["rapd_detector_id"] = "necat_dectris_pilatus6mf"
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+    header['data_root_dir'] = get_data_root_dir(fullname)
 
     # Return the header
     return header

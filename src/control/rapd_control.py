@@ -5,7 +5,7 @@ File for launching the controller process for a RAPD site install
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -52,6 +52,12 @@ def get_commandline():
                         action="store_true",
                         dest="clean_start",
                         help="Wipe input queues clean before starting")
+
+    # Run without monitoring the beamline
+    parser.add_argument("--no_monitor",
+                        action="store_false",
+                        dest="monitor",
+                        help="Don't monitor the beamline")
 
     return parser.parse_args()
 

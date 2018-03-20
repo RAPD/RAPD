@@ -7,7 +7,7 @@ IP address of the host and the optional passed-in tag
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -169,8 +169,8 @@ class Launcher(object):
             self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        #self.adapter(self.site, message, self.launcher)
-        Thread(target=self.adapter, args=(self.site, message, self.launcher)).start()
+        self.adapter(self.site, message, self.launcher)
+        #Thread(target=self.adapter, args=(self.site, message, self.launcher)).start()
 
     def get_settings(self):
         """
@@ -182,7 +182,7 @@ class Launcher(object):
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
-        print self.ip_address
+        #print self.ip_address
         if self.logger:
             self.logger.debug("Found ip address to be %s", self.ip_address)
         """

@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -68,7 +68,7 @@ def check_queue(inp):
 
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (5, 4)
+    return (4, 3)
 
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -238,6 +238,19 @@ def process_cluster_drmaa(self, inp, output=False):
 
     print "Job finished"
 
+def mp_job(func):
+    """
+    wrapper to run process_cluster in a multiprocessing.Process.
+    """
+    @wraps(func)
+    def wrapper(**kwargs):
+        #job = False
+        job = Process(target=func, kwargs=kwargs)
+        job.start()
+        job.join()
+    return wrapper
+
+#@mp_job
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,

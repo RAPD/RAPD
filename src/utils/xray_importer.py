@@ -1,9 +1,9 @@
-"""Tool for importing X-ray files into RAPD"""
-
+"""
+Tool for importing X-ray files into RAPD"""
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -1157,7 +1157,7 @@ def convert_mergable_mtz_to_rfree_mtz(source_file_name,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
     truncate_proc.stdin.write("END\n")
-    _, _ stderr = truncate_proc.communicate()
+    _, __ = truncate_proc.communicate()
 
     # Set the free R flag
     freerflag_proc = subprocess.Popen(["freerflag",
@@ -1368,7 +1368,7 @@ def convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(source_file_name,
                                      shell=True)
     truncate_proc.stdin.write("END\n")
     truncate_proc.stdin.write("eof\n")
-    _, _ = truncate_proc.communicate()
+    _, __ = truncate_proc.communicate()
 
     # Sort the file and prune columns
     cad_file = next(tempfile._get_candidate_names()) + ".mtz"

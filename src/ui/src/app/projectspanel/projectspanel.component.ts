@@ -1,6 +1,7 @@
 import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatDialog,
          MatDialogConfig,
          MatDialogRef,
@@ -22,7 +23,8 @@ export class ProjectspanelComponent implements OnInit {
 
   constructor(private rest_service: RestService,
               public viewContainerRef: ViewContainerRef,
-              public dialog: MatDialog) { }
+              public dialog: MatDialog,
+              private router: Router) { }
 
   ngOnInit() {
     this.getProjects();
@@ -32,7 +34,7 @@ export class ProjectspanelComponent implements OnInit {
     this.rest_service.getProjects()
       .subscribe(
         parameters => {
-          console.log(parameters);
+          // console.log(parameters);
           this.projects = parameters;
         }
       )
@@ -47,43 +49,39 @@ export class ProjectspanelComponent implements OnInit {
     project.created = undefined;
     project.description = undefined;
     project.group = undefined;
-    project.last_action = undefined;
+    project.last_action = 'created';
     project.last_timestamp = undefined;
     project.project_type = 'mx';
     project.results = [];
     project.title = undefined;
 
-    let pseudo_event = {
-      type: 'click',
-      row: project
-    };
-
-    this.editProject(pseudo_event);
+    this.editProject(project, "Create Project");
   }
 
-  editProject(event) {
+  editProject(project, dialog_title:string) {
 
-    if (event.type === 'click') {
-      let project = event.row;
+    if (dialog_title !== "Create Project") {
+      dialog_title = "Edit Project";
+    }
 
-      let config = new MatDialogConfig();
-      config.viewContainerRef = this.viewContainerRef;
+    let config = new MatDialogConfig();
+    config.viewContainerRef = this.viewContainerRef;
 
-      this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
-      this.dialogRef.componentInstance.project = project;
+    this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
+    this.dialogRef.componentInstance.project = project;
+    this.dialogRef.componentInstance.dialog_title = dialog_title;
 
-      this.dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          if (result.success === true) {
-            if (result.operation === 'delete') {
-              this.removeProject(result._id);
-            } else {
-              this.addProject(result.project);
-            }
+    this.dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.success === true) {
+          if (result.operation === 'delete') {
+            this.removeProject(result._id);
+          } else {
+            this.addProject(result.project);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   addProject(new_project:Project) {
@@ -102,6 +100,10 @@ export class ProjectspanelComponent implements OnInit {
     if (index !== -1) {
       this.projects.splice(index, 1);
     }
+  }
+
+  selectProject(project:any) {
+    this.router.navigate(['project-'+project.project_type, project._id]);
   }
 
 }

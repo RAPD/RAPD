@@ -5,7 +5,7 @@ Provides a simple launcher adapter that will launch processes in a shell
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -69,7 +69,8 @@ class LauncherAdapter(object):
             echo.LauncherAdapter(self.site, self.message, self.settings)
         else:
             # Adjust the message to this site
-            self.fix_command()
+            #self.fix_command()
+            self.message = launch_tools.fix_command(self.message)
     
             # Put the command into a file
             command_file = launch_tools.write_command_file(self.settings["launch_dir"],
@@ -81,10 +82,9 @@ class LauncherAdapter(object):
     
             # Call the launch process on the command file
             self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
-            print site_tag
             Popen(["rapd.launch", "-s",site_tag, command_file])
 
-    def fix_command(self):
+    def fix_command_OLD(self):
         """
         Adjust the command passed in in install-specific ways
         """

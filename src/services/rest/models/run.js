@@ -4,4 +4,6 @@ var Schema = mongoose.Schema;
 
 var RunSchema = new Schema({}, {strict:false})
 
-module.exports = mongoose.model('Run', RunSchema);
+// module.exports = mongoose.model('Run', RunSchema);
+exports.Run = mongoose.model('Run', RunSchema);
+exports.RunSchema = RunSchema;

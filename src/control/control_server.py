@@ -5,7 +5,7 @@ Provides tools for interface between the control process and launched processes
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import importlib
 import socket
 import threading
 import time
+import sys
 
 from utils.text import json
 from bson.objectid import ObjectId
@@ -72,8 +73,13 @@ class ControllerServer(threading.Thread):
             channel, message = self.redis.brpop(["RAPD_RESULTS"])
 
             print channel, message
-
-            self.receiver(json.loads(message))
+            
+            # Trying to catch hanging
+            try:
+                self.receiver(json.loads(message))
+            except:
+                info = sys.exc_info()
+                self.logger.exception("Unexpected error in control_server: %s"%info[0])
 
     def stop(self):
         self.logger.debug("Received signal to stop")

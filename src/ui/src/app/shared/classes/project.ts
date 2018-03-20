@@ -8,5 +8,6 @@ export class Project {
   last_timestamp: any;
   project_type: string;
   results: any[];
+  source_data: any[];
   title: string;
 }

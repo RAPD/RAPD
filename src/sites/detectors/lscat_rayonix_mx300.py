@@ -6,7 +6,7 @@ detector
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -256,7 +256,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings={}):
+def read_header(fullname, beam_settings={}, extra_header=False):
     """
     Read the header and add some site-specific data
 

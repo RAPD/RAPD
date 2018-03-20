@@ -142,7 +142,10 @@ DEFAULT_PREFERENCES = {
 
     # Unknown
     "beam_flip": False,
+    # OLD
     "multiprocessing": True,
+    # 8 will be full speed. If set to 1, then everything is run sequentially
+    "nproc" : 8,
     # Change these if user wants to continue dataset with other crystal(s).
     # "reference_data_id": None, #MOSFLM
     # #"reference_data_id": 1,#MOSFLM

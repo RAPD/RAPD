@@ -6,7 +6,7 @@ detector
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -79,11 +79,8 @@ def parse_file_name(fullname):
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
     # print basename
     sbase = basename.split(".")
-    # print sbase
     prefix = ".".join(sbase[0:-1])
-    # print prefix
     image_number = int(sbase[-1])
-    # print image_number
     run_number = None
 
     return directory, basename, prefix, run_number, image_number
@@ -266,7 +263,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings={}):
+def read_header(fullname, beam_settings={}, extra_header=False):
     """
     Read the header and add some site-specific data
 

@@ -5,7 +5,7 @@ RAPD plugin for fast integration with XDS
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2011-2017, Cornell University
+Copyright (C) 2011-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -87,6 +87,7 @@ import info
 VERSIONS = {
     "aimless": (
         "version 0.5",
+        "version 0.6"
         ),
     "freerflag": (
         "version 2.2",
@@ -106,10 +107,10 @@ VERSIONS = {
         "version 7.0",
     ),
     "xds": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
     "xds_par": (
-        "VERSION Jun 1, 2017",
+        "VERSION Jan 26, 2018",
         ),
 }
 
@@ -175,7 +176,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -472,14 +473,14 @@ class RapdPlugin(Process):
                 full_integration_results = self.xds_total(xds_input, last=last)
 
         # Finish up with the data
-        os.chdir(self.dirs['work'])
         final_results = self.finish_data(full_integration_results)
 
         # Set up the results for return
         self.results["process"]["status"] = 99
         self.results["results"].update(final_results)
 
-        self.send_results(self.results)
+        #self.send_results(self.results)
+        os.chdir(self.dirs['work'])
 
     def get_current_images(self):
         """
@@ -558,6 +559,10 @@ class RapdPlugin(Process):
 
             self.logger.debug("Sending back on redis")
 
+            #if results.get('results', False):
+            #    if results['results'].get('data_produced', False):
+            #        pprint(results['results'].get('data_produced'))
+
             # Transcribe results
             json_results = json.dumps(results)
 
@@ -578,7 +583,7 @@ class RapdPlugin(Process):
         # self.finish_data()
 
         # Create an archive
-        self.create_archive()
+        #self.create_archive()
 
         # Transfer files to Control
         self.transfer_files()
@@ -608,7 +613,7 @@ class RapdPlugin(Process):
 
         self.logger.debug("print_credits")
 
-        self.tprint(rcredits.HEADER,
+        self.tprint(rcredits.HEADER.replace("RAPD", "RAPD integrate"),
                     level=99,
                     color="blue")
 
@@ -626,7 +631,7 @@ class RapdPlugin(Process):
         if self.preferences.get("analysis", False):
 
             self.logger.debug("Setting up analysis plugin")
-            self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+            self.tprint("\nLaunching analysis plugin", level=30, color="blue")
 
             # Make sure we are in the work directory
             start_dir = os.getcwd()
@@ -641,8 +646,6 @@ class RapdPlugin(Process):
                 sub_run_mode = "subprocess-interactive"
             elif self.preferences["run_mode"] == "server":
                 sub_run_mode = "subprocess"
-
-            print ">>>", sub_run_mode
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -1986,7 +1989,7 @@ class RapdPlugin(Process):
 
         # Flags for file creation
         scalepack = True
-        mosflm = True
+        mosflm = False
 
         # Set up the method
         # Archive directory name
@@ -2044,31 +2047,16 @@ class RapdPlugin(Process):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.wait()
-        # Move to archive
-        src_file = os.path.abspath("freer.mtz")
-        tgt_file = "%s_free.mtz" % archive_files_prefix
-        # print "Copy %s to %s" % (src_file, tgt_file)
-        shutil.copyfile(src_file, tgt_file)
-        results["mtzfile"] = tgt_file
-        # Include in produced_data
-        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
-        # print "Copy %s to %s" % (src_file, prod_file)
-        shutil.copyfile(src_file, prod_file)
-        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
-        self.results["results"]["data_produced"].append({
-            "path":arch_prod_file,
-            "hash":arch_prod_hash,
-            "description":"rfree"
-        })
-        # pprint(self.results["results"]["data_produced"])
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
+        #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
-        # print "Copy %s to %s" % (src_file, tgt_file)
+        #print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        #print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
@@ -2076,7 +2064,26 @@ class RapdPlugin(Process):
             "hash":arch_prod_hash,
             "description":"unmerged"
         })
-        # pprint(self.results["results"]["data_produced"])
+        #pprint(self.results["results"]["data_produced"])
+
+        # Move to archive
+        src_file = os.path.abspath("freer.mtz")
+        tgt_file = "%s_free.mtz" % archive_files_prefix
+        #print "Copy %s to %s" % (src_file, tgt_file)
+        shutil.copyfile(src_file, tgt_file)
+        # Renames results["mtzfile"] (aimless mtz) to free mtz????
+        results["mtzfile"] = tgt_file
+        # Include in produced_data
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        #print "Copy %s to %s" % (src_file, prod_file)
+        shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
+        self.results["results"]["data_produced"].append({
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
+            "description":"rfree"
+        })
+        #pprint(self.results["results"]["data_produced"])
 
         if scalepack:
             # Create the merged scalepack format file.
@@ -2120,8 +2127,8 @@ class RapdPlugin(Process):
             self.fixMtz2Sca("ANOM.sca")
             Utils.fixSCA(self, "ANOM.sca")
             # Move to archive
-            src_file = os.path.abspath("NATIVE.sca")
-            tgt_file = "%s_NATIVE.sca" % archive_files_prefix
+            src_file = os.path.abspath("ANOM.sca")
+            tgt_file = "%s_ANOM.sca" % archive_files_prefix
             shutil.copyfile(src_file, tgt_file)
             # files_to_archive.append("%s_ANOM.sca" % archive_files_prefix)
 
@@ -2440,14 +2447,16 @@ class RapdPlugin(Process):
             for file_to_move in self.results["results"]["data_produced"]:
                 # Move data
                 target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
-                # print "Moving %s to %s" % (file_to_move["path"], target)
+                #print "Moving %s to %s" % (file_to_move["path"], target)
                 shutil.move(file_to_move["path"], target)
                 # Change entry
                 file_to_move["path"] = target
                 new_data_produced.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["data_produced"] = new_data_produced
+            #pprint(self.results["results"]["data_produced"])
 
+            self.create_archive()
             new_archive_files = []
             for file_to_move in self.results["results"]["archive_files"]:
                 # Move data
@@ -2459,6 +2468,7 @@ class RapdPlugin(Process):
                 new_archive_files.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["archive_files"] = new_archive_files
+            #pprint(self.results["results"]["archive_files"])
 
 
     def clean_up(self):
@@ -2481,6 +2491,14 @@ class RapdPlugin(Process):
             # Erase .mtz files
             for mtz_file in glob.glob("*.mtz"):
                 os.remove(mtz_file)
+
+            # Erase the truncate files
+            for truncate_file in glob.glob("truncate.*"):
+                os.remove(truncate_file)
+
+            # Erase the freer files
+            for freer_file in glob.glob("freer.*"):
+                os.remove(freer_file)
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""

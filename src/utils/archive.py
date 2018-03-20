@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -53,7 +53,7 @@ import tarfile
 def compress_dir(target):
     """Compress a target and return the result file name"""
 
-    print "compress_dir target:", target
+    # print "compress_dir target:", target
 
     # Save where we were
     start_dir = os.getcwd()
@@ -69,10 +69,12 @@ def compress_dir(target):
     with tarfile.open(archive_name, "w:bz2") as tar:
         tar.add(my_target)
 
+    output_name = os.path.abspath(archive_name)
+
     # Move bach to starting work directory
     os.chdir(start_dir)
 
-    return os.path.abspath(archive_name)
+    return output_name
 
 def compress_file(target):
     """
@@ -80,31 +82,35 @@ def compress_file(target):
     """
     # print "compress_file", target
 
+    target = os.path.abspath(target)
+
     # Save where we were
     start_dir = os.getcwd()
-    # print "start_dir", start_dir
+    #print "start_dir", start_dir
 
     # Move to target directory
     os.chdir(os.path.dirname(target))
-    # print os.getcwd()
+    #print os.getcwd()
 
     # Shorten the target from abspath
     my_target = os.path.basename(target)
-    # print my_target
+    #print my_target
 
     # Get hash of target file
     my_hash = get_hash(my_target)
 
-    archive_name = os.path.abspath("%s.tar.bz2" % my_target)
-    # print archive_name
+    #archive_name = os.path.abspath("%s.tar.bz2" % my_target)
+    archive_name = "%s.tar.bz2" % my_target
 
     with tarfile.open(archive_name, "w:bz2") as tar:
         tar.add(my_target)
 
+    output_name = os.path.abspath(archive_name)
+
     # Move bach to starting work directory
     os.chdir(start_dir)
 
-    return (archive_name, my_hash)
+    return (output_name, my_hash)
 
 def create_archive(directory, archive_name=False):
     """

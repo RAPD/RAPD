@@ -38,9 +38,13 @@ var ProjectSchema = new Schema({
   },
   results: {
     type: [Schema.Types.ObjectId],
-    required: false,
     default: [],
     ref: 'Result'
+  },
+  source_data: {
+    type: [Schema.Types.ObjectId],
+    ref: 'Result',
+    default: []
   },
   title: {
     type: String,
