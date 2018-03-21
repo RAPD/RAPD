@@ -118,7 +118,8 @@ done
 if [[ $PLATFORM == "Linux" ]]; then
 
   # ROOT user?
-  if [ $USER == "root" ]; then
+  USER=$(whoami)
+  if [[ $USER == "root" ]]; then
     printf "\033[91mInstalling as root not supported! Sorry.\033[0m\n"
     exit 1
   fi
