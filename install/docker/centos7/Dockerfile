@@ -21,7 +21,9 @@ RUN yum -y install bzip2 \
                    subversion \
                    wget
 
-WORKDIR /opt
+RUN adduser tester
+USER tester
+WORKDIR /home/tester
 RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
-WORKDIR /opt/rapd/install
+WORKDIR /home/tester/rapd/install
 # RUN ./install -mb
