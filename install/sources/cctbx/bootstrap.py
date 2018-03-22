@@ -89,11 +89,12 @@ def tar_extract(workdir, archive, modulename=None):
     tarfoldername = os.path.join(workdir, os.path.commonprefix(tar.getnames()).split('/')[0])
     tar.close()
     # take full permissions on all extracted files
-    module = os.path.join(workdir, tarfoldername)
-    for root, dirs, files in os.walk(module):
-      for fname in files:
-        full_path = os.path.join(root, fname)
-        os.chmod(full_path, stat.S_IREAD | stat.S_IWRITE)
+    # Commenting out FM
+    # module = os.path.join(workdir, tarfoldername)
+    # for root, dirs, files in os.walk(module):
+    #   for fname in files:
+    #     full_path = os.path.join(root, fname)
+    #     os.chmod(full_path, stat.S_IREAD | stat.S_IWRITE)
     # rename to expected folder name, e.g. boost_hot -> boost
     # only rename if folder names differ
     if modulename:
