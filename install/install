@@ -120,7 +120,7 @@ if [[ $PLATFORM == "Linux" ]]; then
   # ROOT user?
   USER=$(whoami)
   if [[ $USER == "root" ]]; then
-    printf "\033[91mInstalling as root not supported! Sorry.\033[0m\n"
+    printf "\033[91mInstalling as root not supported! Sorry.\033[0m\n\n"
     exit 1
   fi
 
@@ -283,7 +283,7 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # Get the bootstrap installer
     cp $SRC_DIR/cctbx/bootstrap.py .
-    printf "  Downloading CCTBX bootstrap script"
+    # printf "  Downloading CCTBX bootstrap script"
     # wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
 
     # Install CCTBX
