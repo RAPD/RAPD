@@ -87,6 +87,13 @@ dp_parser.add_argument("--json",
                        dest="json",
                        help="Output only final and full JSON")
 
+# Set filehandle for JSON output
+dp_parser.add_argument("--json-fd",
+                       action="store",
+                       dest="json_fd",
+                       default=False,
+                       help="Output progress updates to a file descriptor")
+
 # Output progress updates?
 dp_parser.add_argument("--progress",
                        action="store_true",
