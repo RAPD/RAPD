@@ -93,6 +93,13 @@ dp_parser.add_argument("--progress",
                        dest="progress",
                        help="Output progress updates to the terminal")
 
+# Set filehandle for progress output
+dp_parser.add_argument("--progress-fd",
+                       action="store",
+                       dest="progress_fd",
+                       default=False,
+                       help="Output progress updates to a file descriptor")
+
 # The site
 dp_parser.add_argument("-s", "--site",
                        action="store",

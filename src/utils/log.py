@@ -37,6 +37,7 @@ def verbose_print(arg,
                   verbosity=20,
                   no_color=False,
                   progress=False,
+                  progress_fd=False,
                   newline=True,
                   close=True):
     """Print to terminal window screened by verbosity setting
@@ -57,11 +58,15 @@ def verbose_print(arg,
                true when setting up the terminal printer
     """
 
-    if progress and level == "progress":
+    if (progress or progress_fd) and level == "progress":
         if not isinstance(arg, int):
             raise TypeError("a number is required")
-        sys.stdout.write("%DONE={}\n".format(arg))
-        sys.stdout.flush()
+        if progress_fd:
+            progress_fd.write("%DONE={}\n".format(arg))
+            progress_fd.flush()
+        else:       
+            sys.stdout.write("%DONE={}\n".format(arg))
+            sys.stdout.flush()
         return True
 
     elif level == "progress":
@@ -92,17 +97,23 @@ def verbose_print(arg,
                 sys.stdout.write(arg)
             sys.stdout.flush()
 
-def get_terminal_printer(verbosity=50, no_color=False, progress=False):
+def get_terminal_printer(verbosity=50, no_color=False, progress=False, progress_fd=False):
     """Returns a terminal printer
 
     Keyword arguments:
-    verbosity -- threshold to print (default 50)
+    verbosity   -- threshold to print (default 50)
+    progress    -- enable progress printing
+    progress_fd -- enable progress printing and write to an fd
     """
+
+    if progress_fd:
+        progress_fd = open(progress_fd, "w")
 
     terminal_print = functools.partial(verbose_print,
                                        verbosity=verbosity,
                                        no_color=no_color,
-                                       progress=progress)
+                                       progress=progress,
+                                       progress_fd=progress_fd)
     return terminal_print
 
 

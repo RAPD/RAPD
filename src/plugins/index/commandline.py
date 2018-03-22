@@ -373,7 +373,8 @@ def main():
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
-                                            progress=commandline_args.progress)
+                                            progress=commandline_args.progress,
+                                            progress_fd=commandline_args.progress_fd)
 
     print_welcome_message(tprint)
 

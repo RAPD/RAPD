@@ -1548,7 +1548,7 @@ Distance | % Transmission", level=98, color="white")
 
         self.logger.debug("AutoindexingStrategy::run_queue")
         self.tprint(arg="\nStarting strategy calculations", level=98, color="blue")
-        self.tprint(75, level="progress")
+        self.tprint(90, level="progress")
 
         # try:
         def set_best_results(i, x):
@@ -2901,9 +2901,9 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         current_progress = 0
 
         while ellapsed_time < global_vars.LABELIT_TIMEOUT:
-            prog = int(7*ellapsed_time / 50)
+            prog = int(7*ellapsed_time / 60)
             if prog > current_progress:
-                self.tprint(prog*10, "progress")
+                self.tprint(prog*10, level="progress")
                 current_progress = prog
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
