@@ -75,7 +75,7 @@ def tar_extract(workdir, archive, modulename=None):
           # Extract directories with a safe mode.
           directories.append(tarinfo)
           tarinfo = copy.copy(tarinfo)
-          tarinfo.mode = 0770
+          tarinfo.mode = 0700
         tar.extract(tarinfo, workdir)
         # Reverse sort directories.
         directories.sort(key=operator.attrgetter('name'))
