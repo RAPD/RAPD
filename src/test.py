@@ -86,6 +86,15 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
+start_image = 1
+end_image = 14
+
+number_of_images = end_image - start_image + 1
+batch = int(number_of_images / 12)
+print batch
+final_batch =  batch + (number_of_images % 12)
+print final_batch
+
 """
 from utils.modules import load_module
 #import 
@@ -526,7 +535,7 @@ time.sleep(2)
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
-red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
 #time.sleep(1)
 """
 red = connect_ft_redis()
@@ -560,6 +569,16 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
 """
-=======
-#red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
-
+print red.llen('RAPD_QSUB_JOBS_0')
+#red.delete('RAPD_QSUB_JOBS_0')
+print red.llen('images_collected:NECAT_E')
+#red.delete("images_collected:NECAT_E")
+print red.llen('images_collected:NECAT_C')
+#red.delete("images_collected:NECAT_C")
+print red.llen('run_data:NECAT_E')
+#red.delete("run_data:NECAT_E")
+print red.llen('run_data:NECAT_C')
+#red.delete("run_data:NECAT_C")
+print red.llen('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
+"""

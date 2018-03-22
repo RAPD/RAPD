@@ -54,8 +54,9 @@ def run_process(input_args):
     else:
         result =  subprocess.Popen(command,
                                    shell=True,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+                                   #stdout=subprocess.PIPE,
+                                   #stderr=subprocess.PIPE
+                                   )
     result.wait()
     return result
 
@@ -198,9 +199,94 @@ class hdf5_to_cbf_converter(object):
         command0 = "eiger2cbf %s" % self.master_file
 
         # Single image in master file
+        #if self.number_of_images == 1:
+        if self.number_of_images == 1 or start_image == end_image:
+            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
+            #command = "%s 1 %s" % (command0, img)
+            command = "%s %d %s" % (command0, start_image, img)
+
+            # Now convert
+            if active:
+                run_process((command, self.verbose))
+
+            self.output_images.append(img)
+
+        else:
+            # One processor
+            if self.nproc == 1:
+                command = "%s %d:%d %s_" % (command0, start_image, end_image, os.path.join(self.output_dir, self.prefix))
+
+                # Now convert
+                if active:
+                    run_process((command, self.verbose))
+
+                for i in range(start_image, end_image+1):
+                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
+
+            # Multiple processors
+            else:
+                if active:
+                    print "Employing multiple threads"
+
+                    # Construct commands to run in parallel
+                    number_of_images = self.end_image - start_image + 1
+                    batch = int(number_of_images / self.nproc)
+                    final_batch = batch + (number_of_images % self.nproc)
+                    commands = []
+                    
+                    # In case the command may have single image to convert, run this...
+                    if batch in (0, 1):
+                        start = start_image
+                        iteration = 0
+                        while iteration < number_of_images:
+                            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
+                            #command = "%s %d %s" % (command0, start_image, img)
+                            commands.append(("%s %d %s" % (command0, start_image, img), self.verbose))
+                            iteration += 1
+                            start_image += 1
+
+                    # IF more than 1 image per processor
+                    else:
+                        iteration = 0
+                        start = start_image
+                        stop = 0
+                        while iteration < self.nproc:
+    
+                            if iteration == (self.nproc - 1) :
+                                batch = final_batch
+    
+                            stop = start + batch -1
+                            #stop = start + batch
+                            commands.append(("%s %d:%d %s_" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
+    
+                            iteration += 1
+                            start = stop + 1
+
+                    # Run in pool
+                    pool = multiprocessing.Pool(processes=self.nproc)
+                    results = pool.map_async(run_process, commands)
+                    pool.close()
+                    pool.join()
+
+            for i in range(start_image, end_image+1):
+                self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
+
+        self.output_images.sort()
+
+    def convert_images_OLD(self, start_image, end_image, active=True):
+        """Actually convert the images"""
+
+        if self.verbose:
+            print "Converting images %d - %d" % (start_image, end_image)
+
+        # The base eiger2cbf command
+        command0 = "eiger2cbf %s" % self.master_file
+
+        # Single image in master file
         if self.number_of_images == 1:
             img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
-            command = "%s 1 %s" % (command0, img)
+            #command = "%s 1 %s" % (command0, img)
+            command = "%s %d %s" % (command0, start_image, img)
 
             # Now convert
             if active:
@@ -218,27 +304,27 @@ class hdf5_to_cbf_converter(object):
             self.output_images.append(img)
 
         # Single image from a run of images
-        elif start_image == end_image:
-            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
-            command = "%s %d:%d %s" % (command0,
-                                       start_image,
-                                       start_image,
-                                       img)
-
-            # Now convert
-            if active:
-                if self.verbose:
-                    print "Executing command `%s`" % command
-                    myoutput = subprocess.Popen(command,
-                                                shell=True)
-                else:
-                    myoutput = subprocess.Popen(command,
-                                                shell=True,
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE)
-                myoutput.wait()
-
-            self.output_images.append(img)
+        #elif start_image == end_image:
+        #    img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
+        #    command = "%s %d:%d %s" % (command0,
+        #                               start_image,
+        #                               start_image,
+        #                               img)
+        #
+        #    # Now convert
+        #    if active:
+        #        if self.verbose:
+        #            print "Executing command `%s`" % command
+        #            myoutput = subprocess.Popen(command,
+        #                                        shell=True)
+        #       else:
+        #           myoutput = subprocess.Popen(command,
+        #                                        shell=True,
+        #                                        stdout=subprocess.PIPE,
+        #                                        stderr=subprocess.PIPE)
+        #        myoutput.wait()
+        #
+        #    self.output_images.append(img)
 
         # Multiple images from a run of images
         else:
