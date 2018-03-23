@@ -1916,13 +1916,26 @@ Distance | % Transmission", level=98, color="white")
             return (False, False)
 
     def write_json(self, results):
-        """Write a file with the JSON version of the results"""
-
-        json_string = json.dumps(results) #.replace("\\n", "")
+        """
+        Write a file with the JSON version of the results
+        """
+        # Convert
+        json_string = json.dumps(results)
 
         # Output to terminal?
         if self.preferences.get("json", False):
             print json_string
+
+        # Output to an fd?
+        if self.preferences.get("json_fd", False):
+            # Output to terminal if stdout
+            if int(self.preferences.get("json_fd")) == 1:
+                print json_string
+            # Output to fd
+            else:
+                with os.fdopen(int(self.preferences.get("json_fd")), "w") as f:
+                    f.write(json_string)
+                    f.flush()
 
         # Always write a file
         os.chdir(self.working_dir)
