@@ -337,7 +337,9 @@ def print_detectors(left_buffer="", show_py=False):
 def analyze_data_sources(sources,
                          mode="index",
                          start_image=False,
-                         end_image=False):
+                         end_image=False,
+                         hdf5_image_range=False,
+                         hdf5_wedge_range=False):
     """
     Return information on files or directory from input
     """
@@ -346,66 +348,76 @@ def analyze_data_sources(sources,
     return_data = {}
 
     if mode == "index":
-        for source in sources:
-            source_abspath = os.path.abspath(source)
-            # print "  source_abspath:", source_abspath
+        # If inputting an h5 dataset or single image
+        if len(sources) == 1 and os.path.abspath(sources[0]).endswith(".h5"):
+            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                                master_file=os.path.abspath(sources[0]),
+                                output_dir="cbf_files",
+                                image_range=hdf5_image_range,
+                                wedge_range=hdf5_wedge_range,
+                                #overwrite=True,
+                                verbose=False)
+            converter.run()
+            return_data["hdf5_files"] = [os.path.abspath(sources[0])]
+            return_data["files"] = [os.path.abspath(f) for f in converter.output_images]
 
-            # Does file/dir exist?
-            if os.path.exists(source_abspath):
-                if os.path.isdir(source_abspath):
-                    pass
-                elif os.path.isfile(source_abspath):
+        else:
+            prefix = False
+            for source in sources:
+                source_abspath = os.path.abspath(source)
+                # print "  source_abspath:", source_abspath
 
-                    # Are we dealing with hdf5 images
-                    if source_abspath.endswith(".h5"):
+                # Does file/dir exist?
+                if os.path.exists(source_abspath):
+                    if os.path.isdir(source_abspath):
+                        pass
+                    elif os.path.isfile(source_abspath):
 
-                        if not "hdf5_files" in return_data:
-                            return_data["hdf5_files"] = [source_abspath]
+                        # Are we dealing with hdf5 images
+                        if source_abspath.endswith(".h5"):
+                            # Needed for Labelit to have same root name to pairs of images.
+                            if prefix == False:
+                                prefix = convert_hdf5_cbf.get_prefix(source_abspath)
+                            
+                            if not "hdf5_files" in return_data:
+                                return_data["hdf5_files"] = [source_abspath]
+                            else:
+                                return_data["hdf5_files"].append(source_abspath)
+
+                            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                                master_file=source_abspath,
+                                output_dir="cbf_files",
+                                #start_image=len(return_data["hdf5_files"]),
+                                #end_image=len(return_data["hdf5_files"]),
+                                renumber_image=len(return_data["hdf5_files"]),
+                                prefix=prefix,
+                                image_range='1',
+                                overwrite=True,
+                                verbose=False)
+    
+                            converter.run()
+    
+                            #source_abspath = os.path.abspath(converter.output_images[0])
+                            source_abspath = os.path.abspath(converter.output_images[-1])
+    
+                        # 1st file of 1 or 2
+                        if not "files" in return_data:
+                            return_data["files"] = [source_abspath]
+    
+                        # 3rd file - error
+                        elif len(return_data["files"]) > 1:
+                            raise Exception("Up to two images can be submitted for indexing")
+                        # 2nd file - presumably a pair
                         else:
-                            return_data["hdf5_files"].append(source_abspath)
-
-                        #prefix = convert_hdf5_cbf.get_h5_prefix(source_abspath)
-                        #prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
-                        #if os.path.basename(source).count('.') > 1:
-                        #    prefix = os.path.basename(source).replace("_master.h5", "").replace('.', '_')
-                        #else:
-                        #    prefix = os.path.basename(source).replace("_master.h5", "")
-
-                        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
-                            master_file=source_abspath,
-                            output_dir="cbf_files",
-                            #prefix=prefix,
-                            #start_image=1,
-                            start_image=len(return_data["hdf5_files"]),
-                            #end_image=1,
-                            end_image=len(return_data["hdf5_files"]),
-                            overwrite=True,
-                            verbose=False)
-
-                        converter.run()
-
-                        #source_abspath = os.path.abspath(converter.output_images[0])
-                        source_abspath = os.path.abspath(converter.output_images[-1])
-
-                    # 1st file of 1 or 2
-                    if not "files" in return_data:
-                        return_data["files"] = [source_abspath]
-
-                    # 3rd file - error
-                    elif len(return_data["files"]) > 1:
-                        raise Exception("Up to two images can be submitted for indexing")
-                    # 2nd file - presumably a pair
-                    else:
-                        # Same file twice
-                        if source_abspath == return_data["files"][0]:
-                            raise Exception("The same image has been submitted twice for indexing")
-                        else:
-                            return_data["files"].append(source_abspath)
-                            break
-
-                    #counter += 1
-            else:
-                raise Exception("%s does not exist" % source_abspath)
+                            # Same file twice
+                            if source_abspath == return_data["files"][0]:
+                                raise Exception("The same image has been submitted twice for indexing")
+                            else:
+                                return_data["files"].append(source_abspath)
+                                break
+    
+                else:
+                    raise Exception("%s does not exist" % source_abspath)
 
         return return_data
 
@@ -420,23 +432,26 @@ def analyze_data_sources(sources,
                 return_data["hdf5_files"] = [source_abspath]
             else:
                 return_data["hdf5_files"].append(source_abspath)
-            
-            #prefix = convert_hdf5_cbf.get_h5_prefix(source_abspath)
-            #prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
-            #if os.path.basename(sources).count('.') > 1:
-            #    prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
-            #else:
-            #    prefix = os.path.basename(sources).replace("_master.h5", "")
 
-            if not start_image:
-                start_image = 1
+            #if not start_image:
+            #    start_image = 1
+            
+            if start_image and end_image:
+                image_range = '%s-%s'%(start_image, end_image)
+            elif start_image and not end_image:
+                image_range = '%s-end'%start_image
+            elif not start_image and end_image:
+                image_range = '1-%s'%end_image
+            else:
+                image_range = 'all'
 
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                 master_file=source_abspath,
                 output_dir="cbf_files",
                 #prefix=prefix,
-                start_image=start_image,
-                end_image=end_image,
+                #start_image=start_image,
+                #end_image=end_image,
+                image_range=image_range,
                 overwrite=False,
                 verbose=False)
 

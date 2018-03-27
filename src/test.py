@@ -12,6 +12,7 @@ import subprocess
 import re
 from pprint import pprint
 import inspect
+import sys
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -86,16 +87,22 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
-start_image = 1
-end_image = 14
-
-number_of_images = end_image - start_image + 1
-batch = int(number_of_images / 12)
-print batch
-final_batch =  batch + (number_of_images % 12)
-print final_batch
+first_image_number = 1
+wedge_size = 0
+delta_omega = 0.3
+print str(int(first_image_number + (float(wedge_size) / delta_omega)))
+print str(first_image_number + int(round(wedge_size / delta_omega)))
 
 """
+#with open('/gpfs6/users/necat/Jon/RAPD_test/Output/logfile.log', 'w') as sys.stdout:
+job = subprocess.Popen(shlex.split('eiger2cbf /gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h_001_master.h5 1 /gpfs6/users/necat/Jon/RAPD_test/Output/cbf_files/Ni-edge-n59d-kda28cl36cf57h_001_000001.cbf'),
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+stdout, stderr = job.communicate()
+#job.wait()
+print stderr
+
+
 from utils.modules import load_module
 #import 
 DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),

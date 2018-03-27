@@ -284,6 +284,21 @@ def get_commandline():
                         type=float,
                         help="Minimum detector time in seconds")
 
+    # HDF5 specific commands (assuming HDF5 is dataset, not single frame)
+    parser.add_argument("--hdf5_image_range",
+                        action="store",
+                        dest="hdf5_image_range",
+                        default='1',
+                        type=str,
+                        help="Comma separated list of images to index (ie. --hdf5_image_number 1,90)")
+
+    parser.add_argument("--hdf5_wedge_range",
+                        action="store",
+                        dest="hdf5_wedge_range",
+                        default=False,
+                        type=float,
+                        help="Calculates the second image in a pair based on this oscillation angle wedge size between images")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="sources",
@@ -412,7 +427,9 @@ def main():
 
     # Get the data files
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
-                                                        mode="index")
+                                                        mode="index",
+                                                        hdf5_image_range=commandline_args.hdf5_image_range,
+                                                        hdf5_wedge_range=commandline_args.hdf5_wedge_range)
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
@@ -462,21 +479,6 @@ def main():
 
     # If no site or detector, try to figure out the detector
     # if not (site or detector):
-    """
-    if site or detector == False:
-        detector = detector_utils.get_detector_file(data_files["files"][0])
-        if isinstance(detector, dict):
-            if detector.has_key("site"):
-                site_target = detector.get("site")
-                site_file = utils.site.determine_site(site_arg=site_target)
-                site_module = importlib.import_module(site_file)
-                detector_target = site_module.DETECTOR.lower()
-                detector_module = detector_utils.load_detector(detector_target)
-            elif detector.has_key("detector"):
-                site_module = False
-                detector_target = detector.get("detector")
-                detector_module = detector_utils.load_detector(detector_target)
-    """
     if not detector:
         detector = detector_utils.get_detector_file(data_files["files"][0])
         if isinstance(detector, dict):
@@ -508,7 +510,10 @@ def main():
                 image_headers[data_file] = detector_module.read_header(data_file)
             # If this image is derived from an hdf5 master file, tag it
             if "hdf5_files" in data_files:
-                image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]
+                if len(data_files["hdf5_files"]) == len(data_files["files"]):
+                    image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]
+                else:
+                    image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][0]
 
         logger.debug("Image headers: %s", image_headers)
         # print_headers(tprint, image_headers)
