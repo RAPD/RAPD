@@ -23,62 +23,90 @@ export class RestService {
               private authHttp: AuthHttp) { }
 
   //
-  // USERS
+  // DASHBOARD METHODS
   //
-  public getUsers(): Observable<User[]> {
+  public getDashboardResults(): Observable<any> {
 
-    console.log('getUsers');
+    // console.log('getDashboardResults');
 
-    let header = new Headers();
-    header.append('Content-Type', 'application/json');
-
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/users')
-      .map(this.extractUsers)
-      .catch(error => this.handleError(error));
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/results')
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
   }
 
-  private extractUsers(res: Response, error) {
-    let body = res.json();
-    return body.users || [];
+  public getDashboardLogins(): Observable<any> {
+
+    // console.log('getDashboardLogins');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/logins')
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
   }
 
-  // Submit a user to be saved in the database
-  public submitUser(user: User): Observable<any> {
+  public getServerActivities(): Observable<any> {
 
-    console.log('submitUser', user);
-    console.log(this.globals_service.site.restApiUrl + '/users/' + user._id);
+    // console.log('getServerActivities');
 
-    let header = new Headers();
-    header.append('Content-Type', 'application/json');
-
-    return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/users/' + user._id,
-      JSON.stringify({user: user}),
-      {headers: header}
-    )
-    // .map(res => res.json())
-    .catch(error => this.handleError(error));
-  }
-
-  // Delete a user from the database
-  public deleteUser(_id: string): Observable<any> {
-
-    console.log('deleteUser', _id);
-
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/users/' + _id).map(res => res.json());
-  }
-
-  public getGroups(): Observable<Group[]> {
-
-    console.log('getGroups');
-
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups')
-      .map(this.extractGroups)
-      .catch(error => this.handleError(error));
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/server_activities')
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
   }
 
   //
-  // GROUPS
+  // DOWNLOAD METHODS
+  //
+
+  // Request a download
+  public getDownloadById(id:string, filename:string): Observable<any> {
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/download_by_id/' + id)
+                        .map(res => {
+                          if (res.status === 200) {
+
+                            // Convert base64 string to byte array
+                            var byteCharacters = atob((<any>res)._body);
+                            var byteNumbers = new Array(byteCharacters.length);
+                            for (var i = 0; i < byteCharacters.length; i++){
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            var byteArray = new Uint8Array(byteNumbers);
+
+                            // Convert byte array to Blob
+                            var blob = new Blob([byteArray], {type:'application/octet-stream'});
+
+                            // Create ObjectURL
+                            var url= window.URL.createObjectURL(blob);
+
+                            // Create DOM element with download attribute
+                            var pom = document.createElement('a');
+                            pom.setAttribute('href', url);
+                            pom.setAttribute('download', filename);
+
+                            // Now trigger download
+                            if (document.createEvent) {
+                                var event = document.createEvent('MouseEvents');
+                                event.initEvent('click', true, true);
+                                pom.dispatchEvent(event);
+                            }
+                            else {
+                                pom.click();
+                            }
+
+                            // Tell the subscribed caller we are all good
+                            return Observable.of({
+                              success:true,
+                            });
+                          // There was an error in the REST server
+                          } else {
+                            return res.json();
+                          }
+                        })
+                        // There was an error
+                        .catch(error => this.handleError(error));
+  }
+
+  //
+  // GROUP METHODS
   //
   private extractGroups(res: Response, error) {
 
@@ -134,47 +162,7 @@ export class RestService {
   }
 
   //
-  // SESSIONS
-  //
-  public getSessions(): Observable<Session[]> {
-    console.log('getSessions');
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
-      .map(this.extractSessions)
-      .catch(error => this.handleError(error));
-  }
-
-  private extractSessions(res: Response, error) {
-    // console.error(error);
-    let body = res.json();
-    return body.sessions || [];
-  }
-
-  // Submit a session to be saved in the database
-  public submitSession(session: Session): Observable<any> {
-
-    console.log('submitSession');
-
-    let header = new Headers();
-    header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
-
-    return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/sessions/' + session._id,
-      JSON.stringify({session: session}),
-      {headers: header}
-    ).map(res => res.json())
-     .catch(error => this.handleError(error));
-  }
-
-  // Delete a user from the database
-  public deleteSession(_id: string): Observable<any> {
-
-    console.log('deleteSession', _id);
-
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id); //.map(res => res.json());
-  }
-
-  //
-  // IMAGES
+  // IMAGE METHODS
   //
   public getImageData(_id:string): Observable<Image> {
 
@@ -199,76 +187,6 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
-  // RUN methods
-  public getRunData(_id:string): Observable<Run> {
-
-    // console.log('getRunData _id:', _id);
-
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
-                        .map(res => res.json().run)
-                        .catch(error => this.handleError(error));
-  }
-
-  //
-  // PROJECT methods
-  //
-  public getProjects(): Observable<Project[]> {
-
-    console.log('getProjects');
-
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects')
-      .map(res => res.json().projects)
-      .catch(error => this.handleError(error));
-  }
-
-  public submitProject(project: Project): Observable<any> {
-
-    console.log('submitProject', project);
-    console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
-
-    let header: Headers = new Headers();
-    header.append('Content-Type', 'application/json');
-
-    return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/projects/' + project._id,
-      JSON.stringify({project:project}),
-      {headers:header}
-    )
-    // .map(res => res.json())
-    .catch(error => this.handleError(error));
-  }
-
-  // Delete a project from the database
-  public deleteProject(_id: string): Observable<any> {
-
-    console.log('deleteProject', _id);
-
-    return this.authHttp.delete(
-      this.globals_service.site.restApiUrl + '/projects/' + _id
-    )
-    // .map(res => res.json())
-    .catch(error => this.handleError(error));
-  }
-
-  public addResultToProject(data:any): Observable<any> {
-
-    console.log('addResultToProject');
-
-    let header: Headers = new Headers();
-    header.append('Content-Type', 'application/json');
-
-    return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/projects/add_result',
-      JSON.stringify({
-        project_id:data._id,
-        result:data.result
-      }),
-      {headers:header}
-    )
-    // .map(res => res.json())
-    .catch(error => this.handleError(error));
-  }
-
   //
   // JOB methods
   //
@@ -284,7 +202,7 @@ export class RestService {
       JSON.stringify({request:request}),
       {headers:header}
     )
-    // .map(res => res.json())
+    .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -345,84 +263,199 @@ export class RestService {
   }
 
   //
-  // DASHBOARD METHODS
+  // PROJECT methods
   //
-  public getDashboardResults(): Observable<any> {
+  public getProjects(): Observable<Project[]> {
 
-    // console.log('getDashboardResults');
+    console.log('getProjects');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/results')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects')
+      .map(res => res.json().projects)
+      .catch(error => this.handleError(error));
+  }
+
+  public getProject(id: string): Observable<any> {
+
+    console.log('getProject', id);
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects/'+id)
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
+  }
+
+  public submitProject(project: Project): Observable<any> {
+
+    console.log('submitProject', project);
+    console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/projects/' + project._id,
+      JSON.stringify({project:project}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  // Delete a project from the database
+  public deleteProject(_id: string): Observable<any> {
+
+    console.log('deleteProject', _id);
+
+    return this.authHttp.delete(
+      this.globals_service.site.restApiUrl + '/projects/' + _id
+    )
+    // .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  public addResultToProject(data:any): Observable<any> {
+
+    console.log('addResultToProject');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/projects_add_result',
+      JSON.stringify({
+        project_id:data._id,
+        result:data.result
+      }),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  //
+  // RESULT METHODS
+  //
+  public getResult(_id:string): Observable<any> {
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/results/' + _id)
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
 
-  public getDashboardLogins(): Observable<any> {
+  public getResultDetail(_id:string): Observable<any> {
 
-    // console.log('getDashboardLogins');
+    console.log('getResultDetail', _id);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/logins')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/result_details/' + _id)
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
 
-  public getServerActivities(): Observable<any> {
+  //
+  // RUN methods
+  //
+  public getRunData(_id:string): Observable<Run> {
 
-    // console.log('getServerActivities');
+    // console.log('getRunData _id:', _id);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/server_activities')
-                        .map(res => res.json())
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
+                        .map(res => res.json().run)
                         .catch(error => this.handleError(error));
   }
 
-  // Request a download
-  public getDownloadById(id:string, filename:string): Observable<any> {
-
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/download_by_id/' + id)
-                        .map(res => {
-                          if (res.status === 200) {
-
-                            // Convert base64 string to byte array
-                            var byteCharacters = atob((<any>res)._body);
-                            var byteNumbers = new Array(byteCharacters.length);
-                            for (var i = 0; i < byteCharacters.length; i++){
-                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                            }
-                            var byteArray = new Uint8Array(byteNumbers);
-
-                            // Convert byte array to Blob
-                            var blob = new Blob([byteArray], {type:'application/octet-stream'});
-
-                            // Create ObjectURL
-                            var url= window.URL.createObjectURL(blob);
-
-                            // Create DOM element with download attribute
-                            var pom = document.createElement('a');
-                            pom.setAttribute('href', url);
-                            pom.setAttribute('download', filename);
-
-                            // Now trigger download
-                            if (document.createEvent) {
-                                var event = document.createEvent('MouseEvents');
-                                event.initEvent('click', true, true);
-                                pom.dispatchEvent(event);
-                            }
-                            else {
-                                pom.click();
-                            }
-
-                            // Tell the subscribed caller we are all good
-                            return Observable.of({
-                              success:true,
-                            });
-                          // There was an error in the REST server
-                          } else {
-                            return res.json();
-                          }
-                        })
-                        // There was an error
-                        .catch(error => this.handleError(error));
+  //
+  // SESSIONS
+  //
+  public getSessions(): Observable<Session[]> {
+    console.log('getSessions');
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
+      .map(this.extractSessions)
+      .catch(error => this.handleError(error));
   }
 
+  private extractSessions(res: Response, error) {
+    // console.error(error);
+    let body = res.json();
+    return body.sessions || [];
+  }
+
+  // Submit a session to be saved in the database
+  public submitSession(session: Session): Observable<any> {
+
+    console.log('submitSession');
+
+    let header = new Headers();
+    header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/sessions/' + session._id,
+      JSON.stringify({session: session}),
+      {headers: header}
+    ).map(res => res.json())
+     .catch(error => this.handleError(error));
+  }
+
+  // Delete a user from the database
+  public deleteSession(_id: string): Observable<any> {
+
+    console.log('deleteSession', _id);
+
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id); //.map(res => res.json());
+  }
+
+  //
+  // USERS
+  //
+  public getUsers(): Observable<User[]> {
+
+    console.log('getUsers');
+
+    let header = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/users')
+      .map(this.extractUsers)
+      .catch(error => this.handleError(error));
+  }
+
+  private extractUsers(res: Response, error) {
+    let body = res.json();
+    return body.users || [];
+  }
+
+  // Submit a user to be saved in the database
+  public submitUser(user: User): Observable<any> {
+
+    console.log('submitUser', user);
+    console.log(this.globals_service.site.restApiUrl + '/users/' + user._id);
+
+    let header = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/users/' + user._id,
+      JSON.stringify({user: user}),
+      {headers: header}
+    )
+    // .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  // Delete a user from the database
+  public deleteUser(_id: string): Observable<any> {
+
+    console.log('deleteUser', _id);
+
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/users/' + _id).map(res => res.json());
+  }
+
+  public getGroups(): Observable<Group[]> {
+
+    console.log('getGroups');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups')
+      .map(this.extractGroups)
+      .catch(error => this.handleError(error));
+  }
 
   // Generic error handler for connection problems
   private handleError(error) {

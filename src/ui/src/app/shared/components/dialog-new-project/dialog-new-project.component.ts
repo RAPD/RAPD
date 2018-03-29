@@ -24,6 +24,7 @@ export class DialogNewProjectComponent implements OnInit {
   public submit_error:string;
   public submitted:boolean = false;
   @Input() project: Project;
+  @Input() dialog_title: string;
   public model: Project;
   public project_form: FormGroup;
 

@@ -1,12 +1,14 @@
 import { Component,
          Inject,
          Input,
-         OnInit } from '@angular/core';
+         OnInit,
+         ViewContainerRef } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
 import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
+import { Project } from '../../classes/project';
 import { RestService } from '../../../shared/services/rest.service';
 
 @Component({
@@ -45,14 +47,14 @@ export class DialogSelectProjectComponent implements OnInit {
   submitProjectSelection() {
     let form_value = this.project_form.value;
 
-    console.log(form_value);
-
     if (! form_value._id) {
       return false;
     }
 
     // Add the result to the form_value
     form_value.result = this.data;
+
+    console.log(form_value);
 
     this.submitted = true;
     this.rest_service.addResultToProject(form_value)
@@ -62,9 +64,11 @@ export class DialogSelectProjectComponent implements OnInit {
                          // A problem connecting to REST server
                          // Submitted is over
                          this.submitted = false;
-                         this.submit_error = parameters.error;
+                         
                          if (parameters.success) {
                            this.dialogRef.close(parameters.project);
+                         } else {
+                           this.submit_error = parameters.message;
                          }
                        });
   }
