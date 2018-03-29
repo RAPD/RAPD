@@ -187,11 +187,14 @@ class Model(object):
         site = self.site
 
         # Instantiate the database connection
-        #self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
-        #                                  #port=site.DATABASE_SETTINGS['DB_PORT'],
-        #                                  user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
-        #                                  password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
-        self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
+        if site.CONTROL_DATABASE_SETTINGS.get('DATABASE_STRING', False):
+            self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
+        else:
+            self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
+                                              #port=site.DATABASE_SETTINGS['DB_PORT'],
+                                              user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
+                                              password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
+        #self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
 
     def start_server(self):
         """Start up the listening process for core"""
