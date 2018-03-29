@@ -241,7 +241,8 @@ class Model(object):
     def start_image_path_server(self):
         """Only start if self.site.ALT_IMAGE_SERVER_NAME is set"""
         # Check if module or class exists to get path of images in RAMDISK
-        if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+        #if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+        if hasattr(self.site, 'ALT_IMAGE_LOCATION') and hasattr(self.site, 'ALT_IMAGE_SERVER_NAME'):
             self.logger.debug("Starting image path server")
             self.alt_image_path_server = {}
             for site_id in self.detectors.keys():

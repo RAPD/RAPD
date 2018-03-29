@@ -101,6 +101,13 @@ def clear_cluster():
     for pid in l:
         os.system('qdel %s'%pid)
 
+import sites.necat as site
+if hasattr(site, 'ALT_IMAGE_LOCATION'):
+    print 'gh'
+if hasattr(site, 'junk'):
+    print 'gh1'
+
+
 #clear_cluster()
 """
 from utils.modules import load_module
