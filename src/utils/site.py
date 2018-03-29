@@ -131,7 +131,7 @@ def determine_site(site_arg=False):
 
     # Get possible site files
     site_files = get_site_files()
-    print site_files
+    # print site_files
 
     # Transform site files to a more palatable form
     safe_sites = {}
