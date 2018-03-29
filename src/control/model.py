@@ -964,9 +964,7 @@ class Model(object):
                 "directories":directories,
                 "data": {
                     "image_data":image1,
-                    #"image_data":fix_fullname(image1, site_tag),
                     "run_data":run_data
-                    #"run_data":fix_fullname(run_data, site_tag)
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{

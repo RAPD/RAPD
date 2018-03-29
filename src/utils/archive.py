@@ -185,4 +185,5 @@ def get_hash(filename):
 
 
 if __name__ == "__main__":
-    create_manifest("./", True)
+    print create_archive('/gpfs6/users/necat/rapd2/integrate/2018-03-23/yuan_bin3_7sk_sah_p07_w3_10/yuan_bin3_7sk_sah_p07_w3_10_1')
+    #create_manifest("./", True)

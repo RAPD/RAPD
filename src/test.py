@@ -87,11 +87,11 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
-first_image_number = 1
-wedge_size = 0
-delta_omega = 0.3
-print str(int(first_image_number + (float(wedge_size) / delta_omega)))
-print str(first_image_number + int(round(wedge_size / delta_omega)))
+#first_image_number = 1
+#wedge_size = 0
+#delta_omega = 0.3
+#print str(int(first_image_number + (float(wedge_size) / delta_omega)))
+#print str(first_image_number + int(round(wedge_size / delta_omega)))
 
 """
 #with open('/gpfs6/users/necat/Jon/RAPD_test/Output/logfile.log', 'w') as sys.stdout:
@@ -575,7 +575,7 @@ print red.smembers('working')
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
-"""
+
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('images_collected:NECAT_E')
@@ -588,4 +588,4 @@ print red.llen('run_data:NECAT_C')
 #red.delete("run_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
-"""
+
