@@ -1,4 +1,4 @@
-"""Shared methods for XDS"""
+"""Methods for using XDS"""
 
 """
 This file is part of RAPD
@@ -19,13 +19,13 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-05-10"
-__maintainer__ = "Your name"
-__email__ = "Your email"
+__created__ = "2017-06-30"
+__maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import argparse
+# import argparse
 # import from collections import OrderedDict
 # import datetime
 # import glob
@@ -39,7 +39,7 @@ import argparse
 # import redis
 # import shutil
 # import subprocess
-import sys
+# import sys
 # import time
 # import unittest
 # import urllib2
@@ -50,85 +50,37 @@ import sys
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
-from utils.numbers import try_int, try_float
 
 # Software dependencies
 VERSIONS = {
-    # "eiger2cbf": ("160415",)
+# "eiger2cbf": ("160415",)
 }
 
-
-def get_avg_mosaicity_from_integratelp(integrate_lp="INTEGRATE.LP"):
+def get_avg_mosaicity_from_integratelp():
     """
     Parse the INTEGRATE.LP file and extract information
     about the mosaicity.
     """
 
-    lp_lines = open(integrate_lp, "r").readlines()
+    lp = open('INTEGRATE.LP', 'r').readlines()
 
-    for linenum, line in enumerate(lp_lines):
-        if "SUGGESTED VALUES FOR INPUT PARAMETERS" in line:
-            avg_mosaicity_line = lp_lines[linenum + 2]
-    avg_mosaicity = try_float(avg_mosaicity_line.strip().split(' ')[-1])
+    for linenum, line in enumerate(lp):
+        if 'SUGGESTED VALUES FOR INPUT PARAMETERS' in line:
+            avg_mosaicity_line = lp[linenum + 2]
+    avg_mosaicity = float(avg_mosaicity_line.strip().split(' ')[-1])
 
     return avg_mosaicity
 
-def get_isa_from_correctlp(correct_lp="CORRECT.LP"):
+def get_isa_from_correctlp():
     """
-    Parses the CORRECT.LP file to extract ISa
+    Parses the CORRECT.LP file to extract information
     """
 
-    lp_lines = open(correct_lp, "r").readlines()
-    for i, line in enumerate(lp_lines):
-        if "ISa\n" in line:
-            isa_line = lp_lines[i + 1]
+    lp = open('CORRECT.LP', 'r').readlines()
+    for i, line in enumerate(lp):
+        if 'ISa\n' in line:
+            isa_line = lp[i + 1]
             break
-    isa = try_float(isa_line.strip().split()[-1])
+    isa = float(isa_line.strip().split()[-1])
 
     return isa
-
-
-def main(args):
-    """
-    The main process docstring
-    This function is called when this module is invoked from
-    the commandline
-    """
-
-    print "main"
-
-def get_commandline():
-    """
-    Grabs the commandline
-    """
-
-    print "get_commandline"
-
-    # Parse the commandline arguments
-    commandline_description = "Generate a generic RAPD file"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
-
-    # A True/False flag
-    my_parser.add_argument("-c", "--commandline",
-                           action="store_true",
-                           dest="commandline",
-                           help="Generate commandline argument parsing")
-
-    # File name to be generated
-    my_parser.add_argument(action="store",
-                           dest="file",
-                           nargs="?",
-                           default=False,
-                           help="Name of file to be generated")
-
-    # Print help message is no arguments
-    if len(sys.argv[1:])==0:
-        my_parser.print_help()
-        my_parser.exit()
-
-    return my_parser.parse_args()
-
-if __name__ == "__main__":
-
-    # Execute code
-    main()

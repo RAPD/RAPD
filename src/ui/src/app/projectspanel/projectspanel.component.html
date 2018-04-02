@@ -1,0 +1,43 @@
+<div class="rapd-main-panel">
+  <article class="c-content">
+    <table class="rapd-table-wide">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Last Action</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let project of projects">
+          <tr (click)="selectProject(project);">
+            <td>{{project.title}}</td>
+            <td>{{project.project_type}}</td>
+            <td>{{project.description}}</td>
+            <td>{{project.last_action}}</td>
+            <td>
+              <button
+                mat-button
+                color="primary"
+                (click)="editProject(project); $event.stopPropagation();">
+                <mat-icon>settings</mat-icon>
+                Edit
+              </button>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </article>
+  <mat-toolbar class="rapd-main-panel-action-bar">
+    <button
+      mat-button
+      color="primary"
+      (click)="newProject()">
+      <mat-icon>add</mat-icon>
+      New Project
+    </button>
+  </mat-toolbar>
+</div>

@@ -1,0 +1,195 @@
+<div class="panel" *ngIf="user.role === 'site_admin' || user.role === 'group_admin'">
+  <mat-tab-group class="session-tab-group">
+    <mat-tab *ngIf="globals_service.site.have_users === true" label="Users">
+        <article class="c-content" style="margin-top:2em;">
+          <ngx-datatable
+            class="material"
+            [rows]="users"
+            [loadingIndicator]="loadingIndicator"
+            [columnMode]="'force'"
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [limit]="10"
+            [rowHeight]="'auto'"
+            [reorderable]="reorderable"
+            [sorts]="[{prop: 'username', dir: 'asc'}]"
+            (activate)='editUser($event)'>
+            <ngx-datatable-column name="Username" prop="username">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Email" prop="email">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Role" prop="role">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </article>
+        <mat-toolbar class="rapd-main-panel-action-bar">
+          <form class="user-filter-form">
+            <mat-form-field
+              floatPlaceholder="never"
+              (keyup)='updateUserFilter($event)'>
+              <input
+                matInput
+                type="text"
+                placeholder="Filter"
+                style="font-size:1em;">
+            </mat-form-field>
+          </form>
+          <button mat-button color="primary" (click)="newUser()">New User</button>
+          <button mat-button color="primary" (click)="changePass()">Change My Password</button>
+        </mat-toolbar>
+    </mat-tab>
+
+    <mat-tab *ngIf="user.role === 'site_admin'" label="Groups">
+      <article class="c-content" style="margin-top:2em;">
+        <ngx-datatable
+          #groups_table
+          class="material"
+          [rows]="groups"
+          [loadingIndicator]="loadingIndicator"
+          [columnMode]="'force'"
+          [headerHeight]="50"
+          [footerHeight]="50"
+          [limit]="10"
+          [rowHeight]="'auto'"
+          [reorderable]="reorderable"
+          [sorts]="[{prop: 'groupname', dir: 'asc'}]"
+          (activate)='editGroup($event)'>
+          <ngx-datatable-column name="Group Name" prop="groupname">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Institution" prop="institution">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Status" prop="status">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </article>
+      <article class="c-content">
+      </article>
+      <mat-toolbar class="rapd-main-panel-action-bar">
+        <form class="group-filter-form">
+          <mat-form-field
+            floatPlaceholder="never"
+            (keyup)='updateGroupFilter($event)'>
+            <input
+              matInput
+              placeholder="Filter">
+          </mat-form-field>
+        </form>
+        <button *ngIf="! globals_service.site.have_users" mat-button color="primary" (click)="populateGroups()">Populate Groups</button>
+        <button *ngIf="user.role === 'site_admin'" mat-button color="primary" (click)="createGroup()">New Group</button>
+      </mat-toolbar>
+    </mat-tab>
+
+    <mat-tab *ngIf="user.role === 'site_admin'" label="Sessions">
+      <article class="c-content" style="margin-top:2em;">
+        <ngx-datatable
+          class="material"
+          [rows]="sessions"
+          [loadingIndicator]="loadingIndicator"
+          [columnMode]="'force'"
+          [headerHeight]="50"
+          [footerHeight]="50"
+          [limit]="10"
+          [rowHeight]="'auto'"
+          [reorderable]="reorderable"
+          [sorts]="[{prop: 'last_process', dir: 'desc'}]"
+          (activate)='editSession($event)'>
+          <ngx-datatable-column name="Site" prop="site">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Group" prop="group.groupname">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Created" prop="timestamp">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value | date:'y-MM-dd HH:mm'}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Last Process" prop="last_process">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value | date:'y-MM-dd HH:mm'}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Directory" prop="data_root_dir">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </article>
+      <mat-toolbar class="rapd-main-panel-action-bar">
+        <form class="session-filter-form">
+          <mat-form-field
+            (keyup)='updateSessionFilter($event)'>
+            <input
+              matInput
+              placeholder="Filter">
+          </mat-form-field>
+        </form>
+        <button mat-button color="primary" (click)="createSession()">New Session</button>
+      </mat-toolbar>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<div class="rapd-main-panel" *ngIf="user.role === 'user'">
+  <article class="l-content">
+    <h2>My Info</h2>
+    <table class="is-full-width sessions-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Group(s)</th>
+        </tr>
+      </thead>
+      <tr>
+        <td>{{user.username}}</td>
+        <td>{{user.email}}</td>
+        <td>{{user.role}}</td>
+        <td> <span *ngFor="let group of user.groups">{{group.groupname}}</span> </td>
+      </tr>
+    </table>
+  </article>
+  <article class="l-content">
+    <h2>My Groups Info</h2>
+    <table class="is-full-width sessions-table">
+      <thead>
+        <tr>
+          <th>Groupname</th>
+          <th>Institution</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <!-- <tr *ngFor="let group of user_groups">
+        <td>{{group.groupname}}</td>
+        <td>{{group.institution}}</td>
+        <td>{{group.status}}</td>
+      </tr> -->
+    </table>
+  </article>
+  <mat-toolbar class="rapd-main-panel-action-bar">
+    <button mat-button color="primary" (click)="changePass()">Change My Password</button>
+  </mat-toolbar>
+</div>

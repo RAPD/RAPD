@@ -1,0 +1,109 @@
+<div *ngIf="! submit_error">
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <h2>Reintegrate</h2>
+    <h3>{{data.process.repr}}</h3>
+  </div>
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+    <form [formGroup]="reintegrate_form">
+      <div class="form-group">
+        <table class="rapd-form-table">
+          <tbody>
+            <tr>
+              <td class="rapd-form-table-rj">Spacegroup Override</td>
+              <td class="rapd-form-table-select">
+                <mat-select [(ngModel)]="model.spacegroup"
+                           formControlName="spacegroup">
+                  <mat-option [value]="0">None</mat-option>
+                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                    {{globals_service.intl2std[sg]}}
+                  </mat-option>
+                </mat-select>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rji">Frame Range</td>
+              <td>
+                <mat-form-field style="width:5em;">
+                  <input matInput
+                         style="text-align:center;"
+                         placeholder=""
+                         formControlName="start_frame"
+                         [(ngModel)]="model.start_frame">
+                </mat-form-field>
+                -
+                <mat-form-field style="width:5em;">
+                  <input matInput
+                         style="text-align:center;"
+                         placeholder=""
+                         formControlName="end_frame"
+                         [(ngModel)]="model.end_frame">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rji">Resolution Range</td>
+              <td>
+                <mat-form-field style="width:5em;">
+                  <input matInput
+                         style="text-align:center;"
+                         placeholder="Low"
+                         formControlName="low_res"
+                         [(ngModel)]="model.low_res">
+                </mat-form-field>
+                -
+                <mat-form-field style="width:5em;">
+                  <input matInput
+                         style="text-align:center;"
+                         placeholder="Hi"
+                         formControlName="hi_res"
+                         [(ngModel)]="model.hi_res">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rj">Spacegroup Decider</td>
+              <td class="rapd-form-table-select">
+                <mat-select [(ngModel)]="model.spacegroup_decider"
+                           formControlName="spacegroup_decider">
+                  <mat-option *ngFor="let spacegroup_decider of spacegroup_deciders" [value]="spacegroup_decider.val">
+                    {{spacegroup_decider.label}}
+                  </mat-option>
+                </mat-select>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rj">Polishing Rounds</td>
+              <td class="rapd-form-table-select">
+                <mat-select [(ngModel)]="model.rounds_polishing"
+                           formControlName="rounds_polishing">
+                  <mat-option [value]=1>1</mat-option>
+                  <mat-option [value]=2>2</mat-option>
+                  <mat-option [value]=3>3</mat-option>
+                  <mat-option [value]=4>4</mat-option>
+                  <mat-option [value]=5>5</mat-option>
+                </mat-select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button color="primary" (click)="submitReintegrate()">Execute</button>
+  </mat-dialog-actions>
+</div>
+<div *ngIf="submit_error">
+  <mat-dialog-content>
+    <h2>Error</h2>
+    {{submit_error}}
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
+</div>

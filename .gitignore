@@ -3,6 +3,7 @@
 .svn
 
 # Build
+src/restful
 .project
 .pydevproject
 *.pyc
@@ -13,6 +14,7 @@ rapd.cshrc
 rapd.shrc
 phenix-installer-*
 cache
+package-lock.json
 
 # Archives
 *.tar
@@ -23,9 +25,9 @@ Python-*
 # Test data
 test_data
 *.log
+ramdisk 
 
 # Just there for local reference
-ui
 
 # Files that should be hidden
 *secret*
@@ -36,3 +38,47 @@ tmp
 
 # System files
 .DS_Store
+
+
+# From UI
+src/ui/dist
+src/ui/rapd2
+src/ui/tmp
+node_modules
+
+
+# UI configuration
+src/ui/src/app/site.ts
+src/services/rest/config.js
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage/*
+/libpeerconnection.log
+npm-debug.log
+testem.log
+/typings
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+#System Files
+Thumbs.db
+

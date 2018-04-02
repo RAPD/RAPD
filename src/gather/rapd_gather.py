@@ -5,7 +5,7 @@ Wraps the gatherers and allows calling by site specification
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -90,7 +90,8 @@ def main():
         # Compose the command
         command = raw_args[:]
         command.insert(0, "%s/src/sites/gatherers/" % environmental_vars["RAPD_HOME"] + SITE.GATHERER)
-        command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
+        #command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
+        command.insert(0, "rapd.python")
 
         # Run it
         print command

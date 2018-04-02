@@ -50,10 +50,14 @@ VENDORTYPE = "Eiger-9M"
 DETECTOR_SN = "Dectris Eiger 9M S/N E-18-0101"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
-# Template for image name generation ? for frame number places
-IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
 # Is there a run number in the template?
-RUN_NUMBER_IN_TEMPLATE = True
+RUN_NUMBER_IN_TEMPLATE = False
+# Template for image name generation ? for frame number places
+if RUN_NUMBER_IN_TEMPLATE:
+    #IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
+    IMAGE_TEMPLATE = "%s_%03d_??????.cbf" # prefix & run number
+else:
+    IMAGE_TEMPLATE = "%s_??????.cbf" # prefix
 # This is a version number for internal RAPD use
 # If the header changes, increment this number
 HEADER_VERSION = 1
@@ -61,51 +65,15 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
-XDSINP = detector.XDSINP
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
-# This is from LS-CAT supplied XDS.INP
-XDSINP.update({
-    "MAX_CELL_ANGLE_ERROR": " 2.0",
-    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "3",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 6000 30000",
-    "STRONG_PIXEL": "4.0",
-    "MIN_RFL_Rmeas": " 50",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "21",
-    "REFINE(INTEGRATE)": " DISTANCE POSITION ORIENTATION BEAM CELL AXIS",
-    "REFINE(CORRECT)": " DISTANCE POSITION BEAM ORIENTATION CELL AXIS",
-    "INCLUDE_RESOLUTION_RANGE": "50.0 0",
-    "REFINE(IDXREF)": " DISTANCE BEAM ORIENTATION CELL AXIS",
-    "SPACE_GROUP_NUMBER": "0",
-    "NX": " 3110 ",
-    "NY": " 3269",
-    "MINIMUM_ZETA": "0.05",
-    "OVERLOAD": " 1074913",
-    "UNTRUSTED_RECTANGLE4": "    0 3111   1065 1103",
-    "UNTRUSTED_RECTANGLE5": "    0 3111   1616 1654",
-    "UNTRUSTED_RECTANGLE6": "    0 3111   2167 2205",
-    "UNTRUSTED_RECTANGLE7": "    0 3111   2718 2756",
-    "UNTRUSTED_RECTANGLE1": " 1030 1041      0 3270",
-    "UNTRUSTED_RECTANGLE2": " 2070 2081      0 3270",
-    "UNTRUSTED_RECTANGLE3": "    0 3111    514  552",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "21",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "TEST_RESOLUTION_RANGE": " 8.0 3",
-    "MAX_CELL_AXIS_ERROR": " 0.03",
-    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
-    "SENSOR_THICKNESS": "0.45",
-    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": " 2.0",
-    "TRUSTED_REGION": "0.0 1.41",
-    "ROTATION_AXIS": " 1.0 0.0 0.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "QY": "0.075",
-    "QX": "0.075 ",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": " 0.0 1.0 0.0",
-    "SEPMIN": "4.0",
-    "CLUSTER_RADIUS": "2",
-    "DETECTOR": "EIGER",
-    })
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
+          ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 def parse_file_name(fullname):
     """
@@ -124,7 +92,11 @@ def parse_file_name(fullname):
     sbase = basename.split("_")
     prefix = "_".join(sbase[0:-2])
     image_number = int(sbase[-1])
-    run_number = int(sbase[-2])
+    if RUN_NUMBER_IN_TEMPLATE:
+        run_number = int(sbase[-2])
+        prefix = "_".join(sbase[0:-3])
+    else:
+        run_number = None
     return directory, basename, prefix, run_number, image_number
 
 def create_image_fullname(directory,
@@ -140,8 +112,10 @@ def create_image_fullname(directory,
     run_number -- number for the run
     image_number -- number for the image
     """
-
-    filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
+    if RUN_NUMBER_IN_TEMPLATE:
+        filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
+    else:
+        filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, image_number)
 
     fullname = os.path.join(directory, filename)
 
@@ -153,12 +127,50 @@ def create_image_template(image_prefix, run_number):
     """
 
     # print "create_image_template %s %d" % (image_prefix, run_number)
-
-    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    if RUN_NUMBER_IN_TEMPLATE:
+        image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    else:
+        image_template = IMAGE_TEMPLATE % image_prefix
 
     # print "image_template: %s" % image_template
 
     return image_template
+
+def calculate_flux(header, site_params):
+    """
+    Calculate the flux as a function of transmission and aperture size.
+    """
+    beam_size_x = site_params.get('BEAM_SIZE_X')
+    beam_size_y = site_params.get('BEAM_SIZE_Y')
+    aperture = header.get('md2_aperture')
+    new_x = beam_size_x
+    new_y = beam_size_y
+
+    if aperture < beam_size_x:
+        new_x = aperture
+    if aperture < beam_size_y:
+        new_y = aperture
+
+    # Calculate area of full beam used to calculate the beamline flux
+    # Assume ellipse, but same equation works for circle.
+    # Assume beam is uniform
+    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+
+    # Calculate the new beam area (with aperture) divided by the full_beam_area.
+    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+    # then it would switch to circle
+    if beam_size_y <= aperture:
+        # ellipse
+        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    else:
+        # circle
+        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+
+    # Calculate the new_beam_area ratio to full_beam_area
+    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
+    # Return the flux and beam size
+    return (flux, new_x, new_y)
 
 def get_data_root_dir(fullname):
     """
@@ -176,7 +188,7 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
-def read_header(input_file=False, beam_settings=False):
+def read_header(input_file=False, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 
@@ -194,14 +206,22 @@ def read_header(input_file=False, beam_settings=False):
         header = detector.read_header(input_file)
 
         basename = os.path.basename(input_file)
-        header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
-        header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+
+        #header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
+        header["image_prefix"] ="_".join(basename.replace(".cbf", "").split("_")[:-1])
+        
+        # Add run_number (if used) and image template for processing
+        if RUN_NUMBER_IN_TEMPLATE:
+            #header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+            header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+            header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+        else:
+            header["run_number"] = None
+            header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
 
         # Add tag for module to header
         header["rapd_detector_id"] = "lscat_dectris_eiger9m"
 
-        # The image template for processing
-        header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
         header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Return the header

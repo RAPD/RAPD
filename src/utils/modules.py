@@ -5,7 +5,7 @@ Provides tools for loading modules
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -56,23 +56,30 @@ def load_module(seek_module, directories=False, logger=False):
     # Look for rapd plugins in the specified directories
     if directories:
         for directory in directories:
-            # try:
-            # print "Attempting to load module %s" % directory+"."+seek_module
-            if logger:
-                logger.debug("Attempting to load module %s", directory+"."+seek_module)
-            module = importlib.import_module(directory+"."+seek_module)
-            break
-            # except ImportError:
-            #     if logger:
-            #         logger.error("Error loading %s", directory+"."+seek_module)
+            try:
+                if logger:
+                    logger.debug("Attempting to load module %s", directory+"."+seek_module)
+                module = importlib.import_module(directory+"."+seek_module)
+                break
+            except ImportError as e:
+                # print e
+                if logger:
+                    logger.error(e)
+                    logger.debug("FAILED to load module %s", directory+"."+seek_module)
+                # raise
+
     else:
         try:
             # module = importlib.import_module(directory+"."+seek_module)
             module = importlib.import_module(seek_module)
-        except ImportError:
-            pass
+        except ImportError as e:
+            print e
 
     if module == None:
-        raise Exception("No module found for %s" % seek_module)
+        raise Exception("No module found for: '%s'" % seek_module)
     else:
         return module
+
+
+if __name__ == "__main__":
+    load_module("credit")

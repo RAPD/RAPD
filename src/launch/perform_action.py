@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -28,10 +28,12 @@ Method for connecting and sending command to Launcher instance
 
 import socket
 import threading
-import json
 import time
 import logging
 import logging.handlers
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 BUFFER_SIZE = 8192
 

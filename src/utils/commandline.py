@@ -45,7 +45,13 @@ base_parser = argparse.ArgumentParser(add_help=False)
 base_parser.add_argument("-s", "--site",
                          action="store",
                          dest="site",
-                         help="Define the site (ex. NECAT_C)")
+                         help="Define the site (ie. NECAT_C)")
+# Tag for Launcher needed for overwatch launching.
+base_parser.add_argument("-t", "--tag",
+                        action="store",
+                        dest="tag",
+                        #default="",
+                        help="Specify a tag for the Launcher (ie, shell, qsub, etc)")
 base_parser.add_argument("-v", "--verbose",
                          action="store_true",
                          dest="verbose",

@@ -7,7 +7,7 @@ NB - These methods must be run using phenix.python NOT rapd.python
 """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -33,7 +33,6 @@ import argparse
 # import from collections import OrderedDict
 # import datetime
 # import glob
-import json
 # import logging
 # import multiprocessing
 # import os
@@ -47,6 +46,9 @@ import sys
 # import time
 # import unittest
 # import uuid
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Phenix imports
 import phaser

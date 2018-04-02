@@ -5,7 +5,7 @@ Monitor for new run descriptions submitted to a redis instance
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -27,16 +27,17 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import json
 import logging
 import threading
 import time
 
-import redis
+#import redis
+import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
-# import pysent
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Constants
 POLLING_REST = 1      # Time to rest between checks for new run data
@@ -84,7 +85,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -111,22 +112,14 @@ class Monitor(threading.Thread):
         self.logger.debug("Stopping")
 
         self.running = False
+        self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
+        redis_database = importlib.import_module('database.redis_adapter')
 
-        # Using a redis cluster setup
-        # if settings["REDIS_CLUSTER"]:
-        #     self.logger.debug(settings)
-        #     self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
-        #                                      sentinel_port=settings["SENTINEL_PORT"],
-        #                                      master_name=settings["REDIS_MASTER_NAME"])
-        # Using a standard redis server setup
-        # else:
-        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
-                                    port=self.site.IMAGE_MONITOR_REDIS_PORT,
-                                    db=self.site.IMAGE_MONITOR_REDIS_DB)
-        self.redis = redis.Redis(connection_pool=pool)
+        self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
+        self.redis = self.redis_database.connect_to_redis()
 
     def run(self):
         self.logger.debug("Running")
@@ -169,8 +162,6 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWRUN",
                                      "run_data":run_data,
                                      "site_tag":site_tag})
-                        # self.notify(("NEWRUN", {"run_data":run_data,
-                        #                         "site_tag":site_tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 

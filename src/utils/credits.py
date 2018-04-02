@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -88,6 +88,12 @@ XDS = [
     "XDS",
     "Reference: Kabsch W (2010) Acta Cryst. D66:125-132",
     "Website: http://xds.mpimf-heidelberg.mpg.de/\n"
+]
+
+POINTLESS = [
+    "Pointless",
+    "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/pointless.html\n"
 ]
 
 RADDOSE = [

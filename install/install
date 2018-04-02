@@ -117,6 +117,13 @@ done
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
 
+  # ROOT user?
+  USER=$(whoami)
+  if [[ $USER == "root" ]]; then
+    printf "\033[91mInstalling as root not supported! Sorry.\033[0m\n\n"
+    exit 1
+  fi
+
   # Cent OS
   if [ -f /etc/centos-release ]; then
 
@@ -281,7 +288,8 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # Install CCTBX
     printf "  Installing CCTBX"
-    python bootstrap.py --builder=cctbx
+    python bootstrap.py --builder=cctbx --enable-shared
+    # python bootstrap.py --builder=cctbx --nproc=4 --enable-shared
 
     if [ ! $? -eq 0 ]
     then
@@ -424,6 +432,7 @@ if [ $INSTALL_PYTHON == 1 ]; then
   if [[ $PLATFORM == "Darwin" ]]; then
     rapd.pip install pyopenssl
   fi
+  rapd.pip install bz2
   rapd.pip install pycrypto
   rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
   rapd.pip install pyasn1

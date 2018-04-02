@@ -6,7 +6,7 @@ detector
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -37,6 +37,7 @@ import pwd
 
 # RAPD imports
 import detectors.rayonix.rayonix_mx225 as detector
+import detectors.detector_utils as utils
 
 # Detector information
 DETECTOR = "rayonix_mx225"
@@ -49,32 +50,17 @@ HEADER_VERSION = 1
 
 # XDS information
 XDS_FLIP_BEAM = True
-XDSINP = {
-    "MAX_CELL_ANGLE_ERROR": "2.0",
-    "MIN_RFL_Rmeas": "50.0",
-    "INCLUDE_RESOLUTION_RANGE": "100.00 0.00",
-    "SPACE_GROUP_NUMBER": "0",
-    "NY": "3072",
-    "OVERLOAD": "65535",
-    "NX": "3072",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": "6000 30000",
-    "MAX_CELL_AXIS_ERROR": "0.030",
-    "ROTATION_AXIS": "-1.0 0.0 0.0",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "INDEX_ORIGIN": "0 0 0",
-    "DIRECTION_OF_DETECTOR_X-AXIS": "1.0 0.0 0.0",
-    "POLARIZATION_PLANE_NORMAL": "0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": "2.00",
-    "TRUSTED_REGION": "0.0 0.99",
-    "WFAC1": "1.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "QY": "0.07345",
-    "QX": "0.07345",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": "0.0 1.0 0.0",
-    "TEST_RESOLUTION_RANGE": "50.00 2.00",
-    "DETECTOR": "MARCCD"
-    }
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
+# Update the XDS information from the imported detector
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [
+    ('ROTATION_AXIS', '-1 0 0') ,
+          ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
+
 
 def parse_file_name(fullname):
     """
@@ -269,7 +255,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings={}):
+def read_header(fullname, beam_settings={}, extra_header=False):
     """
     Read the header and add some site-specific data
 

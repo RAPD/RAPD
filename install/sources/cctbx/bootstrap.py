@@ -1,13 +1,25 @@
-
+#!/usr/bin/env python
 # -*- mode: python; coding: utf-8; indent-tabs-mode: nil; python-indent: 2 -*-
-from __future__ import division
-import os, os.path, posixpath, ntpath
-import sys
-import stat
-import subprocess
+
+# To download this file:
+# wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+# or
+# curl https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py > bootstrap.py
+# Downloaded 2018-03-22 FM
+
+from __future__ import absolute_import, division
+
+import ntpath
 import optparse
+import os
+import os.path
+import posixpath
+import re
 import shutil
 import socket as pysocket
+import stat
+import subprocess
+import sys
 import tarfile
 import tempfile
 import time
@@ -22,22 +34,14 @@ rosetta_version_tar_bundle="rosetta_src_3.7_bundle"
 rosetta_version_directory='rosetta_src_2016.32.58837_bundle'
 # LICENSE REQUIRED
 afitt_version="AFITT-2.4.0.4-redhat-RHEL7-x64" #binary specific to cci-vm-1
-amber_version='linux-64.ambertools-17.0.0-py27' # same as circle download file
-amber_dir='amber17'
+amber_version='ambertools-18' # same as circle download file
+amber_dir='amber18'
 envs = {
   "AMBERHOME"           : ["modules", "amber"],
   "PHENIX_ROSETTA_PATH" : ["modules", "rosetta"],
   "OE_EXE"              : ["modules", "openeye", "bin"],
   "OE_LICENSE"          : ["oe_license.txt"], # needed for license
 }
-
-# To download this file:
-# wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
-# or
-# curl https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py > bootstrap.py
-
-# To get the version before the switch to git:
-# svn export -r 25697 svn://svn.code.sf.net/p/cctbx/code/trunk/libtbx/auto_build/bootstrap.py
 
 # Utility function to be executed on slave machine or called directly by standalone bootstrap script
 def tar_extract(workdir, archive, modulename=None):
@@ -71,7 +75,7 @@ def tar_extract(workdir, archive, modulename=None):
           # Extract directories with a safe mode.
           directories.append(tarinfo)
           tarinfo = copy.copy(tarinfo)
-          tarinfo.mode = 0700
+          tarinfo.mode = 0770
         tar.extract(tarinfo, workdir)
         # Reverse sort directories.
         directories.sort(key=operator.attrgetter('name'))
@@ -85,17 +89,18 @@ def tar_extract(workdir, archive, modulename=None):
     tarfoldername = os.path.join(workdir, os.path.commonprefix(tar.getnames()).split('/')[0])
     tar.close()
     # take full permissions on all extracted files
-    module = os.path.join(workdir, tarfoldername)
-    for root, dirs, files in os.walk(module):
-      for fname in files:
-        full_path = os.path.join(root, fname)
-        os.chmod(full_path, stat.S_IREAD | stat.S_IWRITE)
+    # Commenting out FM
+    # module = os.path.join(workdir, tarfoldername)
+    # for root, dirs, files in os.walk(module):
+    #   for fname in files:
+    #     full_path = os.path.join(root, fname)
+    #     os.chmod(full_path, stat.S_IREAD | stat.S_IWRITE)
     # rename to expected folder name, e.g. boost_hot -> boost
     # only rename if folder names differ
     if modulename:
       if modulename != tarfoldername:
         os.rename(tarfoldername, modulename)
-  except Exception, e:
+  except Exception as e:
     raise Exception("Extracting tar archive resulted in error: " + str(e) + "\n" \
       + traceback.format_exc())
     return 1
@@ -156,7 +161,7 @@ class ShellCommand(object):
         if os.path.exists(directory):
           print 'Deleting directory : %s' % directory
           try: shutil.rmtree(directory)
-          except OSError, e:
+          except OSError:
             print "Strangely couldn't delete %s" % directory
       return 0
     if 0:
@@ -178,7 +183,7 @@ class ShellCommand(object):
         stderr=stderr,
         env=env,
       )
-    except Exception, e: # error handling
+    except Exception as e: # error handling
       if not self.kwargs.get('haltOnFailure'):
         return 1
       if isinstance(e, OSError):
@@ -216,7 +221,7 @@ class Toolbox(object):
     if os.path.dirname(file):
       try:
         os.makedirs(os.path.dirname(file))
-      except Exception, e:
+      except Exception:
         pass
 
     localcopy = os.path.isfile(file)
@@ -235,10 +240,10 @@ class Toolbox(object):
 
     try:
       import ssl
-      ssl_error = ssl.SSLError
+      from ssl import SSLError
     except ImportError:
       ssl = None
-      ssl_error = None
+      SSLError = None
 
     # Open connection to remote server
     try:
@@ -266,7 +271,7 @@ class Toolbox(object):
         socket = urllib2.urlopen(url_request, None, 7)
       else:
         socket = urllib2.urlopen(url_request)
-    except ssl.SSLError, e:
+    except SSLError, e:
       # This could be a timeout
       if localcopy:
         # Download failed for some reason, but a valid local copy of
@@ -275,7 +280,7 @@ class Toolbox(object):
         return -2
       # otherwise pass on the error message
       raise
-    except (pysocket.timeout, urllib2.URLError, urllib2.HTTPError), e:
+    except (pysocket.timeout, urllib2.HTTPError) as e:
       if isinstance(e, urllib2.HTTPError) and etag and e.code == 304:
         # When using ETag. a 304 error means everything is fine
         log.write("local copy is current (etag)\n")
@@ -287,90 +292,104 @@ class Toolbox(object):
         return -2
       # otherwise pass on the error message
       raise
+    except urllib2.URLError, e:
+      if localcopy:
+        # Download failed for some reason, but a valid local copy of
+        # the file exists, so use that one instead.
+        log.write("%s\n" % str(e))
+        return -2
+      # if url fails to open, try using curl
+      # temporary fix for old OpenSSL in system Python on macOS
+      # https://github.com/cctbx/cctbx_project/issues/33
+      command = ['/usr/bin/curl', '--http1.0', '-Lo', file, '--retry', '5', url]
+      subprocess.call(command, shell=False)
+      socket = None     # prevent later socket code from being run
+      received = 1      # satisfy (filesize > 0) checks later on
 
-    try:
-      file_size = int(socket.info().getheader('Content-Length'))
-    except Exception:
-      file_size = 0
+    if (socket is not None):
+      try:
+        file_size = int(socket.info().getheader('Content-Length'))
+      except Exception:
+        file_size = 0
 
-    if os.path.isfile(tagfile):
-      # ETag did not match, so delete any existing ETag.
-      os.remove(tagfile)
+      if os.path.isfile(tagfile):
+        # ETag did not match, so delete any existing ETag.
+        os.remove(tagfile)
 
-    remote_mtime = 0
-    try:
-      remote_mtime = time.mktime(socket.info().getdate('last-modified'))
-    except Exception:
-      pass
+      remote_mtime = 0
+      try:
+        remote_mtime = time.mktime(socket.info().getdate('last-modified'))
+      except Exception:
+        pass
 
-    if (file_size > 0):
-      if (remote_mtime > 0):
-        # check if existing file matches remote size and timestamp
-        try:
-          (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(file)
-          if (size == file_size) and (remote_mtime == mtime):
-            log.write("local copy is current\n")
-            socket.close()
-            return -2
-        except Exception:
-          # proceed with download if timestamp/size check fails for any reason
-          pass
+      if (file_size > 0):
+        if (remote_mtime > 0):
+          # check if existing file matches remote size and timestamp
+          try:
+            (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(file)
+            if (size == file_size) and (remote_mtime == mtime):
+              log.write("local copy is current\n")
+              socket.close()
+              return -2
+          except Exception:
+            # proceed with download if timestamp/size check fails for any reason
+            pass
 
-      hr_size = (file_size, "B")
-      if (hr_size[0] > 500): hr_size = (hr_size[0] / 1024, "kB")
-      if (hr_size[0] > 500): hr_size = (hr_size[0] / 1024, "MB")
-      log.write("%.1f %s\n" % hr_size)
-      if status:
-        log.write("    [0%")
-        log.flush()
-
-    received = 0
-    block_size = 8192
-    progress = 1
-    # Allow for writing the file immediately so we can empty the buffer
-    tmpfile = file + '.tmp'
-
-    f = open(tmpfile, 'wb')
-    while 1:
-      block = socket.read(block_size)
-      received += len(block)
-      f.write(block)
-      if status and (file_size > 0):
-        while (100 * received / file_size) > progress:
-          progress += 1
-          if (progress % 20) == 0:
-            log.write("%d%%" % progress)
-          elif (progress % 2) == 0:
-            log.write(".")
+        hr_size = (file_size, "B")
+        if (hr_size[0] > 500): hr_size = (hr_size[0] / 1024, "kB")
+        if (hr_size[0] > 500): hr_size = (hr_size[0] / 1024, "MB")
+        log.write("%.1f %s\n" % hr_size)
+        if status:
+          log.write("    [0%")
           log.flush()
 
-      if not block: break
-    f.close()
-    socket.close()
+      received = 0
+      block_size = 8192
+      progress = 1
+      # Allow for writing the file immediately so we can empty the buffer
+      tmpfile = file + '.tmp'
 
-    if status and (file_size > 0):
-      log.write("]\n")
-    else:
-      log.write("%d kB\n" % (received / 1024))
-    log.flush()
+      f = open(tmpfile, 'wb')
+      while 1:
+        block = socket.read(block_size)
+        received += len(block)
+        f.write(block)
+        if status and (file_size > 0):
+          while (100 * received / file_size) > progress:
+            progress += 1
+            if (progress % 20) == 0:
+              log.write("%d%%" % progress)
+            elif (progress % 2) == 0:
+              log.write(".")
+            log.flush()
 
-    # Do not overwrite file during the download. If a download temporarily fails we
-    # may still have a clean, working (yet older) copy of the file.
-    shutil.move(tmpfile, file)
+        if not block: break
+      f.close()
+      socket.close()
 
-    if (file_size > 0) and (file_size != received):
-      return -1
+      if status and (file_size > 0):
+        log.write("]\n")
+      else:
+        log.write("%d kB\n" % (received / 1024))
+      log.flush()
 
-    if remote_mtime > 0:
-      # set file timestamp if timestamp information is available
-      from stat import ST_ATIME
-      st = os.stat(file)
-      atime = st[ST_ATIME] # current access time
-      os.utime(file,(atime,remote_mtime))
+      # Do not overwrite file during the download. If a download temporarily fails we
+      # may still have a clean, working (yet older) copy of the file.
+      shutil.move(tmpfile, file)
 
-    if cache and socket.info().getheader('ETag'):
-      # If the server sent an ETAG, then keep it alongside the file
-      open(tagfile, 'w').write(socket.info().getheader('ETag'))
+      if (file_size > 0) and (file_size != received):
+        return -1
+
+      if remote_mtime > 0:
+        # set file timestamp if timestamp information is available
+        from stat import ST_ATIME
+        st = os.stat(file)
+        atime = st[ST_ATIME] # current access time
+        os.utime(file,(atime,remote_mtime))
+
+      if cache and socket.info().getheader('ETag'):
+        # If the server sent an ETAG, then keep it alongside the file
+        open(tagfile, 'w').write(socket.info().getheader('ETag'))
 
     return received
 
@@ -396,7 +415,7 @@ class Toolbox(object):
             os.makedirs(filename)
           elif upperdirs and not os.path.exists(upperdirs):
             os.makedirs(upperdirs)
-        except Exception, e: pass
+        except Exception: pass
         if not is_directory:
           source = z.open(member)
           target = file(filename, "wb")
@@ -414,6 +433,34 @@ class Toolbox(object):
              # r--r--r-- => 0o444 => 292
             os.chmod(filename, mode)
     z.close()
+
+  @staticmethod
+  def set_git_repository_config_to_rebase(config):
+    with open(config, 'r') as fh:
+      cfg = fh.readlines()
+
+    branch, remote, rebase = False, False, False
+    insertions = []
+    for n, line in enumerate(cfg):
+      if line.startswith('['):
+        if branch and remote and not rebase:
+          insertions.insert(0, (n, branch))
+        if line.startswith('[branch'):
+          branch = line.split('"')[1]
+        else:
+          branch = False
+        remote, rebase = False, False
+      if re.match('remote\s*=', line.strip()):
+        remote = True
+      if re.match('rebase\s*=', line.strip()):
+        rebase = True
+    if branch and remote and not rebase:
+      insertions.insert(0, (n + 1, branch))
+    for n, branch in insertions:
+      print "  setting branch %s to rebase" % branch
+      cfg.insert(n, '\trebase = true\n')
+    with open(config, 'w') as fh:
+      fh.write("".join(cfg))
 
   @staticmethod
   def git(module, parameters, destination=None, use_ssh=False, verbose=False, reference=None):
@@ -447,7 +494,7 @@ class Toolbox(object):
 
       print "Existing non-git directory -- don't know what to do. skipping: %s" % module
       if ('cctbx_project.git' in parameters[0]):
-        print '\n' + '=' * 80 + '\nCCTBX is transitioning to git.\nPlease continue committing changes using svn until November 22, 2016.\nAfter that, commits will only be done through git.\n\nTo update cctbx_project, please run "svn update" while in the cctbx_project directory.\n' + '*'*80 + '\n'
+        print '\n' + '=' * 80 + '\nCCTBX moved to git on November 22, 2016.\n\nTo update cctbx_project to the last available subversion revision please run "svn update" while in the cctbx_project directory.\n' + '*'*80 + '\n'
       return
 
     if isinstance(parameters, basestring):
@@ -484,6 +531,7 @@ class Toolbox(object):
             os.remove(os.path.join(destination, '.git', 'objects', 'info', 'alternates'))
           except OSError:
             returncode = 1
+        Toolbox.set_git_repository_config_to_rebase(os.path.join(destination, '.git', 'config'))
         return returncode
       filename = "%s-%s" % (module,
                             urlparse.urlparse(source_candidate)[2].split('/')[-1])
@@ -538,8 +586,15 @@ class cleanup_ext_class(object):
   def run(self):
     self.remove_ext_files()
 
-class cleanup_dirs_class(object):
+class cleanup_dirs(object):
+  """Command to remove unwanted subdirectories"""
+
   def __init__(self, dirs, workdir=None):
+    """
+    :param dirs:    List of subdirectories to remove from workdir
+    :param workdir: The root directory for everything in dirs. If None, then
+                    the command will be run in the current working directory.
+    """
     self.dirs = dirs
     self.workdir = workdir
 
@@ -548,18 +603,25 @@ class cleanup_dirs_class(object):
 
   def remove_dirs(self):
     cwd=os.getcwd()
-    if self.workdir is not None:
-      if os.path.exists(self.workdir):
-        os.chdir(self.workdir)
-      else:
-        return
-    print "===== Removing directories in %s" % (os.getcwd())
+    try:
+      # Move to the workdir
+      if self.workdir is not None:
+        if os.path.exists(self.workdir):
+          os.chdir(self.workdir)
+        else:
+          return
 
-    for d in self.dirs:
-      if os.path.exists(d):
-        print "      removing %s" % (os.path.join(os.getcwd(),d))
-        shutil.rmtree(d)
-    os.chdir(cwd)
+      # Don't notify the user if we aren't doing anything
+      if any(os.path.exists(d) for d in self.dirs):
+        print "===== Removing directories in %s" % (os.getcwd())
+
+        for d in self.dirs:
+          if os.path.exists(d):
+            print "      removing %s" % (os.path.join(os.getcwd(),d))
+            shutil.rmtree(d)
+    finally:
+      # Leave the directory untouched even if we failed
+      os.chdir(cwd)
 
   def run(self):
     self.remove_dirs()
@@ -592,7 +654,7 @@ class SourceModule(object):
     repo = None
     try:
       repo = self.get_authenticated(auth=auth)
-    except KeyError, e:
+    except KeyError as e:
       repo = self.get_anonymous()
       if not repo:
         raise Exception('No anonymous access method defined for module: %s. Try with --%s'%(self.module, e.args[0]))
@@ -637,18 +699,6 @@ class scons_module(SourceModule):
   anonymous = ['curl', 'http://cci.lbl.gov/repositories/scons.gz']
   authentarfile = ['%(cciuser)s@cci.lbl.gov', 'scons.tar.gz', '/net/cci/auto_build/repositories/scons']
   authenticated = ['rsync', '%(cciuser)s@cci.lbl.gov:/net/cci/auto_build/repositories/scons/']
-
-class boost_module(SourceModule):
-  module = 'boost'
-  anonymous = ['curl', 'http://cci.lbl.gov/repositories/boost.gz']
-  # Compared to rsync pscp is very slow when downloading multiple files
-  # Resort to downloading the compressed archive on Windows
-  authentarfile = ['%(cciuser)s@cci.lbl.gov',
-                   'boost_hot.tar.gz',
-                   '/net/cci/auto_build/repositories/boost_hot/']
-  authenticated = [
-    'rsync',
-    '%(cciuser)s@cci.lbl.gov:/net/cci/auto_build/repositories/boost_hot/']
 
 # external modules
 class amber_module(SourceModule):
@@ -721,6 +771,13 @@ class geostd_module(SourceModule):
                ]
   authenticated = anonymous
 
+class boost_module(SourceModule):
+  module = 'boost'
+  anonymous = ['git',
+               'git@github.com:cctbx/boost.git',
+               'https://github.com/cctbx/boost.git',
+               'https://github.com/cctbx/boost/archive/master.zip']
+
 class cbflib_module(SourceModule):
   module = 'cbflib'
   anonymous = ['git',
@@ -735,8 +792,10 @@ class ccp4io_adaptbx(SourceModule):
 
 class annlib_adaptbx(SourceModule):
   module = 'annlib_adaptbx'
-  anonymous = ['curl', 'http://cci.lbl.gov/repositories/annlib_adaptbx.gz']
-  authenticated = ['svn', 'svn+ssh://%(cciuser)s@cci.lbl.gov/annlib_adaptbx/trunk']
+  anonymous = ['git',
+               'git@github.com:cctbx/annlib_adaptbx.git',
+               'https://github.com/cctbx/annlib_adaptbx.git',
+               'https://github.com/cctbx/annlib_adaptbx/archive/master.zip']
 
 class tntbx_module(SourceModule):
   module = 'tntbx'
@@ -832,8 +891,8 @@ class buildbot_module(SourceModule):
 class phaser_module(SourceModule):
   module = 'phaser'
   anonymous = ['git',
-               'git://git.csx.cam.ac.uk/cimr-phaser/phaser.git',
-               'https://git.csx.cam.ac.uk/cimr-phaser/phaser.git']
+               'git://git.uis.cam.ac.uk/cimr-phaser/phaser.git',
+               'https://git.uis.cam.ac.uk/cimr-phaser/phaser.git']
 
 class phaser_regression_module(SourceModule):
   module = 'phaser_regression'
@@ -947,6 +1006,8 @@ class Builder(object):
       skip_base="",
       force_base_build=False,
       enable_shared=False,
+      mpi_build=False,
+      python3=False,
     ):
     if nproc is None:
       self.nproc=1
@@ -966,11 +1027,18 @@ class Builder(object):
       self.op = os.path
     self.name = '%s-%s'%(self.category, self.platform)
     # Platform configuration.
-    self.python_base = self.opjoin(*['..', 'base', 'bin', 'python'])
+    python_executable = 'python'
+    self.python3 = python3
+    if python3:
+      python_executable = 'python3'
+    if self.platform and ('windows' in self.platform or self.platform == 'win32'):
+      python_executable = python_executable + '.exe'
     if self.platform and 'windows' in self.platform:
-      self.python_base = self.opjoin(*['..', 'base', 'bin', 'python', 'python.exe'])
-    if sys.platform == "win32": # assuming we run standalone without buildbot
-      self.python_base = self.opjoin(*[os.getcwd(), 'base', 'bin', 'python', 'python.exe'])
+      self.python_base = self.opjoin(*['..', 'base', 'bin', 'python', python_executable])
+    elif sys.platform == "win32": # assuming we run standalone without buildbot
+      self.python_base = self.opjoin(*[os.getcwd(), 'base', 'bin', 'python', python_executable])
+    else:
+      self.python_base = self.opjoin(*['..', 'base', 'bin', python_executable])
     self.with_python = with_python
     if self.with_python:
       self.python_base = with_python
@@ -1008,6 +1076,8 @@ class Builder(object):
       extra_opts = ["--nproc=%s" % str(self.nproc)]
       if enable_shared:
         extra_opts.append("--python-shared")
+      if mpi_build:
+        extra_opts.append("--mpi-build")
       self.add_base(extra_opts=extra_opts)
 
     # Configure, make, get revision numbers
@@ -1110,9 +1180,17 @@ class Builder(object):
   def cleanup(self, dirs=None):
     dirs = dirs or []
     if self.isPlatformWindows():
-      # deleting folders by copying an empty folder with robocopy is more reliable on Windows
-      cmd=['cmd', '/c', 'mkdir', 'empty', '&', '(FOR', '%d', 'IN', '('] + dirs + \
-       [')', 'DO', '(ROBOCOPY', 'empty', '%d', '/MIR', '>', 'nul', '&', 'rmdir', '%d))', '&', 'rmdir', 'empty']
+      # Delete folders by copying an empty folder with ROBOCOPY is more reliable on Windows
+      # If ROBOCOPY fails i.e. ERRORLEVEL>0 then bail to stop bootstrap. Start cmd.exe with
+      cmd = ['cmd', '/C', 'mkdir', 'empty', '&',
+         '(FOR', '%b', 'IN', '('] + dirs + [')', 'DO',
+              '((ROBOCOPY', 'empty', '%b', '/MIR', '/COPYALL', '>', 'nul)',
+                 '&', 'rmdir', '/S', '/Q', '%b\\', # remove directory after robocopy
+                 '&', '@IF', 'EXIST', '%b\\', # backslash indicates it's a directory and not a file
+                         '(echo.', '&', 'echo', 'Error', 'deleting', '%b',
+                          '&', 'echo.', '&', 'exit', '/B', '42', ')))',
+          '&', 'rmdir', 'empty'
+       ]
       self.add_step(self.shell(
         name='Removing directories ' + ', '.join(dirs),
         command =cmd,
@@ -1120,7 +1198,7 @@ class Builder(object):
         description="deleting " + ", ".join(dirs),
       ))
     else:
-      self.add_step(cleanup_dirs_class(dirs, "modules"))
+      self.add_step(cleanup_dirs(dirs, "modules"))
 
   def add_rm_bootstrap_on_slave(self):
     # if file is not found error flag is set. Mask it with cmd shell
@@ -1407,19 +1485,19 @@ class Builder(object):
       extra_opts.append('--git-ssh')
     if self.skip_base:
       extra_opts.append('--skip-base=%s' % self.skip_base)
+    if self.python3:
+      extra_opts.append('--python3')
     if not self.force_base_build:
       if "--skip-if-exists" not in extra_opts:
         extra_opts.append("--skip-if-exists")
-    self.add_step(self.shell(
-      name='base',
-      command=[
-        'python',
-        self.opjoin('modules', 'cctbx_project', 'libtbx', 'auto_build', 'install_base_packages.py'),
-        '--python-shared',
-        '--%s'%self.BASE_PACKAGES
-      ] + extra_opts,
-      workdir=['.']
-    ))
+    command=[
+      'python',
+      self.opjoin('modules', 'cctbx_project', 'libtbx', 'auto_build', 'install_base_packages.py'),
+      '--python-shared',
+      '--%s'%self.BASE_PACKAGES
+    ] + extra_opts
+    print "Installing base packages using:\n  " + " ".join(command)
+    self.add_step(self.shell(name='base', command=command, workdir=['.']))
 
   def add_dispatchers(self, product_name="phenix"):
     """Write dispatcher_include file."""
@@ -1510,6 +1588,11 @@ class Builder(object):
                                            str(self.nproc),
 #                                          #"--skip-version", # for Phaser
                                            ])
+    # run build again to make sure everything is built
+    self.add_command('libtbx.scons', args=['-j',
+                                           str(self.nproc),
+#                                          #"--skip-version", # for Phaser
+                                           ])
 
   def add_install(self):
     """Run after compile, before tests."""
@@ -1535,6 +1618,7 @@ class CCIBuilder(Builder):
   BASE_PACKAGES = 'all'
   # Checkout these codebases
   CODEBASES = [
+    'boost',
     'cbflib',
     'cctbx_project',
     'gui_resources',
@@ -1547,7 +1631,6 @@ class CCIBuilder(Builder):
   # Copy these sources from cci.lbl.gov
   HOT = [
     'annlib',
-    'boost',
     'scons',
     'ccp4io',
     'eigen',
@@ -1575,6 +1658,7 @@ class MOLPROBITYBuilder(Builder):
   BASE_PACKAGES = 'molprobity'
   # Checkout these codebases
   CODEBASES = [
+    'boost',
     'cbflib',
     'cctbx_project',
     'ccp4io_adaptbx',
@@ -1591,7 +1675,6 @@ class MOLPROBITYBuilder(Builder):
   # Copy these sources from cci.lbl.gov
   HOT = [
     'annlib',
-    'boost',
     'scons',
     'ccp4io',
     #"libsvm",
@@ -1618,6 +1701,104 @@ class MOLPROBITYBuilder(Builder):
   def rebuild_docs(self):
     pass
 
+class PhaserBuilder(CCIBuilder):
+  BASE_PACKAGES = 'cctbx'
+    # Checkout these codebases
+  CODEBASES = [
+    'boost',
+    'cctbx_project',
+    'ccp4io_adaptbx',
+    'annlib_adaptbx',
+    'tntbx',
+    'clipper',
+    'phaser_regression',
+    'phaser',
+  ]
+  # Configure for these cctbx packages
+  LIBTBX = [
+    'cctbx',
+    'scitbx',
+    'libtbx',
+    'iotbx',
+    'mmtbx',
+    'smtbx',
+    'phaser_regression',
+    'phaser',
+  ]
+
+  def add_tests(self):
+    self.add_test_command('libtbx.import_all_python', workdir=['modules', 'cctbx_project'])
+    self.add_test_command('cctbx_regression.test_nightly')
+
+  def add_base(self, extra_opts=[]):
+    # skip unnecessary base packages when building phaser only
+    if self.skip_base is None or len(self.skip_base) == 0:
+      self.skip_base = "hdf5,lz4_plugin,wxpython,docutils,pyopengl,pillow,tiff," + \
+        "cairo,fonts,render,fontconfig,pixman,png,sphinx,freetype,gtk,matplotlib,"
+    else:
+      self.skip_base = ','.join(self.skip_base.split(',') + ['hdf5','lz4_plugin',
+         'wxpython','docutils','pyopengl','pillow','tiff','cairo','fonts', 'matplotlib',
+         'fontconfig','render','pixman','png','sphinx','freetype','gtk'])
+    super(PhaserBuilder, self).add_base(
+      extra_opts=['--cctbx',
+                 ] + extra_opts)
+
+  def add_dispatchers(self):
+    pass
+
+  def rebuild_docs(self):
+    pass
+
+  def get_libtbx_configure(self):
+    configlst = super(PhaserBuilder, self).get_libtbx_configure()
+    if not self.isPlatformMacOSX():
+      configlst.append("--enable_openmp_if_possible=True")
+    return configlst
+
+
+class CCTBXLiteBuilder(CCIBuilder):
+  BASE_PACKAGES = 'cctbx'
+    # Checkout these codebases
+  CODEBASES = [
+    'boost',
+    'cctbx_project',
+    'gui_resources',
+    'ccp4io_adaptbx',
+    'annlib_adaptbx',
+    'tntbx',
+    'clipper'
+  ]
+  # Configure for these cctbx packages
+  LIBTBX = [
+    'cctbx',
+    'scitbx',
+    'libtbx',
+    'iotbx',
+    'mmtbx',
+    'smtbx',
+    'gltbx',
+    'wxtbx',
+  ]
+
+  def add_tests(self):
+    self.add_test_command('libtbx.import_all_python', workdir=['modules', 'cctbx_project'])
+    self.add_test_command('cctbx_regression.test_nightly')
+
+  def add_base(self, extra_opts=[]):
+    if self.skip_base is None or len(self.skip_base) == 0:
+      self.skip_base = "hdf5,lz4_plugin"
+    else:
+      self.skip_base = ','.join(self.skip_base.split(',') + ['hdf5','lz4_plugin'])
+    super(CCTBXLiteBuilder, self).add_base(
+      extra_opts=['--cctbx',
+                 ] + extra_opts)
+
+  def add_dispatchers(self):
+    pass
+
+  def rebuild_docs(self):
+    pass
+
 class CCTBXBuilder(CCIBuilder):
   BASE_PACKAGES = 'cctbx'
   def add_tests(self):
@@ -1635,58 +1816,9 @@ class CCTBXBuilder(CCIBuilder):
   def rebuild_docs(self):
     pass
 
-class QRBuilder(CCTBXBuilder):
-  EXTERNAL_CODEBASES = ["qrefine"]
-  CODEBASES_EXTRA = [
-    'geostd',
-    ]
-  HOT_EXTRA = [
-    'mon_lib',
-    ]
-
-  def add_make(self):
-    CCTBXBuilder.add_make(self)
-    pip_installs = [] #'aes']
-    instructions = []
-    for pi in pip_installs:
-      instructions.append(['Q|R pip %s' % pi,
-                           [self.python_base,
-                            '-m',
-                            'pip',
-                            'install',
-                            pi
-                          ],
-                           ['modules']])
-
-    for name, command, workdir in instructions:
-      print name,
-      print command,
-      print workdir
-      self.add_step(self.shell(
-        name       = name,
-        command    = command,
-        workdir    = workdir,
-        description= "",
-        haltOnFailure = 1, #haltOnFailure,
-        ))
-    self.add_refresh()
-
-  def get_libtbx_configure(self): # modified in derived class PhenixBuilder
-    return self.LIBTBX + self.LIBTBX_EXTRA + self.EXTERNAL_CODEBASES \
-      + self.HOT_EXTRA
-
-  def add_tests(self):
-    pass
-
-  def add_dispatchers(self):
-    pass
-
-  def rebuild_docs(self):
-    pass
-
 class DIALSBuilder(CCIBuilder):
   CODEBASES_EXTRA = ['dials', 'xia2']
-  LIBTBX_EXTRA = ['dials', 'xia2', 'prime', 'iota', '--skip-phenix-dispatchers']
+  LIBTBX_EXTRA = ['dials', 'xia2', 'prime', 'iota', '--skip_phenix_dispatchers']
   def add_tests(self):
     self.add_test_command('cctbx_regression.test_nightly')
     self.add_test_parallel('dials', flunkOnFailure=False, warnOnFailure=True)
@@ -1737,7 +1869,7 @@ class XFELBuilder(CCIBuilder):
 
   def add_base(self, extra_opts=[]):
     super(XFELBuilder, self).add_base(
-      extra_opts=['--labelit'] + extra_opts)
+      extra_opts=['--labelit', '--dials'] + extra_opts)
 
   def add_tests(self):
     self.add_test_command('cctbx_regression.test_nightly')
@@ -1813,7 +1945,7 @@ class PhenixBuilder(CCIBuilder):
   def get_libtbx_configure(self):
     configlst = super(PhenixBuilder, self).get_libtbx_configure()
     if not self.isPlatformMacOSX():
-      configlst.append("--enable-openmp-if-possible=True")
+      configlst.append("--enable_openmp_if_possible=True")
     #if self.isPlatformMacOSX():
     #  configlst.append("--compiler=clang-omp")
     return configlst
@@ -1863,15 +1995,16 @@ class PhenixExternalRegression(PhenixBuilder):
     lt = time.localtime()
     cleaning = ['dist', 'tests', 'doc', 'tmp', 'base_tmp']
     if lt.tm_wday==5: # do a completer build on Saturday night
-      cleaning += ['base', 'build']
+      cleaning += ['base', 'base_tmp', 'build']
     # Preparation
     # AFITT
     if self.subcategory in [None, "afitt"]:
-      self.add_step(cleanup_dirs_class(['openeye'], 'modules'))
+      self.add_step(cleanup_dirs(['openeye'], 'modules'))
     # Amber
     if self.subcategory in [None, "amber"]:
-      self.add_step(cleanup_dirs_class(['amber16'], 'modules'))
-      self.add_step(cleanup_dirs_class(['amber17'], 'modules'))
+      self.add_step(cleanup_dirs(['amber18'], 'modules'))
+      self.add_step(cleanup_dirs(['amber17'], 'modules'))
+      self.add_step(cleanup_dirs(['amber16'], 'modules'))
     PhenixBuilder.cleanup(self, cleaning)
 
   def get_environment(self, add_build_python_to_path=True):
@@ -2042,6 +2175,19 @@ class PhenixExternalRegression(PhenixBuilder):
       )
 
   def add_tests(self):
+    # timings
+    if self.subcategory in [None, 'timings']:
+      self.add_test_command(
+        'mmtbx.python',
+        args=[os.path.join('..',
+                           '..',
+                           'modules',
+                           'phenix_regression',
+                           'development',
+                           'runtime_speed_regression_test.py',
+                           )],
+        name="timings test",
+        )
     # amber
     if self.subcategory in [None, "amber"]:
       self.add_test_command('amber.run_tests',
@@ -2072,11 +2218,70 @@ class PhenixExternalRegression(PhenixBuilder):
                             env = self.get_environment()
                            )
 
+class QRBuilder(PhenixBuilder):
+  #
+  # Designed to be run in Phenix build to add Q|R
+  # and the entire PhenixBuilder if user is builder
+  #
+  EXTERNAL_CODEBASES = ["qrefine"]
+  user = os.environ.get('USER', None)
+
+  def add_make(self):
+    if self.user=='builder': PhenixBuilder.add_make(self)
+    pip_installs = ['ase', 'JPype1','pymongo']
+    instructions = []
+    for pi in pip_installs:
+      instructions.append(['Q|R pip %s' % pi,
+                           [self.python_base,
+                            '-m',
+                            'pip',
+                            'install',
+                            pi
+                          ],
+                           ['modules']])
+
+    for name, command, workdir in instructions:
+      self.add_step(self.shell(
+        name       = name,
+        command    = command,
+        workdir    = workdir,
+        description= "",
+        haltOnFailure = 1, #haltOnFailure,
+        ))
+    self.add_refresh()
+
+  def get_hot(self):
+    if self.user=='builder': return PhenixBuilder.get_hot(self)
+    return [] # don't have any HOT downloads and the difference between
+              # anonymous and cciuser is making a mess
+
+  def get_libtbx_configure(self): # modified in derived class PhenixBuilder
+    return self.LIBTBX + self.LIBTBX_EXTRA + self.EXTERNAL_CODEBASES
+
+  def get_codebases(self):
+    if self.isPlatformWindows(): assert 0, 'not supported'
+    if self.user=='builder':
+      rc = PhenixBuilder.get_codebases(self)
+    else:
+      rc = self.EXTERNAL_CODEBASES #+ ['cctbx_project']
+    return rc
+
+  def add_tests(self):
+    self.add_test_command('qr.test',
+                          haltOnFailure=True,
+                          )
+
+  def add_dispatchers(self):
+    pass
+
+  def rebuild_docs(self):
+    pass
+
 def run(root=None):
   usage = """Usage: %prog [options] [actions]
 
   You may specify one or more actions:
-    hot - Update static sources (boost, scons, etc.)
+    hot - Update static sources (scons, etc.)
     update - Update source repositories (cctbx, cbflib, etc.)
     base - Build base dependencies (python, hdf5, wxWidgets, etc.)
     build - Build
@@ -2107,11 +2312,24 @@ def run(root=None):
     python bootstrap.py --builder=cctbx --sfuser=metalheadd hot update build tests
 
   """
+  builders = {
+    'cctbxlite': CCTBXLiteBuilder,
+    'cctbx': CCTBXBuilder,
+    'phenix': PhenixBuilder,
+    'xfel': XFELBuilder,
+    'labelit': LABELITBuilder,
+    'dials': DIALSBuilder,
+    'external': PhenixExternalRegression,
+    'molprobity':MOLPROBITYBuilder,
+    'qrefine': QRBuilder,
+    'phaser': PhaserBuilder,
+  }
+
   parser = optparse.OptionParser(usage=usage)
   # parser.add_option("--root", help="Root directory; this will contain base, modules, build, etc.")
   parser.add_option(
     "--builder",
-    help="Builder: cctbx, phenix, xfel, dials, labelit, molprobity",
+    help="Builder: " + ",".join(builders.keys()),
     default="cctbx")
   parser.add_option("--cciuser", help="CCI SVN username.")
   parser.add_option("--sfuser", help="SourceForge SVN username.")
@@ -2157,6 +2375,16 @@ def run(root=None):
                     dest="enable_shared",
                     action="store_true",
                     default=False)
+  parser.add_option("--mpi-build",
+                    dest="mpi_build",
+                    help="Builds software with mpi functionality",
+                    action="store_true",
+                    default=False)
+  parser.add_option("--python3",
+                    dest="python3",
+                    help="Install a Python3 interpreter. This is unsupported and purely for development purposes.",
+                    action="store_true",
+                    default=False)
   options, args = parser.parse_args()
   # process external
   options.specific_external_builder=None
@@ -2183,16 +2411,6 @@ def run(root=None):
   print "Performing actions:", " ".join(actions)
 
   # Check builder
-  builders = {
-    'cctbx': CCTBXBuilder,
-    'phenix': PhenixBuilder,
-    'xfel': XFELBuilder,
-    'labelit': LABELITBuilder,
-    'dials': DIALSBuilder,
-    'external': PhenixExternalRegression,
-    'molprobity':MOLPROBITYBuilder,
-    'qrefine': QRBuilder,
-  }
   if options.builder not in builders:
     raise ValueError("Unknown builder: %s"%options.builder)
 
@@ -2226,6 +2444,8 @@ def run(root=None):
     skip_base=options.skip_base,
     force_base_build=options.force_base_build,
     enable_shared=options.enable_shared,
+    mpi_build=options.mpi_build,
+    python3=options.python3,
   ).run()
   print "\nBootstrap success: %s" % ", ".join(actions)
 

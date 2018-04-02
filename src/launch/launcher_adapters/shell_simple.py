@@ -1,7 +1,11 @@
 """
+Provides a simple launcher adapter that will launch processes in a shell
+"""
+
+"""
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -22,16 +26,14 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides a simple launcher adapter that will launch processes in a shell
-"""
-
 import logging
-import json
+# import json
+import os
 from subprocess import Popen
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+from utils.modules import load_module
 
 class LauncherAdapter(object):
     """
@@ -59,17 +61,52 @@ class LauncherAdapter(object):
         """
         Orchestrate the adapter's actions
         """
+        # Check if command is ECHO
+        if self.message['command'] == 'ECHO':
+            # Load the simple_echo module
+            echo = load_module(seek_module='launch.launcher_adapters.echo_simple')
+            # send message to simple_echo
+            echo.LauncherAdapter(self.site, self.message, self.settings)
+        else:
+            # Adjust the message to this site
+            #self.fix_command()
+            self.message = launch_tools.fix_command(self.message)
+    
+            # Put the command into a file
+            command_file = launch_tools.write_command_file(self.settings["launch_dir"],
+                                                           self.message["command"],
+                                                           self.message)
+    
+            # Set the site tag from input
+            site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
+    
+            # Call the launch process on the command file
+            self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
+            Popen(["rapd.launch", "-s",site_tag, command_file])
 
-        # Decode message
-        command = json.loads(self.message)["command"]
+    def fix_command_OLD(self):
+        """
+        Adjust the command passed in in install-specific ways
+        """
 
-        # Put the command into a file
-        command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
+        # Adjust the working directory for the launch computer
+        work_dir_candidate = os.path.join(
+            self.message["directories"]["launch_dir"],
+            self.message["directories"]["work"])
 
-        # Call the launch process on the command file
-        self.logger.debug("%s", "rapd.launch", "-v", "-s", self.site.ID.lower(), command_file)
-        Popen(["rapd.launch", "-s", self.site.ID.lower(), command_file])
+        # Make sure this is an original directory
+        if os.path.exists(work_dir_candidate):
+            # Already exists
+            for i in range(1, 1000):
+                if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                    work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                    break
+                else:
+                    i += 1
+        # Now make the directory
+        if os.path.isdir(work_dir_candidate) == False:
+            os.makedirs(work_dir_candidate)
 
-if __name__ == "__main__":
-
-    LauncherAdapter('["test1", "test2", "test3"]', {"launch_dir":"/tmp/log"})
+        # Modify command
+        #self.decoded_message["directories"]["work"] = work_dir_candidate
+        self.message["directories"]["work"] = work_dir_candidate

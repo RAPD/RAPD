@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -22,12 +22,14 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import json
 import logging
 import os
 import pymongo
 import redis
 import uuid
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 from utils import pysent
 

@@ -32,7 +32,7 @@ from pprint import pprint
 import sys
 
 # RAPD imports
-from utils.numbers import try_int, try_float
+from utils.r_numbers import try_int, try_float
 
 def setShelxResults(self, inp=False):
   """
@@ -241,214 +241,265 @@ def setMosflmFailed(inp):
               'strategy'+inp+'delta phi'             : 'skip'}
   return(data)
 
-def ParseOutputLabelit(self,inp,iteration=0):
+def ParseOutputLabelit(self, inp, iteration=0):
     """
-    Parses Labelit results and filters for specific errors. Cleans up the output AND looks for best solution
-    then passes info back to caller.
+    Parses Labelit results and filters for specific errors. Cleans up the output AND looks for best
+    solution then passes info back to caller.
     """
+
     if self.verbose:
         self.logger.debug('Parse::ParseOutputLabelit')
 
-    tmp                = []
-    junk               = []
-    labelit_sol        = []
-    pseudotrans        = False
-    multi_sg           = False
-    few_spots          = False
-    min_spots          = False
-    spot_problem       = False
-    labelit_face       = []
-    labelit_solution   = []
-    labelit_metric     = []
-    labelit_fit        = []
-    labelit_rmsd       = []
-    labelit_spots_fit  = []
-    labelit_system     = []
-    labelit_cell       = []
-    labelit_volume     = []
-    labelit_bc         = {}
-    #mosflm_sol         = []
-    mosflm_face        = []
-    mosflm_solution    = []
-    mosflm_sg          = []
-    mosflm_beam_x      = []
-    mosflm_beam_y      = []
-    mosflm_distance    = []
-    mosflm_res         = []
-    mosflm_mos         = []
-    mosflm_rms         = []
+    tmp = []
+    junk = []
+    labelit_sol = []
+    pseudotrans = False
+    multi_sg = False
+    few_spots = False
+    min_spots = False
+    spot_problem = False
+    labelit_face = []
+    labelit_solution = []
+    labelit_metric = []
+    labelit_fit = []
+    labelit_rmsd = []
+    labelit_spots_fit = []
+    labelit_system = []
+    labelit_cell = []
+    labelit_volume = []
+    labelit_bc = {}
+    #mosflm_sol = []
+    mosflm_face = []
+    mosflm_solution = []
+    mosflm_sg = []
+    mosflm_beam_x = []
+    mosflm_beam_y = []
+    mosflm_distance = []
+    mosflm_res = []
+    mosflm_mos = []
+    mosflm_rms = []
 
-    try:
-        #If results empty, then fail
-        if len(inp) == 0:
-            return 'failed'
-        #Check for errors
-        for x,line in enumerate(inp):
-            tmp.append(line)
-            if len(line) > 1:
-                if line.startswith('distl_minimum_number_spots'):
-                    min_spots = line
-                if line.startswith('RuntimeError:'):
-                    return ('failed')
-                if line.startswith('ValueError:'):
-                    return ('failed')
-                if line.startswith('Labelit finds no reasonable solution'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('No_Indexing_Solution: Unreliable model'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('ValueError: min()'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('Spotfinder Problem:'):
-                    spot_problem = True
-                if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
-                    return ('fix labelit')
-                if line.startswith('InputFileError: Input error:'):
-                    return ('no pair')
-                if line.startswith('Have '):
-                    self.min_good_spots = line.split()[1].rstrip(';')
-                    few_spots = True
-                if line.startswith('UnboundLocalError'):
-                    return ('bad input')
-                if line.startswith('divide by zero'):
-                    return ('bumpiness')
-                # Could give error is too many choices with close cell dimensions, but...
-                if line.startswith('No_Lattice_Selection: In this case'):
-                    multi_sg = True
-                    error_lg = line.split()[11]
-                if line.startswith('No_Lattice_Selection: The known_symmetry'):
-                    return ('bad input')
-                if line.startswith('MOSFLM_Warning: MOSFLM does not give expected results on r_'):
-                    return ('mosflm error')
-                # Save the beam center
-                if line.startswith('Beam center'):
-                    labelit_bc['labelit_x_beam'] = line.split()[3][:-3]
-                    labelit_bc['labelit_y_beam'] = line.split()[5][:-3]
-                # Now save line numbers for parsing Labelit and Mosflm results
-                if line.startswith('Solution'):
-                    junk.append(x)
-                # Find lines for Labelit's pseudotrans
-                if line.startswith('Analysis'):
-                    pseudotrans = True
-                    junk.append(x)
-                if line.startswith('Transforming the lattice'):
-                    pseudotrans = True
+    # try:
+    # If results empty, then fail
+    if len(inp) == 0:
+        return 'failed'
 
-        if len(junk) == 0:
-            if spot_problem:
-                if min_spots:
-                    return (('min spots', line))
+    # Check for errors
+    for line_number, line in enumerate(inp):
+        tmp.append(line)
+        print line
+
+        if len(line) > 1:
+            if line.startswith('distl_minimum_number_spots'):
+                min_spots = line
+            if line.startswith('RuntimeError:'):
+                return "failed"
+            if line.startswith('ValueError:'):
+                return "failed"
+            if line.startswith('Labelit finds no reasonable solution'):
+                if self.multiproc:
+                    return "failed"
                 else:
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
+                    return "no index"
+            if line.startswith('No_Indexing_Solution: Unreliable model'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('ValueError: min()'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('Spotfinder Problem:'):
+                spot_problem = True
+            if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
+                return "fix labelit"
+            if line.startswith('InputFileError: Input error:'):
+                return "no pair"
+            if line.startswith('Have '):
+                self.min_good_spots = line.split()[1].rstrip(';')
+                few_spots = True
+            if line.startswith('UnboundLocalError'):
+                return "bad input"
+            if line.startswith('divide by zero'):
+                return "bumpiness"
+            # Could give error is too many choices with close cell dimensions, but...
+            if line.startswith('No_Lattice_Selection: In this case'):
+                multi_sg = True
+                error_lg = line.split()[11]
+            if line.startswith('No_Lattice_Selection: The known_symmetry'):
+                return "bad input"
+            if line.startswith('MOSFLM_Warning: MOSFLM does not give expected results on r_'):
+                return "mosflm error"
+            # Save the beam center
+            if line.startswith('Beam center'):
+                labelit_bc['labelit_x_beam'] = line.split()[3][:-3]
+                labelit_bc['labelit_y_beam'] = line.split()[5][:-3]
+            # Now save line numbers for parsing Labelit and Mosflm results
+            if line.startswith('Solution'):
+                junk.append(line_number)
+            # Find lines for Labelit's pseudotrans
+            if line.startswith('Analysis'):
+                pseudotrans = True
+                junk.append(line_number)
+            if line.startswith('Transforming the lattice'):
+                pseudotrans = True
+
+    if len(junk) == 0:
+        if spot_problem:
+            if min_spots:
+                return (('min spots', line))
             else:
                 if self.multiproc:
-                    return ('failed')
+                    return "failed"
                 else:
-                    return ('no index')
-
-        # Parse Labelit results
-        for line in tmp[junk[0]:]:
-            if len(line.split()) == 15:
-                labelit_sol.append(line.split())
-                labelit_face.append(line.split()[0])
-                labelit_solution.append(line.split()[1])
-                labelit_metric.append(line.split()[2])
-                labelit_fit.append(line.split()[3])
-                labelit_rmsd.append(line.split()[4])
-                labelit_spots_fit.append(line.split()[5])
-                labelit_system.append(line.split()[6:8])
-                labelit_cell.append(line.split()[8:14])
-                labelit_volume.append(line.split()[14])
-        # If multiple indexing choice for same SG... taking care of it.
-        if multi_sg:
-            return(('fix_cell',error_lg,labelit_sol))
-        # Getting Mosflm results with Labelit pseudotrans present
-        if len(junk) == 3:
-            self.logger.debug(junk)
-            tmp2 = tmp[junk[1]+1:junk[2]-1]
-        # If no pseudotrans...
+                    return "no index"
         else:
-            self.logger.debug(junk)
-            self.logger.debug(tmp)
-            tmp2 = tmp[junk[1]+1:]
-        #  Parse Mosflm results
-        for line in tmp2:
-            run = True
-            if len(line.split()) == 9:
-                x = 1
-                mosflm_face.append(line.split()[0])
-                if line.split()[0].startswith(':)'):
-                    mosflm_index = 'index'+line.split()[1].zfill(2)
-            elif len(line.split()) == 8:
-                x = 0
-                mosflm_face.append(' ')
+            if self.multiproc:
+                return "failed"
             else:
-                run = False
-            if run:
-                mosflm_solution.append(line.split()[0+x])
-                mosflm_sg.append(line.split()[1+x])
-                mosflm_beam_x.append(line.split()[2+x])
-                mosflm_beam_y.append(line.split()[3+x])
-                mosflm_distance.append(line.split()[4+x])
-                mosflm_res.append(line.split()[5+x])
-                mosflm_mos.append(line.split()[6+x])
-                mosflm_rms.append(line.split()[7+x])
-        # Sometimes Labelit works with few spots, sometimes it doesn't...
-        if few_spots:
-            if os.path.exists(mosflm_index) == False:
-                return ('min good spots')
+                return "no index"
 
-        data = { 'labelit_face'     : labelit_face,
-                 'labelit_solution' : labelit_solution,
-                 'labelit_metric'   : labelit_metric,
-                 'labelit_fit'      : labelit_fit,
-                 'labelit_rmsd'     : labelit_rmsd,
-                 'labelit_spots_fit': labelit_spots_fit,
-                 'labelit_system'   : labelit_system,
-                 'labelit_cell'     : labelit_cell,
-                 'labelit_volume'   : labelit_volume,
-                 'labelit_iteration': str(iteration),
-                 'labelit_bc'       : labelit_bc,
-                 'pseudotrans'      : pseudotrans,
-                 'mosflm_face'      : mosflm_face,
-                 'mosflm_solution'  : mosflm_solution,
-                 'mosflm_sg'        : mosflm_sg,
-                 'mosflm_beam_x'    : mosflm_beam_x,
-                 'mosflm_beam_y'    : mosflm_beam_y,
-                 'mosflm_distance'  : mosflm_distance,
-                 'mosflm_res'       : mosflm_res,
-                 'mosflm_mos'       : mosflm_mos,
-                 'mosflm_rms'       : mosflm_rms,
-                 'mosflm_index'     : mosflm_index,
-                 'output'           : tmp}
+    # Parse Labelit results
+    for line in tmp[junk[0]:]:
+        if len(line.split()) == 15:
+            labelit_sol.append(line.split())
+            labelit_face.append(line.split()[0])
+            labelit_solution.append(line.split()[1])
+            labelit_metric.append(line.split()[2])
+            labelit_fit.append(line.split()[3])
+            labelit_rmsd.append(line.split()[4])
+            labelit_spots_fit.append(line.split()[5])
+            labelit_system.append(line.split()[6:8])
+            labelit_cell.append(line.split()[8:14])
+            labelit_volume.append(line.split()[14])
 
-        # Utils.pp(self,data)
-        return(data)
+    # If multiple indexing choice for same SG... taking care of it.
+    if multi_sg:
+        return(('fix_cell', error_lg, labelit_sol))
 
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputLabelit**')
-        return None
+    # Getting Mosflm results with Labelit pseudotrans present
+    if len(junk) == 3:
+        self.logger.debug(junk)
+        tmp2 = tmp[junk[1]+1:junk[2]-1]
+
+    # If no pseudotrans...
+    else:
+        self.logger.debug(junk)
+        self.logger.debug(tmp)
+        tmp2 = tmp[junk[1]+1:]
+
+    #  Parse Mosflm results
+    for line in tmp2:
+        run = True
+        if len(line.split()) == 9:
+            x = 1
+            mosflm_face.append(line.split()[0])
+            if line.split()[0].startswith(':)'):
+                mosflm_index = 'index'+line.split()[1].zfill(2)
+        elif len(line.split()) == 8:
+            x = 0
+            mosflm_face.append(' ')
+        else:
+            run = False
+        if run:
+            mosflm_solution.append(line.split()[0+x])
+            mosflm_sg.append(line.split()[1+x])
+            mosflm_beam_x.append(line.split()[2+x])
+            mosflm_beam_y.append(line.split()[3+x])
+            mosflm_distance.append(line.split()[4+x])
+            mosflm_res.append(line.split()[5+x])
+            mosflm_mos.append(line.split()[6+x])
+            mosflm_rms.append(line.split()[7+x])
+
+    # Sometimes Labelit works with few spots, sometimes it doesn't...
+    if few_spots:
+        if os.path.exists(mosflm_index) == False:
+            return 'min good spots'
+
+    data = {'labelit_face': labelit_face,
+            'labelit_solution': labelit_solution,
+            'labelit_metric': labelit_metric,
+            'labelit_fit': labelit_fit,
+            'labelit_rmsd': labelit_rmsd,
+            'labelit_spots_fit': labelit_spots_fit,
+            'labelit_system': labelit_system,
+            'labelit_cell': labelit_cell,
+            'labelit_volume': labelit_volume,
+            'labelit_iteration': str(iteration),
+            'labelit_bc': labelit_bc,
+            'pseudotrans': pseudotrans,
+            'mosflm_face': mosflm_face,
+            'mosflm_solution': mosflm_solution,
+            'mosflm_sg': mosflm_sg,
+            'mosflm_beam_x': mosflm_beam_x,
+            'mosflm_beam_y': mosflm_beam_y,
+            'mosflm_distance': mosflm_distance,
+            'mosflm_res': mosflm_res,
+            'mosflm_mos': mosflm_mos,
+            'mosflm_rms': mosflm_rms,
+            'mosflm_index': mosflm_index,
+            'output': tmp}
+
+    # Utils.pp(self,data)
+    return data
+
+    # except:
+    #     self.logger.exception('**Error in Parse.ParseOutputLabelit**')
+    #     return None
+
+def ParseBestfilePar(bestfile_lines, mat_lines, sub_lines, mode="all"):
+    """
+    Parse the lines from bestfile.par
+    Transplant from xutils.getLabelitCell
+    """
+
+    run2 = False
+    run3 = False
+    cell = False
+    sym = False
+    for line in bestfile_lines:
+        if line.startswith('CELL'):
+            if len(line.split()) == 7:
+                cell = line.split()[1:]
+            else:
+                run2 = True
+        if line.startswith('SYMMETRY'):
+            if len(line.split()) == 2:
+                sym = line.split()[1]
+            else:
+                run3 = True
+    # Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
+    if run2:
+        for line in mat_lines:
+            if len(line.split()) == 6:
+                cell = line.split()
+
+    if run3:
+        for line in sub_lines:
+            if line.startswith('SYMMETRY'):
+                sym = line.split()[1]
+
+    pprint(cell)
+    pprint(sym)
+
+    if mode == 'all':
+        return (cell, sym)
+    elif mode == 'sym':
+        return sym
+    else:
+        return cell
 
 def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
   """
@@ -506,27 +557,27 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('No_Indexing_Solution: Unreliable model'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('ValueError: min()'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('Spotfinder Problem:'):
           spot_problem = True
         if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
@@ -570,12 +621,12 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
       else:
         if self.multiproc:
           return ('failed')
         else:
-          return ('no index')
+          return "no index"
 
     #Parse Labelit results
     for line in tmp[junk[0]:]:
@@ -691,69 +742,49 @@ def ParseOutputDistl(self, inp):
         self.logger.debug('Parse::ParseOutputDistl')
 
     # print "ParseOutputDistl"
-    # print inp
+    # pprint(inp)
 
-    try:
-        spot_total   = []
-        spot_inres   = []
-        good_spots   = []
-        labelit_res  = []
-        distl_res    = []
-        max_cell     = []
-        ice_rings    = []
-        overloads    = []
-        min1         = []
-        max1         = []
-        mean1        = []
-        signal_strength = False
-        for line in inp:
-            if line.count('Spot Total'):
-                spot_total.append(line.split()[3])
-            if line.count('In-Resolution Total'):
-                spot_inres.append(line.split()[3])
-            if line.count('Good Bragg'):
-                good_spots.append(line.split()[4])
-            if line.count('Method 1'):
-                labelit_res.append(line.split()[4])
-            if line.count('Method 2'):
-                distl_res.append(line.split()[4])
-            if line.count('Maximum unit cell'):
-                max_cell.append(line.split()[4])
-            if line.count('Ice Rings'):
-                ice_rings.append(line.split()[3])
-            if line.count('In-Resolution Ovrld Spots'):
-                overloads.append(line.split()[4])
-            if line.count('Signals range'):
-                signal_strength = True
-                min1.append(str(int(float(line.split()[3]))))
-                max1.append(str(int(float(line.split()[5]))))
-                mean1.append(str(int(float(line.split()[10]))))
-        if signal_strength == False:
-            min1.append('0')
-            max1.append('0')
-            mean1.append('0')
-        distl = {
-            'total spots': spot_total,
-            'spots in res': spot_inres,
-            'good Bragg spots': good_spots,
-            'distl res': distl_res,
-            'labelit res': labelit_res,
-            'max cell': max_cell,
-            'ice rings': ice_rings,
-            'overloads': overloads,
-            'min signal strength': min1,
-            'max signal strength': max1,
-            'mean int signal': mean1,
-            }
+    result_dict = {}
+    for line in inp:
+        if "File :" in line:
+            result_dict["file"] = line.split()[2]
+        elif "Spot Total :" in line:
+            result_dict["spots_total"] = try_int(line.split()[3])
+        elif "Remove Ice :" in line:
+            result_dict["spots_remove_ice"] = try_int(line.split()[3])
+        elif "In-Resolution Total :" in line:
+            result_dict["spots_in_res"] = try_int(line.split()[3])
+        elif "Good Bragg Candidates :" in line:
+            result_dict["spots_good_bragg"] = try_int(line.split()[4])
+        elif "Ice Rings :" in line:
+            result_dict["ice_rings"] = try_int(line.split()[3])
+        elif "Method 1 Resolution :" in line:
+            result_dict["labelit_res"] = try_float(line.split()[4])
+        elif "Method 2 Resolution " in line:
+            result_dict["distl_res"] = try_float(line.split()[4])
+        elif "Maximum unit cell :" in line:
+            result_dict["max_cell"] = try_float(line.split()[4])
+        elif "<Spot model eccentricity> :" in line:
+            result_dict["spot_eccentricity"] = try_float(line.split()[4])
+        elif "%Saturation, Top 50 Peaks :" in line:
+            result_dict["sat_top_50"] = try_float(line.split()[5])
+        elif "In-Resolution Ovrld Spots :" in line:
+            result_dict["overloads"] = try_int(line.split()[4])
+        elif "Total integrated signal" in line:
+            result_dict["signal_total"] = try_float(line.split()[13])
+        elif "Signals range from" in line:
+            result_dict["signal_min"] = try_float(line.split()[3])
+            result_dict["signal_max"] = try_float(line.split()[5])
+            result_dict["signal_mean"] = try_float(line.split()[10])
+        elif "Saturations range from" in line:
+            result_dict["sat_min"] = try_float(line.split()[3].replace("%", ""))
+            result_dict["sat_max"] = try_float(line.split()[5].replace("%", ""))
+            result_dict["sat_mean"] = try_float(line.split()[9].replace("%", ""))
 
-        # pprint.pprint(distl)
-        return distl
+    # pprint(result_dict)
+    return result_dict
 
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputDistl**')
-        return None
-
-def ParseOutputRaddose(self, inp):
+def ParseOutputRaddose(inp):
     """
     Looks for dose and cell volume. Passes info back to caller
     """
@@ -761,28 +792,25 @@ def ParseOutputRaddose(self, inp):
     # print "ParseOutputRaddose"
     # print inp
 
-    if self.verbose:
-        self.logger.debug("Parse.ParseOutputRaddose")
-        self.logger.debug(inp)
 
     try:
         for line in inp:
             if "Command not found" in line:
                 raise Exception("No raddose command available")
             if line.startswith('Total absorbed dose'):
-                dose_per_image = float(line.split()[4])
+                dose = int(float(line.split()[4]))
             if line.startswith('** Time in sec'):
-                exp_dose_lim = line.split()[11]
+                exp_dose_lim = int(line.split()[11])
             if line.startswith('   Time in sec'):
-                hen_lim = line.split()[13]
-        raddose = {"dose per image": dose_per_image,
+                hen_lim = int(line.split()[13])
+        raddose = {"dose": dose,
                    "exp dose limit": exp_dose_lim,
                    "henderson limit": hen_lim  }
         return(raddose)
 
     except:
-        self.logger.exception('**Error in Parse.ParseOutputRaddose**')
-        return(None)
+        #self.logger.exception('**Error in Parse.ParseOutputRaddose**')
+        return False
 
 
 def ParseOutputBestNone(self, inp):
@@ -799,294 +827,306 @@ def ParseOutputBest(self, inp, anom=False):
     cleans up the output and looks for errors to pass back for fixing and rerunning.
     passes info back to caller
     """
+    raw = []
+    sweeps = []
+    overall = {}
+    sweep = False
+    # temp = []
 
-    if self.verbose:
-        self.logger.debug('Parse::ParseOutputBest')
+    log, xml = inp
+    # pprint(log)
+    # pprint(xml)
+    # sys.exit()
+    omega_starts = []
+    delta_omegas = []
+    number_images = []
+    exposure_times = []
+    collection_times = []
 
-    temp = []
-    run_num = []
-    phi_start = []
-    num_images = []
-    delta_phi = []
-    time = []
-    orig_time = []
-    distance = []
-    overlap = []
-    new_trans = []
-    h_isig = []
-    r_fac = []
-    red = []
-    # pos = []
-    com = []
-    # iso_B = False
-    # nbr = False
-    dis = False
-    # frac_unique_blind = '0.0'
+    # Check for errors in the log
+    for line in log:
+        raw.append(line.rstrip())
+        """
+        if line.count('ERROR: scaling error > 100%'):
+          nbr = True
+        """
+        if "Anomalous data              :" in line:
+            overall["anomalous"] = {"Yes":True, "No":False}[line.split(":")[-1].strip()]
+        if line.count('***any data cannot be measured for the given time!'):
+            return 'dosage too high'
+        if line.count('no data can be measured with requested'):
+            return 'dosage too high'
+        if line.count('ERROR: radiation damage exceeds 99.9%'):
+            return 'dosage too high'
+        """
+        if line.count('Anisotropic B-factor can not be determined'):
+          iso_B = True
+        """
+        if line.count('ERROR: negative B-factors'):
+            return 'neg B'
+        if line.count('Determination of B-factor failed'):
+            return 'neg B'
+        if line.count('ERROR: the deretmination of'):
+            return 'neg B'
+        if line.count('ERROR: unknown spacegroup'):
+            return 'sg'
+        if line.count('ERROR: Detector pixel'):
+            return 'bin'
 
-    try:
-        log, xml = inp
-
-        # Check for errors in the log
-        for line in log:
-            """
-            if line.count('ERROR: scaling error > 100%'):
-              nbr = True
-            """
-            if line.count('***any data cannot be measured for the given time!'):
-                return ('dosage too high')
-            if line.count('no data can be measured with requested'):
-                return ('dosage too high')
-            if line.count('ERROR: radiation damage exceeds 99.9%'):
-                return ('dosage too high')
-            """
-            if line.count('Anisotropic B-factor can not be determined'):
-              iso_B = True
-            """
-            if line.count('ERROR: negative B-factors'):
-                return('neg B')
-            if line.count('Determination of B-factor failed'):
-                return('neg B')
-            if line.count('ERROR: the deretmination of'):
-                return('neg B')
-            if line.count('ERROR: unknown spacegroup'):
-                return('sg')
-            if line.count('ERROR: Detector pixel'):
-                return('bin')
-
-        if xml == 'None':
-            return 'None'
-        else:
-            # Parse the xml
-            for i, line in enumerate(xml):
-                temp.append(line)
-                if line.count("program=") and line.count("version="):
-                    version = line.split("'")[3].split(" ")[0]
-                    # print ">>>>", line, version
-                if line.count('"resolution"'):
-                    res = line[line.find('>')+1:line.rfind('<')]
-                if line.count('"distance"'):
-                    dis = round(float(line[line.find('>')+1:line.rfind('<')]),-1)
-                    if dis > 1200:
-                        dis = '1200.0'
-                if line.count('"i_sigma"'):
-                    h_isig.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"average_i_over_sigma"'):
-                    isig = line[line.find('>')+1:line.rfind('<')]
-                if line.count('"completeness"'):
-                    com.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"redundancy"'):
-                    red.append(line[line.find('>')+1:line.rfind('<')])
-                # Version 3.4.4 Linux
-                if line.count('"transmission"'):
-                    trans = float(line[line.find('>')+1:line.rfind('<')])
-                    attenuation = str(100 - trans).zfill(3)
-                # Version 3.2.0.z Mac OS X
-                if line.count('"attenuation"'):
-                    attenuation = float(line[line.find('>')+1:line.rfind('<')])
-                    trans = attenuation # str(100 - trans).zfill(3)
-                # NOT correct when I modify time and flux for efficency
-                if line.count('"total_exposure_time"'):
-                    tot_exp_time = line[line.find('>')+1:line.rfind('<')]
-                if line.count('"total_data_collection_time"'):
-                    tot_data_col_time = line[line.find('>')+1:line.rfind('<')]
-                if line.count('"R_factor"'):
-                    r_fac.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"fraction_achievable_%"'):
-                    blind = str(100.0-float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"phi_start"'):
-                    phi_start.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"phi_end">'):
-                    phi_end = line[line.find('>')+1:line.rfind('<')]
-                if line.count('"number_of_images"'):
-                    num_images.append(line[line.find('>')+1:line.rfind('<')])
-                    #For every range, save a distance for the html summary.
-                    distance.append(str(dis))
-                if line.count('"phi_width"'):
-                    delta_phi.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"overlaps"'):
-                    overlap.append(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"collection_run"'):
-                    run_num.append(line[line.rfind('=')+2:line.rfind('"')])
-                if line.count('"exposure_time"'):
-                    t = float(line[line.find('>')+1:line.rfind('<')])
-                    orig_time.append(t)
-                    # if self.pilatus:
-                    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-                        new_trans.append(str(round(trans)))
-                        time.append(str(round(t, 1)))
-                    else:
-                        # Set time and transmission to minimize data collection time
-                        nt = t * trans
-                        if trans == 100.0:
-                            if t > 1:
-                                new_trans.append(str(trans))
-                                time.append(str(round(t,1)))
-                            else:
-                                new_trans.append(str(round(nt)))
-                                time.append('1.0')
-                        else:
-                            if nt > 100:
-                                new_trans.append('100.0')
-                                time.append(str(round(nt/100)))
-                            elif nt < 1:
-                                new_trans.append(str(trans))
-                                #time.append(str(t))
-                                time.append(str(round(t,1)))
-                            else:
-                                new_trans.append(str(round(nt)))
-                                time.append('1.0')
-
-        # If best did not give strat...
-        # if nbr:
-        if dis == False:
-            return "neg B"
-
-        # Remove the last line in starting phi
-        phi_start = phi_start[:-1]
-        rot_range = str(float(phi_end) - float(phi_start[0]))
-
-        # Removes thin sliced erroronious strategy when B-factor calc tanks.
-        # if iso_B:
-        #   if float(min(delta_phi)) < 0.3:
-        #     return ('isotropic B')
-
-        # Check for Best strategy giving multiple continuous runs (Bug in Best)
-        if len(phi_start)> 1:
-            if all(i==delta_phi[0] for i in delta_phi):
-                if all(i==orig_time[0] for i in orig_time):
-                    phi = float(phi_start[0])
-                    i = 0
-                    for x in range(len(num_images)):
-                        phi += float(num_images[x])*float(delta_phi[x])
-                        i += int(num_images[x])
-                    if phi == float(phi_end):
-                        phi_start = [phi_start[0]]
-                        num_images = [str(i)]
-                        time = [time[0]]
-                        delta_phi = [delta_phi[0]]
-                        distance = [distance[0]]
-                        new_trans = [new_trans[0]]
-                        overlap = [overlap[0]]
-                        run_num = [run_num[0]]
-        if anom:
-            j1 = " anom "
-        else:
-            j1 = " "
-        data = {
-            'strategy'+j1+'best_version': version,
-            'strategy'+j1+'run number': run_num,
-            'strategy'+j1+'phi start': phi_start,
-            'strategy'+j1+'num of images': num_images,
-            'strategy'+j1+'delta phi': delta_phi,
-            'strategy'+j1+'image exp time': time,
-            'strategy'+j1+'distance': distance,
-            'strategy'+j1+'overlap': overlap,
-            'strategy'+j1+'res limit': res,
-            'strategy'+j1+'anom flag': str(anom),
-            'strategy'+j1+'phi end': phi_end,
-            'strategy'+j1+'rot range': rot_range,
-            'strategy'+j1+'completeness': com[0],
-            'strategy'+j1+'redundancy': red[0],
-            'strategy'+j1+'R-factor': r_fac[-1]+' ('+r_fac[-2]+')',
-            'strategy'+j1+'I/sig': isig+' ('+h_isig[0]+')',
-            'strategy'+j1+'total exposure time': tot_exp_time,
-            'strategy'+j1+'data collection time': tot_data_col_time,
-            'strategy'+j1+'frac of unique in blind region': blind,
-            'strategy'+j1+'attenuation': attenuation,
-            'strategy'+j1+'new transmission': new_trans
-            }
-
-        return data
-
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputBest**')
+    if xml == 'None':
         return 'None'
+    else:
+        # Parse the xml
+        in_gi_table = False
+        in_dcs_table = False
+        in_sp_table = False
+        sp_list = []
+        prev_sp_list = []
+        run_number = 0
+        for line in xml:
+            # temp.append(line)
+            # print line
+            # GLOBALS
+            if " program=" in line:
+                overall["best_version"] = line.split("'")[3] #.split(" ")[0]
 
-def ParseOutputBestPlots(self, inp):
+            elif "<table name=\"general_inform\"" in line:
+                in_gi_table = True
+
+            elif in_gi_table:
+
+                if "<item name=\"fraction_achievable_%\">" in line:
+                    overall["fraction_achievable"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "</table>" in line:
+                    in_gi_table = False
+
+            # PER SWEEP VARS
+            elif "<table name=\"data_collection_strategy\" index=\"" in line:
+                run_number += 1
+                sweep = {"run_number": run_number}
+                in_dcs_table = True
+
+            # Strategy table
+            elif in_dcs_table:
+                if "<item name=\"resolution\">" in line:
+                    sweep["resolution"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"resolution_reasoning\">" in line:
+                    sweep["resolution_reasoning"] = line[line.find('>')+1:line.rfind('<')]
+
+                elif "<item name=\"i_sigma\">" in line:
+                    sweep["i_sigma"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"completeness\">" in line:
+                    sweep["completeness"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"redundancy\">" in line:
+                    sweep["redundancy"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                # Version 3.2.0.z Mac OS X
+                elif "<item name=\"attenuation\">" in line:
+                    sweep["attenuation"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    sweep["transmission"] = 100.0 - try_float(line[line.find('>')+1:line.rfind('<')])
+
+                # Version 3.4.4 Linux
+                elif "<item name=\"transmission\">" in line:
+                    sweep["transmission"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    sweep["attenuation"] = 100.0 - try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"total_exposure_time\">" in line:
+                    sweep["total_exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    exposure_times.append(sweep["total_exposure_time"])
+
+                elif "<item name=\"total_data_collection_time\">" in line:
+                    sweep["total_data_collection_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    collection_times.append(sweep["total_data_collection_time"])
+
+                elif "<item name=\"phi_start\">" in line:
+                    sweep["phi_start"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    omega_starts.append(sweep["phi_start"])
+
+                elif "<item name=\"number_of_images\">" in line:
+                    sweep["number_of_images"] = try_int(line[line.find('>')+1:line.rfind('<')])
+                    number_images.append(sweep["number_of_images"])
+
+                elif "<item name=\"phi_width\">" in line:
+                    sweep["phi_width"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    delta_omegas.append(sweep["phi_width"])
+
+                elif "<item name=\"exposure_time\">" in line:
+                    sweep["exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"distance\">" in line:
+                    sweep["distance"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"overlaps\">" in line:
+                    sweep["overlaps"] = {"Yes":True, "No":False}[line[line.find('>')+1:line.rfind('<')]]
+
+                elif "</table>" in line:
+                    in_dcs_table = False
+                    sweeps.append(sweep)
+
+            elif "<table name=\"statistical_prediction\" index=\"" in line:
+                in_sp_table = True
+
+            elif in_sp_table:
+
+                if "<list name=\"resolution_bin\" index=\"" in line:
+                    prev_sp_list = sp_list
+                    sp_list = []
+
+                elif "</list>" in line:
+                    pass
+
+                # Done with sp_table
+                elif "</table>" in line:
+                    in_sp_table = False
+
+                    # Parse the high resolution list
+                    for my_sp_list, tag in ((prev_sp_list, "outer"), (sp_list, "overall")):
+                        for line in my_sp_list:
+                            if "<item name=\"min_resolution\">" in line:
+                                overall["min_resolution_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"max_resolution\">" in line:
+                                overall["max_resolution_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"completeness\">" in line:
+                                overall["completeness_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"redundancy\">" in line:
+                                overall["redundancy_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_intensity\">" in line:
+                                overall["average_intensity_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_error\">" in line:
+                                overall["average_error_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_i_over_sigma\">" in line:
+                                overall["average_i_over_sigma_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"R_factor\">" in line:
+                                overall["r_factor_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"Ranom\">" in line:
+                                overall["Ranom_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"fract_overload\">" in line:
+                                overall["fract_overload_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                else:
+                    sp_list.append(line)
+
+    # If it failed and wasn't caught
+    if len(omega_starts) == 0:
+        return 'neg B'
+
+    # Now accumulate the sweep data into overall
+    overall["number_images"] = sum(number_images)
+    overall["omega_start"] = omega_starts[0]
+    overall["omega_end"] = omega_starts[-1] + number_images[-1] * delta_omegas[-1]
+
+
+    return {"log": raw,
+            "overall": overall,
+            "sweeps": sweeps}
+
+def ParseOutputBestPlots(inp):
     """Parse Best plots file for plots"""
 
-    if self.verbose:
-        self.logger.debug("Parse::ParseOutputBestPlots")
+    # self.logger.debug("Parse::ParseOutputBestPlots")
 
-    res = []
-    com = []
-    ws = []
-    we = []
-    wilson = []
-    max_delta_omega = []
-    rad_damage_int_decr = []
-    rad_damage_rfactor_incr = []
-    osc_range = []
+    # print "ParseOutputBestPlots"
 
     # Definitions for the expected values
     cast_vals = {
         "Relative Error and Intensity Plot": {
-            "Rel.Error": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))}
+            "Rel.Error": {"x": try_float, "y": try_float},
+            "Rel.Intensity": {"x": try_float, "y": try_float}
         },
         "Wilson Plot": {
-            "Theory": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Experiment": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Pred.low errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Pred.high errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Theory": {"x": try_float, "y": try_float},
+            "Experiment": {"x": try_float, "y": try_float},
+            "Pred.low errors": {"x": try_float, "y": try_float},
+            "Pred.high errors": {"x": try_float, "y": try_float}
         },
         "Maximal oscillation width": {
-            "resol": {"x": (lambda x:  try_int(x)), "y": (lambda x: try_float(x))}
+            "resol": {"x": try_int, "y": try_float},
+            "linelabel": (lambda x: x.replace("resol.  ", "")+"A")
         },
         "Minimal oscillation ranges for different completenesses": {
-            "compl": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_int(x))}
+            "compl": {"x": try_float, "y": try_int},
+            "linelabel": (lambda x: x.replace("compl -", "").replace(".%", "%"))
         },
+        # "Minimal oscillation ranges for different completenesses": {
+        #     "compl": {"x": try_float, "y": try_int}
+        # },
         "Total exposure time vs resolution": {
-            "Expon.trend": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Expon.trend": {"x": try_float, "y": try_float},
+            "Predictions": {"x": try_float, "y": try_float}
         },
         "Average background intensity per second": {
-            "Background": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Background": {"x": try_float, "y": try_float},
+            "Predictions": {"x": try_float, "y": try_float}
         },
         "Intensity decrease due to radiation damage": {
-            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Rel.Intensity": {"x": try_float, "y": try_float},
+            "resol": {"x": try_float, "y": try_float}
         },
         "Rdamage vs.cumulative exposure time": {
-            "R-factor": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "R-factor": {"x": try_float, "y": try_float},
+            "resol": {"x": try_float, "y": try_float}
         }
     }
 
-    parsed_plots = {}
+    new_parsed_plots = {}
+    new_plot = False
+    new_curve = False
     in_curve = False
+    parsed_plots = {}
     plot = False
     curve = False
     for line in inp:
-
         line = line.strip()
-
+        # print line
         if line.startswith("$"):
             if plot:
                 parsed_plots[plot["parameters"]["toplabel"]] = plot
+                new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
             if curve:
                 plot["data"].append(curve)
-                # pprint.pprint(plot)
                 curve = False
+                new_curve_y = False
+                new_curve_x = False
+
             in_curve = False
             plot = {"parameters": {}, "data": []}
-            # print line
-        elif line.startswith("#"):
-            if curve:
-                plot["data"].append(curve)
-            in_curve = True
-            # print line
-            curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
+            new_plot = {"y_data": [],
+                        "x_data": False,
+                        "parameters": {}}
+
         elif line.startswith("%"):
-            # print in_curve, line
             strip_line = line[1:].strip()
             key = strip_line[:strip_line.index("=")].strip()
             val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
             if in_curve:
                 curve["parameters"][key] = val
+                if key == "linelabel":
+                    # print new_plot["parameters"]["toplabel"], "cast_vals keys", cast_vals[new_plot["parameters"]["toplabel"]].keys()
+                    if "linelabel" in cast_vals[new_plot["parameters"]["toplabel"]]:
+                        new_curve_y["label"] = cast_vals[new_plot["parameters"]["toplabel"]]["linelabel"](val)
+                    else:
+                        new_curve_y["label"] = val
+                    # print val, ">>>", new_curve_y["label"]
             else:
                 plot["parameters"][key] = val
+                new_plot["parameters"][key] = val
+
+        elif line.startswith("#"):
+            if curve:
+                plot["data"].append(curve)
+                new_plot["y_data"].append(new_curve_y)
+                if not new_plot["x_data"]:
+                    new_plot["x_data"] = new_curve_x
+            in_curve = True
+            curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
+            new_curve_y = {"data": [], "label": False}
+            new_curve_x = []
+
+
         elif len(line) > 0:
             # print line
 
@@ -1103,24 +1143,48 @@ def ParseOutputBestPlots(self, inp):
                 x = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["x"](split_line[0].strip())
                 y = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["y"](split_line[1].strip())
 
-            # print x, y
-            # curve["series"].append({"name":x, "value":y})
             curve["series"][0]["xs"].append(x)
             curve["series"][0]["ys"].append(y)
+            new_curve_x.append(x)
+            new_curve_y["data"].append(y)
 
     plot["data"].append(curve)
+    # pprint(plot)
+
+    new_plot["y_data"].append(new_curve_y)
+    if not new_plot["x_data"]:
+        new_plot["x_data"] = new_curve_x
+    # pprint(new_plot)
+    # sys.exit()
+
     parsed_plots[plot["parameters"]["toplabel"]] = plot
+    new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
     # pprint.pprint(parsed_plots)
 
-    output = {"wilson": parsed_plots["Wilson Plot"],
-              "max_delta_omega": parsed_plots.get("Maximal oscillation width", False),
-              "rad_damage": parsed_plots.get("Relative Error and Intensity Plot", False),
-              "exposure": parsed_plots.get("Total exposure time vs resolution", False),
-              "background": parsed_plots.get("Average background intensity per second", False),
-            #   "rad_damage_int_decr": rad_damage_int_decr,
-            #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
-              "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
-    return output
+    output = {
+        "wilson": parsed_plots["Wilson Plot"],
+        "max_delta_omega": parsed_plots.get("Maximal oscillation width", False),
+        "rad_damage": parsed_plots.get("Relative Error and Intensity Plot", False),
+        "exposure": parsed_plots.get("Total exposure time vs resolution", False),
+        "background": parsed_plots.get("Average background intensity per second", False),
+        #   "rad_damage_int_decr": rad_damage_int_decr,
+        #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
+        "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
+
+    new_output = {
+        "wilson": new_parsed_plots["Wilson Plot"],
+        "max_delta_omega": new_parsed_plots.get("Maximal oscillation width", False),
+        "rad_damage": new_parsed_plots.get("Relative Error and Intensity Plot", False),
+        "exposure": new_parsed_plots.get("Total exposure time vs resolution", False),
+        "background": new_parsed_plots.get("Average background intensity per second", False),
+        #   "rad_damage_int_decr": rad_damage_int_decr,
+        #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
+        "osc_range": new_parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
+
+    # pprint(output["osc_range"])
+    # pprint(new_output["osc_range"])
+    # sys.exit()
+    return output, new_output
 
 def ParseOutputMosflm_strat(self, inp, anom=False):
     """
@@ -1130,13 +1194,13 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
         self.logger.debug('Parse::ParseOutputMosflm_strat')
 
     # try:
-    temp  = []
+    temp = []
     strat = []
-    res   = []
+    res = []
     start = []
-    end   = []
-    ni    = []
-    rn    = []
+    end = []
+    ni = []
+    rn = []
     seg = False
 
     # osc_range  = str(self.header.get('osc_range'))
@@ -1147,15 +1211,15 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
             osc_range = '0.5'
         else:
             osc_range  = str(self.header.get('osc_range'))
-    distance   = str(self.header.get('distance'))
-    mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
+    distance   = self.header.get('distance')
+    mosflm_seg = self.preferences.get("mosflm_seg", 1)
 
     index = False
     index_res = False
     for x, line in enumerate(inp):
         # print mosflm_seg, seg, x, line.rstrip()
         temp.append(line)
-        if mosflm_seg != '1':
+        if mosflm_seg != 1:
             if line.startswith(' This may take some time......'):
                 index = x
                 seg = True
@@ -1982,7 +2046,7 @@ def parse_phaser_output(phaser_log):
                 if param.startswith("+TNCS"):
                     tncs = True
     if not pdb:
-        phaser_result = set_phaser_failed("No solution")
+        phaser_result = False # set_phaser_failed("No solution")
     else:
         phaser_result = {"nosol": False,
                          "pdb": pdb,

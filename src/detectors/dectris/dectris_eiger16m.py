@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2012-2017, Cornell University
+Copyright (C) 2012-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -37,54 +37,53 @@ import tempfile
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 
-DETECTOR = "dectris_eiger9m"
+DETECTOR = "dectris_eiger16m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
 XDS_FLIP_BEAM = True
-XDSINP = {
-    "MAX_CELL_ANGLE_ERROR": " 2.0",
-    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "6",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 6000 30000",
-    "UNTRUSTED_RECTANGLE10": "    0 4151   3820 3858",
-    "MIN_RFL_Rmeas": " 50",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "21",
-    "REFINE(INTEGRATE)": " POSITION ORIENTATION",
-    "REFINE(CORRECT)": " POSITION BEAM ORIENTATION CELL AXIS",
-    "INCLUDE_RESOLUTION_RANGE": "50.0 1.5",
-    "REFINE(IDXREF)": " BEAM AXIS ORIENTATION CELL",
-    "SPACE_GROUP_NUMBER": "197",
-    "NX": " 4150 ",
-    "NY": " 4371",
-    "OVERLOAD": " 19405",
-    "UNTRUSTED_RECTANGLE4": "    0 4151    514  552",
-    "UNTRUSTED_RECTANGLE5": "    0 4151   1065 1103",
-    "UNTRUSTED_RECTANGLE6": "    0 4151   1616 1654",
-    "UNTRUSTED_RECTANGLE7": "    0 4151   2167 2205",
-    "UNTRUSTED_RECTANGLE1": " 1030 1041      0 4372",
-    "UNTRUSTED_RECTANGLE2": " 2070 2081      0 4372",
-    "UNTRUSTED_RECTANGLE3": " 3110 3121      0 4372",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "21",
-    "UNTRUSTED_RECTANGLE8": "    0 4151   2718 2756",
-    "UNTRUSTED_RECTANGLE9": "    0 4151   3269 3307",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "TEST_RESOLUTION_RANGE": " 8.0 4.5",
-    "MAX_CELL_AXIS_ERROR": " 0.03",
-    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
-    "SENSOR_THICKNESS": "0.32",
-    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": " 2.0",
-    "TRUSTED_REGION": "0.0 1.41",
-    "ROTATION_AXIS": " 1.0 0.0 0.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "QY": "0.075",
-    "QX": "0.075 ",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": " 0.0 1.0 0.0",
-    "SEPMIN": "4.0",
-    "CLUSTER_RADIUS": "2",
-    "DETECTOR": "EIGER",
-    }
+XDSINP = [
+    ('CLUSTER_RADIUS', '2') ,
+    ('DETECTOR', 'EIGER') ,
+    ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0') ,
+    ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0') ,
+    ('FRACTION_OF_POLARIZATION', '0.99') ,
+    ('INCIDENT_BEAM_DIRECTION', '0 0 1') ,
+    ('INCLUDE_RESOLUTION_RANGE', '200.0 0.0') ,
+    ('MAX_CELL_ANGLE_ERROR', '2.0') ,
+    ('MAX_CELL_AXIS_ERROR', '0.03') ,
+    ('MAX_FAC_Rmeas', '2.0') ,
+    ('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '6') ,
+    ('MINIMUM_VALID_PIXEL_VALUE', '0') ,
+    ('MIN_RFL_Rmeas', ' 50') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '21') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '21') ,
+    ('NX', '4150') ,
+    ('NY', '4371') ,
+    ('OVERLOAD', '19405') ,
+    ('POLARIZATION_PLANE_NORMAL', '0 1 0') ,
+    ('QX', '0.075') ,
+    ('QY', '0.075') ,
+    ('REFINE(CORRECT)', 'POSITION BEAM ORIENTATION CELL AXIS') ,
+    ('REFINE(IDXREF)', 'BEAM AXIS ORIENTATION CELL') ,
+    ('REFINE(INTEGRATE)', 'POSITION ORIENTATION') ,
+    ('ROTATION_AXIS', '1 0 0') ,
+    ('SENSOR_THICKNESS', '0.32') ,
+    ('SEPMIN', '4') ,
+    ('TEST_RESOLUTION_RANGE', '8.0 4.5') ,
+    ('TRUSTED_REGION', '0.0 1.41') ,
+    ('UNTRUSTED_RECTANGLE1', ' 1030 1041      0 4372') ,
+    ('UNTRUSTED_RECTANGLE10', '    0 4151   3820 3858') ,
+    ('UNTRUSTED_RECTANGLE2', ' 2070 2081      0 4372') ,
+    ('UNTRUSTED_RECTANGLE3', ' 3110 3121      0 4372') ,
+    ('UNTRUSTED_RECTANGLE4', '    0 4151    514  552') ,
+    ('UNTRUSTED_RECTANGLE5', '    0 4151   1065 1103') ,
+    ('UNTRUSTED_RECTANGLE6', '    0 4151   1616 1654') ,
+    ('UNTRUSTED_RECTANGLE7', '    0 4151   2167 2205') ,
+    ('UNTRUSTED_RECTANGLE8', '    0 4151   2718 2756') ,
+    ('UNTRUSTED_RECTANGLE9', '    0 4151   3269 3307') ,
+    ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '6000 30000') ,
+    ]
 
 def read_header(image,
                 mode=None,
@@ -124,12 +123,27 @@ def read_header(image,
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
         "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        #"transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        #"size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        #"size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
 
-    rawdata = open(image,"rb").read(2048)
-    headeropen = 0
-    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-    header = rawdata[headeropen:headerclose]
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
 
     # try:
     #tease out the info from the file name
@@ -158,6 +172,9 @@ def read_header(image,
             parameters[label] = pat[1](matches[-1])
         else:
             parameters[label] = None
+    if parameters.has_key('size1'):
+        if parameters['size1'] == 4150:
+            parameters['detector'] = 'Eiger-16M'
 
     pprint(parameters)
 

@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -54,35 +54,13 @@ CIF_CACHE = "/tmp/rapd_cache/cif_files"
 TEST_CACHE = "/tmp/rapd_cache/test_data"
 
 # NE-CAT PDBQ Server
-PDBQ_SERVER = "rapd.nec.aps.anl.gov/pdbq"
+PDBQ_SERVER = "https://rapd.nec.aps.anl.gov/pdbq"
 
 # Timeout for phaser MR process
-LABELIT_TIMEOUT = 120
 PHASER_TIMEOUT = 5000
 
-# Software versions that work with RAPD
-SOFTWARE_VERSIONS = {
-    "AIMLESS": (
-        "version 0.5",
-        ),
-    "FREERFLAG": (
-        "version 2.2",
-    ),
-    "GNUPLOT": (
-        "gnuplot 4.2",
-        "gnuplot 5.0",
-    ),
-    "MTZ2VARIOUS": (
-        "version 1.1",
-    ),
-    "POINTLESS": (
-        "version 1.10",
-        ),
-    "TRUNCATE": (
-        "version 7.0",
-    ),
-    "XDS": (
-        "VERSION Nov 1, 2016",
-    ),
-
-}
+# Time outs for Autointdex+strategies.
+LABELIT_TIMEOUT = 120
+XOALIGN_TIMEOUT = 30
+DISTL_TIMEOUT = 30
+STRATEGY_TIMEOUT = 60

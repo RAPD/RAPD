@@ -5,7 +5,7 @@ Wrapper for manipulating the detector images
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -38,7 +38,31 @@ VENDORTYPE = "MARCCD"
 
 # XDS information
 XDS_FLIP_BEAM = True
-XDSINP = {}
+XDSINP = [
+    ('DETECTOR', 'MARCCD') ,
+    ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0') ,
+    ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0') ,
+    ('FRACTION_OF_POLARIZATION', '0.99') ,
+    ('INCIDENT_BEAM_DIRECTION', '0 0 1') ,
+    ('INCLUDE_RESOLUTION_RANGE', '100.0 0.0') ,
+    ('INDEX_ORIGIN', '0 0 0') ,
+    ('MAX_CELL_ANGLE_ERROR', '2.0') ,
+    ('MAX_CELL_AXIS_ERROR', '0.030') ,
+    ('MAX_FAC_Rmeas', '2.0') ,
+    ('MINIMUM_VALID_PIXEL_VALUE', '0') ,
+    ('MIN_RFL_Rmeas', '50.0') ,
+    ('NX', '3072') ,
+    ('NY', '3072') ,
+    ('OVERLOAD', '65535') ,
+    ('POLARIZATION_PLANE_NORMAL', '0 1 0') ,
+    ('QX', '0.07345') ,
+    ('QY', '0.07345') ,
+    ('ROTATION_AXIS', '1 0 0') ,
+    ('TEST_RESOLUTION_RANGE', '50.0 2.0') ,
+    ('TRUSTED_REGION', '0.0 0.99') ,
+    ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '6000 30000') ,
+    ('WFAC1', '1.0') ,
+  ]
 
 def read_header(image):
     """Read header from rayonix mx300"""

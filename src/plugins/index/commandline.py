@@ -5,7 +5,7 @@ Wrapper for launching an index & strategy on images
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -37,6 +37,7 @@ import uuid
 # RAPD imports
 import utils.log
 from utils.modules import load_module
+from utils.r_numbers import try_float, try_int
 import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
@@ -48,20 +49,34 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # The task to be carried out
     command = {
-        "command":"INDEX",
-        "process_id": uuid.uuid1().get_hex()
+        "command": "INDEX",
+        "process": {
+            "process_id": uuid.uuid1().get_hex(),
+            "parent_id": None,
+            "source": "commandline",
+            "status": 0
+            }
         }
 
     # Working directory
     image_numbers = []
     image_template = ""
+    h5 = ""
     for _, header in image_headers.iteritems():
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
+        if "hdf5_source" in header:
+            if h5:
+                h5 += "_"
+            h5 += os.path.basename(header["hdf5_source"]).replace("_master.h5", "")
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
-               replace("?", "")
-    run_repr += "+".join(image_numbers)
+
+    if h5:
+        run_repr = "rapd_index_" + h5
+    else:
+        run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
+                   replace("?", "")
+        run_repr += "+".join(image_numbers)
 
     work_dir = commandline_utils.check_work_dir(
         os.path.join(os.path.abspath(os.path.curdir), run_repr),
@@ -78,9 +93,9 @@ def construct_command(image_headers, commandline_args, detector_module):
     counter = 0
     for image in images:
         counter += 1
-        command["header%d" % counter] = image_headers[image]
+        command["image%d" % counter] = image_headers[image]
     if counter == 1:
-        command["header2"] = None
+        command["image2"] = None
 
     # Plugin settings
     command["preferences"] = {}
@@ -88,17 +103,18 @@ def construct_command(image_headers, commandline_args, detector_module):
     # JSON output?
     command["preferences"]["json"] = commandline_args.json
     command["preferences"]["progress"] = commandline_args.progress
+    command["preferences"]["no_color"] = commandline_args.no_color
 
     # Show plots
-    command["preferences"]["show_plots"] = commandline_args.plotting
+    command["preferences"]["show_plots"] = commandline_args.show_plots
 
     # Strategy type
     command["preferences"]["strategy_type"] = commandline_args.strategy_type
 
     # Best
     command["preferences"]["best_complexity"] = commandline_args.best_complexity
-    command["preferences"]["shape"] = "2.0"
-    command["preferences"]["susceptibility"] = "1.0"
+    command["preferences"]["shape"] = 2.0
+    command["preferences"]["susceptibility"] = 1.0
     command["preferences"]["aimed_res"] = 0.0
 
     # Best & Labelit
@@ -107,13 +123,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["unitcell"] = commandline_args.unitcell
 
     # Labelit
-    command["preferences"]["a"] = 0.0
-    command["preferences"]["b"] = 0.0
-    command["preferences"]["c"] = 0.0
-    command["preferences"]["alpha"] = 0.0
-    command["preferences"]["beta"] = 0.0
-    command["preferences"]["gamma"] = 0.0
-    command["preferences"]["index_hi_res"] = str(commandline_args.hires)
+    command["preferences"]["index_hi_res"] = try_float(commandline_args.hires, 0.0)
     command["preferences"]["x_beam"] = commandline_args.beamcenter[0]
     command["preferences"]["y_beam"] = commandline_args.beamcenter[1]
     command["preferences"]["beam_search"] = commandline_args.beam_search
@@ -143,14 +153,22 @@ def construct_command(image_headers, commandline_args, detector_module):
     #                   ],#MOSFLM
 
     # Raddose
-    command["preferences"]["crystal_size_x"] = "100"
-    command["preferences"]["crystal_size_y"] = "100"
-    command["preferences"]["crystal_size_z"] = "100"
-    command["preferences"]["solvent_content"] = 0.55
+    command["preferences"]["crystal_size_x"] = 100.0
+    command["preferences"]["crystal_size_y"] = 100.0
+    command["preferences"]["crystal_size_z"] = 100.0
+    command["preferences"]["solvent_content"] = commandline_args.solvent
+    #command["preferences"][]
 
     # Unknown
     command["preferences"]["beam_flip"] = False
-    command["preferences"]["multiprocessing"] = False
+    #command["preferences"]["multiprocessing"] = False
+
+    # Launches jobs at same time using more cores. Much Faster!!
+    #command["preferences"]["multiprocessing"] = True
+    command["preferences"]["nproc"] = commandline_args.nproc
+
+    # The run mode for rapd
+    command["preferences"]["run_mode"] = commandline_args.run_mode
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
@@ -163,11 +181,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = \
         commandline_args.site_det_time_min
 
-    # Return address
-    command["return_address"] = None
-
     return command
-
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -270,6 +284,21 @@ def get_commandline():
                         type=float,
                         help="Minimum detector time in seconds")
 
+    # HDF5 specific commands (assuming HDF5 is dataset, not single frame)
+    parser.add_argument("--hdf5_image_range",
+                        action="store",
+                        dest="hdf5_image_range",
+                        default='1',
+                        type=str,
+                        help="Comma separated list of images to index (ie. --hdf5_image_number 1,90)")
+
+    parser.add_argument("--hdf5_wedge_range",
+                        action="store",
+                        dest="hdf5_wedge_range",
+                        default=False,
+                        type=float,
+                        help="Calculates the second image in a pair based on this oscillation angle wedge size between images")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="sources",
@@ -283,7 +312,13 @@ def get_commandline():
 
     args = parser.parse_args()
 
-    # Checking input
+    # Insert logic to check or modify args here
+
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
 
     # Regularize spacegroup
     if args.spacegroup:
@@ -308,21 +343,21 @@ def print_welcome_message(printer):
 ---------------------
 RAPD Index & Strategy
 ---------------------"""
-    printer(message, 50, color="blue")
+    printer(message, 98, color="blue")
 
 def print_headers(tprint, image_headers):
     """Convenience function"""
 
-    tprint(arg="\nImage headers", level=30, color="blue")
+    tprint(arg="\nImage headers", level=20, color="blue")
     count = 0
     for fullname, header in image_headers.iteritems():
         keys = header.keys()
         keys.sort()
         if count > 0:
-            tprint(arg="", level=30, color="white")
-        tprint(arg="  %s" % fullname, level=30, color="white")
+            tprint(arg="", level=20, color="white")
+        tprint(arg="  %s" % fullname, level=20, color="white")
         for key in keys:
-            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=30, color="white")
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=20, color="white")
         count += 1
 
 def main():
@@ -392,8 +427,9 @@ def main():
 
     # Get the data files
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
-                                                        mode="index")
-
+                                                        mode="index",
+                                                        hdf5_image_range=commandline_args.hdf5_image_range,
+                                                        hdf5_wedge_range=commandline_args.hdf5_wedge_range)
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
@@ -428,7 +464,8 @@ def main():
     # Get site - commandline wins over the environmental variable
     site = False
     site_module = False
-    detector = {}
+    #detector = {}
+    detector = False
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -441,13 +478,13 @@ def main():
         detector_module = detector_utils.load_detector(detector)
 
     # If no site or detector, try to figure out the detector
-    if not (site or detector):
+    # if not (site or detector):
+    if not detector:
         detector = detector_utils.get_detector_file(data_files["files"][0])
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
-                # print site_file
                 site_module = importlib.import_module(site_file)
                 detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
@@ -456,18 +493,30 @@ def main():
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
+    # If someone specifies the site or found in env.
+    if site and not site_module:
+        site_file = utils.site.determine_site(site_arg=site)
+        site_module = importlib.import_module(site_file)
+
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
-        for data_file in data_files["files"]:
+        for index, data_file in enumerate(data_files["files"]):
             if site_module:
                 image_headers[data_file] = detector_module.read_header(data_file,
-                                                                       site_module.BEAM_SETTINGS)
+                                                                       #site_module.BEAM_SETTINGS)
+                                                                       site_module.BEAM_INFO.get(site.upper(), {}))
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
+            # If this image is derived from an hdf5 master file, tag it
+            if "hdf5_files" in data_files:
+                if len(data_files["hdf5_files"]) == len(data_files["files"]):
+                    image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]
+                else:
+                    image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][0]
 
         logger.debug("Image headers: %s", image_headers)
-        print_headers(tprint, image_headers)
+        # print_headers(tprint, image_headers)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
@@ -514,7 +563,9 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdPlugin(None, command, tprint, logger)
+    #plugin_instance = plugin.RapdPlugin(None, command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(site_module, command, tprint, logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

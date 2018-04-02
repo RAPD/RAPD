@@ -5,7 +5,7 @@ Wrapper for launching an integration on images
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -82,7 +82,21 @@ def get_commandline():
                         dest="spacegroup_decider",
                         default="auto",
                         choices=["auto", "pointless", "xds"],
-                        help="Rounds of polishing to perform")
+                        help="Set the spacegroup decider")
+
+    # Don't clean up
+    parser.add_argument("--dirty",
+                        action="store_false",
+                        dest="clean_up",
+                        default=True,
+                        help="Do not clean up")
+
+    # Don't run analysis
+    parser.add_argument("--noanalysis",
+                        action="store_false",
+                        dest="analysis",
+                        default=True,
+                        help="Do not run analysis")
 
     # Directory or files
     parser.add_argument(action="store",
@@ -98,13 +112,19 @@ def get_commandline():
     # Custom check input here
     args = parser.parse_args()
 
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
+
     # Regularize spacegroup
     if args.spacegroup:
         args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
 
     return args
 
-def get_image_data(data_file, detector_module, site_module):
+def get_image_data(data_file, detector_module, site_module, site):
     """
     Get the image data and return given a filename
     """
@@ -112,7 +132,7 @@ def get_image_data(data_file, detector_module, site_module):
     # print "get_image_data", data_file
 
     if site_module:
-        header = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
+        header = detector_module.read_header(data_file, site_module.BEAM_INFO.get(site, {}))
     else:
         header = detector_module.read_header(data_file)
 
@@ -151,6 +171,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         run_data["start"] = commandline_args.start_image
     else:
         run_data["start"] = image_0_data.get("image_number")
+    # Working toward unity
+    run_data["start_image_number"] = run_data["start"]
 
     # Set end image and total number of images
     if commandline_args.end_image:
@@ -160,6 +182,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
     else:
         run_data["end"] = image_n_data.get("image_number")
         run_data["total"] = image_n_data.get("image_number") - run_data["start"] + 1
+    # Working toward unity
+    run_data["number_images"] = run_data["total"]
 
     # The repr for the run
     run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), \
@@ -177,7 +201,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
     # The task to be carried out
     command = {
         "command": "XDS", #"INTEGRATE",
-        "process_id": uuid.uuid1().get_hex()
+        "process": {"process_id": uuid.uuid1().get_hex()}
         }
 
     work_dir = commandline_utils.check_work_dir(
@@ -199,6 +223,11 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         }
 
     command["preferences"] = {
+        "analysis": commandline_args.analysis,
+        "clean_up": commandline_args.clean_up,
+        "cluster_use": commandline_args.cluster_use,
+        "dir_up": commandline_args.dir_up,
+        "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
         "flip_beam": detector_module.XDS_FLIP_BEAM,
@@ -208,8 +237,10 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "low_res": commandline_args.lowres,
         "hi_res": commandline_args.hires,
         "json": commandline_args.json,
+        "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
-        "show_plots": commandline_args.plotting,
+        "run_mode": commandline_args.run_mode,
+        "show_plots": commandline_args.show_plots,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
         "rounds_polishing": commandline_args.rounds_polishing
@@ -224,9 +255,9 @@ def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
 
     message = """
----------------
-RAPD Intgration
----------------"""
+----------------
+RAPD Integration
+----------------"""
     printer(message, 50, color="blue")
 
 
@@ -255,7 +286,7 @@ def main():
     elif commandline_args.json:
         terminal_log_level = 100
     else:
-        terminal_log_level = 50
+        terminal_log_level = 30
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
@@ -337,7 +368,7 @@ def main():
     if commandline_args.detector:
         detector = commandline_args.detector
         detector_module = detector_utils.load_detector(detector)
-
+    """
     # If no site or detector, try to figure out the detector
     if not (site or detector):
         detector = detector_utils.get_detector_file(data_files["data_files"][0])
@@ -353,7 +384,25 @@ def main():
                 site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
+    """
+    if not detector:
+        detector = detector_utils.get_detector_file(data_files["data_files"][0])
+        if isinstance(detector, dict):
+            if detector.has_key("site"):
+                site_target = detector.get("site")
+                site_file = utils.site.determine_site(site_arg=site_target)
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
+                detector_module = detector_utils.load_detector(detector_target)
+            elif detector.has_key("detector"):
+                site_module = False
+                detector_target = detector.get("detector")
+                detector_module = detector_utils.load_detector(detector_target)
 
+    # If someone specifies the site or found in env.
+    if site and not site_module:
+        site_file = utils.site.determine_site(site_arg=site)
+        site_module = importlib.import_module(site_file)
     # Have a detector - read in file data
     if not detector_module:
         raise Exception("No detector identified")
@@ -361,10 +410,12 @@ def main():
     # Get header information
     image_0_data = get_image_data(data_file=data_files["data_files"][0],
                                   detector_module=detector_module,
-                                  site_module=site_module)
+                                  site_module=site_module,
+                                  site=site)
     image_n_data = get_image_data(data_file=data_files["data_files"][-1],
                                   detector_module=detector_module,
-                                  site_module=site_module)
+                                  site_module=site_module,
+                                  site=site)
 
     # # Have an end image set
     # if commandline_args.end_image:
@@ -416,11 +467,11 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Instantiate the plugin
-    plugin.RapdPlugin(site=None,
-                      command=command,
-                      tprint=tprint,
-                      logger=logger)
-    plugin.run()
+    plugin_instance = plugin.RapdPlugin(site_module,
+                                        command=command,
+                                        tprint=tprint,
+                                        logger=logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

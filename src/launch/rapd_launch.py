@@ -5,7 +5,7 @@ Orchestrates the launch process by wrapping a launch plugin
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -28,23 +28,26 @@ __status__ = "Production"
 # Standard imports
 import argparse
 import importlib
-import json
 import os
+import sys
 
 # RAPD imports
 import utils.commandline
 import utils.log
 from utils.modules import load_module
 import utils.site
+from utils.text import json
+from bson.objectid import ObjectId
 
 class Launch(object):
     """
     Launches json-formatted RAPD command files using the command-appropriate
-    rapd agent
+    rapd plugin
     """
 
-    agent = None
-    logger = None
+    command = None
+    plugin = None
+    new_logger = None
 
     def __init__(self, site, command_file):
         """
@@ -62,20 +65,27 @@ class Launch(object):
         Orchsetrate the Launch process
         """
 
-        # Load and decode json command file
-        self.command = self.load_command()
-
         # Start the logger
         self.init_logger()
 
-        self.logger.debug("command: %s", self.command.get("command", None))
-        self.logger.debug("return_address: %s", self.command.get("return_address", None))
+        # Load and decode json command file
+        self.command = self.load_command()
 
-        # Load the agent for this command
-        self.load_agent(self.command.get("command"))
+        # Put the site object into the command
+        #self.command["site"] = self.site
 
-        # Run the agent
-        self.agent.RapdAgent(self.site, self.command)
+        self.new_logger.debug("command: %s", self.command.get("command", None))
+
+        # Load the plugin for this command
+        self.load_plugin(self.command.get("command"))
+
+        # Run the plugin
+        plugin = self.plugin.RapdPlugin(site=self.site,
+                                        command=self.command,
+                                        tprint=False,
+                                        logger=self.new_logger)
+
+        plugin.start()
 
     def load_command(self):
         """
@@ -88,21 +98,22 @@ class Launch(object):
         # Decode json command file
         return json.loads(message)
 
-    def load_agent(self, command):
+    def load_plugin(self, command):
         """
-        Load the agent file for this command
+        Load the plugin file for this command
 
         Keyword arguments
         command -- the command to be run (index+strategy for example)
         """
+        # plugin directories we are looking for
+        directories = []
+        for directory in self.site.RAPD_PLUGIN_DIRECTORIES:
+            directories.append(directory+".%s" % self.command.get("command").lower())
 
-        # Agent we are looking for
-        seek_module = "rapd_agent_%s" % command.lower()
-
-        # Load the agent from directories defined in site file
-        self.agent = load_module(seek_module=seek_module,
-                                 directories=self.site.RAPD_AGENT_DIRECTORIES,
-                                 logger=self.logger)
+        # Load the plugin from directories defined in site file
+        self.plugin = load_module(seek_module="plugin",
+                                  directories=directories,
+                                  logger=self.new_logger)
 
     def init_logger(self):
         """
@@ -110,13 +121,15 @@ class Launch(object):
         """
 
         # Derive definitions for log file
-        logfile_dir = os.path.dirname(self.command_file)
+        # = os.path.dirname(self.command_file)
+        logfile_dir = self.site.LOGFILE_DIR
         logfile_id = os.path.basename(self.command_file).replace(".rapd", "")
 
         # Instantiate a logger at verbose level
-        self.logger = utils.log.get_logger(logfile_dir=logfile_dir,
+        self.new_logger = utils.log.get_logger(logfile_dir=logfile_dir,
                                            logfile_id=logfile_id,
-                                           level=10)
+                                           #level=10)
+                                           )
 
 
 
@@ -143,34 +156,56 @@ def main():
     """
     Run the main process
     """
-
     # Get the commandline args
     commandline_args = get_commandline()
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    # Get the environmental variables
+    environmental_vars = utils.site.get_environmental_variables()
+
+    # Get site - commandline wins
+    site = False
+    if commandline_args.site:
+        site = commandline_args.site
+    elif environmental_vars.has_key("RAPD_SITE"):
+        site = environmental_vars["RAPD_SITE"]
+
+    # If no site, error
+    if site == False:
+        #print text.error+"Could not determine a site. Exiting."+text.stop
+        print "Could not determine a site. Exiting."
+        sys.exit(9)
+
+    # Determine the site_file
+    site_file = utils.site.determine_site(site_arg=site)
+
+    # Error out if no site_file to import
+    if site_file == False:
+        #print text.error+"Could not find a site file. Exiting."+text.stop
+        print "Could not find a site file. Exiting."
+        sys.exit(9)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
+    """
     # Set up logging
     if commandline_args.verbose:
         log_level = 10
     else:
         log_level = SITE.LOG_LEVEL
 
-    logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
+    run_logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_launch",
                                   level=log_level)
 
-    logger.debug("Commandline arguments:")
+    run_logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
-        logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-
+        run_logger.debug("  arg:%s  val:%s", pair[0], pair[1])
+    """
     # Run command file[s]
     if commandline_args.command_files:
         for command_file in commandline_args.command_files:
-            logger.info("Launching %s", command_file)
+            #run_logger.info("Launching %s", command_file)
             Launch(SITE, command_file)
     else:
         raise Exception("Not sure what to do!")

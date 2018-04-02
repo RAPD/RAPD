@@ -200,6 +200,7 @@ class BaseFileGenerator(object):
                             "glob",
                             "json",
                             "logging",
+                            "math",
                             "multiprocessing",
                             "os",
                             "pprint",
@@ -217,7 +218,7 @@ class BaseFileGenerator(object):
         rapd_imports = ("commandline_utils",
                         "detectors.detector_utils as detector_utils",
                         "utils",
-                        "utils.credits as credits")
+                        "utils.credits as rcredits")
 
         self.output_function(["# Standard imports"])
         for value in standard_imports:
@@ -243,7 +244,10 @@ class BaseFileGenerator(object):
         # print added_rapd_imports
         for value in added_rapd_imports:
             if (value not in standard_imports) or (value not in rapd_imports):
-                self.output_function(["import " + value])
+                if value.startswith("from"):
+                    self.output_function([value])
+                else:
+                    self.output_function(["import " + value])
 
         # Blank line to keep it readable
         self.output_function([""])

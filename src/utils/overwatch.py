@@ -31,19 +31,21 @@ __status__ = "Development"
 import argparse
 import atexit
 import importlib
-import json
 import os
-import subprocess
+import socket
+from subprocess import Popen
 import sys
 import time
 import uuid
-
+import signal
 import redis
 
 # RAPD imports
 import utils.commandline
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Time in seconds for a process to be considered dead
 OVERWATCH_TIMEOUT = 30
@@ -95,16 +97,29 @@ class Registrar(object):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
+
+        hostname = socket.gethostname()
+        try:
+            host_ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            host_ip = "unknown"
 
         # Create an entry
         entry = {"ow_type":self.ow_type,
+                 "host_ip":host_ip,
+                 "hostname":hostname,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
+                 "start_time":time.time(),
+                 "status":"initializing",
                  "timestamp":time.time()}
 
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
+
+        # Check for launchers
+        launcher = entry.get('job_list', False)
 
         # Wrap potential redis down
         try:
@@ -125,6 +140,14 @@ class Registrar(object):
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
+
         # Redis is down
         except redis.exceptions.ConnectionError:
 
@@ -139,7 +162,7 @@ class Registrar(object):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # Create entry
         entry = {"ow_type":self.ow_type,
@@ -149,6 +172,9 @@ class Registrar(object):
 
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
+
+        # Check for launchers
+        launcher = entry.get('job_list', False)
 
         # Wrap potential redis down
         try:
@@ -177,6 +203,14 @@ class Registrar(object):
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
+
         # Redis is down
         except redis.exceptions.ConnectionError:
 
@@ -184,8 +218,14 @@ class Registrar(object):
 
     def connect(self):
         """Connect to the central redis Instance"""
+        redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST)
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = self.redis_database.connect_to_redis()
+
+    def stop(self):
+        """Stop the running process cleanly"""
+        self.redis_database.stop()
 
 class Overwatcher(Registrar):
     """
@@ -198,6 +238,8 @@ class Overwatcher(Registrar):
     ow_type = "overwatcher"
     ow_id = None
     ow_managed_id = None
+    ow_managed_type = None
+    run_process = True
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -209,14 +251,22 @@ class Overwatcher(Registrar):
         managed_file_flags -- flags to be passed to the managed file
         """
 
+        # print "__init__"
+
         # Passed-in variables
         self.site = site
         self.managed_file = managed_file
         self.managed_file_flags = managed_file_flags
 
-        print site
-        print managed_file
-        print managed_file_flags
+        # remove and save Python command
+        i = self.managed_file_flags.index('--python')
+        self.managed_file_flags.remove('--python')
+        self.python_command = self.managed_file_flags.pop(i)
+        # print self.python_command
+
+        # print site
+        # print managed_file
+        # print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
@@ -229,28 +279,31 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
-        # Connect to redis
-        self.connect()
+        # Just printing help info
+        if "--help" in self.managed_file_flags:
+            self.start_managed_process(help=True)
 
-        # Register self
-        self.register()
+        # An actual run
+        else:
+            # Connect to redis
+            self.connect()
 
-        # Start microservice with self.uuid as overwatch id
-        self.start_managed_process()
+            # Register self
+            self.register()
 
-        # Register to kill the managed process on overwatch exit
-        atexit.register(self.kill_managed_process)
+            # Start microservice with self.uuid as overwatch id
+            self.start_managed_process(help=True)
 
-        # Start listening for information on managed service and updating
-        self.listen_and_update()
+            # Register to kill the managed process on overwatch exit
+            atexit.register(self.kill_managed_process)
+
+            # Start listening for information on managed service and updating
+            self.listen_and_update()
 
     def restart_managed_process(self):
         """
         Kill and then start the managed process
         """
-
-        # Forget the previous id
-        self.ow_managed_id = None
 
         # Kill
         self.kill_managed_process()
@@ -266,34 +319,62 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
-        self.managed_process.kill()
+        print "kill_managed_process"
 
-    def start_managed_process(self):
+        # Set flag that we do not want to restart the process
+        self.run_process = False
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"killing"})
+
+        self.managed_process.kill()
+        # os.kill(self.managed_process.pid, signal.SIGKILL)
+
+        # Forget the managed id
+        self.ow_managed_id = None
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"stopped"})
+
+    def start_managed_process(self, help=False):
         """
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
         """
-
         # The environmental_vars
         path = os.environ.copy()
 
         # Put together the command
         command = self.managed_file_flags[:]
         command.insert(0, self.managed_file)
-        command.insert(0, "rapd.python")
+        command.insert(0, self.python_command)
         command.append("--overwatch_id")
         command.append(self.uuid)
+        # print 'command: %s'%command
+
+        # Update the entry in redis with the command being run
+        if not help:
+            self.update(custom_vars={"command":" ".join(command),
+                                     "status":"starting"})
 
         # Run the input command
-        self.managed_process = subprocess.Popen(command, env=path)
+        self.managed_process = Popen(command, env=path)
+        #self.managed_process = Popen(command)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)
         exit_code = self.managed_process.poll()
         if exit_code != None:
-            print text.error+"Managed process exited on start. Exiting."+text.stop
+            if not help:
+                print text.error+"Managed process exited on start. Exiting."+text.stop
+                self.update(custom_vars={"status":"error"})
             sys.exit(9)
 
+        # Set flag that we do want to restart the process
+        self.run_process = True
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"running"})
 
     def listen_and_update(self):
         """
@@ -302,33 +383,43 @@ class Overwatcher(Registrar):
         """
 
         connection_errors = 0
+        try:
+            while True:
+                time.sleep(5)
 
-        while True:
-            time.sleep(5)
+                # Get the managed process ow_id if unknown
+                if self.ow_managed_id == None:
+                    self.ow_managed_id = self.get_managed_id()
 
-            # Get the managed process ow_id if unknown
-            if self.ow_managed_id == None:
-                self.ow_managed_id = self.get_managed_id()
+                # Get the managed process type
+                if self.ow_managed_type == None:
+                    self.ow_managed_type = self.get_managed_type()
 
-            # Check the managed process status if a managed process is found
-            if not self.ow_managed_id == None:
-                status = self.check_managed_process()
+                # Check the managed process status if a managed process is found
+                if not self.ow_managed_id == None:
+                    status = self.check_managed_process()
 
-                # Watched process has failed
-                if status == False:
-                    self.restart_managed_process()
+                    # Watched process has failed
+                    if status == False:
+                        # If we are supposed to run the process, run
+                        if self.run_process == True:
+                            self.restart_managed_process()
 
-            # Update the overwatcher status
-            try:
-                self.update()
-                connection_errors = 0
-            # Redis is down
-            except redis.exceptions.ConnectionError:
-                connection_errors += 1
-                if connection_errors > 12:
-                    print "Too many connection errors. Exiting."
-                    break
+                # Check for an instruction
+                self.check_for_instruction()
 
+                # Update the overwatcher status
+                try:
+                    self.update()
+                    connection_errors = 0
+                # Redis is down
+                except redis.exceptions.ConnectionError:
+                    connection_errors += 1
+                    if connection_errors > 12:
+                        print "Too many connection errors. Exiting."
+                        break
+        except KeyboardInterrupt:
+            pass
 
     def check_managed_process(self):
         """
@@ -336,7 +427,8 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        #red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # What's the time?
         now = time.time()
@@ -359,16 +451,48 @@ class Overwatcher(Registrar):
         else:
             return True
 
+    def check_for_instruction(self):
+        """
+        Check for an instruction in the redis instance
+        """
+
+        # print "check_for_instruction"
+
+        # Get connection
+        red = self.redis
+
+        # What's the time?
+        now = time.time()
+
+        try:
+            # Get the instruction
+            instruction = red.hgetall("OW:%s:instruction" % self.uuid)
+        # There is no entry - do nothing
+        except TypeError:
+            return False
+        # Redis is down - do nothing
+        except redis.exceptions.ConnectionError:
+            return False
+
+        # If there is an instruction, delete it as we have retrieved it
+        if instruction:
+            red.delete("OW:%s:instruction" % self.uuid)
+            print "Have instruction:", instruction
+            if instruction["command"] == "stop":
+                self.kill_managed_process()
+            elif instruction["command"] == "start":
+                self.start_managed_process()
+
     def get_managed_id(self):
         """
         Retrieve the managed process's ow_id
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # Look for keys
-        print "Looking for OW:*:%s" % self.uuid
+        # print "Looking for OW:*:%s" % self.uuid
         try:
             keys = red.keys("OW:*:%s" % self.uuid)
         # Redis is down - no keys to be found
@@ -380,10 +504,36 @@ class Overwatcher(Registrar):
         elif len(keys) > 1:
             return None
         else:
-            return keys[0].split(":")[1]
+            # print "Found it!"
+            managed_id = keys[0].split(":")[1]
+            # Update the entry in redis with the command being run
+            self.update(custom_vars={"managed_id":managed_id})
+            return managed_id
 
+    def get_managed_type(self):
+        """
+        Retrieve the managed process's ow_type
+        """
 
+        # Get connection
+        red = self.redis
 
+        # Make sure we have a managed_id
+        if not self.ow_managed_id:
+            return None
+
+        # Look for keys
+        try:
+            ow_type = red.hget("OW:%s" % self.ow_managed_id, "ow_type")
+        # Redis is down - no keys to be found
+        except redis.exceptions.ConnectionError:
+            return None
+
+        if ow_type:
+            # Update the entry in redis with the command being run
+            self.update(custom_vars={"managed_type":ow_type})
+
+        return ow_type
 
 def get_commandline():
     """
@@ -393,21 +543,39 @@ def get_commandline():
     commandline_description = "Overwatch wrapper"
 
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
-                                     description=commandline_description)
+                                     description=commandline_description,
+                                     add_help=False)
+    # Help
+    parser.add_argument("--help", "-h",
+                        action="store_true",
+                        dest="help")
 
     parser.add_argument("--managed_file", "-f",
                         action="store",
                         dest="managed_file",
                         help="File to be overwatched")
-    parsed_args = parser.parse_args()
 
-    return parsed_args
+    parser.add_argument("--python", "-p",
+                        action="store",
+                        default="rapd.python",
+                        dest="python",
+                        help="Which python to launch managed file")
+
+    # parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    # parsed_args = parser.parse_args()
+    parsed_args, unknownargs = parser.parse_known_args()
+
+    if parsed_args.help:
+        parser.print_help()
+
+    return parsed_args, unknownargs
 
 def main():
     """Called when overwatch is run from the commandline"""
 
     # Get the commandline args
-    parsed_args = get_commandline()
+    parsed_args, unknownargs = get_commandline()
 
     # Make sure there is a managed_process in parsed_args
     if parsed_args.managed_file == None:
@@ -416,28 +584,32 @@ def main():
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
-    print environmental_vars
+    # print environmental_vars
 
-    # Environmental var for site if no commandline
-    site = parsed_args.site
-    if site == None:
-        if environmental_vars.has_key("RAPD_SITE"):
-            site = environmental_vars["RAPD_SITE"]
+    if parsed_args.help:
+        print "\n"
+        SITE = None
+    else:
+        # Environmental var for site if no commandline
+        site = parsed_args.site
+        if site == None:
+            if environmental_vars.has_key("RAPD_SITE"):
+                site = environmental_vars["RAPD_SITE"]
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=site)
-    if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
-        sys.exit(9)
+        # Determine the site
+        site_file = utils.site.determine_site(site_arg=site)
+        if site_file == False:
+            print text.error+"Could not determine a site file. Exiting."+text.stop
+            sys.exit(9)
 
-    # Import the site settings
-    print "Importing %s" % site_file
-    SITE = importlib.import_module(site_file)
+        # Import the site settings
+        print "Importing %s" % site_file
+        SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args
     parsed_args_list = []
     for arg, val in parsed_args._get_kwargs():
-        print "  arg:%s  val:%s" % (arg, val)
+        # print "  arg:%s  val:%s" % (arg, val)
         if arg != "managed_file":
             if val == True:
                 parsed_args_list.append("--%s" % arg)
@@ -448,11 +620,13 @@ def main():
                 parsed_args_list.append("--%s" % arg)
                 parsed_args_list.append(str(val))
 
+    # Add the args not understood by overwatch argparser
+    parsed_args_list.extend(unknownargs)
+
     # Instantiate the Overwatcher
     OW = Overwatcher(site=SITE,
                      managed_file=parsed_args.managed_file,
                      managed_file_flags=parsed_args_list)
-
 
 if __name__ == "__main__":
 

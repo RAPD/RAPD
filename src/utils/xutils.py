@@ -5,7 +5,7 @@ rapd_utils has a number of useful dicts and functions used in rapd
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -26,19 +26,23 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
-import json
 import os
 from pprint import pprint
 import shutil
 import subprocess
 import sys
 
+from utils.text import json
+from bson.objectid import ObjectId
+
 from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
 import iotbx.pdb.mmcif as iotbx_mmcif
 
 # RAPD imports
-import agents.subcontractors.parse as Parse
+#import plugins.subcontractors.parse as Parse
+from utils.modules import load_module
+
 
 bravais   = ['1', '5', '3', '22', '23', '21', '16', '79', '75', '143', '146', '196', '197', '195']
 
@@ -241,76 +245,77 @@ def calcADF(self, inp):
     Calc an ADF from MR phases.
     """
 
-    try:
-        mtz  = self.phaser_results[inp].get("AutoMR results").get("AutoMR mtz")
-        pdb  = self.phaser_results[inp].get("AutoMR results").get("AutoMR pdb")
-        map1 = self.phaser_results[inp].get("AutoMR results").get("AutoMR adf")
-        peak = self.phaser_results[inp].get("AutoMR results").get("AutoMR peak")
-        file_type = self.datafile[-3:]
-        if file_type == "mtz":
-            command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(mtz, self.datafile)
-        else:
-            command  = "scalepack2mtz hklin %s hklout junk.mtz<<eof1\n"%self.datafile
-            command += "symm %s\nanomalous yes\nend\neof1\n" % self.phaser_results[inp].get("AutoMR results").get("AutoMR sg")
-            command += "truncate hklin junk.mtz hklout junk2.mtz<<eof2\n"
-            command += "truncate yes\nanomalous yes\nend\neof2\n"
-            command += "cad hklin1 %s hklin2 junk2.mtz hklout adf_input.mtz<<eof3\n" % mtz
-        command += "labin file 1 E1=FC  E2=PHIC E3=FOM\n"
-        command += "labin file 2 all\nend\neof3\n"
-        command += "fft hklin adf_input.mtz mapout map.tmp<<eof4\n"
-        command += "scale F1 1.0\n"
-        command += "labin DANO=DANO SIG1=SIGDANO PHI=PHIC W=FOM\n"
-        command += "end\neof4\n"
-        command += "mapmask mapin map.tmp xyzin %s mapout %s<<eof5\n" % (pdb, map1)
-        command += "border 5\nend\neof5\n"
-        command += "peakmax mapin %s xyzout %s<<eof6\n" % (map1, peak)
-        command += "numpeaks 50\nend\neof6\n\n"
-        adf = open("adf.com", "w")
-        adf.writelines(command)
-        adf.close()
+    #try:
+    mtz  = self.phaser_results[inp].get("AutoMR results").get("AutoMR mtz")
+    pdb  = self.phaser_results[inp].get("AutoMR results").get("AutoMR pdb")
+    map1 = self.phaser_results[inp].get("AutoMR results").get("AutoMR adf")
+    peak = self.phaser_results[inp].get("AutoMR results").get("AutoMR peak")
+    file_type = self.datafile[-3:]
+    if file_type == "mtz":
+        command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(mtz, self.datafile)
+    else:
+        command  = "scalepack2mtz hklin %s hklout junk.mtz<<eof1\n"%self.datafile
+        command += "symm %s\nanomalous yes\nend\neof1\n" % self.phaser_results[inp].get("AutoMR results").get("AutoMR sg")
+        command += "truncate hklin junk.mtz hklout junk2.mtz<<eof2\n"
+        command += "truncate yes\nanomalous yes\nend\neof2\n"
+        command += "cad hklin1 %s hklin2 junk2.mtz hklout adf_input.mtz<<eof3\n" % mtz
+    command += "labin file 1 E1=FC  E2=PHIC E3=FOM\n"
+    command += "labin file 2 all\nend\neof3\n"
+    command += "fft hklin adf_input.mtz mapout map.tmp<<eof4\n"
+    command += "scale F1 1.0\n"
+    command += "labin DANO=DANO SIG1=SIGDANO PHI=PHIC W=FOM\n"
+    command += "end\neof4\n"
+    command += "mapmask mapin map.tmp xyzin %s mapout %s<<eof5\n" % (pdb, map1)
+    command += "border 5\nend\neof5\n"
+    command += "peakmax mapin %s xyzout %s<<eof6\n" % (map1, peak)
+    command += "numpeaks 50\nend\neof6\n\n"
+    adf = open("adf.com", "w")
+    adf.writelines(command)
+    adf.close()
 
-        if self.test == False:
-            processLocal(("sh adf.com", "adf.log"), self.logger)
-        else:
-            os.system("touch adf.com")
-
+    if self.test == False:
+        processLocal(("sh adf.com", "adf.log"), self.logger)
+    else:
+        os.system("touch adf.com")
+    """
     except:
         # self.logger.exception('**Error in Utils.calcADF**')
         pass
-
+    """
 def calcResNumber(self,sg,se=False,vol=False):
   """
   Calculates total number of residues or number of Se in AU.
   """
   if self.verbose:
     self.logger.debug('Utilities::calcResNumber')
-  try:
-    if vol:
-      num_residues = calcTotResNumber(self,vol)
-    else:
-      num_residues = calcTotResNumber(self,calcVolume(self))
-    den = int(symopsSG(self,sg))
-    if sg == 'R3':
-      if self.cell2[-1].startswith('120'):
-        den = int(symopsSG(self,'H3'))
-    elif sg == 'R32':
-      if self.cell2[-1].startswith('120'):
-        den = int(symopsSG(self,'H32'))
-    #Figure about 1 SeMet every 75 residues.
-    if se:
-      num_se = int(round((num_residues/75)/den))
-      if num_se == 0:
-        num_se = 1
-      return (num_se)
-    else:
-      return (int(num_residues/den))
+  #try:
+  if vol:
+    num_residues = calcTotResNumber(self,vol)
+  else:
+    num_residues = calcTotResNumber(self,calcVolume(self))
+  den = int(symopsSG(self,sg))
+  if sg == 'R3':
+    if self.cell2[-1].startswith('120'):
+      den = int(symopsSG(self,'H3'))
+  elif sg == 'R32':
+    if self.cell2[-1].startswith('120'):
+      den = int(symopsSG(self,'H32'))
+  #Figure about 1 SeMet every 75 residues.
+  if se:
+    num_se = int(round((num_residues/75)/den))
+    if num_se == 0:
+      num_se = 1
+    return (num_se)
+  else:
+    return (int(num_residues/den))
+  """
   except:
     self.logger.exception('**Error in Utils.calcResNumber**')
     if se:
       return(5)
     else:
       return(200)
-
+  """
 def calc_res_number(sg, se=False, volume=0.0, sample_type="protein", solvent_content=0.55):
     """
     Calculates total number of residues or number of Se in AU.
@@ -346,32 +351,33 @@ def calc_res_number(sg, se=False, volume=0.0, sample_type="protein", solvent_con
     #   else:
     #     return(200)
 
-def calcTotResNumber(self, volume):
+def calcTotResNumber_OLD(self, volume):
   """
   Calculates number of residues in the unit cell for Raddose calculation. If cell volume bigger than 50000000, then
   turns on Ribosome which makes changes so meaning strategy is presented.
   """
   if self.verbose:
     self.logger.debug('Utilities::calcTotResNumber')
-  try:
-    checkVolume(self,volume)
-    content = 1 - float(self.solvent_content)
-    #Calculate number of residues based on solvent content in volume of cell.
-    if self.sample_type == 'Protein':
-      #based on average MW of residue = 110 DA
-      return(int((float(volume)*float(content))/135.3))
-    elif self.sample_type == 'DNA':
-      #based on average MW of residue = 330 DA
-      return(int((float(volume)*float(content))/273.9))
-    else:
-      #if RNA or Ribosome
-      #RNA based on average MW of residue = 340 DA
-      return(int((float(volume)*float(content))/282.2))
+  #try:
+  checkVolume(self,volume)
+  content = 1 - float(self.solvent_content)
+  #Calculate number of residues based on solvent content in volume of cell.
+  if self.sample_type == 'protein':
+    #based on average MW of residue = 110 DA
+    return(int((float(volume)*float(content))/135.3))
+  elif self.sample_type == 'dna':
+    #based on average MW of residue = 330 DA
+    return(int((float(volume)*float(content))/273.9))
+  else:
+    #if RNA or Ribosome
+    #RNA based on average MW of residue = 340 DA
+    return(int((float(volume)*float(content))/282.2))
+  """
   except:
     self.logger.exception('**Error in Utils.calcTotResNumber**')
     return (None)
-
-def calc_tot_res_number(volume, sample_type=False, solvent_content=False):
+  """
+def calc_tot_res_number(volume, sample_type='protein', solvent_content=False):
     """
     Calculates number of residues in the unit cell for Raddose calculation. If cell volume bigger than 50000000, then
     turns on Ribosome which makes changes so meaning strategy is presented.
@@ -380,9 +386,6 @@ def calc_tot_res_number(volume, sample_type=False, solvent_content=False):
     if not sample_type:
         if volume > 25000000.0: #For 30S
             sample_type = "ribosome"
-        # Guessing
-        else:
-            sample_type = "protein"
 
     if not solvent_content:
         if sample_type == "protein":
@@ -412,161 +415,160 @@ def calcTransmission(self,attenuation=1):
     """
     if self.verbose:
         self.logger.debug('Utilities::calcTransmission')
-    try:
-        if self.distl_results:
-            if self.distl_results["distl_results"] != 'FAILED':
-                mean_int_sig = float(max(self.distl_results.get("distl_results").get('mean int signal')))
-                if mean_int_sig < 1:
-                    mean_int_sig = -1
-        else:
-            mean_int_sig = -1
+    #try:
+    if self.distl_results:
+        if self.distl_results["distl_results"] != 'FAILED':
+            mean_int_sig = float(max(self.distl_results.get("distl_results").get('mean int signal')))
+            if mean_int_sig < 1:
+                mean_int_sig = -1
+    else:
+        mean_int_sig = -1
 
-        #TESTING: Adjusting the '4000' number to give reasonable results for expected transmission setting.
-        #if self.best_failed == False:
-        if mean_int_sig != -1:
-            trans = int((4000/(mean_int_sig))*self.transmission*attenuation)
-            if trans > 100:
-                trans = int(100)
-                if trans < 1:
-                    trans = int(1)
-        else:
-            trans = int(attenuation*self.transmission)
-        return (trans)
-
+    #TESTING: Adjusting the '4000' number to give reasonable results for expected transmission setting.
+    #if self.best_failed == False:
+    if mean_int_sig != -1:
+        trans = int((4000/(mean_int_sig))*self.transmission*attenuation)
+        if trans > 100:
+            trans = int(100)
+            if trans < 1:
+                trans = int(1)
+    else:
+        trans = int(attenuation*self.transmission)
+    return (trans)
+    """
     except:
         self.logger.exception('**Error in Utils.calcTransmission**')
         return (1)
-
+    """
 def calcVolume(self):
     """
     Calculate and return volume of unit cell.
     """
     if self.verbose:
         self.logger.debug('Utilities::calcVolume')
-    try:
-        log = []
-        volume = False
-        #put together the command script for Raddose
-        if isinstance(self.cell, list):
-            cell = ' '.join(self.cell)
-        else:
-            cell = self.cell
-        #Run Raddose to get the volume of the cell.
-        command = 'raddose << EOF\nCELL %s\nEND\nEOF\n'%cell
-        output = subprocess.Popen(command,
-                                  shell=True,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT)
-        for line in output.stdout:
-            log.append(line)
-            #self.logger.debug(line.rstrip())
-            if line.startswith('Unit Cell Volume'):
-                volume = float((line.split())[4])
-        return(volume)
-
+    #try:
+    log = []
+    volume = False
+    #put together the command script for Raddose
+    if isinstance(self.cell, list):
+        cell = ' '.join(self.cell)
+    else:
+        cell = self.cell
+    #Run Raddose to get the volume of the cell.
+    command = 'raddose << EOF\nCELL %s\nEND\nEOF\n'%cell
+    output = subprocess.Popen(command,
+                              shell=True,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT)
+    for line in output.stdout:
+        log.append(line)
+        #self.logger.debug(line.rstrip())
+        if line.startswith('Unit Cell Volume'):
+            volume = float((line.split())[4])
+    return(volume)
+    """
     except:
         self.logger.exception('**Error in Utils.calcVolume**')
         return(None)
-
+    """
 def changeIns(self):
   """
   Change the ins file for ShelxD to account for nproc in multiShelxD mode.
   """
   if self.verbose:
     self.logger.debug('Utilities::changeIns')
-  try:
-    ntry = int(round(self.shelxd_try/self.njobs))
-    if ntry == 0:
-      ntry = 1
-    os.system('cp junk_fa.ins junk_fa_orig.ins')
-    junk = []
-    for x,line in enumerate(open('junk_fa.ins','r').readlines()):
-      junk.append(line)
-      if line.startswith('SEED'):
-        new_line = line.replace(line.split()[1],'0')
+  #try:
+  ntry = int(round(self.shelxd_try/self.njobs))
+  if ntry == 0:
+    ntry = 1
+  os.system('cp junk_fa.ins junk_fa_orig.ins')
+  junk = []
+  for x,line in enumerate(open('junk_fa.ins','r').readlines()):
+    junk.append(line)
+    if line.startswith('SEED'):
+      new_line = line.replace(line.split()[1],'0')
+      junk.remove(line)
+      junk.insert(x,new_line)
+    if line.startswith('NTRY'):
+      new_line2 = line.replace(line.split()[1],str(ntry))
+      junk.remove(line)
+      junk.insert(x,new_line2)
+    if line.startswith('PATS'):
+      #if self.many_sites:
+      if self.many_sites or self.cubic:
+        new = 'PATS 200\nWEED 0.3'
+        new_line3 = line.replace(line.split()[0],new)
         junk.remove(line)
-        junk.insert(x,new_line)
-      if line.startswith('NTRY'):
-        new_line2 = line.replace(line.split()[1],str(ntry))
-        junk.remove(line)
-        junk.insert(x,new_line2)
-      if line.startswith('PATS'):
-        #if self.many_sites:
-        if self.many_sites or self.cubic:
-          new = 'PATS 200\nWEED 0.3'
-          new_line3 = line.replace(line.split()[0],new)
-          junk.remove(line)
-          junk.insert(x,new_line3)
-    f2 = open('junk_fa.ins','w')
-    f2.writelines(junk)
-    f2.close()
-
+        junk.insert(x,new_line3)
+  f2 = open('junk_fa.ins','w')
+  f2.writelines(junk)
+  f2.close()
+  """
   except:
     self.logger.exception('**Error in Utils.ChangeIns**')
-
+  """
+"""
 def checkAnom(self):
-  """
-  Check to see if anomalous signal is present in data. Should modify to just
-  read the SHELXC results instead of running it before.
-  """
-  try:
-    signal = False
-    #cc_anom   = self.data.get('original').get('cc_anom')
-    log = open(self.data.get('original').get('scala_log'),'r').readlines()
-    for line in log:
-      if line.startswith('  Completeness'):
-        comp = line.split()[1]
-      if line.startswith('  Mid-Slope of'):
-        slope = line.split()[5]
-      if line.startswith('  DelAnom correlation'):
-        cc_anom = line.split()[4]
-      """
-      if line.startswith('  Multiplicity'):
-        mult = line.split()[1]
-      if line.startswith('  Anomalous completeness'):
-        comp_anom = line.split()[2]
-      if line.startswith('  Anomalous multiplicity'):
-        mult_anom = line.split()[2]
-      if line.startswith('  Rmerge    '):
-        r = line.split()[1]
-      if line.startswith('  Rpim (within'):
-        rpim_anom = line.split()[3]
-      if line.startswith('  Rpim (all'):
-        rpim = line.split()[5]
-      """
-    if float(comp) > 70:
-      if float(slope) > 1:
-        if float(cc_anom) > 0.1:
-          #copy sca file to local directory so path isn't too long for SHELX
-          sca = os.path.basename(self.datafile)
-          shutil.copy(self.datafile,sca)
-          command  = 'shelxc junk <<EOF\nCELL %s\nSPAG %s\nSAD %s\nFIND 1\nSFAC Se\nEOF\n'%(self.cell,self.input_sg,sca)
-          output = subprocess.Popen(command,
-                                    shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-          temp = []
-          for line in output.stdout:
-            temp.append(line)
-          #shelx = self.ParseOutputShelxC(temp)
-          shelx = Parse.ParseOutputShelxC(self,temp)
-          dsig = shelx.get('shelxc_dsig')
-          max_dsig = max(dsig)
-          if max_dsig > 1:
-            signal = True
-          else:
-            signal = False
-    if signal:
-      return (True)
-    else:
-      Parse.setShelxResults(self)
-      return (False)
+
+  #Check to see if anomalous signal is present in data. Should modify to just
+  #read the SHELXC results instead of running it before.
+
+  #try:
+  signal = False
+  #cc_anom   = self.data.get('original').get('cc_anom')
+  log = open(self.data.get('original').get('scala_log'),'r').readlines()
+  for line in log:
+    if line.startswith('  Completeness'):
+      comp = line.split()[1]
+    if line.startswith('  Mid-Slope of'):
+      slope = line.split()[5]
+    if line.startswith('  DelAnom correlation'):
+      cc_anom = line.split()[4]
+    #if line.startswith('  Multiplicity'):
+    #  mult = line.split()[1]
+    #if line.startswith('  Anomalous completeness'):
+    #  comp_anom = line.split()[2]
+    #if line.startswith('  Anomalous multiplicity'):
+    #  mult_anom = line.split()[2]
+    #if line.startswith('  Rmerge    '):
+    #  r = line.split()[1]
+    #if line.startswith('  Rpim (within'):
+    #  rpim_anom = line.split()[3]
+    #if line.startswith('  Rpim (all'):
+    #  rpim = line.split()[5]
+  if float(comp) > 70:
+    if float(slope) > 1:
+      if float(cc_anom) > 0.1:
+        #copy sca file to local directory so path isn't too long for SHELX
+        sca = os.path.basename(self.datafile)
+        shutil.copy(self.datafile,sca)
+        command  = 'shelxc junk <<EOF\nCELL %s\nSPAG %s\nSAD %s\nFIND 1\nSFAC Se\nEOF\n'%(self.cell,self.input_sg,sca)
+        output = subprocess.Popen(command,
+                                  shell=True,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT)
+        temp = []
+        for line in output.stdout:
+          temp.append(line)
+        #shelx = self.ParseOutputShelxC(temp)
+        shelx = Parse.ParseOutputShelxC(self,temp)
+        dsig = shelx.get('shelxc_dsig')
+        max_dsig = max(dsig)
+        if max_dsig > 1:
+          signal = True
+        else:
+          signal = False
+  if signal:
+    return (True)
+  else:
+    Parse.setShelxResults(self)
+    return (False)
 
   except:
     self.logger.exception('**ERROR in Utils.checkAnom**')
     Parse.setShelxResults(self)
     return(False)
-
+"""
 def checkInverse(self, inp):
     """
     Check if inverse SG is possible.
@@ -597,9 +599,6 @@ def checkSG(self, inp):
   Check SG subgroups.
   """
 
-  print "checkSG"
-  print inp
-
   if self.verbose:
     self.logger.debug('Utilities::checkSG')
 
@@ -628,27 +627,29 @@ def checkVolume(self,volume):
   """
   if self.verbose:
     self.logger.debug('Utilities::checkVolume')
-  try:
-    #if float(volume) > 50000000.0: #For 70S
-    if float(volume) > 25000000.0: #For 30S
-      self.sample_type = 'Ribosome'
-      self.solvent_content = 0.64
+  #try:
+  #if float(volume) > 50000000.0: #For 70S
+  if float(volume) > 25000000.0: #For 30S
+    self.sample_type = 'ribosome'
+    self.solvent_content = 0.64
+  """
   except:
     self.logger.exception('**Error in Utils.checkVolume**')
-
-def check_volume(volume):
+  """
+def check_volume_OLD(volume):
     """Check to see if unit cell is really big"""
+
 
     if float(volume) > 25000000.0: #For 30S
         sample_type = "ribosome"
         solvent_content = 0.64
-
+    # WONT WORK if less than 25000000
     return (sample_type, solvent_content)
-
+"""
 def checkXparm(self):
-  """
-  Check if XPARM.XDS has the same SG and similar cell to GXPARM.XDS. For multiruns.py.
-  """
+
+  #Check if XPARM.XDS has the same SG and similar cell to GXPARM.XDS. For multiruns.py.
+
   if self.verbose:
     self.logger.debug('Utilities::checkXparm')
 
@@ -660,34 +661,31 @@ def checkXparm(self):
         os.rename('GXPARM.XDS','GXPARM1.XDS')
       os.rename('XPARM.XDS','XPARM_orig.XDS')
       shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
-
+"""
 def cleanPDB(self,inp):
   """
   Get rid of HETATM, ANISOU, and water lines in pdb file.
   """
   if self.verbose:
     self.logger.debug('Utilities::cleanPDB')
-  try:
-    temp = []
-    old = '%s_orig.pdb'%inp[:-4]
-    shutil.copy(inp,old)
-    f = open(inp,'r').readlines()
-    for line in f:
-      temp.append(line)
-      if line.startswith('HETATM'):
-        temp.remove(line)
-      if line.startswith('ANISOU'):
-        temp.remove(line)
-    f2 = open(inp,'w')
-    f2.writelines(temp)
-    f2.close()
-
+  #try:
+  temp = []
+  old = '%s_orig.pdb'%inp[:-4]
+  shutil.copy(inp,old)
+  f = open(inp,'r').readlines()
+  for line in f:
+    temp.append(line)
+    if line.startswith('HETATM'):
+      temp.remove(line)
+    if line.startswith('ANISOU'):
+      temp.remove(line)
+  f2 = open(inp,'w')
+  f2.writelines(temp)
+  f2.close()
+  """
   except:
     self.logger.exception('**Error in Utils.cleanPDB**')
-
-
-
-
+  """
 def convert_hdf5_cbf(inp,
                      odir=False,
                      prefix=False,
@@ -709,119 +707,112 @@ def convert_hdf5_cbf(inp,
     if logger:
         logger.debug('Utilities::convert_hdf5_cbf')
 
-    try:
-        #command0 = '/gpfs6/users/necat/Jon/Programs/CCTBX_x64/base_tmp/eiger2cbf/trunk/eiger2cbf %s'%inp
-        command0 = "eiger2cbf %s" % inp
+    #try:
+    #command0 = '/gpfs6/users/necat/Jon/Programs/CCTBX_x64/base_tmp/eiger2cbf/trunk/eiger2cbf %s'%inp
+    command0 = "eiger2cbf %s" % inp
 
-        if odir:
-            out = odir
+    if odir:
+        out = odir
+    else:
+        out = '/gpfs6/users/necat/Jon/RAPD_test/Output/Temp'
+    if prefix == False:
+        prefix = 'conv_1_'
+
+    # check if folder exists, if not make it and change to it.
+    #folders2(self,out)
+    if os.path.exists(out) == False:
+        os.makedirs(out)
+    os.chdir(out)
+
+    if inp.count("master"):
+
+        # Not really needed, unless someone collected a huge dataset.
+        ncpu = multiprocessing.cpu_count()
+        pool = multiprocessing.Pool(processes=ncpu)
+
+        # Check how many frames are in dataset
+        nimages = pool.apply_async(processLocal, ((command0, os.path.join(out, "test.log")),))
+        nimages.wait()
+        total = int(open('test.log','r').readlines()[-1])
+        if BLspec.checkCluster():
+            # Half the number of nodes in the queue.
+            split = int(round(total/8))
+            cluster = True
         else:
-            out = '/gpfs6/users/necat/Jon/RAPD_test/Output/Temp'
-        if prefix == False:
-            prefix = 'conv_1_'
-
-        # check if folder exists, if not make it and change to it.
-        #folders2(self,out)
-        if os.path.exists(out) == False:
-            os.makedirs(out)
-        os.chdir(out)
-
-        if inp.count("master"):
-
-            # Not really needed, unless someone collected a huge dataset.
-            ncpu = multiprocessing.cpu_count()
-            pool = multiprocessing.Pool(processes=ncpu)
-
-            # Check how many frames are in dataset
-            nimages = pool.apply_async(processLocal, ((command0, os.path.join(out, "test.log")),))
-            nimages.wait()
-            total = int(open('test.log','r').readlines()[-1])
-            if BLspec.checkCluster():
-                # Half the number of nodes in the queue.
-                split = int(round(total/8))
-                cluster = True
-            else:
-                # Least amount of splitting without running out of memory.
-                split = 360
-                cluster = False
-            st = 1
-            end = split
-            stop = False
-            # For Autoindexing. Differentiate pairs from separate runs.
-            if total == 1:
-                # Set the image number defaut to 1.
-                if imgn == False: imgn = 1
-                img = '%s%s.cbf'%(os.path.join(out,prefix),str(imgn).zfill(zfill))
-                command = '%s 1 %s'%(command0, img)
-            else:
-                command = '%s %s:%s %s'%(command0,st, end, os.path.join(out,prefix))
-            while 1:
-                if cluster:
-                    # No self required
-                    pool.apply_async(BLspec.processCluster_NEW, ((command,os.path.join(out,'eiger2cbf.log')),))
-                else:
-                    pool.apply_async(processLocal, ((command,os.path.join(out,'eiger2cbf.log')),))
-                time.sleep(0.1)
-                if stop:
-                    break
-                st += split
-                end += split
-                # Check to see if next round will be out of range
-                if st >= total:
-                    break
-                if st + split >= total:
-                    end = total
-                    stop = True
-                if end > total:
-                    end = total
-            pool.close()
-            pool.join()
-
-            # Get the detector description from the h5 file
-            with open('eiger2cbf.log','r') as f:
-                for line in f:
-                    if line.count('description'):
-                        det = line[line.find('=')+2:].strip()
-                        break
-
-            # Read header from first image and pass it back.
-            header = readHeader(img)
-
-            # change the detector
-            header['detector'] = det
-            return(header)
+            # Least amount of splitting without running out of memory.
+            split = 360
+            cluster = False
+        st = 1
+        end = split
+        stop = False
+        # For Autoindexing. Differentiate pairs from separate runs.
+        if total == 1:
+            # Set the image number defaut to 1.
+            if imgn == False: imgn = 1
+            img = '%s%s.cbf'%(os.path.join(out,prefix),str(imgn).zfill(zfill))
+            command = '%s 1 %s'%(command0, img)
         else:
-            return('Not master file!!!')
+            command = '%s %s:%s %s'%(command0,st, end, os.path.join(out,prefix))
+        while 1:
+            if cluster:
+                # No self required
+                pool.apply_async(BLspec.processCluster_NEW, ((command,os.path.join(out,'eiger2cbf.log')),))
+            else:
+                pool.apply_async(processLocal, ((command,os.path.join(out,'eiger2cbf.log')),))
+            time.sleep(0.1)
+            if stop:
+                break
+            st += split
+            end += split
+            # Check to see if next round will be out of range
+            if st >= total:
+                break
+            if st + split >= total:
+                end = total
+                stop = True
+            if end > total:
+                end = total
+        pool.close()
+        pool.join()
 
+        # Get the detector description from the h5 file
+        with open('eiger2cbf.log','r') as f:
+            for line in f:
+                if line.count('description'):
+                    det = line[line.find('=')+2:].strip()
+                    break
+
+        # Read header from first image and pass it back.
+        header = readHeader(img)
+
+        # change the detector
+        header['detector'] = det
+        return(header)
+    else:
+        return('Not master file!!!')
+    """
     except:
         if logger:
             logger.exception('**ERROR in Utils.convert_hdf5_cbf**')
         return("FAILED")
-
-
-
-
-
-
-
+    """
 def convertImage(self, inp, output):
   """
   Convert image to new type.
   """
   if self.verbose:
     self.logger.debug('Utilities::convertImage')
-  try:
-    processLocal('convert %s %s'%(inp,output),self.logger)
+  #try:
+  processLocal('convert %s %s'%(inp,output),self.logger)
+  """
   except:
     self.logger.exception('**ERROR in Utils.convertImage**')
-
+  """
 def convertSG(self, inp, reverse=False):
     """
     Convert SG to SG#.
     """
-
     # print "convertSG %s %s" % (inp, reverse)
-
     if self.verbose:
         self.logger.debug('Utilities::convertSG')
 
@@ -1033,24 +1024,24 @@ def convertShelxFiles(self,inp):
   """
   if self.verbose:
     self.logger.debug('Utilities::convertShelxFiles')
-  try:
-    inv = self.shelx_results0[inp].get('Shelx results').get('shelxe_inv_sites')
-    if inv == 'True':
-      sg = convertSG(self,checkInverse(self,convertSG(self,inp))[0],True)
-      h = 'junk_i'
-    else:
-      sg = inp
-      h = 'junk'
-    for i in range(2):
-      fl = 'phs'
-      if i == 1:
-        fl = 'hat'
-      if os.path.exists('%s.%s'%(h,fl)):
-        shutil.copy('%s.%s'%(h,fl),'%s.%s'%(sg,fl))
-
+  #try:
+  inv = self.shelx_results0[inp].get('Shelx results').get('shelxe_inv_sites')
+  if inv == 'True':
+    sg = convertSG(self,checkInverse(self,convertSG(self,inp))[0],True)
+    h = 'junk_i'
+  else:
+    sg = inp
+    h = 'junk'
+  for i in range(2):
+    fl = 'phs'
+    if i == 1:
+      fl = 'hat'
+    if os.path.exists('%s.%s'%(h,fl)):
+      shutil.copy('%s.%s'%(h,fl),'%s.%s'%(sg,fl))
+  """
   except:
     self.logger.exception('**ERROR in Utils.convertShelxFiles**')
-
+  """
 def convertUnicode(self,inp=False):
   """
   Convert unicode to Python string for Phenix.
@@ -1156,27 +1147,27 @@ def denzo2mosflm(self):
   except:
     self.logger.exception('**Error in Utils.denzo2mosflm**')
 
-def distlComb(self):
-  """
-  Combine distl results into 1 inp.
-  """
-  try:
-    if len(self.distl_results.keys()) == 1:
-      self.distl_results = self.distl_results['0']
-    else:
-      d = {}
-      for key in self.distl_results.get('0').get("distl_results").keys():
-        temp = self.distl_results.get('0').get("distl_results")[key]
-        temp.extend(self.distl_results.get('1').get("distl_results")[key])
-        d[key] = temp
-      self.distl_results = {"distl_results" : d}
-      # pprint.pprint(self.distl_results)
-
-  except:
-    self.logger.exception('**Error in Utils.distlComb**')
+# def distlComb(self):
+#   """
+#   Combine distl results into 1 inp.
+#   """
+#   try:
+#     if len(self.distl_results.keys()) == 1:
+#       self.distl_results = self.distl_results['0']
+#     else:
+#       d = {}
+#       for key in self.distl_results.get('0').get("distl_results").keys():
+#         temp = self.distl_results.get('0').get("distl_results")[key]
+#         temp.extend(self.distl_results.get('1').get("distl_results")[key])
+#         d[key] = temp
+#       self.distl_results = {"distl_results" : d}
+#       # pprint.pprint(self.distl_results)
+#
+#   except:
+#     self.logger.exception('**Error in Utils.distlComb**')
 
 #Moved Labelit stuff here because it is used by rapd_agent_strategy.py and rapd_agent_beamcenter.py
-def errorLabelitPost(self, iteration, error, run_before=False):
+def errorLabelitPost_OLD(self, iteration, error, run_before=False):
   """
   Do the logging for the error correction in Labelit.
   """
@@ -1191,7 +1182,7 @@ def errorLabelitPost(self, iteration, error, run_before=False):
         if self.verbose:
           self.logger.debug(error)
         self.labelit_log[str(iteration)].extend('\n%s\n'%error)
-        self.labelit_results[str(iteration)] = { 'Labelit results'  : 'FAILED'}
+        self.labelit_results[str(iteration)] = { "labelit_results"  : 'FAILED'}
       else:
         self.labelit_log[str(iteration)].extend('\n%s Retrying Labelit\n'%error)
     else:
@@ -1208,7 +1199,8 @@ def errorLabelitPost(self, iteration, error, run_before=False):
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitPost**')
 
-def errorLabelit(self, iteration):
+#def errorLabelit(self, iteration=0):
+def get_labelit_settings_OLD(self, iteration=0):
     """
     Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
     Commented out things were tried before.
@@ -1216,9 +1208,14 @@ def errorLabelit(self, iteration):
 
     self.logger.debug('Utilities::errorLabelit')
 
+    # If iteration is string, return the total number of iterations in the funnction.
+    if isinstance(iteration, str):
+        return 6
+
     # Create separate folders for Labelit runs.
     if self.multiproc == False:
         iteration += 1
+    # Change to the correct folder (create it if necessary).
     foldersLabelit(self, iteration)
 
     preferences = open('dataset_preferences.py','a')
@@ -1227,6 +1224,12 @@ def errorLabelit(self, iteration):
 
     if self.twotheta == False:
         preferences.write('beam_search_scope=0.3\n')
+
+    if iteration == 0:
+        preferences.close()
+        self.labelit_log[iteration] = ['\nUsing default parameters.\n']
+        self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
+        self.logger.debug('Using default parameters.')
 
     if iteration == 1:
         # Seemed to pick stronger spots on Pilatis
@@ -1240,17 +1243,17 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-        self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        self.labelit_log[iteration] = ['\nLooking for long unit cell.\n']
+        self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
         self.logger.debug('Looking for long unit cell.')
 
     elif iteration == 2:
         # Change it up and go for larger peaks like small molecule.
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
-        self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
+        self.labelit_log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+        self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
     elif iteration == 3:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
@@ -1263,50 +1266,50 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_spot_area=7\n')
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-        self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        self.labelit_log[iteration] = ['\nLooking for weak diffraction.\n']
+        self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         else:
             preferences.write('distl.minimum_spot_area=8\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 3 or 8.')
 
     elif iteration == 5:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
             setting = (2, 5)
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=4\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
             setting = (2, 4)
         else:
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 2 or 6.')
 
     return self.process_labelit(iteration)
 
-def errorLabelitMin(self, iteration, line):
+def errorLabelitMin_OLD(self, iteration, line):
   """
   Labelit error correction. Reset min spots allowed. Set/reset setting in dataset_preferences.py according
   to error iteration. Only run in multiproc mode.
@@ -1334,7 +1337,7 @@ def errorLabelitMin(self, iteration, line):
     self.labelit_log[str(iteration)].extend('\nCould not change spot finding settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitFixCell(self,iteration,lg,labelit_sol):
+def errorLabelitFixCell_OLD(self,iteration,lg,labelit_sol):
   """
   Pick correct cell (lowest rmsd) if multiple cell choices are possible in user selected SG and rerun Labelit.
   """
@@ -1359,7 +1362,7 @@ def errorLabelitFixCell(self,iteration,lg,labelit_sol):
     self.logger.exception('**Error in Utils.errorLabelitFixCell**')
     return(None)
 
-def errorLabelitCellSG(self,iteration):
+def errorLabelitCellSG_OLD(self,iteration):
   """
   #Retrying Labelit without using user specified unit cell params.
   """
@@ -1375,7 +1378,7 @@ def errorLabelitCellSG(self,iteration):
     self.logger.exception('**ERROR in Utils.errorLabelitCellSG**')
     return(None)
 
-def errorLabelitBump(self,iteration):
+def errorLabelitBump_OLD(self,iteration):
   """
   Get rid of distl_profile_bumpiness line in dataset_preferences.py. Don't think I use much anyway.
   """
@@ -1397,7 +1400,7 @@ def errorLabelitBump(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not remove distl_profile_bumpiness line in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitGoodSpots(self,iteration):
+def errorLabelitGoodSpots_OLD(self,iteration):
   """
   Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a Labelit
   failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed index.
@@ -1425,7 +1428,7 @@ def errorLabelitGoodSpots(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not change min number of good bragg spots settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitMosflm(self,iteration):
+def errorLabelitMosflm_OLD(self,iteration):
     """
     Set Mosflm integration resolution lower. Seems to fix this error.
     """
@@ -1448,7 +1451,7 @@ def errorLabelitMosflm(self,iteration):
         self.labelit_log[str(iteration)].extend('\nCould not reset Mosflm resolution.\n')
         return None
 
-def getBestVersion():
+def get_best_version():
     """
     Returns the version of Best that is to be run
     """
@@ -1468,7 +1471,7 @@ def getBestVersion():
 
     return version
 
-def errorBest(self, iteration=0, best_version="3.2.0"):
+def errorBest_OLD(self, iteration=0, best_version="3.2.0"):
     """
     Run all the Best runs at the same time.
     Reduce resolution limit and rerun Mosflm to calculate new files.
@@ -1492,13 +1495,13 @@ def errorBest(self, iteration=0, best_version="3.2.0"):
                 new.writelines(temp)
                 new.close()
                 subprocess.Popen("sh %s" % f, shell=True).wait()
-        self.processBest(iteration, best_version)
+        self.process_best(iteration, best_version)
 
     except:
         self.logger.exception("**ERROR in Utils.errorBest**")
         self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
 
-def errorBestPost(self,iteration,error,anom=False):
+def errorBestPost_OLD(self,iteration,error,anom=False):
   """
   Post error to proper log in postprocessBest.
   """
@@ -1526,67 +1529,67 @@ def errorBestPost(self,iteration,error,anom=False):
   except:
     self.logger.exception('**Error in Utils.errorBestPost**')
 
-def failedHTML(self, inp):
+def failedHTML_OLD(self, inp):
   """
-  Generates failed html to output for GUI.
+  Generates failed html to output for GUI. FOR RAPD1!!
   """
   if self.verbose:
     self.logger.debug('Utilities::failedHTML')
-  try:
-    if type(inp) == tuple:
-      name,error = inp
-    else:
-      name = inp
-      error = False
-    f = getHTMLHeader(self)
-    f +='%6s$(document).ready(function() {\n'%''
-    f +='%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',))
-    f +='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
-    if error:
-      f +='%7s<h3 class="results">%s</h3>\n'%('',error)
-    elif self.failed:
-      f +='%7s<h3 class="results">Input data could not be analysed.</h3>\n'%''
-    else:
-      f +='%7s<h3 class="results">There was an error during data analysis or it timed out</h3>\n'%''
-    f +='%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n'%(4*('',))
-    if self.gui:
-      sp = '%s.php'%name
-    else:
-      sp = '%s.html'%name
-    junk = open(sp,'w')
-    junk.writelines(f)
-    junk.close()
-    if os.path.exists(os.path.join(self.working_dir,sp)) == False:
-      shutil.copy(sp,self.working_dir)
-
+  #try:
+  if type(inp) == tuple:
+    name,error = inp
+  else:
+    name = inp
+    error = False
+  f = getHTMLHeader(self)
+  f +='%6s$(document).ready(function() {\n'%''
+  f +='%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',))
+  f +='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
+  if error:
+    f +='%7s<h3 class="results">%s</h3>\n'%('',error)
+  elif self.failed:
+    f +='%7s<h3 class="results">Input data could not be analysed.</h3>\n'%''
+  else:
+    f +='%7s<h3 class="results">There was an error during data analysis or it timed out</h3>\n'%''
+  f +='%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n'%(4*('',))
+  if self.gui:
+    sp = '%s.php'%name
+  else:
+    sp = '%s.html'%name
+  junk = open(sp,'w')
+  junk.writelines(f)
+  junk.close()
+  if os.path.exists(os.path.join(self.working_dir,sp)) == False:
+    shutil.copy(sp,self.working_dir)
+  """
   except:
     self.logger.exception('**ERROR in Utils.failedHTML**.')
-
+  """
 def fixBestSG(self):
     """
     Make user selected SG correct for BEST.
     """
     if self.verbose:
         self.logger.debug("Utilities::fixBestSG")
-    try:
-        temp = []
-        shutil.copy("bestfile.par", "bestfile_orig.par")
-        if self.verbose:
-            self.logger.debug("Since user selected the space group, BEST files will be edited to match.")
-        for x,line in enumerate(open("bestfile_orig.par", "r").readlines()):
-            temp.append(line)
-            if line.startswith("SYMMETRY"):
-                if line.split()[1] != self.spacegroup:
-                    temp.remove(line)
-                    temp.insert(x, line.replace(line.split()[1], self.spacegroup))
-        new = open("bestfile.par", "w")
-        new.writelines(temp)
-        new.close()
-
+    #try:
+    temp = []
+    shutil.copy("bestfile.par", "bestfile_orig.par")
+    if self.verbose:
+        self.logger.debug("Since user selected the space group, BEST files will be edited to match.")
+    for x,line in enumerate(open("bestfile_orig.par", "r").readlines()):
+        temp.append(line)
+        if line.startswith("SYMMETRY"):
+            if line.split()[1] != self.spacegroup:
+                temp.remove(line)
+                temp.insert(x, line.replace(line.split()[1], self.spacegroup))
+    new = open("bestfile.par", "w")
+    new.writelines(temp)
+    new.close()
+    """
     except:
         self.logger.exception("**ERROR in Utils.fixBestSG**")
-
-def fixBestSGBack(self):
+    """
+def fixBestSGBack_OLD(self):
   """
   Best will fail if user selected SG is not found in autoindexing. This brings back the autoindexed SG.
   """
@@ -1600,7 +1603,28 @@ def fixBestSGBack(self):
   except:
     self.logger.exception('**ERROR in Utils.fixBestSGBack**')
 
-def fixBestfile(self):
+def fix_bestfile():
+    """
+    Fix the 'BEAM SWUNG_OUT' line in case of 2 theta usage.
+    """
+    #self.logger.debug('Utilities::fixBestfile')
+
+    temp = []
+    tt = False
+    for i,line in enumerate(open('bestfile.par','r').readlines()):
+        temp.append(line)
+        if line.startswith('BEAM'):
+            if line.split()[1] == 'SWUNG_OUT':
+                tt = True
+                temp.remove(line)
+                temp.insert(i,'BEAM           %s %s\n'%(line.split()[2],line.split()[3]))
+    if tt:
+        shutil.copy('bestfile.par', 'bestfile_orig.par')
+        with open('bestfile.par', 'w') as new:
+            new.writelines(temp)
+            new.close()
+
+def fixBestfile_OLD(self):
     """
     Fix the 'BEAM SWUNG_OUT' line in case of 2 theta usage.
     """
@@ -1631,25 +1655,26 @@ def fixMosflmSG(self):
   """
   if self.verbose:
     self.logger.debug('Utilities::fixMosflmSG')
-  try:
-    temp = []
-    shutil.copy('%s'%self.index_number,'%s_orig'%self.index_number)
-    if self.verbose:
-      self.logger.debug('Since user selected the space group, Mosflm files will be edited to match.')
-    for x,line in enumerate(open('%s'%self.index_number,'r').readlines()):
-      temp.append(line)
-      if line.startswith('SYMMETRY'):
-        if line.split()[1] != self.spacegroup:
-          temp.remove(line)
-          temp.insert(x,'SYMMETRY %s\n'%self.spacegroup)
-    new = open('%s'%self.index_number,'w')
-    new.writelines(temp)
-    new.close()
-
+  #try:
+  temp = []
+  mfile = os.path.join(self.labelit._dir,self.index_number)
+  shutil.copy(mfile,'%s_orig'%mfile)
+  if self.verbose:
+    self.logger.debug('Since user selected the space group, Mosflm files will be edited to match.')
+  for x,line in enumerate(open(mfile,'r').readlines()):
+    temp.append(line)
+    if line.startswith('SYMMETRY'):
+      if line.split()[1] != self.spacegroup:
+        temp.remove(line)
+        temp.insert(x,'SYMMETRY %s\n'%self.spacegroup)
+  new = open('%s'%os.path.join(self.labelit._dir, self.index_number),'w')
+  new.writelines(temp)
+  new.close()
+  """
   except:
     self.logger.exception('**ERROR in Utils.fixMosflmSG**')
-
-def fixMosflmSGBack(self):
+  """
+def fixMosflmSGBack_OLD(self):
   """
   Best will fail if user selected SG is not found in autoindexing. This brings back the autoindexed SG.
   """
@@ -1669,38 +1694,38 @@ def fixSCA(self,inp=False):
   """
   #if self.verbose:
     #self.logger.debug('Utilities::fixSCA')
-  try:
-    if inp:
-      sca = inp
-    else:
-      sca = self.datafile
-    temp = []
-    lines_fixed = 0
-    old_sca = sca.replace('.sca','_orig.sca')
-    shutil.copy(sca,old_sca)
-    junk = open(old_sca, 'r').readlines()[2]
+  #try:
+  if inp:
+    sca = inp
+  else:
+    sca = self.datafile
+  temp = []
+  lines_fixed = 0
+  old_sca = sca.replace('.sca','_orig.sca')
+  shutil.copy(sca,old_sca)
+  junk = open(old_sca, 'r').readlines()[2]
+  if inp == False:
+    if self.input_sg:
+      junk2 = junk.replace(junk[61:-1],self.input_sg)
+  for line in open(old_sca,'r').readlines():
+    temp.append(line)
     if inp == False:
-      if self.input_sg:
-        junk2 = junk.replace(junk[61:-1],self.input_sg)
-    for line in open(old_sca,'r').readlines():
-      temp.append(line)
-      if inp == False:
-        if line.startswith(junk):
-          if self.input_sg:
-            temp.remove(line)
-            temp.insert(2,junk2)
-      #Fix *'s in sca file
-      if line.count('*'):
-        temp.remove(line)
-        lines_fixed += 1
-    out = open(sca,'w')
-    out.writelines(temp)
-    out.close()
-    self.logger.debug('Number of lines fixed in the SCA file: %s'%lines_fixed)
-
+      if line.startswith(junk):
+        if self.input_sg:
+          temp.remove(line)
+          temp.insert(2,junk2)
+    #Fix *'s in sca file
+    if line.count('*'):
+      temp.remove(line)
+      lines_fixed += 1
+  out = open(sca,'w')
+  out.writelines(temp)
+  out.close()
+  self.logger.debug('Number of lines fixed in the SCA file: %s'%lines_fixed)
+  """
   except:
     self.logger.exception('**ERROR in Utils.fixSCA**')
-
+  """
 def fix_mtz_to_sca(input_file):
     """Fix spaces in SG and * in sca file"""
 
@@ -1729,27 +1754,6 @@ def fix_mtz_to_sca(input_file):
     with open(input_file, "w") as output_file:
         output_file.writelines(new_lines)
 
-def fixSG(self,inp):
-  """
-  Fix input SG if R3/R32.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::fixSG')
-  try:
-    if inp == 'H3':
-      return ('R3')
-    elif inp == 'H32':
-      return ('R32')
-    elif inp == 'R3:H':
-      return ('R3')
-    elif inp == 'R32:H':
-      return ('R32')
-    else:
-      return(inp)
-
-  except:
-    self.logger.exception('**ERROR in Utils.fixSG**')
-
 def fix_spacegroup(spacegroup):
     """Fix input SG if R3/R32"""
 
@@ -1765,23 +1769,6 @@ def fix_spacegroup(spacegroup):
         return "R32"
     else:
         return spacegroup
-
-def fixR3SG(self,inp):
-  """
-  Fix input SG if R3/R32.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::fixR3SG')
-  try:
-    if inp == 'R3':
-      return ('H3')
-    elif inp == 'R32':
-      return ('H32')
-    else:
-      return(inp)
-
-  except:
-    self.logger.exception('**ERROR in Utils.fixR3SG**')
 
 def fix_R3_sg(inp):
     """
@@ -1805,19 +1792,20 @@ def foldersLabelit(self, iteration=0):
   """
   if self.verbose:
     self.logger.debug('Utilities::foldersLabelit')
-  try:
-    if os.path.exists(os.path.join(self.working_dir, str(iteration))):
-      copy = False
-    else:
-      copy = True
-    folders(self, iteration)
-    if copy:
-      pref = 'dataset_preferences.py'
-      pref_path = os.path.join(self.working_dir, pref)
-      shutil.copy(pref_path, pref)
+  #try:
+  if os.path.exists(os.path.join(self.working_dir, str(iteration))):
+    copy = False
+  else:
+    copy = True
+  folders(self, iteration)
+  if copy:
+    pref = 'dataset_preferences.py'
+    pref_path = os.path.join(self.working_dir, pref)
+    shutil.copy(pref_path, pref)
+  """
   except:
     self.logger.exception('**Error in Utils.foldersLabelit**')
-
+  """
 def create_folders_labelit(working_dir, iteration=0):
     """
     Sets up new directory and changes to it for each error iteration in multiproc_labelit.
@@ -1838,33 +1826,66 @@ def create_folders_labelit(working_dir, iteration=0):
         pref_path = os.path.join(working_dir, pref)
         shutil.copy(pref_path, pref)
 
-def foldersStrategy(self, iteration=0):
+def foldersStrategy_OLD2(self, iteration=0):
   """
   Sets up new directory for programs.
   """
   if self.verbose:
     self.logger.debug('Utilities::foldersStrategy')
-  try:
-    if os.path.exists(os.path.join(self.working_dir,str(iteration))):
-      copy = False
-    else:
-      copy = True
-    folders(self,iteration)
-    if copy:
-      if iteration[-1] == '0':
-        os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
-      shutil.copy(os.path.join(self.labelit_dir,self.index_number),os.getcwd())
-      shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),os.getcwd())
-      if self.header2:
-        shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),os.getcwd())
-      #For Pilatis background calc.
-      if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-      #if self.pilatus:
-        if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
-          shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),os.getcwd())
+  #try:
+  if os.path.exists(os.path.join(self.working_dir,str(iteration))):
+    copy = False
+  else:
+    copy = True
+  folders(self,iteration)
+  if copy:
+    if iteration[-1] == '0':
+      # Does this even work? there is bestfile.dat and .par?
+      os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
+    shutil.copy(os.path.join(self.labelit_dir,self.index_number),os.getcwd())
+    shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),os.getcwd())
+    if self.header2:
+      shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),os.getcwd())
+    #For Pilatis background calc.
+    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+    #if self.pilatus:
+      if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+        shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),os.getcwd())
+  """
   except:
     self.logger.exception('**Error in Utils.foldersStrategy**')
-
+  """
+def foldersStrategy_OLD(self, iteration=0):
+  """
+  Sets up new directory for programs.
+  """
+  if self.verbose:
+    self.logger.debug('Utilities::foldersStrategy')
+  #try:
+  #if os.path.exists(os.path.join(self.working_dir,str(iteration))):
+  new_folder = os.path.join(self.labelit_dir,str(iteration))
+  if os.path.exists(new_folder):
+    copy = False
+  else:
+    copy = True
+  #folders(self,iteration)
+  folders2(self, new_folder)
+  if copy:
+    if iteration == 0:
+      os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
+    #shutil.copy(os.path.join(self.labelit_dir,self.index_number),new_folder)
+    shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),new_folder)
+    if self.header2:
+      shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),new_folder)
+    #For Pilatis background calc.
+    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+    #if self.pilatus:
+      if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+        shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),new_folder)
+  """
+  except:
+    self.logger.exception('**Error in Utils.foldersStrategy**')
+  """
 def folders(self,inp=None):
   """
   Sets up new directory for programs.
@@ -1872,19 +1893,19 @@ def folders(self,inp=None):
   if self.verbose:
     self.logger.debug('Utilities::folders')
   """
-  try:
-    if inp != None:
-      dir1 = os.path.join(self.working_dir,str(inp))
-    else:
-      dir1 = self.working_dir
-    if os.path.exists(dir1) == False:
-      os.mkdir(dir1)
-      #os.makedirs(dir1)
-    os.chdir(dir1)
-
+  #try:
+  if inp != None:
+    dir1 = os.path.join(self.working_dir,str(inp))
+  else:
+    dir1 = self.working_dir
+  if os.path.exists(dir1) == False:
+    os.mkdir(dir1)
+    #os.makedirs(dir1)
+  os.chdir(dir1)
+  """
   except:
     self.logger.exception('**Error in Utils.folders**')
-
+  """
 def create_folders(working_dir=None, new_dir=None):
     """Creates and moves to a new directory"""
 
@@ -1919,21 +1940,22 @@ def folders2(self,inp=None):
   """
   if self.verbose:
     self.logger.debug('Utilities::folders2')
-  try:
-    if inp != None:
-      if inp.startswith('/'):
-        dir1 = inp
-      else:
-        dir1 = os.path.join(os.getcwd(),str(inp))
+  #try:
+  if inp != None:
+    if inp.startswith('/'):
+      dir1 = inp
     else:
-      dir1 = self.working_dir
-    if os.path.exists(dir1) == False:
-      #os.mkdir(dir1)
-      os.makedirs(dir1)
-    os.chdir(dir1)
+      dir1 = os.path.join(os.getcwd(),str(inp))
+  else:
+    dir1 = self.working_dir
+  if os.path.exists(dir1) == False:
+    #os.mkdir(dir1)
+    os.makedirs(dir1)
+  os.chdir(dir1)
+  """
   except:
     self.logger.exception('**Error in Utils.folders2**')
-
+  """
 def getmmCIF(self,inp):
   """
   Symlink the path of the mmCIF to local folder.
@@ -1941,17 +1963,17 @@ def getmmCIF(self,inp):
   if self.verbose:
     self.logger.debug('Utilities::getmmCIF')
   import os
-  try:
-    path = '/gpfs5/users/necat/rapd/pdbq/pdb/%s/%s.cif'%(inp[1:3].lower(),inp.lower())
-    new_path = os.path.join(os.getcwd(),os.path.basename(path))
-    #If symlink is already there, pass it back, otherwise create it.
-    if os.path.exists(new_path) == False:
-      os.symlink(path,new_path)
-    return(new_path)
-  except:
-    self.logger.exception('**Error in Utils.getmmCIF**')
+  #try:
+  path = '/gpfs5/users/necat/rapd/pdbq/pdb/%s/%s.cif'%(inp[1:3].lower(),inp.lower())
+  new_path = os.path.join(os.getcwd(),os.path.basename(path))
+  #If symlink is already there, pass it back, otherwise create it.
+  if os.path.exists(new_path) == False:
+    os.symlink(path,new_path)
+  return(new_path)
+  #except:
+  #  self.logger.exception('**Error in Utils.getmmCIF**')
 
-def getHTMLHeader(self,inp=False):
+def getHTMLHeader_OLD(self,inp=False):
   """
   Return PHP header for output HTML files.
   """
@@ -2048,7 +2070,7 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
         #For rapd_agent_anom.py so original SCA file used in SHELX.
         self.autosol_datafile = inp
     data = mtz.object(inp)
-    sg = fixR3SG(self,data.space_group_name().replace(' ',''))
+    sg = fix_R3_sg(self,data.space_group_name().replace(' ',''))
     cell2 = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
     cell = ' '.join(cell2)
     if volume:
@@ -2099,102 +2121,102 @@ def get_mtz_info(datafile):
 
     return (sg, cell, vol)
 
-def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
+def getPDBInfo_OLD(self,inp,matthews=True,cell_analysis=False):
   """
   Get info from PDB of mmCIF file.
   """
   from iotbx import pdb
   if self.verbose:
     self.logger.debug('Utilities::PDBInfo')
-  try:
-    #get resolution limit for Matthews Calc. Only called once.
-    if self.dres:
-      res0 = self.dres
+  #try:
+  #get resolution limit for Matthews Calc. Only called once.
+  if self.dres:
+    res0 = self.dres
+  else:
+    res0 = getRes(self)
+  #Get rid of ligands and water so Phenix won't error.
+  #cleanPDB(self,inp)
+  np = 0
+  na = 0
+  nmol = 1
+  sc = 0.55
+  nchains = 0
+  res1 = 0.0
+  d = {}
+  l = []
+  inp = convertUnicode(self,inp)
+  if inp[-3:].lower() == 'cif':
+    import iotbx.pdb.mmcif
+    root = pdb.mmcif.cif_input(file_name=inp).construct_hierarchy()
+  else:
+    root = pdb.input(inp).construct_hierarchy()
+  #print rsam.structure_weight(root,mmt.PROTEIN)
+  for chain in root.models()[0].chains():
+    np1 = 0
+    na1 = 0
+    #Sometimes Hetatoms are AA with same segid.
+    if l.count(chain.id) == 0:
+      l.append(chain.id)
+      repeat = False
+      nchains += 1
     else:
-      res0 = getRes(self)
-    #Get rid of ligands and water so Phenix won't error.
-    #cleanPDB(self,inp)
-    np = 0
-    na = 0
-    nmol = 1
-    sc = 0.55
-    nchains = 0
-    res1 = 0.0
-    d = {}
-    l = []
-    inp = convertUnicode(self,inp)
-    if inp[-3:].lower() == 'cif':
-      import iotbx.pdb.mmcif
-      root = pdb.mmcif.cif_input(file_name=inp).construct_hierarchy()
-    else:
-      root = pdb.input(inp).construct_hierarchy()
-    #print rsam.structure_weight(root,mmt.PROTEIN)
-    for chain in root.models()[0].chains():
-      np1 = 0
-      na1 = 0
-      #Sometimes Hetatoms are AA with same segid.
-      if l.count(chain.id) == 0:
-        l.append(chain.id)
-        repeat = False
-        nchains += 1
-      else:
-        repeat = True
-      #Count the number of AA and NA in pdb file.
-      for rg in chain.residue_groups():
-        if rg.atoms()[0].parent().resname in pdb.common_residue_names_amino_acid:
-          np1 += 1
-        if rg.atoms()[0].parent().resname in pdb.common_residue_names_rna_dna:
-          na1 += 1
-        #not sure if I get duplicates?
-        if rg.atoms()[0].parent().resname in pdb.common_residue_names_ccp4_mon_lib_rna_dna:
-          na1 += 1
-      #Limit to 10 chains?!?
-      if nchains < 10:
-        #Do not split up PDB if run from cell analysis
-        if cell_analysis == False and repeat == False:
-          #Save info for each chain.
-          if np1 or na1:
-            #Write new pdb files for each chain.
-            temp = pdb.hierarchy.new_hierarchy_from_chain(chain)
-            #Long was of making sure that user does not have directory named '.pdb' or '.cif'
-            n = os.path.join(os.path.dirname(inp),'%s_%s.pdb'%(os.path.basename(inp)[:os.path.basename(inp).find('.')],chain.id))
-            if self.test == False:
-              temp.write_pdb_file(file_name=n)
-            if matthews:
-              # Run Matthews Calc. on chain
-              nmol, sc, res1 = runPhaserModule(self, (np1, na1, res0, n))
-            else:
-              res1 = runPhaserModule(self, n)
-            d[chain.id] = {'file':n,
-                           'NRes':np1+na1,
-                           'MWna':na1*330,
-                           'MWaa':np1*110,
-                           'MW':na1*330+np1*110,
-                           'NMol':nmol,
-                           'SC':sc,
-                           'res':res1,}
-      np += np1
-      na += na1
+      repeat = True
+    #Count the number of AA and NA in pdb file.
+    for rg in chain.residue_groups():
+      if rg.atoms()[0].parent().resname in pdb.common_residue_names_amino_acid:
+        np1 += 1
+      if rg.atoms()[0].parent().resname in pdb.common_residue_names_rna_dna:
+        na1 += 1
+      #not sure if I get duplicates?
+      if rg.atoms()[0].parent().resname in pdb.common_residue_names_ccp4_mon_lib_rna_dna:
+        na1 += 1
+    #Limit to 10 chains?!?
+    if nchains < 10:
+      #Do not split up PDB if run from cell analysis
+      if cell_analysis == False and repeat == False:
+        #Save info for each chain.
+        if np1 or na1:
+          #Write new pdb files for each chain.
+          temp = pdb.hierarchy.new_hierarchy_from_chain(chain)
+          #Long was of making sure that user does not have directory named '.pdb' or '.cif'
+          n = os.path.join(os.path.dirname(inp),'%s_%s.pdb'%(os.path.basename(inp)[:os.path.basename(inp).find('.')],chain.id))
+          if self.test == False:
+            temp.write_pdb_file(file_name=n)
+          if matthews:
+            # Run Matthews Calc. on chain
+            nmol, sc, res1 = runPhaserModule(self, (np1, na1, res0, n))
+          else:
+            res1 = runPhaserModule(self, n)
+          d[chain.id] = {'file':n,
+                         'NRes':np1+na1,
+                         'MWna':na1*330,
+                         'MWaa':np1*110,
+                         'MW':na1*330+np1*110,
+                         'NMol':nmol,
+                         'SC':sc,
+                         'res':res1,}
+    np += np1
+    na += na1
 
-    #Run on entire PDB
-    if matthews:
-      nmol,sc,res1 = runPhaserModule(self,(np,na,res0,inp))
-    else:
-      res1 = runPhaserModule(self,inp)
-    d['all'] = {'file':inp,
-                'NRes':np+na,
-                'MWna':na*330,
-                'MWaa':np*110,
-                'MW':na*330+np*110,
-                'NMol':nmol,
-                'SC':sc,
-                'res':res1}
-    return(d)
-
+  #Run on entire PDB
+  if matthews:
+    nmol,sc,res1 = runPhaserModule(self,(np,na,res0,inp))
+  else:
+    res1 = runPhaserModule(self,inp)
+  d['all'] = {'file':inp,
+              'NRes':np+na,
+              'MWna':na*330,
+              'MWaa':np*110,
+              'MW':na*330+np*110,
+              'NMol':nmol,
+              'SC':sc,
+              'res':res1}
+  return(d)
+  """
   except:
     self.logger.exception('**ERROR in Utils.getPDBInfo')
     return(False)
-
+  """
 def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
     """Get info from PDB of mmCIF file"""
 
@@ -2297,7 +2319,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     'res': phaser_return["target_resolution"]}
     return d
 
-def getSGInfo(self,inp):
+def getSGInfo_OLD(self,inp):
   """
   Get info from PDB of mmCIF file.
   """
@@ -2374,47 +2396,48 @@ def get_spacegroup_info(cif_file):
     else:
         return str(iotbx_pdb.input(cif_file).crystal_symmetry().space_group_info()).upper().replace(" ", "")
 
-def getLabelitCell(self,inp=False):
+def getLabelitCell_OLD(self,inp=False):
   """
   Get unit cell from Labelit results.
   """
   if self.verbose:
     self.logger.debug('Utilities::getLabelitCell')
-  try:
-    run2 = False
-    run3 = False
-    cell = False
-    sym = False
-    for line in open('bestfile.par','r').readlines():
-      if line.startswith('CELL'):
-        if len(line.split()) == 7:
-          cell = line.split()[1:]
-        else:
-          run2 = True
+  #try:
+  run2 = False
+  run3 = False
+  cell = False
+  sym = False
+  for line in open(os.path.join(self.labelit_dir,'bestfile.par'),'r').readlines():
+    if line.startswith('CELL'):
+      if len(line.split()) == 7:
+        cell = line.split()[1:]
+      else:
+        run2 = True
+    if line.startswith('SYMMETRY'):
+      if len(line.split()) == 2:
+        sym = line.split()[1]
+      else:
+        run3 = True
+  #Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
+  if run2:
+    for line in open('%s.mat'%os.path.join(self.labelit_dir,self.index_number),'r').readlines():
+      if len(line.split()) == 6:
+        cell = line.split()
+  if run3:
+    for line in open(os.path.join(self.labelit_dir, self.index_number),'r').readlines():
       if line.startswith('SYMMETRY'):
-        if len(line.split()) == 2:
-          sym = line.split()[1]
-        else:
-          run3 = True
-    #Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
-    if run2:
-      for line in open('%s.mat'%self.index_number,'r').readlines():
-        if len(line.split()) == 6:
-          cell = line.split()
-    if run3:
-      for line in open(self.index_number,'r').readlines():
-        if line.startswith('SYMMETRY'):
-          sym = line.split()[1]
-    if inp == 'all':
-      return((cell,sym))
-    elif inp == 'sym':
-      return(sym)
-    else:
-      return(cell)
+        sym = line.split()[1]
+  if inp == 'all':
+    return((cell,sym))
+  elif inp == 'sym':
+    return(sym)
+  else:
+    return(cell)
+  """
   except:
     self.logger.exception('**Error in Utils.getLabelitCell**')
     return (None)
-
+  """
 def getLabelitStats(self,inp=False,simple=False):
   """
   Returns stats from Labelit for determining beam center. (Extra parsing from self.labelit_results)
@@ -2422,43 +2445,44 @@ def getLabelitStats(self,inp=False,simple=False):
   if self.verbose:
     self.logger.debug('Utilities::getLabelitStats')
   output = {}
-  try:
-    if inp:
-      j1 = '[inp]'
-    else:
-      j1 = ''
-    if simple:
-      x = 1
-    else:
-      x = 2
-    if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
-      for i in range(0,x):
-        if i == 0:
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_face').index(':)')
-          sg   = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_sg')[ind]
-          sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution')[ind]
-        else:
-          #P1 stats
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution').index('1')
-          sol = '1'
-        mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
-        mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
-        mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
-        ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
-        met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
-        rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
-        vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
-        if i == 0:
-          output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
-        else:
-          output['P1']   = {'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'rmsd':rmsd}
-      if simple:
-        return(sg,mos_rms,met,vol)
+  #try:
+  if inp:
+    j1 = '[inp]'
+  else:
+    j1 = ''
+  if simple:
+    x = 1
+  else:
+    x = 2
+  if type(eval('self.labelit_results%s'%j1).get("labelit_results")) == dict:
+    for i in range(0,x):
+      if i == 0:
+        ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_face').index(':)')
+        sg   = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_sg')[ind]
+        sol  = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_solution')[ind]
       else:
-        eval('self.labelit_results%s'%j1).update({'labelit_stats': output})
+        #P1 stats
+        ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_solution').index('1')
+        sol = '1'
+      mos_rms = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_rms')[ind]
+      mos_x = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_x')[ind]
+      mos_y = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_y')[ind]
+      ind1  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index(sol)
+      met  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_metric')[ind1]
+      rmsd = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_rmsd')[ind1]
+      vol = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_volume')[ind1]
+      if i == 0:
+        output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
+      else:
+        output['P1']   = {'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'rmsd':rmsd}
+    if simple:
+      return(sg,mos_rms,met,vol)
+    else:
+      eval('self.labelit_results%s'%j1).update({'labelit_stats': output})
+  """
   except:
     self.logger.exception('**Error in Utils.getLabelitStats**')
-
+  """
 def getLabelitStatsNoMosflm(self,inp=False,simple=False):
   """
   Returns stats from Labelit for determining beam center. (Extra parsing from self.labelit_results)
@@ -2477,29 +2501,29 @@ def getLabelitStatsNoMosflm(self,inp=False,simple=False):
     else:
       x = 2
     l = [':)',':(','xx']
-    if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
+    if type(eval('self.labelit_results%s'%j1).get("labelit_results")) == dict:
       for i in range(0,x):
         if i == 0:
           for z in range(len(l)):
             try:
-              ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_face').index(l[z])
+              ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_face').index(l[z])
               break
             except(ValueError):
               continue
-          sg   = primaries[eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_system')[ind][1]]
-          sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution')[ind]
+          sg   = primaries[eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_system')[ind][1]]
+          sol  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution')[ind]
         else:
           #P1 stats
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index('1')
+          ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index('1')
           sol = '1'
-        #mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
-        #mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
-        #mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
-        ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
-        met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
-        rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
-        cell = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_cell')[ind1]
-        vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
+        #mos_rms = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_rms')[ind]
+        #mos_x = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_x')[ind]
+        #mos_y = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_y')[ind]
+        ind1  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index(sol)
+        met  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_metric')[ind1]
+        rmsd = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_rmsd')[ind1]
+        cell = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_cell')[ind1]
+        vol = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_volume')[ind1]
         if i == 0:
           #output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
           output['best'] = {'SG':sg, 'metric':met, 'rmsd':rmsd, 'sol':sol, 'cell':cell}
@@ -2513,7 +2537,7 @@ def getLabelitStatsNoMosflm(self,inp=False,simple=False):
   except:
     self.logger.exception('**Error in Utils.getLabelitStatsNoMosflm**')
 
-def getRes(self,inp=False):
+def getRes_OLD(self,inp=False):
   """
   Return resolution limit of dataset.
   """
@@ -2562,6 +2586,8 @@ def get_site(image, load=False):
 
     d = {('MARCCD', 7) : ('sercat', 'SERCAT_BM'),
          ('MARCCD', 101) : ('sercat', 'SERCAT_ID'),
+         #('Eiger-16M', 'Dectris Eiger 16M S/N E-32-0108') : ('necat', 'NECAT_E'),
+         ('Eiger-16M', 'Dectris Eiger 16M S/N E-32-0108') : ('necat', 'NECAT_T'),
          }
 
     i = ImageFactory(image)
@@ -2596,13 +2622,11 @@ def getWavelength(self,inp=False):
   finally:
     return(wave)
 
-def getVendortype(self,inp):
+def get_vendortype(inp):
   """
   Returns which detector vendortype the image is from by passing in the header.
   If it is not in the header, use ImageFactory to get it.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::getVendortype')
   vendortype = inp.get('detector',False)
   #If not in header, use ImageFactory
   if vendortype == False:
@@ -2611,138 +2635,144 @@ def getVendortype(self,inp):
   return (vendortype)
 
 def load_cluster_adapter(self):
-  """Load the appropriate cluster adapter.
-     Need self.site set so it knows which cluster to import.
-  """
-  try:
-    if self.site.CLUSTER_ADAPTER:
-      return (load_module(self.site.CLUSTER_ADAPTER))
-    else:
-      return (False)
-  except:
-    # If self.site is not set.
-    return (False)
+    """Load the appropriate cluster adapter.
+       Need self.site set so it knows which cluster to import.
+    """
+    try:
+        if self.site.CLUSTER_ADAPTER:
+            return (load_module(self.site.CLUSTER_ADAPTER))
+        else:
+            return (False)
+    except:
+        # If self.site is not set.
+        return (False)
 
-def killChildren(self,pid):
+def kill_children(pid, logger=False):
   """
   Kills the parent process, the children, and the children's children.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killChildren')
+  if logger:
+    logger.debug('Utilities::killChildren')
   pids = []
-  try:
-    output = subprocess.Popen('ps -F -A | grep %s'%pid,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    for line in output.stdout:
-      if line.split()[1] == str(pid):
-        pids.append(pid)
-      if line.split()[2] == str(pid):
-        pid1 = line.split()[:][1]
-        pids.append(pid1)
-        #Grab all the child processes as well.
-        output2 = subprocess.Popen('ps -F -A | grep %s'%pid1,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        for line in output2.stdout:
-          if line.split()[2] == str(pid1):
-            pids.append(line.split()[:][1])
-    for p in pids:
-      self.logger.debug('kill -9 %s'%p)
-      os.system('kill -9 %s'%p)
-
+  #try:
+  output = subprocess.Popen('ps -F -A | grep %s'%pid,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+  for line in output.stdout:
+    if line.split()[1] == str(pid):
+      pids.append(pid)
+    if line.split()[2] == str(pid):
+      pid1 = line.split()[:][1]
+      pids.append(pid1)
+      #Grab all the child processes as well.
+      output2 = subprocess.Popen('ps -F -A | grep %s'%pid1,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+      for line in output2.stdout:
+        if line.split()[2] == str(pid1):
+          pids.append(line.split()[:][1])
+  for p in pids:
+    if logger:
+        logger.debug('kill -9 %s'%p)
+    os.system('kill -9 %s'%p)
+  """
   except:
-    self.logger.exception('**Could not kill the children?!?**')
-
-def killJobs(self,inp):
+    if logger:
+        logger.exception('**Could not kill the children?!?**')
+  """
+def kill_job(inp, logger=False):
   """
   Kills all the input jobs.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killJobs')
-  try:
-    output = subprocess.Popen('ps -F -A | grep %s'%inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    for line in output.stdout:
-      kill = 'kill -9 %s'%line
-      self.logger.debug(kill)
-      os.system(kill)
-
+  if logger:
+    logger.debug('Utilities::killJobs')
+  #try:
+  output = subprocess.Popen('ps -F -A | grep %s'%inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+  for line in output.stdout:
+    kill = 'kill -9 %s'%line
+    if logger:
+        logger.debug(kill)
+    os.system(kill)
+  """
   except:
-    self.logger.exception('**Could not kill the children?!?**')
-
+    if logger:
+        logger.exception('**Could not kill the children?!?**')
+  """
 def makeHAfiles(self):
   """
   make the input HA files for phenix.autosol.
   """
   if self.verbose:
     self.logger.debug('Utilities::makeHAfiles')
-  try:
-    counter = 0
-    l = ['','_i']
-    while counter <= 1:
-      temp = []
-      ha1 = []
-      for line in open('junk%s.hat'%l[counter],'r').readlines():
-        temp.append(line)
-        if line.startswith('UNIT'):
-          index1 = temp.index(line)
-      for line in temp[index1:]:
-        if len(line.split()) == 7:
-          if line.split()[5].startswith('-') == False:
-            ha1.append('%s %s %s'%(line.split()[2],line.split()[3],line.split()[4]))
-      if counter == 0:
-        self.ha_num1 = str(len(ha1))
-      else:
-        self.ha_num2 = str(len(ha1))
-      new_ha = open('junk%s.ha'%l[counter],'w')
-      for line in ha1:
-        new_ha.write('%s\n'%line)
-      new_ha.close()
-      counter += 1
+  #try:
+  counter = 0
+  l = ['','_i']
+  while counter <= 1:
+    temp = []
+    ha1 = []
+    for line in open('junk%s.hat'%l[counter],'r').readlines():
+      temp.append(line)
+      if line.startswith('UNIT'):
+        index1 = temp.index(line)
+    for line in temp[index1:]:
+      if len(line.split()) == 7:
+        if line.split()[5].startswith('-') == False:
+          ha1.append('%s %s %s'%(line.split()[2],line.split()[3],line.split()[4]))
+    if counter == 0:
+      self.ha_num1 = str(len(ha1))
+    else:
+      self.ha_num2 = str(len(ha1))
+    new_ha = open('junk%s.ha'%l[counter],'w')
+    for line in ha1:
+      new_ha.write('%s\n'%line)
+    new_ha.close()
+    counter += 1
+  """
   except:
     self.logger.exception('**ERROR in Utils.makeHAfiles**')
-
+  """
 def makeSeqFile(self):
   """
   Convert seq to file of generate poly-ala file. Required to fix bug in AutoSol.
   """
   if self.verbose:
     self.logger.debug('Utilities::makeSeqFile')
-  try:
-    seq = self.preferences.get('request').get('sequence')
-    f = open('seq.pir','w')
-    if seq == '':
-      print >>f, "> dummy sequence\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA*\n"
-    else:
-      print >>f, "> sequence\n%s*\n"%seq
-    f.close()
-
+  #try:
+  seq = self.preferences.get('request').get('sequence')
+  f = open('seq.pir','w')
+  if seq == '':
+    print >>f, "> dummy sequence\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA*\n"
+  else:
+    print >>f, "> sequence\n%s*\n"%seq
+  f.close()
+  """
   except:
     self.logger.exception('**Error in Utils.makeSeqFile**')
-
+  """
 def mtz2sca(self,inp=False,output=False):
   """
   Convert mtz file to SCA for Shelx using mtz2sca. Scales correctly.
   """
   if self.verbose:
     self.logger.debug('Utilities::mtz2sca')
-  try:
-    if inp:
-      if len(inp) == 2:
-        outfile = '%s.sca'%inp[0]
-        command  = 'mtz2sca %s %s'%(inp[1],outfile)
-        out = os.path.join(os.getcwd(),outfile)
-      else:
-        command = 'mtz2sca %s'%inp
-        out = os.path.join(os.getcwd(),os.path.basename(inp.replace('.mtz','.sca')))
+  #try:
+  if inp:
+    if len(inp) == 2:
+      outfile = '%s.sca'%inp[0]
+      command  = 'mtz2sca %s %s'%(inp[1],outfile)
+      out = os.path.join(os.getcwd(),outfile)
     else:
-      command  = 'mtz2sca %s temp.sca'%self.datafile
-      out = os.path.join(os.getcwd(),'temp.sca')
-    if self.test == False:
-      processLocal(command,self.logger)
-    fixSCA(self,out)
-    if output:
-      output.put(out)
-    else:
-      self.datafile = out
-  except:
-    self.logger.exception('**ERROR in Utils.mtz2sca2**')
+      command = 'mtz2sca %s'%inp
+      out = os.path.join(os.getcwd(),os.path.basename(inp.replace('.mtz','.sca')))
+  else:
+    command  = 'mtz2sca %s temp.sca'%self.datafile
+    out = os.path.join(os.getcwd(),'temp.sca')
+  if self.test == False:
+    processLocal(command,self.logger)
+  fixSCA(self,out)
+  if output:
+    output.put(out)
+  else:
+    self.datafile = out
+
+  #except:
+  #  self.logger.exception('**ERROR in Utils.mtz2sca2**')
 
 def mtz2scaUM(self,inp,output=False):
   """
@@ -2750,35 +2780,35 @@ def mtz2scaUM(self,inp,output=False):
   """
   if self.verbose:
     self.logger.debug('Utilities::mtz2scaUM')
-  try:
-    if len(inp) == 2:
-      name = inp[0]
-      inp = inp[1]
+  #try:
+  if len(inp) == 2:
+    name = inp[0]
+    inp = inp[1]
+  else:
+    name = False
+    inp = inp
+  if os.path.basename(inp).startswith('smerge'):
+    if name:
+      file2 = '%s_unmerged.sca'%name
     else:
-      name = False
-      inp = inp
-    if os.path.basename(inp).startswith('smerge'):
-      if name:
-        file2 = '%s_unmerged.sca'%name
-      else:
-        file2 = os.path.basename(inp).replace('_sortedMergable.mtz','_unmerged.sca')
-    else:
-      file2 = os.path.basename(inp).replace('_mergable.mtz','_unmerged.sca')
-    command  = 'aimless hklin %s scalepackunmerged %s hklout temp.mtz << eof > aimless.log\n'%(inp,file2)
-    command += 'anomalous on\nscales constant\n'
-    command += 'sdcorrection norefine full 1 0 0 partial 1 0 0\n'
-    command += 'bins resolution 10\n'
-    command += 'cycles 0\n'
-    command += 'output scalepack unmerged\neof\n'
-    if self.test == False:
-      processLocal(command,self.logger)
-      fixSCA(self,file2)
-    if output:
-      output.put(os.path.join(os.getcwd(),file2))
-    else:
-      self.datafile = os.path.join(os.getcwd(),file2)
-  except:
-    self.logger.exception('**ERROR in Utils.mtz2scaUM**')
+      file2 = os.path.basename(inp).replace('_sortedMergable.mtz','_unmerged.sca')
+  else:
+    file2 = os.path.basename(inp).replace('_mergable.mtz','_unmerged.sca')
+  command  = 'aimless hklin %s scalepackunmerged %s hklout temp.mtz << eof > aimless.log\n'%(inp,file2)
+  command += 'anomalous on\nscales constant\n'
+  command += 'sdcorrection norefine full 1 0 0 partial 1 0 0\n'
+  command += 'bins resolution 10\n'
+  command += 'cycles 0\n'
+  command += 'output scalepack unmerged\neof\n'
+  if self.test == False:
+    processLocal(command,self.logger)
+    fixSCA(self,file2)
+  if output:
+    output.put(os.path.join(os.getcwd(),file2))
+  else:
+    self.datafile = os.path.join(os.getcwd(),file2)
+  #except:
+  #  self.logger.exception('**ERROR in Utils.mtz2scaUM**')
 
 def phs2mtz(self,inp):
   """
@@ -2786,18 +2816,18 @@ def phs2mtz(self,inp):
   """
   if self.verbose:
     self.logger.debug('Utilities::phs2mtz')
-  try:
-    command  = 'f2mtz hklin %s hklout %s<<eof\n'%(inp,inp.replace('.phs','.mtz'))
-    command += 'CELL %s\n'%self.cell
-    command += 'SYMM %s\n'%self.shelx_sg
-    #Make labels the same as Resolve.
-    command += 'LABOUT  H K L FP FOMM PHIM SIGFP\n'
-    command += 'CTYPOUT H H H F W P Q\n'
-    command += 'END\neof\n'
-    if self.test == False:
-      processLocal(command,self.logger)
-  except:
-    self.logger.exception('**ERROR in Utils.phs2mtz**')
+  #try:
+  command  = 'f2mtz hklin %s hklout %s<<eof\n'%(inp,inp.replace('.phs','.mtz'))
+  command += 'CELL %s\n'%self.cell
+  command += 'SYMM %s\n'%self.shelx_sg
+  #Make labels the same as Resolve.
+  command += 'LABOUT  H K L FP FOMM PHIM SIGFP\n'
+  command += 'CTYPOUT H H H F W P Q\n'
+  command += 'END\neof\n'
+  if self.test == False:
+    processLocal(command,self.logger)
+  #except:
+  #  self.logger.exception('**ERROR in Utils.phs2mtz**')
 
 def pp(inp):
   """
@@ -2851,59 +2881,6 @@ def processLocal(inp, logger=False, output=False):
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
-
-def rocksCommand(inp, logger=False):
-  """
-  Run Rocks command on all cluster nodes. Mainly used by rapd_agent_beamcenter.py to copy
-  specific images to /dev/shm on each node for processing in RAM.
-  """
-  if logger:
-    logger.debug('Utilities::rocksCommand')
-  try:
-    command = '/opt/rocks/bin/rocks run host compute "%s"'%inp
-    if logger:
-      processLocal("ssh necat@gadolinium '%s'"%command,logger)
-    else:
-      processLocal("ssh necat@gadolinium '%s'"%command)
-  except:
-      self.logger.exception('**ERROR in Utils.rocksCommand**')
-
-def readHeader_TESTING(self,image):
-  """
-  Read image header as RAPD.
-  """
-  if self.verbose:
-      self.logger.debug('MultiRuns::readHeader')
-
-  tail = image[-3:]
-  d = {}
-  if tail== 'cbf':
-    from rapd_pilatus import PilatusReadHeader
-    from rapd_site import settings_C as C
-    d['header'] = PilatusReadHeader(os.path.join(os.getcwd(),image),logger=self.logger)
-    distance = float(d['header'].get('distance'))
-    x_beam = C['beam_center_x_m6'] * distance**6 + \
-             C['beam_center_x_m5'] * distance**5 + \
-             C['beam_center_x_m4'] * distance**4 + \
-             C['beam_center_x_m3'] * distance**3 + \
-             C['beam_center_x_m2'] * distance**2 + \
-             C['beam_center_x_m1'] * distance + C['beam_center_x_b']
-             #header['vertical_offset']
-    y_beam = C['beam_center_y_m6'] * distance**6 + \
-             C['beam_center_y_m5'] * distance**5 + \
-             C['beam_center_y_m4'] * distance**4 + \
-             C['beam_center_y_m3'] * distance**3 + \
-             C['beam_center_y_m2'] * distance**2 + \
-             C['beam_center_y_m1'] * distance + C['beam_center_y_b']
-    d['header'].update({'x_beam':x_beam})
-    d['header'].update({'y_beam':y_beam})
-  else:
-    from rapd_adsc import AdscReadHeader
-    d['header'] = AdscReadHeader(os.path.join(os.getcwd(),image),logger=self.logger)
-  return(d)
-
-def junk():
-  return('got here')
 
 def readMarHeader(inp):
   import re,struct
@@ -3270,42 +3247,42 @@ def sca2mtz(self,res=False,run_before=False):
   """
   if self.verbose:
     self.logger.debug('Utilities::sca2mtz')
-  try:
-    failed = False
-    os.chdir(self.working_dir)
-    path = os.path.join(self.working_dir,'temp.mtz')
-    command  = 'scalepack2mtz hklin %s hklout junk.mtz<<eof1\n'%self.datafile
-    if res:
-      command += 'resolution 50 %s\n'%res
-    command += 'end\neof1\n'
-    command += 'truncate hklin junk.mtz hklout temp.mtz<<eof2\n'
-    command += 'truncate yes\nend\neof2\n'
-    temp = []
-    if self.test == False:
-      myoutput = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-      for line in myoutput.stdout:
-        temp.append(line)
-        if line.startswith(' TRUNCATE:  LSQ: sigma is zero'):
-          failed = True
-          for line in temp:
-            if line.startswith(' finishing resolution'):
-              hi_res = line.split()[3]
-    if failed:
-      if run_before:
-        return(None)
-      else:
-        run_before = True
-        sca2mtz(self,hi_res,run_before)
+  #try:
+  failed = False
+  os.chdir(self.working_dir)
+  path = os.path.join(self.working_dir,'temp.mtz')
+  command  = 'scalepack2mtz hklin %s hklout junk.mtz<<eof1\n'%self.datafile
+  if res:
+    command += 'resolution 50 %s\n'%res
+  command += 'end\neof1\n'
+  command += 'truncate hklin junk.mtz hklout temp.mtz<<eof2\n'
+  command += 'truncate yes\nend\neof2\n'
+  temp = []
+  if self.test == False:
+    myoutput = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    for line in myoutput.stdout:
+      temp.append(line)
+      if line.startswith(' TRUNCATE:  LSQ: sigma is zero'):
+        failed = True
+        for line in temp:
+          if line.startswith(' finishing resolution'):
+            hi_res = line.split()[3]
+  if failed:
+    if run_before:
+      return(None)
     else:
-      if self.test == False:
-        os.system('rm -f junk.mtz')
-      #self.datafile = path
-      return(path)
-
+      run_before = True
+      sca2mtz(self,hi_res,run_before)
+  else:
+    if self.test == False:
+      os.system('rm -f junk.mtz')
+    #self.datafile = path
+    return(path)
+  """
   except:
     self.logger.exception('**ERROR in Utils.sca2mtz**')
     return(None)
-
+  """
 def setPhaserRes(self,res):
   """
   Determine the best resolution to run Phaser at.
@@ -3350,31 +3327,29 @@ def set_phaser_res(res, large_cell, dres):
             elif 4.5 < res < 6.0:
               res = 4.5
     return res
-
+"""
 def setCellSymXDS(self):
-  """
-  Set the cell and sym from the GXPARM file to the XDS.INP.
-  """
+
+  #Set the cell and sym from the GXPARM file to the XDS.INP.
+
   if self.verbose:
     self.logger.debug('Utilities::setCellSymXDS')
   try:
     run = True
     #Check if GXPARM and XPARM have same SG. If not copy GXPARM over.
     gxparm = Parse.ParseOutputGxparm(self,open(self.gxparm,'r').readlines(),True)
-    """
-    if os.path.exists('XPARM.XDS'):
-      #local_gxparm = Parse.ParseOutputGxparm(self,open('GXPARM.XDS','r').readlines(),True)
-      xparm = Parse.ParseOutputGxparm(self,open('XPARM.XDS','r').readlines(),True)
-      #if int(gxparm[0]) != int(xparm[0]):
+    #if os.path.exists('XPARM.XDS'):
+    #  #local_gxparm = Parse.ParseOutputGxparm(self,open('GXPARM.XDS','r').readlines(),True)
+    #  xparm = Parse.ParseOutputGxparm(self,open('XPARM.XDS','r').readlines(),True)
+    #  #if int(gxparm[0]) != int(xparm[0]):
 
-      #Should not happen since cell and SG are input as below.
-      if int(gxparm[0]) != int(local_gxparm[0]):
-        print os.getcwd()
-        if os.path.exists('GXPARM.XDS'):
-          os.rename('GXPARM.XDS','GXPARM1.XDS')
-        os.rename('XPARM.XDS','XPARM_orig.XDS')
-        shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
-    """
+    #  #Should not happen since cell and SG are input as below.
+    #  if int(gxparm[0]) != int(local_gxparm[0]):
+    #    print os.getcwd()
+    #    if os.path.exists('GXPARM.XDS'):
+    #      os.rename('GXPARM.XDS','GXPARM1.XDS')
+    #    os.rename('XPARM.XDS','XPARM_orig.XDS')
+    #    shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
     inp = open('XDS.INP','r').readlines()
     for line in inp:
       if line.count('UNIT_CELL_CONSTANTS='):
@@ -3389,45 +3364,46 @@ def setCellSymXDS(self):
 
   except:
     self.logger.exception('**ERROR in Utils.setCellSymXDS**')
-
+"""
 def setRes(self,input,res):
   """
   Set the high res limit of mtz file to new limit.
   """
   if self.verbose:
     self.logger.debug('Utilities::setRes')
-  try:
-    inp  = 'pointless -copy hklin %s hklout newres_mergable.mtz <<eof\n'%input
-    #inp += 'SETTING C2\nResolution 50 %s\neof\n'%res
-    #Keep low res data
-    inp += 'SETTING C2\nResolution high %s\neof\n'%res
-    processLocal(inp,self.logger)
-    return(os.path.join(os.getcwd(),'newres_mergable.mtz'))
+  #try:
+  inp  = 'pointless -copy hklin %s hklout newres_mergable.mtz <<eof\n'%input
+  #inp += 'SETTING C2\nResolution 50 %s\neof\n'%res
+  #Keep low res data
+  inp += 'SETTING C2\nResolution high %s\neof\n'%res
+  processLocal(inp,self.logger)
+  return(os.path.join(os.getcwd(),'newres_mergable.mtz'))
 
-  except:
-    self.logger.exception('**ERROR in Utils.setRes**')
+  #except:
+  #  self.logger.exception('**ERROR in Utils.setRes**')
 
-def setScalingXDS(self):
+def setScalingXDS_OLD(self):
   """
   Turn off the scaling in XDS.
   """
   if self.verbose:
     self.logger.debug('Utilities::setScalingXDS')
-  try:
-    run = True
-    inp = open('XDS.INP','r').readlines()
-    for line in inp:
-      if line.count('MINIMUM_I/SIGMA='):
-        run = False
-    if run:
-      #inp.append('     MINIMUM_I/SIGMA=50\n     CORRECTIONS=\n     NBATCH=1\nJOB=CORRECT\n')
-      inp.append('     MINIMUM_I/SIGMA=50\n     CORRECTIONS=MODULATION\n     NBATCH=1\nJOB=CORRECT\n')
-      f = open('XDS.INP','w')
-      f.writelines(inp)
-      f.close()
+  #try:
+  run = True
+  inp = open('XDS.INP','r').readlines()
+  for line in inp:
+    if line.count('MINIMUM_I/SIGMA='):
+      run = False
+  if run:
+    #inp.append('     MINIMUM_I/SIGMA=50\n     CORRECTIONS=\n     NBATCH=1\nJOB=CORRECT\n')
+    inp.append('     MINIMUM_I/SIGMA=50\n     CORRECTIONS=MODULATION\n     NBATCH=1\nJOB=CORRECT\n')
+    f = open('XDS.INP','w')
+    f.writelines(inp)
+    f.close()
+  """
   except:
     self.logger.exception('**ERROR in Utils.setScalingXDS**')
-
+  """
 def stillRunning(pid):
   """
   Check to see if process and/or its children and/or children's children are still running.
@@ -3460,7 +3436,6 @@ def subGroups(self,inp1,inp2='shelx'):
   if self.verbose:
     self.logger.debug('Utilities::subGroups')
   try:
-    sg2 = False
     subgroups = {  '1'  : [None],
                    '5'  : [None],
                    '5.1': [None],
@@ -3517,26 +3492,25 @@ def subGroups(self,inp1,inp2='shelx'):
                    '16' : ['16','17','17.1','17.2','18','18.1','18.2','19'],
                    '20' : ['20','21'],
                    '23' : ['23','24'],
-                   '75' : ['75','76','77','78'],
+                   '75' : ['75','76','77','78'],#
                    '79' : ['79','80'],
-                   '89' : ['89','90','91','94','93','92','95','96'],
+                   '89' : ['89','90','91','94','93','92','95','96'],#
                    '97' : ['97','98'],
-                   '143': ['143','144','145'],
-                   '149': ['149','151','153'],
-                   '150': ['150','152','154'],
-                   '168': ['168','169','171','173','170','172'],
-                   '177': ['177','178','180','182','179','181'],
+                   '143': ['143','144','145'],#
+                   '149': ['149','151','153'],#
+                   '150': ['150','152','154'],#
+                   '168': ['168','169','171','173','170','172'],#
+                   '177': ['177','178','180','182','179','181'],#
                    '195': ['195','198'],
                    '197': ['197','199'],
-                   '207': ['207','208','212','213'],
+                   '207': ['207','208','212','213'],#
                    '209': ['209','210'],
                    '211': ['211','214'] }
-
+    sg2 = False
     if subgroups.has_key(inp1):
       sg = inp1
     else:
-      junk = subgroups.items()
-      for line in junk:
+      for line in subgroups.items():
         if line[1].count(inp1):
           sg = line[0]
     #Returns Laue group number
@@ -3558,11 +3532,6 @@ def subGroups(self,inp1,inp2='shelx'):
 
 def get_sub_groups(input_sg, mode="simple"):
     """Return sub subgroups releated to input spacegroup"""
-
-    shelx_sg = False
-
-    if isinstance(input_sg, int):
-        input_sg = str(input_sg)
 
     subgroups1 = {"1": [None],
                   "5": [None],
@@ -3634,12 +3603,16 @@ def get_sub_groups(input_sg, mode="simple"):
                   "209": ["209", "210"],
                   "211": ["211", "214"]}
 
+    shelx_sg = False
+
+    if isinstance(input_sg, int):
+        input_sg = str(input_sg)
+
     # Look for subgroups
     if subgroups1.has_key(input_sg):
         simple_sg = input_sg
     else:
-        my_sg = subgroups1.items()
-        for line in my_sg:
+        for line in subgroups1.items():
             if line[1].count(input_sg):
                 simple_sg = line[0]
 
@@ -3752,9 +3725,8 @@ def symopsSG(self, inp):
 
 def sg_to_nsymops(inp):
     """
-    Convert SG to SG#.
+    return number of symmetry operations for given space group.
     """
-    #try:
     symops = {'P1': 1,
               'C2': 4,
               'C121': 4,
@@ -3835,10 +3807,7 @@ def sg_to_nsymops(inp):
               'P4332': 24,
               'P4132': 24}
 
-    sg = symops[inp]
-    return sg
-  # except:
-  #   self.logger.exception('**ERROR in Utils.symopsSG**')
+    return symops[inp]
 
 def XDS2Shelx(self,inp,output=False):
   """
@@ -3847,28 +3816,28 @@ def XDS2Shelx(self,inp,output=False):
   """
   if self.verbose:
     self.logger.debug('Utilities::XDS2Shelx')
-  try:
-    if len(inp) == 2:
-      #name = inp[0]
-      inp = inp[1]
-    else:
-      #name = False
-      inp = inp
-    if os.path.exists(os.path.basename(inp)) == False:
-      os.symlink(inp,os.path.basename(inp))
-    #print os.path.basename(inp).replace('.HKL','.sca')
-    inp1 = "INPUT_FILE=%s\nOUTPUT_FILE=%s SHELX\nFRIEDEL'S_LAW=FALSE\n"%(os.path.basename(inp),os.path.basename(inp).replace('.HKL','.sca'))
-    f = open('XDSCONV.INP','w')
-    #print >>f,inp
-    f.writelines(inp1)
-    f.close()
-    #if self.test == False:
-    subprocess.Popen('xdsconv',shell=True).wait()
-    fixSCA(self,os.path.basename(inp).replace('.HKL','.sca'))
-    if output:
-      output.put(os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca')))
-    else:
-      self.datafile = os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca'))
+  #try:
+  if len(inp) == 2:
+    #name = inp[0]
+    inp = inp[1]
+  else:
+    #name = False
+    inp = inp
+  if os.path.exists(os.path.basename(inp)) == False:
+    os.symlink(inp,os.path.basename(inp))
+  #print os.path.basename(inp).replace('.HKL','.sca')
+  inp1 = "INPUT_FILE=%s\nOUTPUT_FILE=%s SHELX\nFRIEDEL'S_LAW=FALSE\n"%(os.path.basename(inp),os.path.basename(inp).replace('.HKL','.sca'))
+  f = open('XDSCONV.INP','w')
+  #print >>f,inp
+  f.writelines(inp1)
+  f.close()
+  #if self.test == False:
+  subprocess.Popen('xdsconv',shell=True).wait()
+  fixSCA(self,os.path.basename(inp).replace('.HKL','.sca'))
+  if output:
+    output.put(os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca')))
+  else:
+    self.datafile = os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca'))
 
-  except:
-    self.logger.exception('**ERROR in Utils.XDS2Shelx**')
+  #except:
+  #  self.logger.exception('**ERROR in Utils.XDS2Shelx**')

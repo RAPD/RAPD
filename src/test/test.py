@@ -32,7 +32,6 @@ from argparse import RawTextHelpFormatter
 import glob
 import hashlib
 import importlib
-import json
 # import logging
 # import multiprocessing
 import os
@@ -51,9 +50,10 @@ import unittest
 # import detectors.detector_utils as detector_utils
 import test_sets
 import utils.global_vars as rglobals
-print rglobals
 import utils.log
 import utils.site as site
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Cache for test data
 TEST_CACHE = rglobals.TEST_CACHE
@@ -118,6 +118,7 @@ def run_processing(target, plugin, tprint, verbose=True):
 
     # Read in the results
     tprint("    Comparing results", 10, "white")
+    print "cwd", os.getcwd()
     result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
     result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
 

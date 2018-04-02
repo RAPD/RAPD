@@ -140,7 +140,7 @@ def compare_results(result1, result2, tprint):
             strategy anom phi start [0]
             strategy anom rot range
         Best results
-            strategy phi start
+            omega_start
             strategy rot range
     """
 
@@ -149,25 +149,25 @@ def compare_results(result1, result2, tprint):
            result2["results"]["distl_results"]["good Bragg spots"]
 
     tprint("    Labelit", 10, "white")
-    assert result1["results"]["Labelit results"]["labelit_cell"][0] == \
-           result2["results"]["Labelit results"]["labelit_cell"][0]
+    assert result1["results"]["labelit_results"]["labelit_cell"][0] == \
+           result2["results"]["labelit_results"]["labelit_cell"][0]
 
-    assert result1["results"]["Labelit results"]["mosflm_sg"] == \
-           result2["results"]["Labelit results"]["mosflm_sg"]
+    assert result1["results"]["labelit_results"]["mosflm_sg"] == \
+           result2["results"]["labelit_results"]["mosflm_sg"]
 
     tprint("    Best standard strategy", 10, "white")
-    assert result1["results"]["Best results"]["strategy phi start"] == \
-           result2["results"]["Best results"]["strategy phi start"]
+    assert result1["results"]["best_results_norm"]["omega_start"] == \
+           result2["results"]["best_results_norm"]["omega_start"]
 
-    assert result1["results"]["Best results"]["strategy rot range"] == \
-           result2["results"]["Best results"]["strategy rot range"]
+    assert result1["results"]["best_results_norm"]["strategy rot range"] == \
+           result2["results"]["best_results_norm"]["strategy rot range"]
 
     tprint("    Best anomalous strategy", 10, "white")
-    assert result1["results"]["Best ANOM results"]["strategy anom phi start"] == \
-           result2["results"]["Best ANOM results"]["strategy anom phi start"]
+    assert result1["results"]["best_results_anom"]["strategy anom phi start"] == \
+           result2["results"]["best_results_anom"]["strategy anom phi start"]
 
-    assert result1["results"]["Best ANOM results"]["strategy anom rot range"] == \
-           result2["results"]["Best ANOM results"]["strategy anom rot range"]
+    assert result1["results"]["best_results_anom"]["strategy anom rot range"] == \
+           result2["results"]["best_results_anom"]["strategy anom rot range"]
 
     return True
 

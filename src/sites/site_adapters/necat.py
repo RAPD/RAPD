@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -24,6 +24,8 @@ __status__ = "Development"
 
 import logging
 import redis
+import importlib
+#import database.redis_adapter as redis_DB
 
 class Adapter(object):
     """
@@ -38,14 +40,21 @@ class Adapter(object):
         # Passed-in settings
         self.settings = settings
 
-    def get_redis_connection(self):
+    def get_redis_connection(self, tag=False):
         """
         Returns a connection to the Redis database
+        """
         """
         return redis.Redis(self.settings["REDIS_HOST"],
                            self.settings["REDIS_PORT"],
                            self.settings["REDIS_DB"])
-
+        """
+        redis_database = importlib.import_module('database.redis_adapter')
+        if tag:
+            bl_database = redis_database.Database(settings=self.settings[tag])
+        else:
+            bl_database = redis_database.Database(settings=self.settings)
+        return bl_database.connect_redis_pool()
     #
     # Put methods
     #
@@ -259,7 +268,166 @@ class Adapter(object):
         # Return the data
         return return_dict
 
-    def get_image_data(self):
+    def get_image_data(self, tag=False):
+        """
+        Returns a dict of beamline data for storage with the image
+        """
+
+        self.logger.debug("get_image_data")
+        return_dict = {}
+
+        # Get redis connection
+        if tag:
+            connection = self.get_redis_connection(tag)
+        else:
+            connection = self.get_redis_connection()
+        self.logger.debug("get_image_data - Have redis connection")
+
+        # Both beamlines
+        # Scrub out problems with offest
+        #vertical_offset = float(connection.get("SEGMENT_OFFSET_SV"))
+        # Add all additional info not in header
+        if tag == 'NECAT_C':
+            pipe = connection.pipeline()
+            pipe.get("ENERGY_SV")
+            pipe.get("RING_CUR_SV")
+            pipe.get("MD2_AP_DIAM_SV")
+            pipe.get("PUCK_SV")
+            pipe.get("SAMP_SV")
+            pipe.get("MD2_ALL_AXES_SV")
+            pipe.get("SEGMENT_OFFSET_SV")
+            results = pipe.execute()
+
+            energy = float(results[0])
+            ring_current = float(results[1])
+            md2_aperture = float(int(results[2].split()[0])/1000)
+            samp_pos = '%s%s'%(results[3], results[4])
+            md2_angles = results[5].split()
+            # Convert to floats
+            md2_angles = [float(a) for a in md2_angles]
+            phi = md2_angles[2]
+            kappa = md2_angles[1]
+            vertical_offset = float(results[6])
+
+            return_dict = {"energy"          : energy,
+                           "ring_current"    : ring_current,
+                           "md2_aperture"    : md2_aperture,
+                           "sample_mounter_position": samp_pos,
+                           "phi"             : phi,
+                           "kappa"           : kappa,
+                           "vertical_offset" : vertical_offset,
+                           }
+
+            self.logger.debug("%s", return_dict)
+        # Add vertical offset for both beamlines
+        #return_dict.update({"vertical_offset" : vertical_offset})
+        # Return the data
+        return return_dict
+
+    def get_image_data_OLD(self, tag=False):
+        """
+        Returns a dict of beamline data for storage with the image
+        """
+
+        self.logger.debug("get_image_data")
+        return_dict = {}
+
+        # Get redis connection
+        if tag:
+            connection = self.get_redis_connection(tag)
+        else:
+            connection = self.get_redis_connection()
+        self.logger.debug("get_image_data - Have redis connection")
+        #pipe = connection.pipeline()
+
+        # Both beamlines
+        # Scrub out problems with offest
+        try:
+            self.logger.debug("Getting vertical offset")
+            vertical_offset = float(get("SEGMENT_OFFSET_SV"))
+        except:
+            vertical_offset = 0
+            self.logger.debug("Vertical offset exception")
+
+        if tag == 'NECAT_C':
+            try:
+                energy = float(connection.get("ENERGY_SV"))
+            except:
+                energy = 0.0
+                self.logger.debug("Energy exception")
+
+            try:
+                self.logger.debug("Getting Ring current")
+                ring_current = float(connection.get("RING_CUR_SV"))
+            except:
+                ring_current = 0.0
+                self.logger.debug("Ring current exception")
+
+            try:
+                flux = float(connection.get("FLUX_SV"))
+            except:
+                flux = 0.0
+                self.logger.debug("Flux exception")
+
+            try:
+                self.logger.debug("Getting Aperture")
+                md2_aperture = float(int(connection.get("MD2_AP_DIAM_SV").split()[0])/1000)
+            except:
+                md2_aperture = 0.07
+                self.logger.debug("Aperture exception")
+
+            try:
+                puck = connection.get("PUCK_SV")
+            except:
+                puck = "A"
+                self.logger.debug("Puck exception")
+
+            try:
+                sample = connection.get("SAMP_SV")
+            except:
+                sample = '1'
+                self.logger.debug("Sample exception")
+
+            try:
+                md2_angles = connection.get("MD2_ALL_AXES_SV").split()
+                # Convert to floats
+                md2_angles = [float(a) for a in md2_angles]
+            except:
+                md2_angles = [0.0, 0.0, 0.0]
+                self.logger.debug("Axes exception")
+
+            try:
+                phi = md2_angles[2]
+            except:
+                phi = 0.0
+                self.logger.debug("Phi exception")
+
+            try:
+                kappa = md2_angles[1]
+            except:
+                kappa = 0.0
+                self.logger.debug("Kappa exception")
+
+
+
+            self.logger.debug("get_image_data - making dict")
+
+            return_dict = {"energy"          : energy,
+                           "ring_current"    : ring_current,
+                           "energy"          : energy,
+                           "flux"            : flux,
+                           "md2_aperture"    : md2_aperture,
+                           "sample_mounter_position": '%s%s'%(puck,sample),
+                           "phi"             : phi,
+                           "kappa"           : kappa,
+                           "vertical_offset" : vertical_offset}
+
+            self.logger.debug("%s", return_dict)
+
+        # Return the data
+        return return_dict
+
+    def get_image_data_OLD2(self):
         """
         Returns a dict of beamline data for storage with the image
         """
@@ -351,7 +519,7 @@ class Adapter(object):
 
         return_dict = {"id"              : self.settings["ID"],
                        "ring_current"    : ring_current,
-                       "ring_mode"       : ring_mode,
+                       #"ring_mode"       : ring_mode,
                        "energy"          : energy,
                        "flux"            : flux,
                        "md2_aperture"    : md2_aperture,

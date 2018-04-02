@@ -7,6 +7,11 @@ if [ "$RAPD_HOME" != "" ]; then
 
   SAFE_PREFIX=$(echo "$RAPD_HOME" | sed -e 's/\//\\\//g')
 
+  # MongoDB Tool
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.mongotool
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/database\/rapd_mongotool.py \"\$@\"" >>$RAPD_HOME/bin/rapd.mongotool
+  chmod +x $RAPD_HOME/bin/rapd.mongotool
+
   # Control
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.control
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>$RAPD_HOME/bin/rapd.control

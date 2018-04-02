@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -22,8 +22,9 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import redis_monitor
+#import redis_monitor
+import monitors.image_monitors.redis_image_monitor as redis_monitor
 
 # Standard monitor
-class ImageMonitor(redis_monitor.RedisMonitor):
+class Monitor(redis_monitor.Monitor):
     """The standard monitor from redis"""

@@ -5,7 +5,7 @@ File for launching the controller process for a RAPD site install
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@ __status__ = "Production"
 import argparse
 import importlib
 import sys
+import time
 
 # RAPD imports
 import utils.commandline
@@ -46,6 +47,17 @@ def get_commandline():
     site install"""
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
+
+    parser.add_argument("--clean_start",
+                        action="store_true",
+                        dest="clean_start",
+                        help="Wipe input queues clean before starting")
+
+    # Run without monitoring the beamline
+    parser.add_argument("--no_monitor",
+                        action="store_false",
+                        dest="monitor",
+                        help="Don't monitor the beamline")
 
     return parser.parse_args()
 
@@ -83,7 +95,7 @@ def main():
     # print "Importing %s" % site_file
     SITE = importlib.import_module(site_file)
 
-	# Single process lock?
+    # Single process lock?
     utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
     # Set up logging
@@ -93,15 +105,27 @@ def main():
         log_level = SITE.LOG_LEVEL
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_control",
-                                  level=log_level)
+                                  #level=log_level
+                                 )
 
     logger.debug("Commandline arguments:")
+    settings = {}
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
+        #settings[arg] = val
+        settings[pair[0]] = pair[1]
 
     # Instantiate the model
     MODEL = Model(SITE=SITE,
+                  settings=settings,
                   overwatch_id=commandline_args.overwatch_id)
+
+    try:
+      while 1:
+        time.sleep(100)
+    except KeyboardInterrupt:
+        # Close everything cleanly
+        MODEL.stop()
 
 
 if __name__ == "__main__":

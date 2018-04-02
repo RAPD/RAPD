@@ -1,0 +1,686 @@
+<div class="result-panel child">
+  <mat-card *ngIf="full_result.process.status === 1" class="rapd-result">
+    <mat-card-header class="rapd-result">
+      <div style="width:100%">
+        <div style="float:left;">
+          <h3>
+            Indexing Initiated for
+            <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
+            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2)">info_outline</mat-icon></span>
+          </h3>
+        </div>
+      </div>
+    </mat-card-header>
+    <div>
+      <mat-card-content class="rapd-result">
+      </mat-card-content>
+    </div>
+  </mat-card>
+  <mat-card *ngIf="full_result.process.status > 1" class="rapd-result">
+    <mat-card-header class="rapd-result">
+      <div style="width:100%">
+
+        <div style="float:left;">
+          <h3>
+            Indexing Results for
+            <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
+            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2)">info_outline</mat-icon></span>
+          </h3>
+        </div>
+        <div class="rapd-select-panel">
+          <mat-select
+            placeholder="View mode"
+            floatPlaceholder="auto"
+            [(ngModel)]="view_mode"
+            name="view_mode"
+            value="summary">
+            <mat-option value="summary">Summary</mat-option>
+            <mat-option value="image">Image</mat-option>
+            <mat-option value="details">Details</mat-option>
+            <mat-option value="logs">Logs</mat-option>
+          </mat-select>
+        </div>
+
+      </div>
+    </mat-card-header>
+    <div>
+      <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+        <div fxLayout="row" fxLayoutGap="10px">
+          <div fxFlex="none">
+            <div *ngIf="(full_result.results)?.labelit_results.status !== 'FAILED'">
+              <h3>Indexing Solution</h3>
+              <table class="rapd-table">
+                <thead>
+                  <tr>
+                    <th>Spacegroup</th>
+                    <th>Unit Cell</th>
+                    <th>Mos. (&deg;)</th>
+                    <th>Res. (&Aring;)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{this.full_result.results.labelit_results.best_sym}}</td>
+                    <td>
+                      {{this.full_result.results.labelit_results.best_cell[0]}}&nbsp;&nbsp;
+                      {{this.full_result.results.labelit_results.best_cell[1]}}&nbsp;&nbsp;
+                      {{this.full_result.results.labelit_results.best_cell[2]}}&nbsp;&nbsp;
+                      {{this.full_result.results.labelit_results.best_cell[3]}}&nbsp;&nbsp;
+                      {{this.full_result.results.labelit_results.best_cell[4]}}&nbsp;&nbsp;
+                      {{this.full_result.results.labelit_results.best_cell[5]}}
+                    </td>
+                    <td>{{this.full_result.results.labelit_results.mosflm_mos[0]}}</td>
+                    <td>{{this.full_result.results.labelit_results.mosflm_res[0]}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div *ngIf="(full_result.results)?.labelit_results.status === 'FAILED'">
+              <h2>Labelit Failure</h2>
+              <h3 class="rapd-failure">{{full_result.results.labelit_results.error}}</h3>
+            </div>
+            <div *ngIf="(full_result.results)?.labelit_results.status !== 'FAILED'">
+              <div *ngIf="full_result.results.best_results_norm !== 'FAILED'">
+                <h2>Data Collection Strategies</h2>
+                <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
+                  <h3>Normal by Best</h3>
+                  <table class="rapd-table">
+                    <thead>
+                      <tr>
+                        <th>N</th>
+                        <th>&Omega; Start</th>
+                        <th>&Delta;&Omega;</th>
+                        <th># Images</th>
+                        <th>Exposure time</th>
+                        <th>Distance</th>
+                        <th>Transmission</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
+                        <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
+                        <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}</td>
+                        <td>{{full_result.results.best_results_norm.sweeps[key].phi_width | number:'1.1-2'}}</td>
+                        <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
+                        <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time | number:'1.1-2'}}</td>
+                        <td>{{round_ten(full_result.results.best_results_norm.sweeps[key].distance)}}</td>
+                        <td>{{full_result.results.best_results_norm.sweeps[key].transmission | number:'1.0-0'}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div *ngIf="full_result.results.best_results_anom !== 'FAILED'">
+                  <h3>Anomalous by Best</h3>
+                  <table class="rapd-table">
+                    <thead>
+                      <tr>
+                        <th>N</th>
+                        <th>&Omega; Start</th>
+                        <th>&Delta;&Omega;</th>
+                        <th># Images</th>
+                        <th>Exposure time</th>
+                        <th>Distance</th>
+                        <th>Transmission</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
+                        <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
+                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}</td>
+                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_width | number:'1.1-2'}}</td>
+                        <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
+                        <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td>
+                        <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td>
+                        <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div *ngIf="full_result.results.mosflm_results_norm !== undefined">
+                <h2>Data Collection Strategies</h2>
+                <div *ngIf="(full_result.results.mosflm_results_norm)?.status !== 'FAILED'">
+                  <h3>Normal by Mosflm</h3>
+                  <table class="rapd-table">
+                    <thead>
+                      <tr>
+                        <th>N</th>
+                        <th>&Omega; Start</th>
+                        <th>&Omega; Range</th>
+                        <!-- <th># Images</th> -->
+                        <!-- <th>Exposure time</th> -->
+                        <!-- <th>Distance</th> -->
+                        <!-- <th>Transmission</th> -->
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let sweep of full_result.results.mosflm_results_norm.strategy.sweeps">
+                        <td>{{sweep.run_number}}</td>
+                        <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                        <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                        <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div *ngIf="(full_result.results.mosflm_results_anom)?.status !== 'FAILED'">
+                  <h3>Anomalous by Mosflm</h3>
+                  <table class="rapd-table">
+                    <thead>
+                      <tr>
+                        <th>N</th>
+                        <th>&Omega; Start</th>
+                        <th>&Omega; Range</th>
+                        <!-- <th># Images</th> -->
+                        <!-- <th>Exposure time</th> -->
+                        <!-- <th>Distance</th> -->
+                        <!-- <th>Transmission</th> -->
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let sweep of full_result.results.mosflm_results_anom.strategy.sweeps">
+                        <td>{{sweep.run_number}}</td>
+                        <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                        <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                        <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                        <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="full_result.results.plots" fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+            <div fxFlex="none" class="rapd-plot-header">
+              <div class="rapd-chart-title-panel">
+                <h3>{{selected_plot_label}}</h3>
+              </div>
+              <div class="rapd-chart-select-panel">
+                <mat-select
+                  placeholder="Select plot"
+                  (change)="setPlot(selected_plot)"
+                  [(ngModel)]="selected_plot"
+                  name="plot">
+                  <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                </mat-select>
+              </div>
+            </div>
+            <div fxFlex="grow">
+              <div class="chart-container" style="position: relative;">
+                <!-- <div *ngIf="selected_plot=='background'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='exposure'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div> -->
+                <div *ngIf="selected_plot=='max_delta_omega'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='osc_range'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='osc_range_anom'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='rad_damage'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='wilson'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="globals_service.LineChartColors">
+                  </canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'image'" class="rapd-result">
+        <!-- <div fxLayout="row" fxLayoutGap="10px">
+          <div fxFlex="none"> -->
+            <app-mx-image [result]="full_result"></app-mx-image>
+          <!-- </div>
+        </div> -->
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'details'" class="rapd-result">
+        <div>
+          <div *ngIf="full_result.results.best_results_norm !== 'FAILED'" class="rapd-result">
+            <h3>Data Collection Strategy from Best Normal</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Delta;&Omega;</th>
+                  <th># Images</th>
+                  <th>Exposure time</th>
+                  <th>Distance</th>
+                  <th>Transmission</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
+                  <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}&deg;</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].phi_width}}&deg;</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time}}s</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].distance.toFixed(0)}}mm</td>
+                  <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(1)}}%</td>
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Resolution Limit</td>
+                  <td>{{full_result.results.best_results_norm.overall.max_resolution_outer}} &Aring;</td>
+                </tr>
+                <tr>
+                  <td>&Omega;<sub>start</sub> - &Omega;<sub>finish</sub></td>
+                  <td>{{full_result.results.best_results_norm.overall.omega_start}}&deg; - {{full_result.results.best_results_norm.overall.omega_end}}&deg;</td>
+                </tr>
+                <tr>
+                  <td>Rotation Range</td>
+                  <td>{{(full_result.results.best_results_norm.overall.omega_end - full_result.results.best_results_norm.overall.omega_start) | number:'1.1-1'}}&deg;</td>
+                </tr>
+                <tr>
+                  <td>Number of Images</td>
+                  <td>{{full_result.results.best_results_norm.overall.number_images}}</td>
+                </tr>
+                <tr>
+                  <td>Completeness (outer)</td>
+                  <td>{{full_result.results.best_results_norm.overall.completeness_overall}} ({{full_result.results.best_results_norm.overall.completeness_outer}})</td>
+                </tr>
+                <tr>
+                  <td>Redundancy (outer)</td>
+                  <td>{{full_result.results.best_results_norm.overall.redundancy_overall}} ({{full_result.results.best_results_norm.overall.redundancy_outer}})</td>
+                </tr>
+                <tr>
+                  <td>R factor (outer)</td>
+                  <td>{{full_result.results.best_results_norm.overall.r_factor_overall}} ({{full_result.results.best_results_norm.overall.r_factor_outer}})</td>
+                </tr>
+                <tr>
+                  <td>I/&sigma;I (outer)</td>
+                  <td>{{full_result.results.best_results_norm.overall.average_i_over_sigma_overall}} ({{full_result.results.best_results_norm.overall.average_i_over_sigma_outer}})</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.best_results_anom !== 'FAILED'" class="rapd-result">
+            <h3>Data Collection Strategy from Best ANOMALOUS</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Delta;&Omega;</th>
+                  <th># Images</th>
+                  <th>Exposure time</th>
+                  <th>Distance</th>
+                  <th>Transmission</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
+                  <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_start | number:'1.1-2'}}&deg;</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_width | number:'1.1-2'}}&deg;</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time}}s</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].distance.toFixed(0)}}mm</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}%</td>
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Resolution Limit</td>
+                  <td>{{full_result.results.best_results_anom.overall.max_resolution_outer}} &Aring;</td>
+                </tr>
+                <tr>
+                  <td>&Omega;<sub>start</sub> - &Omega;<sub>finish</sub></td>
+                  <td>{{full_result.results.best_results_anom.overall.omega_start}}&deg; - {{full_result.results.best_results_anom.overall.omega_end}}&deg;</td>
+                </tr>
+                <tr>
+                  <td>Rotation Range</td>
+                  <td>{{(full_result.results.best_results_anom.overall.omega_end - full_result.results.best_results_anom.overall.omega_start) | number:'1.1-1'}}&deg;</td>
+                </tr>
+                <tr>
+                  <td>Number of Images</td>
+                  <td>{{full_result.results.best_results_anom.overall.number_images}}</td>
+                </tr>
+                <tr>
+                  <td>Completeness (outer)</td>
+                  <td>{{full_result.results.best_results_anom.overall.completeness_overall}} ({{full_result.results.best_results_anom.overall.completeness_outer}})</td>
+                </tr>
+                <tr>
+                  <td>Redundancy (outer)</td>
+                  <td>{{full_result.results.best_results_anom.overall.redundancy_overall}} ({{full_result.results.best_results_anom.overall.redundancy_outer}})</td>
+                </tr>
+                <tr>
+                  <td>R factor (outer)</td>
+                  <td>{{full_result.results.best_results_anom.overall.r_factor_overall}} ({{full_result.results.best_results_anom.overall.r_factor_outer}})</td>
+                </tr>
+                <tr>
+                  <td>I/&sigma;I (outer)</td>
+                  <td>{{full_result.results.best_results_anom.overall.average_i_over_sigma_overall}} ({{full_result.results.best_results_anom.overall.average_i_over_sigma_outer}})</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.mosflm_results_norm !== undefined" class="rapd-result">
+            <h3>Data Collection Strategy from Mosflm Normal</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Omega; Range</th>
+                  <!-- <th># Images</th> -->
+                  <!-- <th>Exposure time</th> -->
+                  <!-- <th>Distance</th> -->
+                  <!-- <th>Transmission</th> -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sweep of full_result.results.mosflm_results_norm.strategy.sweeps">
+                  <td>{{sweep.run_number}}</td>
+                  <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                  <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                  <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Completeness Normal</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_norm}}</td>
+                </tr>
+                <!-- <tr>
+                  <td>Completeness Anomalous</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_anom}}</td>
+                </tr> -->
+                <tr>
+                  <td>Multiplicity</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.multiplicity}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Total</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.reflections_total}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Unique</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.reflections_unique}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.mosflm_results_anom !== undefined" class="rapd-result">
+            <h3>Data Collection Strategy from Mosflm ANOMALOUS</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Omega; Range</th>
+                  <!-- <th># Images</th> -->
+                  <!-- <th>Exposure time</th> -->
+                  <!-- <th>Distance</th> -->
+                  <!-- <th>Transmission</th> -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sweep of full_result.results.mosflm_results_anom.strategy.sweeps">
+                  <td>{{sweep.run_number}}</td>
+                  <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                  <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                  <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Completeness Normal</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.completeness_norm}}</td>
+                </tr>
+                <tr>
+                  <td>Completeness Anomalous</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.completeness_anom}}</td>
+                </tr>
+                <tr>
+                  <td>Multiplicity</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.multiplicity}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Total</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.reflections_total}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Unique</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.reflections_unique}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.raddose_results" class="rapd-result">
+            <h3>Raddose Analysis</h3>
+          </div>
+          <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'" class="rapd-result">
+            <h3>Mosflm Integration</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Solution</th>
+                  <th>Spacegroup</th>
+                  <th>X Beam</th>
+                  <th>Y Beam</th>
+                  <th>Distance</th>
+                  <th>Resolution</th>
+                  <th>Mosaicity</th>
+                  <th>RMS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of full_result.results.labelit_results.mosflm_face; let i = index">
+                  <td>{{full_result.results.labelit_results.mosflm_face[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_solution[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_sg[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_beam_x[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_beam_y[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_distance[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_res[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_mos[i]}}</td>
+                  <td>{{full_result.results.labelit_results.mosflm_rms[i]}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'" class="rapd-result">
+            <h3>Labelit Indexing</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Solution</th>
+                  <th>Metric</th>
+                  <th>RMSD</th>
+                  <th># Spots</th>
+                  <th>Crystal System</th>
+                  <th>Cell</th>
+                  <th>Volume</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of full_result.results.labelit_results.labelit_face; let i = index">
+                  <td>{{full_result.results.labelit_results.labelit_face[i]}}</td>
+                  <td>{{full_result.results.labelit_results.labelit_solution[i]}}</td>
+                  <td>{{full_result.results.labelit_results.labelit_metric[i]}}</td>
+                  <td>{{full_result.results.labelit_results.labelit_rmsd[i]}}</td>
+                  <td>{{full_result.results.labelit_results.labelit_spots_fit[i]}}</td>
+                  <td>{{full_result.results.labelit_results.labelit_system[i]}}</td>
+                  <td>
+                    {{full_result.results.labelit_results.labelit_cell[i][0]}} &Aring;
+                    {{full_result.results.labelit_results.labelit_cell[i][1]}} &Aring;
+                    {{full_result.results.labelit_results.labelit_cell[i][2]}} &Aring;
+                    {{full_result.results.labelit_results.labelit_cell[i][3]}}&deg;
+                    {{full_result.results.labelit_results.labelit_cell[i][4]}}&deg;
+                    {{full_result.results.labelit_results.labelit_cell[i][5]}}&deg;
+                  </td>
+                  <td>{{full_result.results.labelit_results.labelit_volume[i]}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="full_result.results.distl_results" class="rapd-result">
+            <h3>DISTL Peak Picking</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th colspan=4 class="rapd-table-span">Spots</th>
+                  <th colspan=2 class="rapd-table-span">Resolution</th>
+                  <th></th>
+                  <th></th>
+                  <th colspan=3 class="rapd-table-span">Signal Strength</th>
+                </tr>
+                <tr>
+                  <th>Total</th>
+                  <th>In Res</th>
+                  <th>Good Bragg</th>
+                  <th>Overloaded</th>
+                  <th>DISTL</th>
+                  <th>Labelit</th>
+                  <th>Max Cell</th>
+                  <th>Ice Rings</th>
+                  <th>Min</th>
+                  <th>Mean</th>
+                  <th>Max</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let result of full_result.results.distl_results">
+                  <td>{{result.spots_total}}</td>
+                  <td>{{result.spots_in_res}}</td>
+                  <td>{{result.spots_good_bragg}}</td>
+                  <td>{{result.overloads}}</td>
+                  <td>{{result.distl_res}}</td>
+                  <td>{{result.labelit_res}}</td>
+                  <td>{{result.max_cell}}</td>
+                  <td>{{result.ice_rings}}</td>
+                  <td>{{result.signal_min}}</td>
+                  <td>{{result.signal_mean}}</td>
+                  <td>{{result.signal_max}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+        <app-log-card
+          *ngIf="full_result.results.best_results_norm"
+          [log]="full_result.results.best_results_norm.log"
+          header="Best Strategy Normal">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.best_results_anom"
+          [log]="full_result.results.best_results_anom.log"
+          header="Best Strategy ANOMALOUS">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.mosflm_results_norm"
+          [log]="full_result.results.mosflm_results_norm.log"
+          header="Mosflm Strategy Normal">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.mosflm_results_anom"
+          [log]="full_result.results.mosflm_results_anom.log"
+          header="Mosflm Strategy ANOMALOUS">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.labelit_results.log"
+          [log]="full_result.results.labelit_results.log.run1"
+          header="Labelit Indexing">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.labelit_results.output"
+          [log]="full_result.results.labelit_results.output"
+          header="Labelit Indexing">
+        </app-log-card>
+      </mat-card-content>
+    </div>
+    <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
+      <button mat-button color="primary" (click)="openReindexDialog()"><mat-icon>refresh</mat-icon>Reindex</button>
+      <button mat-button color="primary" (click)="openProjectDialog()"><mat-icon>add</mat-icon>Project</button>
+      <button mat-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><mat-icon>arrow_upward</mat-icon>Pin</button>
+      <button mat-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnPin</button>
+      <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><mat-icon>delete</mat-icon>Junk</button>
+      <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnJunk</button>
+      <!-- <button mat-button (click)="printPage()">Print</button> -->
+    </mat-toolbar>
+  </mat-card>
+</div>

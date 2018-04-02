@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import sys
 
 # RAPD imports
 import detectors.adsc.adsc_q315 as detector
-
+import detectors.detector_utils as utils
 """
 Header from ALS 8.2.1 test image
 {
@@ -79,7 +79,16 @@ HEADER_VERSION = 1
 
 # XDS input information
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
-XDSINP = detector.XDSINP
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
+# Update the XDS information from the imported detector
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
+          ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
+
 
 def parse_file_name(fullname):
     """Parse the fullname of an image and return

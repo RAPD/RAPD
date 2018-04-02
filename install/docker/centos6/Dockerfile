@@ -2,7 +2,7 @@
 #
 # VERSION 2.0.0
 
-FROM centos:6
+FROM centos:6.7
 MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
@@ -17,8 +17,9 @@ RUN yum -y install bzip2 \
                    patch \
                    subversion \
                    wget
-
-WORKDIR /opt
-RUN git clone -b iss008 https://github.com/RAPD/RAPD.git rapd
-WORKDIR /opt/rapd/install
+RUN adduser tester
+USER tester
+WORKDIR /home/tester
+# RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
+# WORKDIR /home/tester/rapd/install
 # RUN ./install -mb > install.log

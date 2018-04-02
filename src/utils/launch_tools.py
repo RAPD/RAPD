@@ -5,7 +5,7 @@ Tools for launch and launcher
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -31,6 +31,9 @@ import os
 import stat
 import tempfile
 
+from utils.text import json
+from bson.objectid import ObjectId
+
 def write_command_file(target_directory, command, message):
     """
     Write the message to a command file in the target directory
@@ -38,7 +41,7 @@ def write_command_file(target_directory, command, message):
     Keyword arguments
     target_directory -- directory to write the command file in
     command -- command type
-    message -- contents of the commad file
+    message -- contents of the command file
 
     message will be the content of the file:
     target_directory/command_{random chars}.rapd
@@ -53,7 +56,7 @@ def write_command_file(target_directory, command, message):
                                            prefix=command+"_",
                                            suffix=".rapd",
                                            delete=False)
-    out_file.write(message)
+    out_file.write(json.dumps(message))
     out_file.close()
 
     return out_file.name
@@ -84,3 +87,41 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
     os.chmod(target_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     return target_file
+
+def get_site_tag(message):
+    """Find and return the site_tag from the image header"""
+    # Find site_tag from SNAP
+    site_tag = False
+    if message.get('image1', False):
+        site_tag = message['image1'].get('site_tag')
+    # Find site_tag from INTEGRATE
+    elif message.get('data', False):
+        site_tag = message['data']['image_data'].get('site_tag')
+    return site_tag
+
+def fix_command(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        message["directories"]["launch_dir"],
+        message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+    # Now make the directory
+    if os.path.exists(work_dir_candidate) == False:
+        os.makedirs(work_dir_candidate)
+
+    # Modify command
+    message["directories"]["work"] = work_dir_candidate
+
+    return message

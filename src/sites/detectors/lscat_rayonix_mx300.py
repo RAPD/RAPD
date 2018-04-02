@@ -6,7 +6,7 @@ detector
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -38,45 +38,29 @@ import sys
 
 # RAPD imports
 import detectors.rayonix.rayonix_mx300 as detector
+import detectors.detector_utils as utils
 
 DETECTOR = "rayonix_mx300"
 VENDORTYPE = "MARCCD"
 DETECTOR_SN = 0
 DETECTOR_SUFFIX = ""
-IMAGE_TEMPLATE = "%s_%d.???"
-RUN_NUMBER_IN_TEMPLATE = True
+#IMAGE_TEMPLATE = "%s_%d.???"
+#RUN_NUMBER_IN_TEMPLATE = True
+IMAGE_TEMPLATE = "%s.???"
+RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 # XDS info
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
-XDSINP = {
-    "DETECTOR": "MARCCD",
-    "DIRECTION_OF_DETECTOR_X-AXIS": "1.0 0.0 0.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": "0.0 1.0 0.0",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "INCLUDE_RESOLUTION_RANGE": "100.00 0.00",
-    "INDEX_ORIGIN": "0 0 0",
-    "MAX_CELL_ANGLE_ERROR": "2.0",
-    "MAX_CELL_AXIS_ERROR": "0.030",
-    "MAX_FAC_Rmeas": "2.00",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "MIN_RFL_Rmeas": "50.0",
-    "NX": "4096",
-    "NY": "4096",
-    "OVERLOAD": "65535",
-    "POLARIZATION_PLANE_NORMAL": "0.0 1.0 0.0",
-    "QX": "0.078200",
-    "QY": "0.078200",
-    "ROTATION_AXIS": "1.0 0.0 0.0",
-    "SPACE_GROUP_NUMBER": "0",
-    "TEST_RESOLUTION_RANGE": "50.00 2.00",
-    "TRUSTED_REGION": "0.0 0.99",
-    "UNTRUSTED_RECTANGLE1": "1288 1475 3346 3835",
-    "UNTRUSTED_RECTANGLE2": "724 872 462 974",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": "6000 30000",
-    "WFAC1": "1.0"
-    }
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
+# Update the XDS information from the imported detector
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
+          ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 def parse_file_name(fullname):
     """Parse the fullname of an image and return
@@ -104,8 +88,10 @@ def create_image_template(image_prefix, run_number):
     """
     Create an image template for XDS
     """
-
-    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    if run_number:
+        image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    else:
+        image_template = IMAGE_TEMPLATE % image_prefix
 
     return image_template
 
@@ -270,7 +256,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings={}):
+def read_header(fullname, beam_settings={}, extra_header=False):
     """
     Read the header and add some site-specific data
 
@@ -293,17 +279,25 @@ def read_header(fullname, beam_settings={}):
 
     # Add tag for module to header
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
-
+    """
     print basename
     print basename.split(".")
     print basename.split(".")[-2].split("_")
     # print "_".join(basename.split(".")[-2].split("_")[:-1])
     header["image_prefix"] ="_".join(basename.split(".")[-2].split("_")[:-1])
     print basename.split(".")[-2].split("_")[-1]
-    header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
-
+    #header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
+    header["run_number"] = basename.split(".")[-2].split("_")[-1]
+    """
+    # Get rid of run number since it is not mandatory at LSCAT.
+    header["image_prefix"] = basename.split(".")[-2]
+    header["run_number"] = None
+    #if basename.split(".")[-2].split("_") == 'S':
+        
+    
     # The image template for processing
-    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    #header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    header["image_template"] = IMAGE_TEMPLATE %header["image_prefix"]
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Add some values HACK

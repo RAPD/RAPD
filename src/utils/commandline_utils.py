@@ -5,7 +5,7 @@ Utilities for commandline running
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -69,7 +69,7 @@ dp_parser.add_argument("--nolog",
 # No plotting in commandline
 dp_parser.add_argument("--noplot",
                        action="store_false",
-                       dest="plotting",
+                       dest="show_plots",
                        help="Do not display plots in CLI")
 
 # No color in terminal printing
@@ -150,13 +150,14 @@ dp_parser.add_argument("--sample_type",
                        action="store",
                        dest="sample_type",
                        default="protein",
-                       choices=["protein", "dna", "rna", "peptide"],
+                       choices=["protein", "dna", "rna", "peptide", "ribosome"],
                        help="The type of sample")
 
 # Solvent fraction
 dp_parser.add_argument("--solvent",
                        action="store",
                        dest="solvent",
+                       default=0.55,
                        type=float,
                        help="Solvent fraction 0.0-1.0")
 
@@ -191,6 +192,19 @@ dp_parser.add_argument("--nproc",
                        default=multiprocessing.cpu_count(),
                        help="Number of processors to use. Defaults to the number of \
                              processors available")
+
+# Use the cluster
+dp_parser.add_argument("--cluster",
+                       action="store_true",
+                       dest="cluster_use",
+                       help="Use cluster")
+
+# Directory for exchanging files (used by some server installs)
+dp_parser.add_argument("--exchange_dir",
+                       action="store",
+                       dest="exchange_dir",
+                       help="Root directory for file excahnge between RAPD server entities")
+
 
 # The rapd file generating parser - to be used by commandline RAPD processes
 gf_parser = argparse.ArgumentParser(add_help=False)
@@ -327,7 +341,8 @@ def analyze_data_sources(sources,
                          mode="index",
                          start_image=False,
                          end_image=False,
-                         timeout=30):
+                         hdf5_image_range=False,
+                         hdf5_wedge_range=False):
     """
     Return information on files or directory from input
     """
@@ -336,55 +351,76 @@ def analyze_data_sources(sources,
     return_data = {}
 
     if mode == "index":
+        # If inputting an h5 dataset or single image
+        if len(sources) == 1 and os.path.abspath(sources[0]).endswith(".h5"):
+            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                                master_file=os.path.abspath(sources[0]),
+                                output_dir="cbf_files",
+                                image_range=hdf5_image_range,
+                                wedge_range=hdf5_wedge_range,
+                                #overwrite=True,
+                                verbose=False)
+            converter.run()
+            return_data["hdf5_files"] = [os.path.abspath(sources[0])]
+            return_data["files"] = [os.path.abspath(f) for f in converter.output_images]
 
-        for source in sources:
-            source_abspath = os.path.abspath(source)
+        else:
+            prefix = False
+            for source in sources:
+                source_abspath = os.path.abspath(source)
+                # print "  source_abspath:", source_abspath
 
-            # Does file/dir exist?
-            if os.path.exists(source_abspath):
-                if os.path.isdir(source_abspath):
-                    pass
-                elif os.path.isfile(source_abspath):
+                # Does file/dir exist?
+                if os.path.exists(source_abspath):
+                    if os.path.isdir(source_abspath):
+                        pass
+                    elif os.path.isfile(source_abspath):
 
-                    # Are we dealing with hdf5 images
-                    if source_abspath.endswith(".h5"):
+                        # Are we dealing with hdf5 images
+                        if source_abspath.endswith(".h5"):
+                            # Needed for Labelit to have same root name to pairs of images.
+                            if prefix == False:
+                                prefix = convert_hdf5_cbf.get_prefix(source_abspath)
+                            
+                            if not "hdf5_files" in return_data:
+                                return_data["hdf5_files"] = [source_abspath]
+                            else:
+                                return_data["hdf5_files"].append(source_abspath)
 
-                        if not "hdf5_files" in return_data:
-                            return_data["hdf5_files"] = [source_abspath]
+                            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                                master_file=source_abspath,
+                                output_dir="cbf_files",
+                                #start_image=len(return_data["hdf5_files"]),
+                                #end_image=len(return_data["hdf5_files"]),
+                                renumber_image=len(return_data["hdf5_files"]),
+                                prefix=prefix,
+                                image_range='1',
+                                overwrite=True,
+                                verbose=False)
+    
+                            converter.run()
+    
+                            #source_abspath = os.path.abspath(converter.output_images[0])
+                            source_abspath = os.path.abspath(converter.output_images[-1])
+    
+                        # 1st file of 1 or 2
+                        if not "files" in return_data:
+                            return_data["files"] = [source_abspath]
+    
+                        # 3rd file - error
+                        elif len(return_data["files"]) > 1:
+                            raise Exception("Up to two images can be submitted for indexing")
+                        # 2nd file - presumably a pair
                         else:
-                            return_data["hdf5_files"].append(source_abspath)
-
-                        prefix = os.path.basename(source).replace("_master.h5", "")
-
-                        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
-                            master_file=source_abspath,
-                            output_dir="cbf_files",
-                            prefix=prefix,
-                            start_image=1,
-                            end_image=1,
-                            overwrite=True,
-                            verbose=False)
-
-                        converter.run()
-
-                        source_abspath = os.path.abspath(converter.output_images[0])
-
-                    # 1st file of 1 or 2
-                    if not "files" in return_data:
-                        return_data["files"] = [source_abspath]
-                    # 3rd file - error
-                    elif len(return_data["files"]) > 1:
-                        raise Exception("Up to two images can be submitted for indexing")
-                    # 2nd file - presumably a pair
-                    else:
-                        # Same file twice
-                        if source_abspath == return_data["files"][0]:
-                            raise Exception("The same image has been submitted twice for indexing")
-                        else:
-                            return_data["files"].append(source_abspath)
-                            break
-            else:
-                raise Exception("%s does not exist" % source_abspath)
+                            # Same file twice
+                            if source_abspath == return_data["files"][0]:
+                                raise Exception("The same image has been submitted twice for indexing")
+                            else:
+                                return_data["files"].append(source_abspath)
+                                break
+    
+                else:
+                    raise Exception("%s does not exist" % source_abspath)
 
         return return_data
 
@@ -400,17 +436,25 @@ def analyze_data_sources(sources,
             else:
                 return_data["hdf5_files"].append(source_abspath)
 
-            prefix = os.path.basename(sources).replace("_master.h5", "")
-
-            if not start_image:
-                start_image = 1
+            #if not start_image:
+            #    start_image = 1
+            
+            if start_image and end_image:
+                image_range = '%s-%s'%(start_image, end_image)
+            elif start_image and not end_image:
+                image_range = '%s-end'%start_image
+            elif not start_image and end_image:
+                image_range = '1-%s'%end_image
+            else:
+                image_range = 'all'
 
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                 master_file=source_abspath,
                 output_dir="cbf_files",
-                prefix=prefix,
-                start_image=start_image,
-                end_image=end_image,
+                #prefix=prefix,
+                #start_image=start_image,
+                #end_image=end_image,
+                image_range=image_range,
                 overwrite=False,
                 verbose=False)
 
@@ -486,11 +530,14 @@ def analyze_data_sources(sources,
 
             return return_data
 
-
 if __name__ == "__main__":
 
-    print "commandline_utils.py"
+    #print "commandline_utils.py"
+    os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
+    s = ['/gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h.001_master.h5']
+    analyze_data_sources(s, 'index', )
 
+    """
     parser = argparse.ArgumentParser(parents=[dp_parser],
                                      description="Testing")
     returned_args = parser.parse_args()
@@ -503,3 +550,4 @@ if __name__ == "__main__":
 
     print "\nSites:"
     print_sites(left_buffer="  ")
+    """

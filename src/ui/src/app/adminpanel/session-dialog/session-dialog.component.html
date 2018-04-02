@@ -1,0 +1,68 @@
+<div *ngIf="! submit_error">
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <h2>
+      <div *ngIf="model._id;then edit_content else create_content"></div>
+      <ng-template #edit_content>Edit </ng-template>
+      <ng-template #create_content>Create </ng-template>
+      Session
+    </h2>
+  </div>
+  <form [formGroup]="session_form">
+    <div class="form-group">
+      <p>
+        <mat-form-field>
+          <mat-select
+            formControlName="site"
+            [(ngModel)]="model.site"
+            placeholder="Site">
+            <mat-option *ngFor="let s of globals_service.site.site_tags" [value]="s">{{s}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </p>
+      <p>
+        <mat-form-field>
+          <mat-select
+            formControlName="group"
+            [(ngModel)]="model.group._id"
+            placeholder="Group">
+            <mat-option value="">Unknown</mat-option>
+            <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </p>
+      <p>
+        <mat-form-field>
+          <input matInput
+            formControlName="data_root_dir"
+            required
+            placeholder="directory"
+            style="width:17em;"
+            [(ngModel)]="model.data_root_dir">
+        </mat-form-field>
+      </p>
+    </div>
+    <p>
+      <mat-progress-bar
+        *ngIf="submitted"
+        mode="indeterminate"
+        color="primary">
+      </mat-progress-bar>
+    </p>
+    <p>
+      <button *ngIf="model._id" type="button" mat-button color="warn" (click)="deleteSession()">Delete</button>
+      <button type="button" [disabled]="!session_form.valid" mat-button (click)="submitSession()">Save</button>
+    </p>
+  </form>
+</div>
+<div *ngIf="submit_error">
+  <mat-dialog-content>
+    <h2>Error</h2>
+    {{submit_error}}
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
+</div>

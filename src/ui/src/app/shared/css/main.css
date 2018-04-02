@@ -1,0 +1,509 @@
+/*
+ * Resets
+ */
+ html {
+     height: 100%;
+     margin: 0;
+     padding: 0;
+ }
+
+
+
+/*
+ * Font controls
+ */
+
+/* Roboto is Material Design default */
+body {
+  font-family: "Roboto","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+  height:100%;
+}
+
+/* Chinkfive is the font for RAPD "branding" */
+@font-face {
+  font-family: 'Chunkfive';
+  src: url('Chunkfive.otf');
+}
+
+.chunky {
+  font-family: 'ChunkFive', 'Georgia', serif;
+}
+
+
+h3.rapd-failure {
+  color: red;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+/*.child {
+
+}*/
+
+
+
+.l-content {
+  padding: 10px 96px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.l2-content {
+  padding: 10px 0 0 96px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+}
+
+/*
+ * The top of the UI
+ */
+/*.main-title {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}*/
+
+.main-title {
+  font-family: 'ChunkFive', 'Georgia', serif;
+  font-size: 2em;
+}
+
+mat-toolbar.main-toolbar {
+  background: rgba(229, 229, 229, 1.0);
+  border-radius: 5px;
+  box-shadow: none;
+  width: 100%;
+}
+
+.main-toolbar .main-buttons {
+  width: 100%;
+}
+
+
+/*
+ * Items in the top-level UI
+ */
+
+
+div.rapd-main-panel {
+  background-color: rgba(229, 229, 229, 1.0);
+  border-radius: 5px;
+  height: 100%;
+  margin: 5px 0 5px 0;
+  padding-top: 2em;
+  text-align: center;
+  width: 100%;
+ }
+
+article.c-content {
+  width: 80%;
+  margin-left: 10%;
+}
+
+mat-toolbar.rapd-main-panel-action-bar {
+  background-color: rgba(229, 229, 229, 1.0);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 10px 0 0 10%;
+  width: 80%;
+  margin-left: 10%;
+}
+
+.sessions-table {
+  margin-bottom: 32px;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26);
+  border-radius: 2px;
+  background: #fff;
+}
+
+.sessions-table tbody th, .sessions-table tbody td {
+    border-bottom: 1px solid #ECEFF1;
+    color: #445A64;
+    padding: 16px 32px;
+    text-align: left;
+}
+
+.sessions-table thead th {
+    background: rgba(229, 229, 229, 1.0);
+    border-bottom: 1px solid #ECEFF1;
+    color: black;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 32px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.is-full-width {
+  width: 100%;
+}
+
+.is-full-height {
+  height: 100%;
+}
+
+.session-tab-group {
+  background: rgba(229, 229, 229, 1.0);
+  /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
+  /*width: 232px;*/
+  /*overflow: auto;*/
+  /*margin: 0.25em 0 0.5em 0.25em;*/
+  /*min-height: calc(100vh - 4.75em);*/
+}
+
+.rapd-side-list {
+  background: rgba(229, 229, 229, 1.0);
+  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+  width: 16em;
+  overflow: auto;
+  margin: 0.25em 0 0.5em 0.25em;
+  height: calc(100vh - 8em);
+}
+
+/* Divider between pinned/normal/trashed results */
+mat-divider.rapd-side-list-divider {
+  border-top: 2px dashed rgba(0,0,0,0.2);
+}
+
+.result-panel {
+  /*background: rgba(229, 229, 229, 1.0);*/
+  /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
+  overflow: scroll;
+  margin: 0.25em 0 0.5em 0.25em;
+  /*min-width: calc(100vw - 17em);*/
+  /*display: flex;*/
+  /*flex-wrap: wrap;*/
+}
+
+.result-panel-action-bar {
+  background: rgba(0,0,0,0);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 0.25em -1em 0.5em 0;
+  min-width: calc(100vw - 17em);
+}
+
+.mat-list-item.rapd-list-item {
+
+}
+
+.mat-list-item.rapd-list-child-item {
+    margin-left: 3em;
+}
+
+.rapd-error-result {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.rapd-list-item .mat-list-item-content {
+  height: 1.5em;
+}
+
+.mat-overlay-pane {
+  background: rgba(255,255,255,0.95);
+}
+
+/* Invalid ng form entries */
+input.ng-invalid:not(form)  {
+  /*border-bottom: 5px solid #a94442; /* red */
+  background: rgba(255,0,0,0.5);
+}
+
+/* A panel in the interface */
+div.panel {
+  background-color: rgba(229, 229, 229, 1.0);
+  height: 100%;
+}
+
+
+
+button.button-dialog-top-right.mat-icon-button {
+  float: right;
+  margin-top: -30px;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.active-result {
+  background-color: yellow;
+}
+.active-result:hover {
+  background-color: yellow;
+}
+
+.hidden {
+  display: none;
+}
+
+.overlay-grey {
+  opacity: 0.5;
+}
+
+/*
+ * Small content panels with black tops
+ */
+ .rapd-panel {
+   background-color: rgba(255,255,255,1);
+   border-radius: 3px;
+ }
+
+ .rapd-panel-heading {
+   background: rgba(0,0,0,1);
+   border-radius: 3px 3px 0 0;
+   color: rgba(255,255,255,1);
+   display: block;
+   height: 20px;
+   margin: 0 0 0 0;
+   padding: 10px 15px;
+   text-align: left;
+ }
+
+ .rapd-panel-content {
+   padding: 10px;
+ }
+
+
+
+
+/*
+ * Table for settings input
+ */
+
+ :host /deep/ .datatable-body-row.active .datatable-row-group {
+ background-color: white !important;
+ }
+
+table.rapd-form-table {
+  table-layout: fixed;
+  /*width: 100%;*/
+  /*border: 1px solid rgba(0,0,0,0.2);*/
+  border-collapse: collapse;
+  /*border-radius: 2px;*/
+  margin: 10px;
+}
+
+td.rapd-form-table-rj {
+  padding: 10px 10px 0 10px;
+  text-align: right;
+}
+
+td.rapd-form-table-rji {
+  padding: 0px 10px 5px 10px;
+  text-align: right;
+}
+
+td.rapd-form-table-select {
+  padding-bottom: 7px;
+}
+
+
+
+/*
+ * Table for data display
+ */
+table.rapd-table {
+  table-layout: fixed;
+  /*width: 100%;*/
+  border: 1px solid rgba(0,0,0,0.2);
+  border-collapse: collapse;
+  border-radius: 2px;
+  margin: 10px;
+  text-align: center;
+}
+
+.rapd-table th, td {
+  padding: 0 10px 0px 10px;
+}
+
+.rapd-table tr {
+  padding: 10px 10px 10px 10px;
+  height: 30px;
+}
+
+.rapd-table thead th {
+  color: rgba(0,0,0,0.54);
+  font-weight: 500;
+  font-size: 1;
+}
+
+.rapd-table thead tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* A colspan header */
+.rapd-table-span {
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+.rapd-table tbody {
+  color: rgba(0,0,0,1);
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.rapd-table tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+table.rapd-table-wide {
+  table-layout: fixed;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-collapse: collapse;
+  border-radius: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+.rapd-table-wide th, td {
+  padding: 0 10px 0px 10px;
+}
+
+.rapd-table-wide tr {
+  padding: 10px 10px 10px 10px;
+  height: 30px;
+}
+
+.rapd-table-wide thead th {
+  color: rgba(0,0,0,0.54);
+  font-weight: 500;
+  font-size: 1;
+}
+
+.rapd-table-wide thead tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.rapd-table-wide tbody {
+  color: rgba(0,0,0,1);
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.rapd-table-wide tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+
+mat-card.rapd-result {
+  margin: 1px;
+  overflow: scroll;
+  width: 97%;
+}
+
+mat-card-header.rapd-result {
+  /*background-color: rgba(0,0,0,0.1);*/
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  padding:5px;
+}
+
+mat-card-content.rapd-result {
+  /*background-color: rgba(255,255,255,1);*/
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow-y: scroll;
+  padding: 5px;
+}
+
+mat-card-actions.rapd-result {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 4px;
+}
+
+/* Container for results */
+div.rapd-result {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 4px;
+  padding: 5px;
+}
+
+div.rapd-result-paragraph {
+  margin-left: 10px;
+}
+/* dive that holds title for chart */
+.rapd-chart-title-panel {
+  float: left;
+}
+
+/* div that holds a select that looks separate */
+.rapd-select-panel {
+  border-radius: 2px;
+  /*box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);*/
+  /*box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
+              0 2px 2px 0 rgba(0,0,0,.14),
+              0 1px 5px 0 rgba(0,0,0,.12);*/
+  float: right;
+  margin: 1.1em 0 1em 0;
+  padding: 5px;
+  width: 7em;
+}
+
+.rapd-select-panel .mat-select-value {
+  text-align:right;
+}
+
+
+
+/* Entries for showing raw output from programs */
+.rapd-raw-output-card {
+  margin: 0.5em;
+  overflow-y: hidden;
+  overflow-x:visible;
+}
+
+/*
+ * CSS for plots and their containers
+ */
+
+/* div that holds select for chart type */
+.rapd-chart-select-panel {
+  float: right;
+  margin: 1.2em 0.2em 0 0;
+  width: 10em;
+}
+
+div.rapd-plot-header {
+  /*margint: 30px;*/
+  padding: 1em 1em 1em 1em;
+  width: 100%;
+}
+
+div.chart-container {
+  position: relative;
+  width:90%;
+}
+
+.rapd-chart-select-panel .mat-select-value {
+  text-align:right;
+}
+
+/* CSS for log file displays */
+.rapd-raw-output {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.75;
+}
+
+.raw-collapsed {
+  height: 15em;
+}
+
+/*.raw-output-toggle {
+  float: left;
+  top: 2.0em;
+  left: -1.4em;
+}*/

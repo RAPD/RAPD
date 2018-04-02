@@ -5,7 +5,7 @@ Monitor for new data collection images to be submitted to a redis instance
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -27,12 +27,14 @@ __status__ = "Development"
 
 # Standard imports
 import logging
-import redis
+# import redis
 import threading
 import time
+import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
+import database.redis_adapter as redis_database
 # from utils import pysent
 
 # Constants
@@ -49,13 +51,13 @@ class Monitor(threading.Thread):
 
     # Storage for where to look for information
     tags = []
-    image_lists = []
 
     # Overwatch
     ow_registrar = None
 
     def __init__(self,
                  site,
+                 clean_start=False,
                  notify=None,
                  overwatch_id=None):
         """
@@ -75,6 +77,7 @@ class Monitor(threading.Thread):
 
         # Passed-in variables
         self.site = site
+        self.clean_start = clean_start
         self.notify = notify
         self.overwatch_id = overwatch_id
 
@@ -82,7 +85,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -97,36 +100,18 @@ class Monitor(threading.Thread):
             for site_id in self.site.ID:
                 self.tags.append(site_id.upper())
 
-        # Figure out where we are going to look
-        for tag in self.tags:
-            self.image_lists.append(("images_collected:"+tag, tag))
-
     def stop(self):
         """Stop the process of polling the redis instance"""
 
         self.logger.debug("Stopping")
 
         self.running = False
+        self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-
-        # Using a redis cluster setup
-        # if settings["REDIS_CLUSTER"]:
-        #     self.logger.debug(settings)
-        #     self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
-        #                                      sentinel_port=settings["SENTINEL_PORT"],
-        #                                      master_name=settings["REDIS_MASTER_NAME"])
-        # # Using a standard redis server setup
-        # else:
-
-        # Create a pool connection
-        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
-                                    port=self.site.IMAGE_MONITOR_REDIS_PORT,
-                                    db=self.site.IMAGE_MONITOR_REDIS_DB)
-
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
+        self.redis_database = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
+        self.redis = self.redis_database.connect_to_redis()
 
     def run(self):
         """Orchestrate the monitoring for new images in redis db"""
@@ -145,7 +130,12 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = int ((5 * len(self.image_lists)) / POLLING_REST)
+        ow_round_interval = 50 # int((5 * len(self.image_lists)) / POLLING_REST)
+
+        # If we are starting clean
+        if self.clean_start:
+            for tag in self.tags:
+                self.redis.delete("images_collected:%s" % tag)
 
         while self.running:
 
@@ -156,6 +146,7 @@ class Monitor(threading.Thread):
 
                     # Try to pop the oldest image off the list
                     new_image = self.redis.rpop("images_collected:%s" % tag)
+                    #new_image = self.redis.rpop("images_collected_%s" % tag)
 
                     # Have a new_image
                     if new_image:
@@ -165,8 +156,8 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWIMAGE",
                                      "fullname":new_image,
                                      "site_tag":tag})
-                        # self.notify(("NEWIMAGE", {"fullname":new_image,
-                        #                           "site_tag":tag}))
+
+                        self.logger.debug("New image data %s", new_image)
 
                     # Slow it down a little
                     time.sleep(POLLING_REST)
@@ -174,3 +165,5 @@ class Monitor(threading.Thread):
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update()
+
+        self.logger.debug("Exit image monitor loop")

@@ -5,7 +5,7 @@ Detector utilities
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -56,6 +56,7 @@ parameters_to_get = (
     "chi_range_average",
     "chi_range_total",
     "chi_start",
+    "data_collection_date",
     "kappa",
     "kappa_end",
     "kappa_increment",
@@ -285,6 +286,97 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
+def merge_xds_input(base, new):
+    """Merge base xds_inp with changes/additions from new"""
+    new_inp = []
+    skip = False
+    # replace existing keywords in base xds
+    for line in base:
+        try:
+            if len(new[0]) > 0:
+                for x in range(len(new)):
+                    if line[0] == new[x][0]:
+                        line = new.pop(x)
+                        break
+        except IndexError:
+            print 'nothing left in inp1'
+            skip = True
+        #new_inp.append("%s%s"%('='.join(line), '\n'))
+        new_inp.append(line)
+    # Skip if nothing left to add
+    if skip == False:
+        # Add new keywords
+        if len(new[0]) > 0:
+            for line in new:
+                #new_inp.append("%s%s"%('='.join(line), '\n'))
+                new_inp.append(line)
+
+    return new_inp
+
+def reorder_input(inp0, inp1):
+    """
+    Compares the detector file to the sites.detector file.
+    Generates new XDS parameters to put in the site.detector file"""
+    # inp0 is from detector
+    # inp1 is from site
+    temp0 = []
+    temp1 = []
+    unt0 = []
+    unt1 = []
+    same = []
+    
+    # put into list if not otherwise
+    if isinstance(inp0, dict):
+        temp0 = [(key, value) for key, value in inp0.iteritems()]
+        temp0.sort()
+        # print converted
+        print '-------inp0-------'
+        for line in temp0:
+            print line, ','
+            #print '(%s, %s),'%tuple(line)
+    else:
+        temp0 = inp0
+        temp0.sort()
+
+    if isinstance(inp1, dict):
+        temp1 = [(key, value) for key, value in inp1.iteritems()]
+        temp1.sort()
+        # print converted
+        print '-------inp1-------'
+        for line in temp1:
+            print line, ','
+    else:
+        temp1 = inp1
+        temp1.sort()
+    # Separate the UNTRUSTED_ lines for separate sorting
+    if len(temp0[0]) > 0:
+        unt0 = [ l0[1] for l0 in temp0 if l0[0].count('UNTRUSTED_')]
+        unt0.sort()
+        temp0 = [ l0 for l0 in temp0 if l0[0].count('UNTRUSTED_') == False]
+    if len(temp1[0]) > 0:
+        unt1 = [ l1[1] for l1 in temp1 if l1[0].count('UNTRUSTED_')]
+        unt1.sort()
+        temp1 = [ l1 for l1 in temp1 if l1[0].count('UNTRUSTED_') == False]
+        # Assuming we are adding new untrusted regions
+        unt1 = [ line for line in unt1 if unt0.count(line) == False]
+    if temp0 == []:
+        temp0 = [()]
+    if temp1 == []:
+        temp1 = [()]
+    
+    
+    if len(temp0[0]) > 0 and len(temp1[0]) > 0:
+        print '\n-------new params-------'
+        # If the same keywords are used, then inp1 takes priority
+        for x, l0 in enumerate(temp0):
+            for y, l1 in enumerate(temp1):
+                # if keyword is the same
+                if l0[0] == l1[0]:
+                    if l0[1].strip() != l1[1].strip():
+                        print l1, ','
+        for x in range(len(unt1)):
+            print "('UNTRUSTED_RECTANGLE%s', '%s'),"%((len(unt0)+1+x), unt1[x])
+
 def print_hdf5_file_structure(file_name) :
     """
     Prints the HDF5 file structure
@@ -325,10 +417,12 @@ def print_hdf5_item_structure(g, offset='    ') :
 def print_hdf5_header_info(file_name):
     """Prints out information from an hdf5 file"""
 
+
     header = read_hdf5_header(file_name)
 
     print "\n Information from HDF5 file"
     print "============================"
+
     keys = header.keys()
     keys.sort()
     for key in keys:
@@ -337,30 +431,31 @@ def print_hdf5_header_info(file_name):
 
 def read_hdf5_header(file_name) :
     """Searched the HDF5 file header for information and returns a dict"""
-    file = h5py.File(file_name, 'r') # open read-only
-    item = file #["/Configure:0000/Run:0000"]
+    h5_file = h5py.File(file_name, 'r') # open read-only
+    # item = h5_file #["/Configure:0000/Run:0000"]
     header = {}
-    interrogate_hdf5_item_structure("root", item, header)
-    file.close()
+    interrogate_hdf5_item_structure("root", h5_file, header)
+    h5_file.close()
     return header
 
 def interrogate_hdf5_item_structure(key, g, header) :
     """Prints the input file/group/dataset (g) name and begin iterations on its content"""
 
 
-    if isinstance(g, h5py.Dataset) :
-
+    if isinstance(g, h5py.Dataset):
+        # print "dataset"
         if key in parameters_to_get:
             header[key] = g.value
 
-    if isinstance(g, h5py.File) or isinstance(g, h5py.Group) :
-        for new_key,val in dict(g).iteritems() :
+    if isinstance(g, h5py.File) or isinstance(g, h5py.Group):
+        # print "file"
+        for new_key, val in dict(g).iteritems():
+            # print new_key, val
             subg = val
             #print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
             interrogate_hdf5_item_structure(new_key, subg, header)
 
     return header
-
 
 def main(test_images):
     """Print out some detector information"""
@@ -374,7 +469,8 @@ def main(test_images):
             print_hdf5_header_info(test_image)
 
             tmp_dir = tempfile.mkdtemp()
-            prefix = os.path.basename(test_image).replace("_master.h5", "")
+            #prefix = os.path.basename(test_image).replace("_master.h5", "")
+            prefix = convert_hdf5_cbf.get_prefix(test_image)
 
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
                                                                output_dir=tmp_dir,
@@ -421,7 +517,7 @@ def main(test_images):
 
 
 if __name__ == "__main__":
-
+    """
     # Get image name from the commandline
     if len(sys.argv) > 1:
         test_images = sys.argv[1:]
@@ -429,3 +525,12 @@ if __name__ == "__main__":
     else:
         print text.red + "No input image" + text.stop
         sys.exit(9)
+    """
+    import detectors.rigaku.raxis as inp0
+    import sites.detectors.ucla_rigaku_raxisivpp as inp1
+    reorder_input(inp0.XDSINP, inp1.XDSINP)
+    print '----TEST-----'
+    for line in inp1.XDSINP:
+        print line
+    
+    

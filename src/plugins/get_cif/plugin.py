@@ -37,12 +37,11 @@ VERSION = "1.0.0"
 
 # Standard imports
 import argparse
-import json
 import logging
 import multiprocessing
 import os
 import shutil
-import subprocess32
+import subprocess
 import time
 import urllib2
 
@@ -52,6 +51,8 @@ import urllib2
 # import utils
 import utils.credits as rcredits
 import utils.global_vars as rglobals
+from utils.text import json
+from bson.objectid import ObjectId
 # import info
 
 # Cache of CIF files
@@ -153,7 +154,7 @@ class RapdPlugin(multiprocessing.Process):
         for pdb_code in self.command["input_data"]["pdb_codes"]:
 
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
+            response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
                        (PDBQ_SERVER, pdb_code))).read()
 
             # Decode search result
@@ -235,7 +236,7 @@ class RapdPlugin(multiprocessing.Process):
                     self.tprint("    Fetching %s" % cif_file, level=10, color="white")
                     try:
                         response = urllib2.urlopen(urllib2.Request(\
-                                   "http://%s/pdbq/entry/get_cif/%s" % \
+                                   "%s/entry/get_cif/%s" % \
                                    (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                    , timeout=60).read()
                     except urllib2.HTTPError as http_error:
@@ -257,7 +258,7 @@ class RapdPlugin(multiprocessing.Process):
                 self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
-                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               "%s/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                                timeout=60).read()
                 except urllib2.HTTPError as http_error:
@@ -271,15 +272,15 @@ class RapdPlugin(multiprocessing.Process):
                     outfile.write(response)
 
             # Uncompress the gzipped file
-            unzip_proc = subprocess32.Popen(["gunzip", gzip_file])
+            unzip_proc = subprocess.Popen(["gunzip", gzip_file])
             unzip_proc.wait()
 
             # Convert from cif to pdb
             if self.command["preferences"]["pdb"]:
                 # Convert
-                conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
-                                                     stdout=subprocess32.PIPE,
-                                                     stderr=subprocess32.PIPE)
+                conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file],
+                                                     stdout=subprocess.PIPE,
+                                                     stderr=subprocess.PIPE)
                 conversion_proc.wait()
                 # pdb_file = cif_file.replace(".cif", ".pdb")
 

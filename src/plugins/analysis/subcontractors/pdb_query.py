@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2010-2017, Cornell University
+Copyright (C) 2010-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -26,7 +26,6 @@ __status__ = "Development"
 
 # Standard imports
 import gzip
-import json
 from multiprocessing import Pool, Process, Queue
 import os
 from pprint import pprint
@@ -44,6 +43,8 @@ from plugins.subcontractors.parse import ParseOutputPhaser, setPhaserFailed
 # from utils.communicate import rapd_send
 # import utils.site as site_utils
 import utils.global_vars as rglobals
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 
 PDBQ_SERVER = rglobals.PDBQ_SERVER
@@ -210,7 +211,7 @@ class PDBQuery(Process):
                     _d_[l1[x]] = [self.cell[l2[y][x]] - self.cell[l2[y][x]] * self.percent/2,
                                   self.cell[l2[y][x]] + self.cell[l2[y][x]] *self.percent/2]
                 # Query server
-                response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
+                response = urllib2.urlopen(urllib2.Request("%s/cell_search/" % \
                            PDBQ_SERVER, data=json.dumps(_d_))).read()
                 j = json.loads(response)
                 for k in j.keys():
@@ -418,7 +419,7 @@ class PDBQuery(Process):
                     self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                     try:
                         response = urllib2.urlopen(urllib2.Request(\
-                                   "http://%s/pdbq/entry/get_cif/%s" % \
+                                   "%s/entry/get_cif/%s" % \
                                    (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                    , timeout=60).read()
                     except urllib2.HTTPError as http_error:
@@ -441,7 +442,7 @@ class PDBQuery(Process):
                 self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
-                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               "%s/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                                timeout=60).read()
                 except urllib2.HTTPError as http_error:

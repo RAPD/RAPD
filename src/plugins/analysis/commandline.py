@@ -26,6 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import multiprocessing
 import os
 import sys
 import uuid
@@ -66,16 +67,20 @@ def construct_command(commandline_args):
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
+        "dir_up": commandline_args.dir_up,
+        "nproc": commandline_args.nproc,
         "pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
+        "show_plots": commandline_args.show_plots,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
     }
 
-    # Show plots
-    # command["preferences"]["show_plots"] = commandline_args.plotting
+    # Interprocess communication
+    if commandline_args.queue:
+        command["queue"] = commandline_args.queue
 
     # logger.debug("Command for index plugin: %s", command)
 
@@ -101,6 +106,13 @@ def get_commandline():
                            action="store_true",
                            dest="test",
                            help="Turn test mode on")
+
+    # Multiprocessing
+    my_parser.add_argument("--nproc",
+                           dest="nproc",
+                           type=int,
+                           default=max(1, multiprocessing.cpu_count() - 1),
+                           help="Number of processors to employ")
 
     # Verbose
     # my_parser.add_argument("-v", "--verbose",
@@ -144,6 +156,12 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
+    # Hide plots?
+    my_parser.add_argument("--noplot",
+                           action="store_false",
+                           dest="show_plots",
+                           help="No plotting")
+
     # Output progress updates?
     my_parser.add_argument("--progress",
                            action="store_true",
@@ -184,6 +202,7 @@ def get_commandline():
         my_parser.exit()
 
     args = my_parser.parse_args()
+    args.queue = False
 
     # Insert logic to check or modify args here
     # Running in interactive mode if this code is being called
@@ -268,7 +287,8 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdPlugin(command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(command, tprint, logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

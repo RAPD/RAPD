@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2009-2017, Cornell University
+Copyright (C) 2009-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import socket
 import threading
 import multiprocessing
 import subprocess
-import json
 import os
 import time
 import sys
@@ -42,6 +41,8 @@ import utils.commandline
 from utils.lock import file_is_locked
 import utils.log
 import utils.site
+from utils.text import json
+from bson.objectid import ObjectId
 
 # from rapd_site import secret_settings_general as secrets
 # from rapd_database import Database

@@ -3,7 +3,7 @@
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -30,7 +30,11 @@ import sys
 # RAPD imports
 from utils.site import read_secrets
 
-# Site ID - limited to 12 characters. Should be UPPERCASE
+# Site
+SITE = "SERCAT"
+
+# Site IDs
+# Should be UPPERCASE
 # May be a string or list or tuple of strings
 ID = ("SERCAT_ID", "SERCAT_BM")
 
@@ -47,33 +51,33 @@ BEAM_INFO = {
     "SERCAT_BM" : {
         # Flux of the beam
         "BEAM_FLUX":8E11,
-        # Size of the beam in microns
-        "BEAM_SIZE_X":50,
-        "BEAM_SIZE_Y":20,
+        # Size of the beam in mm
+        "BEAM_SIZE_X":0.05,
+        "BEAM_SIZE_Y":0.02,
         # Shape of the beam - ellipse, rectangle
         "BEAM_SHAPE":"ellipse",
         # Shape of the attenuated beam - circle or rectangle
         "BEAM_APERTURE_SHAPE":"circle",
         # Gaussian description of the beam for raddose
-        "BEAM_GAUSS_X":0.03,
-        "BEAM_GAUSS_Y":0.01,
+        #"BEAM_GAUSS_X":0.03,
+        #"BEAM_GAUSS_Y":0.01,
         # Beam center calibration
         "BEAM_CENTER_DATE":"2015-12-07",
         # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-        "BEAM_CENTER_X":(153.94944895756946,
-                       -0.016434436106566495,
-                       3.5990848937868658e-05,
-                       -8.2987834172005917e-08,
-                       1.0732920112697317e-10,
-                       -7.339858946384788e-14,
-                       2.066312749407257e-17),
-        "BEAM_CENTER_Y":(158.56546190593907,
-                       0.0057578279496966192,
-                       -3.9726067083100419e-05,
-                       1.1458201832002297e-07,
-                       -1.7875879553926729e-10,
-                       1.4579198435694557e-13,
-                       -4.7910792416525411e-17),
+        "BEAM_CENTER_X":(109.627,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0),
+        "BEAM_CENTER_Y":(114.037,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0),
         # Detector information
         "DETECTOR_DISTANCE_MAX":1000.0,
         "DETECTOR_DISTANCE_MIN":100.0,
@@ -86,53 +90,68 @@ BEAM_INFO = {
     "SERCAT_ID" : {
         # Flux of the beam
         "BEAM_FLUX":8E11,
-        # Size of the beam in microns
-        "BEAM_SIZE_X":50,
-        "BEAM_SIZE_Y":20,
+        # Size of the beam in mm
+        "BEAM_SIZE_X":0.05,
+        "BEAM_SIZE_Y":0.02,
         # Shape of the beam - ellipse, rectangle
         "BEAM_SHAPE":"ellipse",
         # Shape of the attenuated beam - circle or rectangle
         "BEAM_APERTURE_SHAPE":"circle",
         # Gaussian description of the beam for raddose
-        "BEAM_GAUSS_X":0.03,
-        "BEAM_GAUSS_Y":0.01,
+        #"BEAM_GAUSS_X":0.03,
+        #"BEAM_GAUSS_Y":0.01,
         # Beam center calibration
         "BEAM_CENTER_DATE":"2015-12-07",
         # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-        "BEAM_CENTER_X":(153.94944895756946,
-                       -0.016434436106566495,
-                       3.5990848937868658e-05,
-                       -8.2987834172005917e-08,
-                       1.0732920112697317e-10,
-                       -7.339858946384788e-14,
-                       2.066312749407257e-17),
-        "BEAM_CENTER_Y":(158.56546190593907,
-                       0.0057578279496966192,
-                       -3.9726067083100419e-05,
-                       1.1458201832002297e-07,
-                       -1.7875879553926729e-10,
-                       1.4579198435694557e-13,
-                       -4.7910792416525411e-17)
+        "BEAM_CENTER_X":(150.7,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0),
+        "BEAM_CENTER_Y":(144.75,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0,
+                         0)
     }
 }
 
-
 # Logging
 # Linux should be /var/log/
-LOGFILE_DIR = "/tmp/log"
+#LOGFILE_DIR = "/tmp/log"
+LOGFILE_DIR = "/home/schuerjp/temp/log"
 LOG_LEVEL = 50
 
 # Control process settings
 # Process is a singleton? The file to lock to. False if no locking.
-CONTROL_LOCK_FILE = "/tmp/lock/rapd_control.lock"
+CONTROL_LOCK_FILE = "/home/schuerjp/temp/lock/rapd_control.lock"
 
 # Method RAPD uses to match data root dir to a user & session
 #   manual -- the data_root_dir will be connected manually with a group/session
-#   image_file -- the image header information generated by RAPD will contain session and group info
+#   uid -- the image header information generated by RAPD will contain session and group info
 SESSION_METHOD = "image_file"
 
-# Where files from UI are uploaded - should be visible by launch instance
-UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
+# Methods RAPD uses to track groups
+#   type
+#     stat -- uses os.stat to determine attribute used
+#   attribute
+#     uid -- st_uid
+GROUP_ID = ("stat", "uid", "uidNumber")
+# GROUP_ID = {
+#     "type":"stat",
+#     "attribute":"uid",
+#     "field":"uidNumber"
+# }
+# The field name in groups collection that matches the property described in GROUP_ID
+#   uidNumber
+GROUP_ID_FIELD = "uidNumber"
+
+# Where files are exchanged between plugins and control
+EXCHANGE_DIR = "/panfs/panfs0.localdomain/home/schuerjp/exchange_dir/"
 
 # Control settings
 # Database to use for control operations. Options: "mysql"
@@ -148,21 +167,23 @@ DETECTOR = False
 DETECTOR_SUFFIX = ""
 # Keyed to ID
 DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
-             "SERCAT_BM":("SERCAT_RAYONIX_MX300", "")}
+             "SERCAT_BM":("SERCAT_RAYONIX_MX225", "")}
+
+# Launcher Manager to sort out where to send jobs
+LAUNCHER_MANAGER_LOCK_FILE = "/home/schuerjp/temp/lock/launcher_manager.lock"
 
 # Launcher settings
-LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
+LAUNCHER_LOCK_FILE = "/home/schuerjp/temp/lock/launcher.lock"
 
 # Launcher to send jobs to
 # The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
-LAUNCHER_TARGET = 2
+LAUNCHER_TARGET = 1
 
 # Directories to look for rapd agents
-RAPD_AGENT_DIRECTORIES = ("sites.agents",
-                          "agents")
-# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
-# the same file in src/agents
-
+RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
+                           "plugins")
+# Queried in order, so a echo/plugin.py in src/sites/plugins will override
+# the same file in src/plugins
 
 # Directories to look for launcher adapters
 RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
@@ -177,7 +198,7 @@ CLUSTER_ADAPTER = "sites.cluster.sercat"
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
 GATHERER = "sercat_id.py"
-GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
+GATHERER_LOCK_FILE = "/home/schuerjp/temp/lock/gatherer.lock"
 
 # Monitor for collected images
 IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
@@ -185,9 +206,11 @@ IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Running in a cluster configuration - True || False
 # IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 # Images collected into following directories will be ignored
-IMAGE_IGNORE_DIRECTORIES = ()
+IMAGE_IGNORE_DIRECTORIES = ("/var/sergui",)
 # Images collected containing the following string will be ignored
-IMAGE_IGNORE_STRINGS = ("ignore", )
+IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs", "_r1_UR", "_r1_UL", "_r1_AR", "_r1_AL")
+# So if image is not present, look in long term storage location.
+ALT_IMAGE_LOCATIONS = False
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
@@ -205,7 +228,7 @@ CLOUD_INTERVAL = 10
 CLOUD_HANDLER_DIRECTORIES = ("cloud.handlers", )
 
 # For connecting to the site
-SITE_ADAPTER = "sites.site_adapters.necat"
+SITE_ADAPTER = False
 # Running in a cluster configuration - True || False
 SITE_ADAPTER_REDIS_CLUSTER = False
 
@@ -222,21 +245,30 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_HOST":CONTROL_DATABASE_HOST,
     "DATABASE_PORT":CONTROL_DATABASE_PORT,
     "DATABASE_USER":CONTROL_DATABASE_USER,
-    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD
+    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD,
+    # Connection can be 'pool' for database on single computer, or
+    # 'sentinal' for high availability on redundant computers.
+    "REDIS_CONNECTION":"pool",
+    "REDIS_HOST":CONTROL_REDIS_HOST,
+    "REDIS_PORT":CONTROL_REDIS_PORT,
+    "REDIS_DB":CONTROL_REDIS_DB,
+    "REDIS_SENTINEL_HOSTS":CONTROL_SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":CONTROL_REDIS_MASTER_NAME,
 }
 
 
 LAUNCHER_SETTINGS = {
-    "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
+    # "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
 }
 
 LAUNCH_SETTINGS = {
-    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES,
-    "LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
-                        LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
+    "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
+    # "LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
+    #                     LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
+    "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
 
 # BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
@@ -253,16 +285,21 @@ LAUNCH_SETTINGS = {
 
 IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
                           "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
-                        #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
-                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
+                          #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
+                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOSTS,
                           "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME}
+                          'REDIS_CONNECTION':"pool",
+                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME,
+                          "REDIS_SENTINEL_HOSTS" : IMAGE_MONITOR_SENTINEL_HOSTS,
+                          }
 
 RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
                         "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
                         # "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
-                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
+                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOSTS,
                         "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
+                        "REDIS_CONNECTION":"pool",
+                        "REDIS_SENTINEL_HOSTS" : RUN_MONITOR_SENTINEL_HOSTS,
                         "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
 
 CLOUD_MONITOR_SETTINGS = {
@@ -272,7 +309,7 @@ CLOUD_MONITOR_SETTINGS = {
     "UI_PORT" : UI_PORT,
     "UI_USER" : UI_USER,
     "UI_PASSWORD" : UI_PASSWORD,
-    "UPLOAD_DIR" : UPLOAD_DIR
+    # "UPLOAD_DIR" : UPLOAD_DIR
     }
 
 SITE_ADAPTER_SETTINGS = {"ID" : ID,
@@ -283,8 +320,10 @@ SITE_ADAPTER_SETTINGS = {"ID" : ID,
 REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                            "MONGO_CONNECTION_STRING" : REMOTE_ADAPTER_MONGO_CONNECTION_STRING,
                         #    "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
-                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
+                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOSTS,
                            "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
+                           "REDIS_CONNECTION":"pool",
+                           "REDIS_SENTINEL_HOSTS" : REMOTE_ADAPTER_SENTINEL_HOSTS,
                            "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
                            "REDIS_HOST" : REMOTE_ADAPTER_REDIS_HOST,
                            "REDIS_PORT" : REMOTE_ADAPTER_REDIS_PORT}
