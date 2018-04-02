@@ -12,6 +12,7 @@ import subprocess
 import re
 from pprint import pprint
 import inspect
+import sys
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -86,7 +87,22 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
+first_image_number = 1
+wedge_size = 0
+delta_omega = 0.3
+print str(int(first_image_number + (float(wedge_size) / delta_omega)))
+print str(first_image_number + int(round(wedge_size / delta_omega)))
+
 """
+#with open('/gpfs6/users/necat/Jon/RAPD_test/Output/logfile.log', 'w') as sys.stdout:
+job = subprocess.Popen(shlex.split('eiger2cbf /gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h_001_master.h5 1 /gpfs6/users/necat/Jon/RAPD_test/Output/cbf_files/Ni-edge-n59d-kda28cl36cf57h_001_000001.cbf'),
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+stdout, stderr = job.communicate()
+#job.wait()
+print stderr
+
+
 from utils.modules import load_module
 #import 
 DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
@@ -526,7 +542,7 @@ time.sleep(2)
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
-red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
 #time.sleep(1)
 """
 red = connect_ft_redis()
@@ -560,6 +576,16 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
 """
-=======
-#red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
-
+print red.llen('RAPD_QSUB_JOBS_0')
+#red.delete('RAPD_QSUB_JOBS_0')
+print red.llen('images_collected:NECAT_E')
+#red.delete("images_collected:NECAT_E")
+print red.llen('images_collected:NECAT_C')
+#red.delete("images_collected:NECAT_C")
+print red.llen('run_data:NECAT_E')
+#red.delete("run_data:NECAT_E")
+print red.llen('run_data:NECAT_C')
+#red.delete("run_data:NECAT_C")
+print red.llen('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
+"""

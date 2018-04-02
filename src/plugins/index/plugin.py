@@ -486,15 +486,6 @@ class RapdPlugin(Process):
         self.working_dir = self.setup.get("work")
         if self.ram:
             self.working_dir = "/dev/shm%s"%self.working_dir
-        """
-        if self.test or self.cluster_use:
-            self.working_dir = self.dest_dir
-        elif self.ram:
-            self.working_dir = "/dev/shm/%s" % self.dest_dir[1:]
-        else:
-            self.working_dir = self.dest_dir
-        """
-        
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
