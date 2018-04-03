@@ -471,20 +471,23 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
         header = base_read_header(input_file)
         # header = detector.read_header(input_file)
 
+    # Add some values HACK
+    #header["aperture_x"] = 0.05
+    #header["aperture_y"] = 0.05
+
     # Calculate flux, new beam size and add them to header
     if beam_settings:
         flux, x_size, y_size = calculate_flux(header, beam_settings)
         header['flux'] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
-    
-    # Add some values HACK
-    header["aperture_x"] = 0.05
-    header["aperture_y"] = 0.05
-    
+
     basename = os.path.basename(input_file)
-    header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
-    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+    header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-1])
+    header["run_number"] = None
+    #header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
+    #header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+    
 
     # Add tag for module to header
     header["rapd_detector_id"] = "sercat_dectris_eiger16m"
