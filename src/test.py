@@ -103,6 +103,46 @@ stdout, stderr = job.communicate()
 print stderr
 
 
+=======
+def clear_cluster():
+    l = []
+    inp = 'qstat'
+    myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    for line in myoutput.stdout:
+        split = line.split()
+        if len(split) == 8:
+            #print split
+            if split[2].count('INDEX'):
+                l.append(split[0])
+            if split[2].count('INTEGRATE_'):
+                l.append(split[0])
+    for pid in l:
+        os.system('qdel %s'%pid)
+ # Create a pool connection and return it.
+pool = redis.ConnectionPool(host='127.0.0.1',
+                            port=6379,
+                            db=0)
+red = redis.Redis(connection_pool=pool)
+#red.ping()
+try:
+   red.ping()
+except redis.exceptions.ConnectionError as e:
+    print e, type(e)
+    print dir(e)
+    print e.message
+    print type(e.message)
+    print e.message.split()[4][:-1]
+
+"""
+import sites.necat as site
+if hasattr(site, 'ALT_IMAGE_LOCATION'):
+    print 'gh'
+if hasattr(site, 'junk'):
+    print 'gh1'
+
+
+#clear_cluster()
+
 from utils.modules import load_module
 #import 
 DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
@@ -238,17 +278,7 @@ calc = (8.8E12)/(numpy.pi*0.035*0.015)
 print calc
 """
 """
-l = []
-inp = 'qstat'
-myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-for line in myoutput.stdout:
-    split = line.split()
-    if len(split) == 8:
-        #print split
-        if split[2].count('INDEX'):
-            l.append(split[0])
-for pid in l:
-    os.system('qdel %s'%pid)
+
 
 
 pool = redis.ConnectionPool(host="164.54.212.169",
@@ -528,16 +558,15 @@ red = connect_redis_manager_HA()
 #red = connect_sercat_redis()
 #connection = connect_beamline()
 #red = connect_ft_redis()
-#print red.smembers('working')
-"""
-red.delete('RAPD_QSUB_JOBS_0')
-red.delete("images_collected:NECAT_E")
-red.delete("images_collected:NECAT_C")
-red.delete("run_data:NECAT_C")
-red.delete("run_data:NECAT_E")
-red.delete('RAPD_JOBS_WAITING')
-time.sleep(2)
-"""
+
+#red.delete('RAPD_QSUB_JOBS_0')
+#red.delete("images_collected:NECAT_E")
+#red.delete("images_collected:NECAT_C")
+#red.delete("run_data:NECAT_C")
+#red.delete("run_data:NECAT_E")
+#red.delete('RAPD_JOBS_WAITING')
+#time.sleep(2)
+
 #red.delete('images_collected:NECAT_E')
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
@@ -575,6 +604,7 @@ print red.smembers('working')
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
+<<<<<<< HEAD
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
@@ -588,4 +618,33 @@ print red.llen('run_data:NECAT_C')
 #red.delete("run_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
+=======
+"""
+print red.llen('RAPD_QSUB_JOBS_0')
+#red.delete('RAPD_QSUB_JOBS_0')
+#print red.llen('run_info_C')
+print red.llen('RAPD_JOBS')
+#print red.llen("images_collected:SERCAT_ID")
+#red.delete("images_collected:SERCAT_ID")
+#print red.llen('run_data:SERCAT_ID')
+#red.delete("run_data:SERCAT_ID")
+print red.llen("images_collected:NECAT_E")
+#red.delete("images_collected:NECAT_E")
+print red.llen("images_collected:NECAT_C")
+#red.delete("images_collected:NECAT_C")
+print red.llen('run_data:NECAT_C')
+#red.delete("run_data:NECAT_C")
+print red.llen('run_data:NECAT_E')
+#red.delete("run_data:NECAT_E")
+#print red.llen('RAPD_RESULTS')
+#red.delete('RAPD_RESULTS')
+#print red.llen('run_info_T')
+print red.llen('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
+#print red.lrange('run_info_T', 0, 5)
+#red.delete('images_collected_T')
+print red.llen('images_collected_E')
+#red.close()
+>>>>>>> sercat
 
+"""

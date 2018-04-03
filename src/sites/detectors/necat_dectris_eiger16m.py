@@ -91,6 +91,8 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     ('UNTRUSTED_RECTANGLE16', '    0 4151   3010 3015'),
     ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
     ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
+    # Signal to say which beamline.
+    ('CLUSTER_NODES', 'NECAT_E'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
