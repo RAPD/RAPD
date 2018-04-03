@@ -116,7 +116,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
-    ErrorDialogComponent,ErrorDialogComponent
+    ErrorDialogComponent,
     ConfirmDialogComponent,
   ],
   imports: [
