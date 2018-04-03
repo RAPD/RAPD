@@ -369,6 +369,8 @@ def main():
         terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
+    elif commandline_args.json_fd:
+        terminal_log_level = 100
     else:
         terminal_log_level = 30
 

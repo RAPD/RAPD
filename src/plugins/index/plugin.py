@@ -1961,7 +1961,7 @@ Distance | % Transmission", level=98, color="white")
 
         # Plot as long as JSON output is not selected
         if self.preferences.get("show_plots", True) and \
-           (not self.preferences.get("json", False)):
+           (not (self.preferences.get("json", False) or self.preferences.get("json_fd", False))):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
