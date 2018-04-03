@@ -210,6 +210,8 @@ def calculate_flux(header, site_params):
     beam_size_x = site_params.get('BEAM_SIZE_X')
     beam_size_y = site_params.get('BEAM_SIZE_Y')
     aperture = header.get('md2_aperture', 0.05)
+    if aperture == None:
+        aperture = 0.05
     new_x = beam_size_x
     new_y = beam_size_y
 
