@@ -166,7 +166,8 @@ CONTROL_DATABASE = "mongodb"
 DETECTOR = False
 DETECTOR_SUFFIX = ""
 # Keyed to ID
-DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
+#DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
+DETECTORS = {"SERCAT_ID":("SERCAT_DECTRIS_EIGER16M", ""),
              "SERCAT_BM":("SERCAT_RAYONIX_MX225", "")}
 
 # Launcher Manager to sort out where to send jobs
