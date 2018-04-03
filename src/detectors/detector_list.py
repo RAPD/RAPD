@@ -59,8 +59,12 @@ DETECTORS = {
     ("MARCCD", "7"): {                                  # APS 22BM
         "detector": "sercat_rayonix_mx300",
         },
-    ("MARCCD", "101"): {                                # APS 22ID
-        "detector": "sercat_rayonix_mx300hs",
+    # ("MARCCD", "101"): {                                # APS 22ID
+    #     "detector": "sercat_rayonix_mx300hs",
+    #     # "site": "sercat_id"
+    #     },
+    ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0115"): {                                # APS 22ID
+        "detector": "sercat_dectris_eiger16m",
         # "site": "sercat_id"
         },
     ("Pilatus-6M", "PILATUS 6M-F S/N 60-0112-F"): {
