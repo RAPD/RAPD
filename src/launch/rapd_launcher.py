@@ -182,7 +182,7 @@ class Launcher(object):
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
-        #print self.ip_address
+        print self.ip_address
         if self.logger:
             self.logger.debug("Found ip address to be %s", self.ip_address)
         """
