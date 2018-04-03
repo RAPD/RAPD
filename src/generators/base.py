@@ -257,7 +257,7 @@ class BaseFileGenerator(object):
         self.output_function([
             "# Software dependencies",
             "VERSIONS = {",
-            "# \"eiger2cbf\": (\"160415\",)",
+            "    # \"eiger2cbf\": (\"160415\",)",
             "}\n"
         ])
 

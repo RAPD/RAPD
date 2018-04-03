@@ -215,10 +215,12 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("  Spacegroup: %s  (%d)" % (self.input_spacegroup, self.input_spacegroup_num),
                     level=10,
                     color="white")
-        self.tprint("  Cell: %f %f %f %f %f %f" % tuple(self.cell), level=10, color="white")
-        self.tprint("  Volume: %f" % self.volume, level=10, color="white")
-        self.tprint("  Resolution: %f" % self.dres, level=10, color="white")
-        self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
+        self.tprint("  Cell: %f.2 %f.2 %f.2 %f.2 %f.2 %f.2" % tuple(self.cell),
+                    level=10,
+                    color="white")
+        self.tprint("  Volume: %f.1" % self.volume, level=10, color="white")
+        self.tprint("  Resolution: %f.1" % self.dres, level=10, color="white")
+        # self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
 
         # Set by number of residues in AU. Ribosome (70s) is 24k.
         self.est_res_number = xutils.calc_res_number(self.input_spacegroup,

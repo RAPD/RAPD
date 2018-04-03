@@ -82,6 +82,8 @@ def construct_command(commandline_args):
     if commandline_args.queue:
         command["queue"] = commandline_args.queue
 
+    # logger.debug("Command for index plugin: %s", command)
+
     return command
 
 def get_commandline():

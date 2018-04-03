@@ -1,4 +1,4 @@
-"""analysis RAPD plugin"""
+"""Analysis RAPD plugin"""
 
 """
 This file is part of RAPD
@@ -46,6 +46,7 @@ import shutil
 import subprocess
 import sys
 import time
+import unittest
 import numpy
 
 # RAPD imports
@@ -547,7 +548,7 @@ self.command["input_data"]["datafile"]
         if self.preferences.get("clean", False):
 
             self.logger.debug("Cleaning up Phaser files and folders")
-
+            #TODO
             # Change to work dir
             os.chdir(self.command["directories"]["work"])
 
