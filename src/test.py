@@ -100,7 +100,22 @@ def clear_cluster():
                 l.append(split[0])
     for pid in l:
         os.system('qdel %s'%pid)
+ # Create a pool connection and return it.
+pool = redis.ConnectionPool(host='127.0.0.1',
+                            port=6379,
+                            db=0)
+red = redis.Redis(connection_pool=pool)
+#red.ping()
+try:
+   red.ping()
+except redis.exceptions.ConnectionError as e:
+    print e, type(e)
+    print dir(e)
+    print e.message
+    print type(e.message)
+    print e.message.split()[4][:-1]
 
+"""
 import sites.necat as site
 if hasattr(site, 'ALT_IMAGE_LOCATION'):
     print 'gh'
@@ -109,7 +124,7 @@ if hasattr(site, 'junk'):
 
 
 #clear_cluster()
-"""
+
 from utils.modules import load_module
 #import 
 DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
