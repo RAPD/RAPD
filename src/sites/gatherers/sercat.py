@@ -125,44 +125,60 @@ class Gatherer(object):
         self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
-        while self.go:
+        try:
+            while self.go:
 
-            print "go"
+                #print "go"
+                if self.tag == 'SERCAT_BM':
+                    # 5 rounds of checking
+                    for ___ in range(5):
+                        # Check if the run info has changed on the disk
+                        if self.check_for_run_info():
+                            run_data = self.get_run_data()
+                            if run_data:
+                                self.logger.debug("run_data:%s %s", self.tag, run_data)
+                                # Put into exchangable format
+                                run_data_json = json.dumps(run_data)
+                                # Publish to Redis
+                                red.publish("run_data:%s" % self.tag, run_data_json)
+                                # Push onto redis list in case no one is currently listening
+                                red.lpush("run_data:%s" % self.tag, run_data_json)
+                            # 20 image checks
+                            for __ in range(20):
+                                # Check if the image file has changed
+                                if self.check_for_image_collected():
+                                    image_name = self.get_image_data()
+                                    if image_name:
+                                        self.logger.debug("image_collected:%s %s",
+                                                          self.tag,
+                                                          image_name)
+                                        # Publish to Redis
+                                        red.publish("image_collected:%s" % self.tag, image_name)
+                                        # Push onto redis list in case no one is currently listening
+                                        red.lpush("images_collected:%s" % self.tag, image_name)
+                                    break
+                                else:
+                                    time.sleep(0.05)
+                # For SERCAT_ID
+                else:
+                    for ___ in range(20):
+                        # Check if the run info has changed on the disk
+                        if self.check_for_run_info():
+                            run_data = self.get_run_data()
+                            if run_data:
+                                self.logger.debug("run_data:%s %s", self.tag, run_data)
+                                # Put into exchangable format
+                                run_data_json = json.dumps(run_data)
+                                # Publish to Redis
+                                red.publish("run_data:%s" % self.tag, run_data_json)
+                                # Push onto redis list in case no one is currently listening
+                                red.lpush("run_data:%s" % self.tag, run_data_json)
 
-            # 5 rounds of checking
-            for ___ in range(5):
+                # Have Registrar update status
+                self.ow_registrar.update({"site_id":self.site.ID})
 
-                # Check if the run info has changed on the disk
-                if self.check_for_run_info():
-                    run_data = self.get_run_data()
-                    if run_data:
-                        self.logger.debug("run_data:%s %s", self.tag, run_data)
-                        # Put into exchangable format
-                        run_data_json = json.dumps(run_data)
-                        # Publish to Redis
-                        red.publish("run_data:%s" % self.tag, run_data_json)
-                        # Push onto redis list in case no one is currently listening
-                        red.lpush("run_data:%s" % self.tag, run_data_json)
-
-                # 20 image checks
-                for __ in range(20):
-                    # Check if the image file has changed
-                    if self.check_for_image_collected():
-                        image_name = self.get_image_data()
-                        if image_name:
-                            self.logger.debug("image_collected:%s %s",
-                                              self.tag,
-                                              image_name)
-                            # Publish to Redis
-                            red.publish("image_collected:%s" % self.tag, image_name)
-                            # Push onto redis list in case no one is currently listening
-                            red.lpush("images_collected:%s" % self.tag, image_name)
-                        break
-                    else:
-                        time.sleep(0.05)
-
-            # Have Registrar update status
-            self.ow_registrar.update({"site_id":self.site.ID})
+        except KeyboardInterrupt:
+            self.stop()
 
     def stop(self):
         """
