@@ -182,7 +182,7 @@ class Launcher(object):
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
-        print self.ip_address
+        #print self.ip_address
         if self.logger:
             self.logger.debug("Found ip address to be %s", self.ip_address)
         """
@@ -205,6 +205,7 @@ class Launcher(object):
             #print launcher
             if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
                 self.launcher = launcher
+                print 'gh'
                 break
             elif launcher.get('ip_address') == self.ip_address:
                 possible_tags.append(launcher.get('tag'))
