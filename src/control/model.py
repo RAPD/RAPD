@@ -1071,10 +1071,7 @@ class Model(object):
 
             # Save the result
             __ = self.database.save_plugin_result(message)
-<<<<<<< HEAD
-=======
 
->>>>>>> sercat
             """
             # Release hold on dataset in RAMDISK
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
