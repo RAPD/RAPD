@@ -187,11 +187,14 @@ class Model(object):
         site = self.site
 
         # Instantiate the database connection
-        #self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
-        #                                  #port=site.DATABASE_SETTINGS['DB_PORT'],
-        #                                  user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
-        #                                  password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
-        self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
+        if site.CONTROL_DATABASE_SETTINGS.get('DATABASE_STRING', False):
+            self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
+        else:
+            self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
+                                              #port=site.DATABASE_SETTINGS['DB_PORT'],
+                                              user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
+                                              password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
+        #self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -238,7 +241,8 @@ class Model(object):
     def start_image_path_server(self):
         """Only start if self.site.ALT_IMAGE_SERVER_NAME is set"""
         # Check if module or class exists to get path of images in RAMDISK
-        if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+        #if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
+        if hasattr(self.site, 'ALT_IMAGE_LOCATION') and hasattr(self.site, 'ALT_IMAGE_SERVER_NAME'):
             self.logger.debug("Starting image path server")
             self.alt_image_path_server = {}
             for site_id in self.detectors.keys():
@@ -964,9 +968,7 @@ class Model(object):
                 "directories":directories,
                 "data": {
                     "image_data":image1,
-                    #"image_data":fix_fullname(image1, site_tag),
                     "run_data":run_data
-                    #"run_data":fix_fullname(run_data, site_tag)
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{
@@ -1069,6 +1071,7 @@ class Model(object):
 
             # Save the result
             __ = self.database.save_plugin_result(message)
+
             """
             # Release hold on dataset in RAMDISK
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:

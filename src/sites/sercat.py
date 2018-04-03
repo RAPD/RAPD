@@ -166,7 +166,8 @@ CONTROL_DATABASE = "mongodb"
 DETECTOR = False
 DETECTOR_SUFFIX = ""
 # Keyed to ID
-DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
+#DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
+DETECTORS = {"SERCAT_ID":("SERCAT_DECTRIS_EIGER16M", ""),
              "SERCAT_BM":("SERCAT_RAYONIX_MX225", "")}
 
 # Launcher Manager to sort out where to send jobs
@@ -197,7 +198,8 @@ CLUSTER_ADAPTER = "sites.cluster.sercat"
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
-GATHERER = "sercat_id.py"
+#GATHERER = "sercat_id.py"
+GATHERER = "sercat.py"
 GATHERER_LOCK_FILE = "/home/schuerjp/temp/lock/gatherer.lock"
 
 # Monitor for collected images
@@ -210,7 +212,14 @@ IMAGE_IGNORE_DIRECTORIES = ("/var/sergui",)
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs", "_r1_UR", "_r1_UL", "_r1_AR", "_r1_AL")
 # So if image is not present, look in long term storage location.
-ALT_IMAGE_LOCATIONS = False
+#ALT_IMAGE_LOCATIONS = False
+
+# If processing images in NFS shared RAMDISK with different path 
+# than long-term storage that was passed in. Check if they exist.
+ALT_IMAGE_LOCATION = True
+# Name of class in detector file that runs as server.
+# Set to False if not using server 
+#ALT_IMAGE_SERVER_NAME = 'FileLocation'
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"

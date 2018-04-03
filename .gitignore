@@ -26,12 +26,15 @@ Python-*
 test_data
 *.log
 ramdisk 
+test.py
+junk.sh
 
 # Just there for local reference
 
 # Files that should be hidden
 *secret*
 *foo*
+*.swp
 
 # Temporary workspaces
 tmp
