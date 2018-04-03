@@ -37,6 +37,7 @@ def verbose_print(arg,
                   verbosity=20,
                   no_color=False,
                   progress=False,
+                  progress_fd=1,
                   newline=True,
                   close=True):
     """Print to terminal window screened by verbosity setting
@@ -57,15 +58,25 @@ def verbose_print(arg,
                true when setting up the terminal printer
     """
 
-    if progress and level == "progress":
+    # Have progress
+    if level == "progress":
+
+        # Make sure we are writing a number
         if not isinstance(arg, int):
             raise TypeError("a number is required")
-        sys.stdout.write("%DONE={}\n".format(arg))
-        sys.stdout.flush()
-        return True
 
-    elif level == "progress":
-        return False
+        # To terminal
+        if progress:
+            sys.stdout.write("%DONE={}\n".format(arg))
+            sys.stdout.flush()
+
+        # To fd
+        if progress_fd:
+            progress_fd.write("%DONE={}\n".format(arg))
+            progress_fd.flush()
+        
+        # Finished
+        return True
 
     # Cast everything to a string
     if not isinstance(arg, str):
@@ -92,17 +103,23 @@ def verbose_print(arg,
                 sys.stdout.write(arg)
             sys.stdout.flush()
 
-def get_terminal_printer(verbosity=50, no_color=False, progress=False):
+def get_terminal_printer(verbosity=50, no_color=False, progress=False, progress_fd=False):
     """Returns a terminal printer
 
     Keyword arguments:
-    verbosity -- threshold to print (default 50)
+    verbosity   -- threshold to print (default 50)
+    progress    -- enable progress printing
+    progress_fd -- enable progress printing and write to an fd
     """
+
+    if progress_fd:
+        fd = os.fdopen(int(progress_fd), "w")
 
     terminal_print = functools.partial(verbose_print,
                                        verbosity=verbosity,
                                        no_color=no_color,
-                                       progress=progress)
+                                       progress=progress,
+                                       progress_fd=fd)
     return terminal_print
 
 
