@@ -203,8 +203,44 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
+def calculate_flux(header, site_params):
+    """
+    Calculate the flux as a function of transmission and aperture size.
+    """
+    beam_size_x = site_params.get('BEAM_SIZE_X')
+    beam_size_y = site_params.get('BEAM_SIZE_Y')
+    aperture = header.get('md2_aperture', 0.05)
+    new_x = beam_size_x
+    new_y = beam_size_y
+
+    if aperture < beam_size_x:
+        new_x = aperture
+    if aperture < beam_size_y:
+        new_y = aperture
+
+    # Calculate area of full beam used to calculate the beamline flux
+    # Assume ellipse, but same equation works for circle.
+    # Assume beam is uniform
+    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+
+    # Calculate the new beam area (with aperture) divided by the full_beam_area.
+    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+    # then it would switch to circle
+    if beam_size_y <= aperture:
+        # ellipse
+        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    else:
+        # circle
+        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+
+    # Calculate the new_beam_area ratio to full_beam_area
+    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
+    # Return the flux and beam size
+    return (flux, new_x, new_y)
+
 # Calculate the flux of the beam
-def calculate_flux(header, beam_settings={}):
+def calculate_flux_OLD(header, beam_settings={}):
     """
     Return the flux and size of the beam given parameters
 
