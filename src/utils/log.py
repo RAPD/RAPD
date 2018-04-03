@@ -113,13 +113,13 @@ def get_terminal_printer(verbosity=50, no_color=False, progress=False, progress_
     """
 
     if progress_fd:
-        fd = os.fdopen(int(progress_fd), "w")
+        progress_fd = os.fdopen(int(progress_fd), "w")
 
     terminal_print = functools.partial(verbose_print,
                                        verbosity=verbosity,
                                        no_color=no_color,
                                        progress=progress,
-                                       progress_fd=fd)
+                                       progress_fd=progress_fd)
     return terminal_print
 
 
