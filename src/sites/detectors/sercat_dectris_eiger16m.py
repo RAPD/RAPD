@@ -491,18 +491,15 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
 
     # Add tag for module to header
     header["rapd_detector_id"] = "sercat_dectris_eiger16m"
-
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+    # Get the data_root_dir
     header['data_root_dir'] = get_data_root_dir(input_file)
 
     # Add source parameters
     header["gauss_x"] = beam_settings.get("BEAM_GAUSS_X", 0.05)
     header["gauss_y"] = beam_settings.get("BEAM_GAUSS_Y", 0.05)
-
-    # Get the data_root_dir
-    header["data_root_dir"] = get_data_root_dir(fullname)
 
     # Return the header
     return header
