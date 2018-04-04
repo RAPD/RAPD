@@ -299,7 +299,7 @@ def merge_xds_input(base, new):
                         line = new.pop(x)
                         break
         except IndexError:
-            print 'nothing left in inp1'
+            # print 'nothing left in inp1'
             skip = True
         #new_inp.append("%s%s"%('='.join(line), '\n'))
         new_inp.append(line)

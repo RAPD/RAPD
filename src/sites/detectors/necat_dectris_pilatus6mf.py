@@ -184,6 +184,7 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+
     path_split    = fullname.split(os.path.sep)
     data_root_dir = False
 
@@ -215,7 +216,7 @@ def get_data_root_dir(fullname):
     else:
         data_root_dir = False
 
-    #return the determined directory
+    # return the determined directory
     return data_root_dir
 
 def base_read_header_OLD(image,
@@ -394,11 +395,17 @@ def main(args):
     else:
         raise Error("No test image input!")
 
-    # Read the header
-    header = read_header(test_image)
+    # File exists
+    if os.path.exists(test_image):
+        # Read the header
+        header = read_header(test_image)
 
-    # And print it out
-    pprint.pprint(header)
+        # And print it out
+        pprint.pprint(header)
+
+    # No file
+    else:
+        print get_data_root_dir(test_image)
 
 if __name__ == "__main__":
 

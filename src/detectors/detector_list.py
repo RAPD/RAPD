@@ -50,14 +50,21 @@ DETECTORS = {
     ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0108"): {
         "detector": "necat_dectris_eiger16m",
     },
-    ("MARCCD", "0"): {
+    ("MARCCD", "0"): {                                  # APS 21-ID-F
         "detector": "lscat_rayonix_mx300"
-        },          # APS 21-ID-F
-    ("MARCCD", "3"): {                                  # APS 22BM
-        "detector": "sercat_rayonix_mx225",
-        },      # APS 22BM
-    ("MARCCD", "101"): {                                # APS 22ID
-        "detector": "sercat_rayonix_mx300hs",
+        },
+    # ("MARCCD", "3"): {                                  # APS 22BM
+    #     "detector": "sercat_rayonix_mx225",
+    #     },
+    ("MARCCD", "7"): {                                  # APS 22BM
+        "detector": "sercat_rayonix_mx300",
+        },
+    # ("MARCCD", "101"): {                                # APS 22ID
+    #     "detector": "sercat_rayonix_mx300hs",
+    #     # "site": "sercat_id"
+    #     },
+    ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0115"): {                                # APS 22ID
+        "detector": "sercat_dectris_eiger16m",
         # "site": "sercat_id"
         },
     ("Pilatus-6M", "PILATUS 6M-F S/N 60-0112-F"): {
