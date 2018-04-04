@@ -520,7 +520,7 @@ def main():
                     image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][0]
 
         logger.debug("Image headers: %s", image_headers)
-        # print_headers(tprint, image_headers)
+        print_headers(tprint, image_headers)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
