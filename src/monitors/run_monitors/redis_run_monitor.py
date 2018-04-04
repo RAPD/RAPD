@@ -102,7 +102,7 @@ class Monitor(threading.Thread):
 
         # Figure out where we are going to look
         for site_tag in self.tags:
-            self.run_lists.append(("run_data:"+site_tag, site_tag))
+            self.run_lists.append(("runs_data:"+site_tag, site_tag))
 
         self.logger.debug("run_lists: %s", str(self.run_lists))
 

@@ -193,6 +193,8 @@ def parse_output(labelit_output, iteration=0):
             if line.startswith("Transforming the lattice"):
                 pseudotrans = True
 
+    # pprint(result_lines)
+
     # No extra parsing to do
     if len(result_lines) == 0:
         if spot_problem:
@@ -475,7 +477,7 @@ def get_commandline():
                            dest="file",
                            nargs="?",
                            default=False,
-                           help="Name of file to be generated")
+                           help="Name of file to be parsed")
 
     # Print help message is no arguments
     if len(sys.argv[1:])==0:

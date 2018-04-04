@@ -102,6 +102,7 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # JSON output?
     command["preferences"]["json"] = commandline_args.json
+    command["preferences"]["json_fd"] = commandline_args.json_fd
     command["preferences"]["progress"] = commandline_args.progress
     command["preferences"]["no_color"] = commandline_args.no_color
 
@@ -383,12 +384,15 @@ def main():
         terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
+    elif commandline_args.json_fd:
+        terminal_log_level = 100
     else:
         terminal_log_level = 30
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
-                                            progress=commandline_args.progress)
+                                            progress=commandline_args.progress,
+                                            progress_fd=commandline_args.progress_fd)
 
     print_welcome_message(tprint)
 
