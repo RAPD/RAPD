@@ -196,6 +196,7 @@ def get_data_root_dir(fullname):
     for p in path_split:
         if p.startswith('gpfs'):
             st = path_split.index(p)
+            break
         else:
             st = 0
     if path_split[st].startswith("gpfs"):

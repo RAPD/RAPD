@@ -535,7 +535,8 @@ class RapdPlugin(Process):
         self.tprint("  Watching for %s " % target_image, level=10, color="white", newline=False)
         while (time.time() - start_time) < max_time:
             self.tprint(".", level=10, color="white", newline=False)
-            if os.path.exists(target_image):
+            #if os.path.exists(target_image):
+            if os.path.isfile(target_image):
                 self.tprint(".", level=10, color="white")
                 return True
             time.sleep(1)

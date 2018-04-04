@@ -205,7 +205,6 @@ class Launcher(object):
             #print launcher
             if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
                 self.launcher = launcher
-                print 'gh'
                 break
             elif launcher.get('ip_address') == self.ip_address:
                 possible_tags.append(launcher.get('tag'))
