@@ -121,8 +121,9 @@ class Gatherer(object):
         print "  Will publish new runs on run_data:%s" % self.tag
         print "  Will push new runs onto runs_data:%s" % self.tag
         self.logger.debug("  Will publish new runs on run_data:%s" % self.tag)
-        self.logger.debug("  Will push new images onto runs_data:%s" % self.tag)
-        if self.tag == 'SERCAT_BM':
+        self.logger.debug("  Will push new runs onto runs_data:%s" % self.tag)
+        
+        elif self.tag == 'SERCAT_BM':
             print "  Will publish new images on image_collected:%s" % self.tag
             print "  Will push new images onto images_collected:%s" % self.tag
             self.logger.debug("  Will publish new images on image_collected:%s" % self.tag)
@@ -176,6 +177,9 @@ class Gatherer(object):
                                 red.publish("run_data:%s" % self.tag, run_data_json)
                                 # Push onto redis list in case no one is currently listening
                                 red.lpush("runs_data:%s" % self.tag, run_data_json)
+
+                        else:
+                            time.sleep(0.05)
 
                 # Have Registrar update status
                 self.ow_registrar.update({"site_id":self.site.ID})
