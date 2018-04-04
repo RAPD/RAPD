@@ -279,7 +279,9 @@ def get_commandline():
     # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
     if args.spacegroup:
         args.spacegroup = space_group_symbols(args.spacegroup).number()
-        print 'Spacegroup number is' + str(args.spacegroup)
+    else:
+        # If user has not set a spacegroup, then default to 0.
+        args.spacegroup = 0
     # Turn cell into a tuple
     # if args.cell:
     #     args.cell=tuple(args.cell)
@@ -362,7 +364,7 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="default")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
@@ -370,10 +372,10 @@ def main():
     tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
-        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="default")
 
     # Should working directory go up or down?
-    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
@@ -389,10 +391,10 @@ def main():
 
     # Print plugin info
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="white")
-    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="default")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="default")
+    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="default")
+    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="default")
 
     # Run the plugin
     plugin.RapdPlugin(command, tprint, logger)
