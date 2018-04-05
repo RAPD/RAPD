@@ -1127,7 +1127,7 @@ class RapdPlugin(multiprocessing.Process):
 
         programs = ["CCTBX", "AIMLESS", "POINTLESS"]
         info_string = credits.get_credits_text(programs, "    ")
-        self.tprint(info_string, level=99, color="white")
+        self.tprint(info_string, level=99, color="default")
 
 class MakeTables:
     """
