@@ -28,6 +28,7 @@ __status__ = "Development"
 
 # Standard imports
 import logging
+import sys
 import threading
 import time
 
@@ -148,8 +149,8 @@ class Monitor(threading.Thread):
 
                 for run_list, site_tag in self.run_lists:
 
-                    # self.logger.debug("Querying %s %s", run_list, site_tag)
-
+                    self.logger.debug("Querying %s %s", run_list, site_tag)
+                    sys.exit()
                     # Try to pop the oldest image off the list
                     raw_run_data = self.redis.rpop(run_list)
 

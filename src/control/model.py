@@ -632,7 +632,7 @@ class Model(object):
             print 'run_id:%s'%run_id
             print 'run: %s'%run
 
-            #self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
+            self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
