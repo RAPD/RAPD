@@ -130,6 +130,11 @@ def is_run_from_imagename():
     # Tease out the info from the file name
     directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
+    # Run number 0 for snaps at NECAT
+    if run_number > 0:
+        return True
+    else:
+        return False
     
 
 def calculate_flux(header, site_params):
