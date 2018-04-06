@@ -134,7 +134,7 @@ class Gatherer(object):
                         self.logger.debug("Directory %s is marked to be ignored - skipping", run_data['directory'])
                     else:
                         #run_data['directory'] = dir
-                        self.logger.debug("run_data:%s %s", self.tag, run_data)
+                        self.logger.debug("runs_data:%s %s", self.tag, run_data)
                         # Put into exchangable format
                         run_data_json = json.dumps(run_data)
                         # Publish to Redis
