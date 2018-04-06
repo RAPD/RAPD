@@ -154,7 +154,7 @@ class Monitor(threading.Thread):
                     raw_run_data = self.redis.rpop(run_list)
 
                     # Have new run data
-                    if raw_run_data:
+                    if raw_run_data != None:
                         # Parse into python object
                         run_data = json.loads(raw_run_data)
 

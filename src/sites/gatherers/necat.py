@@ -112,7 +112,7 @@ class Gatherer(object):
         #self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
         self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
-        self.logger.debug("  Will push new datasets onto run_data:%s" % self.tag)
+        self.logger.debug("  Will push new datasets onto runs_data:%s" % self.tag)
         
         # path prefix for RDMA folder location with Eiger
         if self.tag == 'NECAT_E':
@@ -136,11 +136,13 @@ class Gatherer(object):
                         #run_data['directory'] = dir
                         self.logger.debug("runs_data:%s %s", self.tag, run_data)
                         # Put into exchangable format
-                        run_data_json = json.dumps(run_data)
+                        #run_data_json = json.dumps(run_data)
                         # Publish to Redis
-                        self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                        #self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                        self.redis.publish("run_data:%s" % self.tag, run_data)
                         # Push onto redis list in case no one is currently listening
-                        self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
+                        #self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
+                        self.redis.lpush("runs_data:%s" % self.tag, run_data)
                         """
                         ## This loop is for testing##
                         for i in range(2):
