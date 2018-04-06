@@ -727,7 +727,7 @@ class Model(object):
         detector = self.detectors[site_tag.upper()]
 
         # If the detector can determine if run or snap
-        if hasattr(detector, is_run_from_imagename):
+        if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
             if type(detector.is_run_from_imagename) == "function":
                 # See if we have a SNAP
