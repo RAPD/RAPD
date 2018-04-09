@@ -631,7 +631,7 @@ class Model(object):
             print 'run_id:%s'%run_id
             print 'run: %s'%run
 
-            self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
+            #self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
@@ -733,10 +733,12 @@ class Model(object):
         if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
             if type(detector.is_run_from_imagename) == "function":
+                self.logger.debug("Have function")
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
+                    self.logger.debug("Could NOT be a snap")
                     could_be_snap = False
-                else:
+                else:                
                     return "SNAP", None
 
         # Tease out the info from the file name
