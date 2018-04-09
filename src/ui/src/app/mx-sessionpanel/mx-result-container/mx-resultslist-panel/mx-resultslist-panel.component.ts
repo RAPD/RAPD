@@ -170,7 +170,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   private onClick(id:string) {
 
-    // console.log('onClick', id);
+    console.log('onClick', id);
 
     // Save the current result as the active result
     this.active_result = id;
