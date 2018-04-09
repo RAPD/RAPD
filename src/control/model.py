@@ -723,6 +723,9 @@ class Model(object):
         """
         self.logger.debug("%s %s", site_tag, fullname)
 
+        # Flag for snap
+        could_be_snap = True
+
         # The detector
         detector = self.detectors[site_tag.upper()]
 
@@ -731,7 +734,9 @@ class Model(object):
             # Make sure we have a function
             if type(detector.is_run_from_imagename) == "function":
                 # See if we have a SNAP
-                if not detector.is_run_from_imagename(fullname) == True:
+                if detector.is_run_from_imagename(fullname) == True:
+                    could_be_snap = False
+                else:
                     return "SNAP", None
 
         # Tease out the info from the file name
@@ -753,11 +758,16 @@ class Model(object):
                                      minutes=self.site.RUN_WINDOW,
                                      return_type="dict")
 
-        # No run information - SNAP
+        # No run information
         if not run_info:
-            return "SNAP", None
+            # SNAP
+            if could_be_snap:
+                return "SNAP", None
+            # RUN
+            else:
+                return "RUN", None
 
-        # NOT a snap
+        # Have run information
         else:
             # run_info is a list of dicts - take most recent match
             run_info = run_info[0]
