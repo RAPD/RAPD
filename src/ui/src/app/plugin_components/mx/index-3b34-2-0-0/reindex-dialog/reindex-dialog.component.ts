@@ -106,7 +106,7 @@ export class ReindexDialogComponent implements OnInit {
     request.image2 = this.data.image2;
 
     // Directories is a copy from parent. Plugin will handle
-    request.directories = this.data.command.directories;
+    // request.directories = this.data.command.directories;
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
