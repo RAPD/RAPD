@@ -122,13 +122,13 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
-def is_run_from_imagename():
+def is_run_from_imagename(imagename):
     """
     Determine if image is in a run from the image
     """
     
     # Tease out the info from the file name
-    directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
+    directory, basename, image_prefix, run_number, image_number = parse_file_name(imagename)
 
     # Run number 0 for snaps at NECAT
     if run_number > 0:
@@ -420,7 +420,8 @@ def main(args):
 
     # No file
     else:
-        print get_data_root_dir(test_image)
+        print "data root dir:", get_data_root_dir(test_image)
+        print "is run:", is_run_from_imagename(test_image)
 
 if __name__ == "__main__":
 

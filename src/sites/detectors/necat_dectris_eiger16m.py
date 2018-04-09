@@ -213,7 +213,7 @@ def is_run_from_imagename(imagename):
     """
     
     # Tease out the info from the file name
-    directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(imagename)
+    directory, basename, image_prefix, run_number, image_number = parse_file_name(imagename)
 
     # Run number 0 for snaps at NECAT
     if run_number > 0:
