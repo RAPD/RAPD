@@ -18,6 +18,11 @@ router.route('/jobs/submit')
 
     let request = req.body.request;
 
+    // Add _id to process is not present
+    if (! request.process._id) {
+      request.process._id = new mongoose.mongo.ObjectId();
+    }
+
     console.log(request);
 
     redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
