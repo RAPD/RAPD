@@ -57,6 +57,7 @@ from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
 from utils.text import json
+#import json
 from bson.objectid import ObjectId
 
 class Gatherer(object):
@@ -126,8 +127,10 @@ class Gatherer(object):
                 #current_run = self.pipe.get("RUN_INFO_SV").set("RUN_INFO_SV", "").execute()
                 # get run info passed from RAPD
                 #current_run = self.redis.rpop('run_info_T')
-                current_run = self.redis.rpop('run_info_%s'%self.tag[-1])
-                if current_run not in (None, ""):
+                #current_run = self.redis.rpop('run_info_%s'%self.tag[-1])
+                current_run_raw = self.redis.rpop('run_info_%s'%self.tag[-1])
+                if current_run_raw not in (None, ""):
+                    current_run = json.loads(current_run_raw)
                     # get the additional beamline params and put into nice dict.
                     run_data = self.get_run_data(current_run)
                     if self.ignored(run_data['directory']):
@@ -136,13 +139,13 @@ class Gatherer(object):
                         #run_data['directory'] = dir
                         self.logger.debug("runs_data:%s %s", self.tag, run_data)
                         # Put into exchangable format
-                        #run_data_json = json.dumps(run_data)
+                        run_data_json = json.dumps(run_data)
                         # Publish to Redis
-                        #self.redis.publish("run_data:%s" % self.tag, run_data_json)
-                        self.redis.publish("run_data:%s" % self.tag, run_data)
+                        self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                        #self.redis.publish("run_data:%s" % self.tag, run_data)
                         # Push onto redis list in case no one is currently listening
-                        #self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
-                        self.redis.lpush("runs_data:%s" % self.tag, run_data)
+                        self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
+                        #self.redis.lpush("runs_data:%s" % self.tag, run_data)
                         """
                         ## This loop is for testing##
                         for i in range(2):
