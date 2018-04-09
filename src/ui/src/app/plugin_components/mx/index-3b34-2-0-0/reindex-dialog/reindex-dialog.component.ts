@@ -90,7 +90,11 @@ export class ReindexDialogComponent implements OnInit {
     let request:any = {
       command:'INDEX',
       process:{
+        image1_id: this.data.process.image1_id,
+        image2_id: this.data.process.image2_id,
         parent_id: this.data.process.result_id,
+        result_id: false,
+        session_id: this.data.process.session_id,
         source: 'client',
         status: 0
       },

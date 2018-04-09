@@ -383,7 +383,13 @@ class RapdPlugin(Process):
                 self.results["header%d" % version]["basename"] = \
                     os.path.basename(self.results["header%d" % version]["fullname"])
         """
+
+        # Directory information
+        self.results["directories"] = self.command.get("directories", {})
+
+        # Preferences
         self.results["preferences"] = self.preferences
+        
         # Describe the process
         self.results["process"] = self.command.get("process", {})
         # Status is now 1 (starting)
