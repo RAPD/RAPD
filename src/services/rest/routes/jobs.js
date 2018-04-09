@@ -23,7 +23,7 @@ router.route('/jobs/submit')
       request.process._id = new mongoose.mongo.ObjectId();
     }
 
-    console.log(request);
+    console.log("REQUEST", request);
 
     redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
       if (err) {
