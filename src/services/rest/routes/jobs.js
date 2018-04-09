@@ -1,6 +1,6 @@
 var express  = require('express');
 var router   = express.Router();
-// var mongoose = require('../models/mongoose');
+var mongoose = require('../models/mongoose');
 const config = require('../config');
 
 // Redis
