@@ -20,7 +20,7 @@ router.route('/jobs/submit')
 
     // Add _id to process is not present
     if (! request.process.result_id) {
-      request.process.result_id = new mongoose.mongo.ObjectId();
+      request.process.result_id = new mongoose.mongo.ObjectId().toHexString();
     }
 
     console.log("REQUEST", request);
