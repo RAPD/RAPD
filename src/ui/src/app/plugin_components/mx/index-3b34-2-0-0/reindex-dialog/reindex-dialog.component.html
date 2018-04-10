@@ -17,7 +17,7 @@
               formControlName="spacegroup"
               placeholder="Spacegroup override">
               <mat-option [value]="0">None</mat-option>
-              <mat-option *ngFor="let sg of globals_service.sgs_in_order" [ngValue]="sg">
+              <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
                 {{globals_service.intl2std[sg]}}
               </mat-option>
             </mat-select>
