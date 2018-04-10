@@ -59,7 +59,7 @@
           class="rapd-list-child-item"
           [attr.id]="child._id"
           [myHighlight]="highlight_color"
-          (click)="onClick(child)"
+          (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
           <table style="width:100%;">
             <tr>
