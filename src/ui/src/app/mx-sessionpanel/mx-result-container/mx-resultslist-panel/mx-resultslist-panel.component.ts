@@ -135,7 +135,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
               this.orphan_children[result.parent_id] = [];
             }
             console.log('Add to orphan_children');
-            this.orphan_children[result.parent_id].push(result._id);
+            this.orphan_children[result.parent_id].push(result);
           }
         
         // No parent - check for children
