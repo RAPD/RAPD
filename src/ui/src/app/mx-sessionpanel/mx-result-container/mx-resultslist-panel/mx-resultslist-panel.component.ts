@@ -65,7 +65,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
       // My kind of data
       if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
 
-        // console.log('Adding to', this.result_types[this.result_type], 'results');
+        console.log('Adding to', this.result_types[this.result_type], 'results');
 
         // Filter for age & status
         if (! result.display) {
