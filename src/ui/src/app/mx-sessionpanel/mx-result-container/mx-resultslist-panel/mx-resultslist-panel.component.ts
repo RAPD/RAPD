@@ -60,7 +60,11 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
     let self = this;
 
+    console.log(data);
+
     for (let result of data) {
+
+      console.log(result);
 
       // My kind of data
       if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
