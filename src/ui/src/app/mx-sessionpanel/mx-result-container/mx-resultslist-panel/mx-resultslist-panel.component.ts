@@ -134,27 +134,16 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
               this.orphan_children[result.parent_id] = [];
             }
             console.log('Add to orphan_children');
-            this.orphan_children.push(result._id);
+            this.orphan_children[result.parent_id].push(result._id);
           }
         
         // No parent - check for children
         } else {
-          let orphan_children_index = this.orphan_children.findIndex(function(elem) {
-            if (elem._id === result._id) {
-              return true;
-            } else {
-              return false;
-            }
-          });
-          
-          // Take children and add to parent
-          if (orphan_children_index !== -1) {
+          if (result._id in this.orphan_children) {
             console.log('Adding orphan children to parent');
-            this.data_results[data_results_index].children =  this.orphan_children[orphan_children_index];
-            this.orphan_children.splice(orphan_children_index, 1);
-          // Insert
+            this.data_results[data_results_index].children =  this.orphan_children[result._id];
+            delete this.orphan_children[result._id];
           } else {
-            // console.log('  New data');
             this.data_results[data_results_index].children = [];
           }
         }
