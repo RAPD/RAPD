@@ -26,6 +26,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   new_result_timeout: any;
+  orphan_children: any;
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -60,7 +61,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
     let self = this;
 
-    console.log(data);
+    // console.log(data);
 
     for (let result of data) {
 
@@ -82,7 +83,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Look for index of result
-        var index = this.data_results.findIndex(function(elem) {
+        var data_results_index = this.data_results.findIndex(function(elem) {
           if (elem._id === result._id) {
             return true;
           } else {
@@ -90,10 +91,9 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           }
         });
         // Update
-        // console.log('  index:', index);
-        if (index !== -1) {
+        if (data_results_index !== -1) {
           // console.log('  Updated data');
-          this.data_results[index] = result;
+          this.data_results[data_results_index] = result;
         // Insert
         } else {
           // console.log('  New data');
@@ -126,22 +126,53 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
                 parent_result.children.unshift(result);
               }
             }
+          // No parent result yet
+          } else {
+            console.log('No parent_result yet');
+            // Create entry for orphan child results
+            if (! (result.parent_id in this.orphan_children)) {
+              this.orphan_children[result.parent_id] = [];
+            }
+            console.log('Add to orphan_children');
+            this.orphan_children.push(result._id);
+          }
+        
+          // No parent - check for children
+        } else {
+          let orphan_children_index = this.orphan_children.findIndex(function(elem) {
+            if (elem._id === result._id) {
+              return true;
+            } else {
+              return false;
+            }
+          });
+          // Take children and add to parent
+          if (orphan_children_index !== -1) {
+            console.log('Adding orphan children to parent');
+            this.data_results[data_results_index].children =  this.orphan_children[orphan_children_index];
+            this.orphan_children.splice(orphan_children_index, 1);
+          // Insert
+          } else {
+            // console.log('  New data');
+            this.data_results[data_results_index].children = [];
           }
         }
 
         // Update children
-        console.log('result.children');
-        if (result.children) {
-          console.log('Have children', result.children);
-          result.children.forEach(function(elem, index) {
-            console.log('  child:', elem);
-            var child_result = self.getResult(elem);
-            console.log('  child_result:', child_result);
-            if (child_result) {
-                result.children[index] = child_result;
-            }
-          });
-        }
+        // console.log('result.children');
+        // if (result.children.length > 0) {
+        //   console.log('Have children', result.children);
+        //   result.children.forEach(function(elem, index) {
+        //     console.log('  child:', elem);
+        //     var child_result = self.getResult(elem);
+        //     console.log('  child_result:', child_result);
+        //     if (child_result) {
+        //         result.children[index] = child_result;
+        //     }
+        //   });
+        // }
+
+
       }
     }
 
