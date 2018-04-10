@@ -18,7 +18,7 @@
           [myHighlight]="highlight_color"
           (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
-          Reprocess {{i+1}}
+          Reprocess {{data_result.children.length-i+1}}
         </mat-list-item>
       </div>
     </div>
@@ -66,7 +66,7 @@
               <td
                 [ngClass]="child.status < 0 ? 'rapd-error-result' : ''"
                 style="padding:0 0 0 0;">
-                Reprocess {{data_result.children-i+1}} {{child.display}}
+                Reprocess {{data_result.children.length-i+1}} {{child.display}}
               </td>
             </tr>
             <tr *ngIf="child.status > 0 && child.status < 99">
@@ -103,7 +103,7 @@
           [myHighlight]="highlight_color"
           (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
-          Reprocess {{i+1}}
+          Reprocess {{data_result.children.length-i+1}}
         </mat-list-item>
       </div>
     </div>
