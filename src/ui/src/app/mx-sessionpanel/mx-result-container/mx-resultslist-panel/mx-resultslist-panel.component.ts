@@ -98,6 +98,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         } else {
           // console.log('  New data');
           this.data_results.unshift(result);
+          data_results_index = 0;
         }
 
         // Update parent objects
