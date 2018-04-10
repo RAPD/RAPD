@@ -114,6 +114,8 @@ export class ReindexDialogComponent implements OnInit {
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+    request.preferences.spacegroup = parseInt(request.preferences.spacegroup, 10);
+
 
     // Set run mode
     request.preferences.run_mode = 'server';
