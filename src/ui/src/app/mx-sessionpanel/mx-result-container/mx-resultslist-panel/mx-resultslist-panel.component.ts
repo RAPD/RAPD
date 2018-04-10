@@ -25,7 +25,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
-  new_result_timeout: number;
+  new_result_timeout: any;
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
