@@ -26,7 +26,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   new_result_timeout: any;
-  orphan_children: any;
+  orphan_children: any = {};
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -137,7 +137,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
             this.orphan_children.push(result._id);
           }
         
-          // No parent - check for children
+        // No parent - check for children
         } else {
           let orphan_children_index = this.orphan_children.findIndex(function(elem) {
             if (elem._id === result._id) {
@@ -146,6 +146,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
               return false;
             }
           });
+          
           // Take children and add to parent
           if (orphan_children_index !== -1) {
             console.log('Adding orphan children to parent');
