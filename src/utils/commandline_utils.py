@@ -39,9 +39,6 @@ import time
 # CCTBX Imports
 from cctbx.sgtbx import space_group_symbols
 
-# CCTBX Imports
-from cctbx.sgtbx import space_group_symbols
-
 # RAPD imports
 import detectors.detector_utils as detector_utils
 # import utils.log
