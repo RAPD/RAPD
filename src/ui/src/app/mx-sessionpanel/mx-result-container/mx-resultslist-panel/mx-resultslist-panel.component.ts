@@ -98,10 +98,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Update parent objects
         if (result.parent_id) {
-          // console.log('Have parent_id', result.parent_id);
+          console.log('Have parent_id', result.parent_id);
           var parent_result = this.getResult(result.parent_id);
           if (parent_result) {
-            // console.log('parent_result:', parent_result);
+            console.log('parent_result:', parent_result);
             // Look for index of result
             if (parent_result.children) {
               var my_index = parent_result.children.findIndex(function(elem) {
@@ -112,13 +112,13 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
                 }
               });
               // Update
-              // console.log('  my_index:', my_index);
+              console.log('  my_index:', my_index);
               if (my_index !== -1) {
-                // console.log('  Updated data');
+                console.log('  Updated data');
                 parent_result.children[my_index] = result;
               // Insert
               } else {
-                // console.log('  New data');
+                console.log('  New data');
                 parent_result.children.unshift(result);
               }
             }
@@ -126,13 +126,13 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Update children
-        // console.log('result.children');
+        console.log('result.children');
         if (result.children) {
-          // console.log('Have children', result.children);
+          console.log('Have children', result.children);
           result.children.forEach(function(elem, index) {
-            // console.log('  child:', elem);
+            console.log('  child:', elem);
             var child_result = self.getResult(elem);
-            // console.log('  child_result:', child_result);
+            console.log('  child_result:', child_result);
             if (child_result) {
                 result.children[index] = child_result;
             }
