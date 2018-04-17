@@ -48,6 +48,7 @@ import sys
 import time
 import unittest
 import numpy
+import shlex
 
 # RAPD imports
 import plugins.subcontractors.molrep as molrep
@@ -190,6 +191,7 @@ class RapdPlugin(Process):
         self.tprint("  Volume: %f" % self.volume, level=20, color="white")
 
         # Handle ribosome sample types
+        # FIX THIS SINCE IT WILL ALWAYS BE default!!
         if (self.command["preferences"]["sample_type"] != "default" and \
             self.volume > 25000000.0) or \
             self.command["preferences"]["sample_type"] == "ribosome": #For 30S
@@ -331,13 +333,17 @@ calculation",
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
-        # print command
-
+        self.logger.debug(command)
+        """
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         shell=True)
+        #for line in xtriage_proc.stdout:
+        #    self.logger.debug(line)
         xtriage_proc.wait()
+        """
+        xtriage_proc = subprocess.call(shlex.split(command))
 
         # Read raw output
         if os.path.exists("logfile.log"):

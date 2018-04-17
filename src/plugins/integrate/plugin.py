@@ -2024,12 +2024,12 @@ class RapdPlugin(Process):
             "dir": directory,
             }
         self.logger.debug("Returning results!")
-        self.logger.debug(results)
+        #self.logger.debug(results)
 
          # Set up the results for return
         self.results["process"]["status"] = 50
         self.results["results"].update(results)
-        self.logger.debug(self.results)
+        #self.logger.debug(self.results)
 
         return results
 
@@ -2134,7 +2134,7 @@ class RapdPlugin(Process):
         self.archive_dir = archive_dir
 
         # Full path prefix for archive files
-        if self.image_data.get("run_number"):
+        if self.image_data.get("run_number", False):
             archive_files_prefix = "%s/%s_%d" % (archive_dir,
                                                  self.image_data.get("image_prefix"),
                                                  self.image_data.get("run_number"))
