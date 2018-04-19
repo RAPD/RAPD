@@ -353,7 +353,8 @@ def analyze_data_sources(sources,
                          start_image=False,
                          end_image=False,
                          hdf5_image_range=False,
-                         hdf5_wedge_range=False):
+                         hdf5_wedge_range=False,
+                         timeout=1):
     """
     Return information on files or directory from input
     """
@@ -530,7 +531,7 @@ def analyze_data_sources(sources,
                 if return_data["data_files"]:
                     break
                 else:
-                    time.sleep(0.1)
+                    time.sleep(0.5)
 
             # Sort into order
             return_data["data_files"].sort()
