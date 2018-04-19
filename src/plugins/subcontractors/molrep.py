@@ -31,7 +31,7 @@ __status__ = "Development"
 # import glob
 # import json
 # import logging
-import math
+#import math
 # import multiprocessing
 # import os
 from pprint import pprint
@@ -40,7 +40,7 @@ from pprint import pprint
 # import redis
 # import shutil
 # import subprocess
-import sys
+#import sys
 # import time
 # import unittest
 
@@ -48,7 +48,7 @@ import sys
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-from utils.r_numbers import try_int, try_float
+#from utils.r_numbers import try_int, try_float
 
 def parse_raw_output(raw_output):
     """

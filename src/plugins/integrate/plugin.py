@@ -281,6 +281,8 @@ class RapdPlugin(Process):
 
     def run(self):
         self.logger.debug('Fastintegration::run')
+        #inp = open('/gpfs6/users/necat/rapd2/integrate/2018-04-18/py3255_1/wedge_1_1200/XDS.INP', 'r').readlines()
+        #self.check_for_xds_errors('/gpfs6/users/necat/rapd2/integrate/2018-04-18/py3255_1/wedge_1_1200', inp)
         self.preprocess()
         self.process()
         self.postprocess()
@@ -599,7 +601,7 @@ class RapdPlugin(Process):
         self.run_analysis_plugin()
 
         # Send back results - the final time
-        self.send_results(self.results)
+        #self.send_results(self.results)
 
         # Save output
         self.write_json(self.results)
@@ -682,10 +684,17 @@ class RapdPlugin(Process):
                                                 self.logger)
 
             plugin_instance.start()
-
-            analysis_result = plugin_queue.get()
-
-            self.results["results"]["analysis"] = analysis_result
+            
+            # Allow multiple returns for each part of analysis.
+            while True:
+                analysis_result = plugin_queue.get()
+                self.results["results"]["analysis"] = analysis_result
+                self.send_results(self.results)
+                if analysis_result['process']["status"] in (-1, 100):
+                    break
+            
+            #analysis_result = plugin_queue.get()
+            #self.results["results"]["analysis"] = analysis_result
 
             # Back to where we were, in case it matters
             os.chdir(start_dir)
@@ -1614,17 +1623,20 @@ class RapdPlugin(Process):
         for line in xdslog:
             if '! ERROR !' in line:
                 # An error was found in XDS.LOG, now figure out what it was.
-                if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line:
+                if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line or \
+                'DIMENSION OF DIFFERENCE VECTOR SET' in line or \
+                'CANNOT READ XPARM.XDS' in line:
                     self.logger.debug('    Found an indexing error')
                     self.tprint(arg="\n  Found an indexing error",
                                 level=10,
                                 color="red")
 
                     # Try to fix by extending the data range
-                    tmp = input[-1].split('=')
-                    first, last = tmp.split()
-                    if int(last) == (int(self.image_data('start'))
-                                     + int(self.image_data('total')) - 1):
+                    #tmp = input[-1].split('=')
+                    #first, last = tmp[-1].split()
+                    first, last = input[-1].split('=')[-1].split()
+                    if int(last) == (int(self.image_data['start'])
+                                     + int(self.image_data['total']) - 1):
                         self.logger.debug(
                             '         FAILURE: Already using the full data range available.')
                         #return False

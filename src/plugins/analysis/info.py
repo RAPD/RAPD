@@ -48,3 +48,4 @@ __status__ = "Development"
 # import detectors.detector_utils as detector_utils
 # import utils
 
+STATS_TIMER = 180
