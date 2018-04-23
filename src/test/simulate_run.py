@@ -49,10 +49,11 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 import test_sets
+import detectors.detector_utils as detector_utils
 import utils.global_vars as rglobals
 import utils.log
 import utils.site as site
-import utils.text as r_text
+import utils.text as text
 from bson.objectid import ObjectId
 
 # Cache for test data
@@ -106,6 +107,44 @@ def main():
 
     print_welcome_message(tprint)
 
+    # Handle site - commandline only    
+    if commandline_args.site:
+        # Determine the site_file
+        site_file = utils.site.determine_site(site_arg=commandline_args.site)
+
+        # Error out if no site_file to import
+        if site_file == False:
+            print text.error+"Could not find a site file. Exiting.\n"+text.stop
+            sys.exit(9)
+
+        # Import the site settings
+        # print "Importing %s" % site_file
+        SITE = importlib.import_module(site_file)
+    else:
+        SITE = False
+
+    # Do some checking on site & id
+    if isinstance(SITE.ID, tuple):
+        if len(SITE.ID) > 1:
+            if commandline_args.id:
+                if commandline_args.id in SITE.ID:
+                    ID = commandline_args.id
+                else:
+                    print text.error+"Specified id not in site.ID. Exiting.\n"+text.stop
+                    sys.exit(9)
+            else:
+                print text.error+"Site has multiple ids, need to define id using --id flag. Exiting.\n"+text.stop
+                sys.exit(9)   
+    else:
+        if commandline_args.id:
+            if commandline_args.id == SITE.ID:
+                ID = commandline_args.id
+            else:
+                print text.error+"Specified id does not match site.ID. Exiting.\n"+text.stop
+                sys.exit(9)
+        else:
+            ID = SITE.ID
+
     # Make sure directories are there
     if not os.path.exists(commandline_args.source):
         raise IOError("Source directory %s does not exist" % commandline_args.source)
@@ -114,71 +153,29 @@ def main():
 
     # Gather the images
     source_template = os.path.join(commandline_args.source, commandline_args.template)
+    source_images = glob.glob(source_template)
+    pprint(source_images)
 
+    # Gather the run info
+    detector = detector_utils.get_detector_file(source_images[0])
+    if isinstance(detector, dict):
+        if detector.has_key("detector"):
+            detector_target = detector.get("detector")
+            detector_module = detector_utils.load_detector(detector_target)
+    else:
+        print text.error+"Don't understand this image. Exiting.\n"+text.stop
+        sys.exit(9)
 
+    first_image_header = detector_module.read_header(source_images[0])
+    pprint(first_image_header)
+    last_image_header = detector_module.read_header(source_images[-1])
+    pprint(last_image_header)
+
+    # Signal the run info
+
+    # Start moving images
 
     sys.exit()
-
-    # Make sure targets are in common format
-    if isinstance(commandline_args.targets, str):
-        targets = [commandline_args.targets]
-    else:
-        targets = commandline_args.targets
-
-    # Handle the all setting for plugins
-    if "all" in commandline_args.plugins:
-        plugins = []
-        for plugin in test_sets.PLUGINS.keys():
-            if not plugin == "all":
-                plugins.append(plugin)
-    else:
-        plugins = commandline_args.plugins
-
-    # Check dependencies first
-    if "DEPENDENCIES" in targets:
-        targets.pop(targets.index("DEPENDENCIES"))
-        targets.insert(0, "DEPENDENCIES")
-
-    for target in targets:
-
-        if target == "DEPENDENCIES":
-
-            tprint("Dependency testing", 10, "white")
-            for plugin in plugins:
-                # Run normal unit testing
-                run_unit(plugin, tprint, "DEPENDENCIES", commandline_args.verbose)
-
-        else:
-            # Check that data exists
-            data_present = check_for_data(target,
-                                          tprint)
-
-            # Download data
-            if not data_present:
-                download_data(target,
-                              commandline_args.force,
-                              tprint)
-
-                # Check that data exists again
-                data_present = check_for_data(target,
-                                              tprint)
-
-                # We have a problem
-                if not data_present:
-                    raise Exception("There is a problem getting valid test \
-data")
-
-            tprint("Plugin testing", 99, "white")
-            for plugin in plugins:
-
-                # Run unit testing
-                run_unit(plugin, tprint, "ALL", commandline_args.verbose)
-
-                run_processing(target,
-                               plugin,
-                               tprint,
-                               commandline_args.verbose)
-
 
 def get_commandline():
     """
@@ -204,6 +201,13 @@ def get_commandline():
                         default=5.0,
                         help="Delay in seconds before first frame is copied")
 
+    # ID for use with sites that have multiple ids
+    parser.add_argument("--id",
+                        action="store",
+                        dest="id",
+                        default=False,
+                        help="Id for use with multi-id sites")
+
     # Interval beween frames copying
     parser.add_argument("-i", "--interval",
                         action="store",
@@ -224,6 +228,13 @@ def get_commandline():
                         dest="verbose",
                         help="Request less output")
 
+    # Site information
+    parser.add_argument("--site",
+                        action="store",
+                        dest="site",
+                        default=False,
+                        help="The site")
+    
     # Source directory
     parser.add_argument("-s", "--source",
                         action="store",
@@ -254,7 +265,7 @@ def get_commandline():
     args = parser.parse_args()
 
     if args.source == args.target:
-        print "\n"+r_text.error+"!!ERROR!! Source and target directories cannot be the same"+r_text.stop+"\n"
+        print "\n"+text.error+"!!ERROR!! Source and target directories cannot be the same"+text.stop+"\n"
         parser.print_help()
         sys.exit(-1)
 
