@@ -63,6 +63,7 @@ src/services/rest/config.js
 .settings/
 
 # IDE - VSCode
+.vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

@@ -3,9 +3,9 @@
 """
 This file is part of RAPD
 c
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2018, Cornell University
 All rights reserved.
-
+conda update --prefix /Users/frankmurphy/anaconda anaconda
 RAPD is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
 the Free Software Foundation, version 3.

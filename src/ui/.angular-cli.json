@@ -1,16 +1,18 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "project": {
-    "name": "rapd"
+    "version": "1.0.0-beta.22-1",
+    "name": "rapd21-ui"
   },
   "apps": [
     {
       "root": "src",
       "outDir": "dist",
       "assets": [
-        "downloads",
         "assets",
-        "favicon.ico"
+        "favicon.ico",
+        "../node_modules/chart.js/dist/",
+        "../node_modules/moment-mini/"
       ],
       "index": "index.html",
       "main": "main.ts",
@@ -19,6 +21,7 @@
       "tsconfig": "tsconfig.app.json",
       "testTsconfig": "tsconfig.spec.json",
       "prefix": "app",
+      "mobile": false,
       "styles": [
         "styles.css"
       ],
@@ -30,6 +33,8 @@
       }
     }
   ],
+  "addons": [],
+  "packages": [],
   "e2e": {
     "protractor": {
       "config": "./protractor.conf.js"
@@ -37,16 +42,13 @@
   },
   "lint": [
     {
-      "project": "src/tsconfig.app.json",
-      "exclude": "**/node_modules/**"
+      "project": "src/tsconfig.app.json"
     },
     {
-      "project": "src/tsconfig.spec.json",
-      "exclude": "**/node_modules/**"
+      "project": "src/tsconfig.spec.json"
     },
     {
-      "project": "e2e/tsconfig.e2e.json",
-      "exclude": "**/node_modules/**"
+      "project": "e2e/tsconfig.e2e.json"
     }
   ],
   "test": {
@@ -54,8 +56,21 @@
       "config": "./karma.conf.js"
     }
   },
+  "lint": [
+    {
+      "files": "src/**/*.ts",
+      "project": "src/tsconfig.json"
+    },
+    {
+      "files": "e2e/**/*.ts",
+      "project": "e2e/tsconfig.json"
+    }
+  ],
   "defaults": {
     "styleExt": "css",
-    "component": {}
+    "component": {
+      "inlineTemplate": false,
+      "spec": true
+    }
   }
 }
