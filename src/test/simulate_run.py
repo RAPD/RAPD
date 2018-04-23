@@ -171,9 +171,39 @@ def main():
     last_image_header = detector_module.read_header(source_images[-1])
     pprint(last_image_header)
 
-    # Signal the run info
+    # Running as site?
+    if ID:
 
-    # Start moving images
+        # Signal the run info
+        """
+        run_data = {
+                "anomalous":None,
+                "beamline":raw_run_data.get("beamline", None),              # Non-standard
+                "beam_size_x":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
+                "beam_size_y":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
+                "directory":raw_run_data.get("directory", None),
+                "distance":float(raw_run_data.get("dist", 0.0)),
+                "energy":float(raw_run_data.get("energy", 0.0)),
+                "file_ctime":datetime.datetime.fromtimestamp(self.run_time).isoformat(),
+                "image_prefix":raw_run_data.get("image_prefix", None),
+                "kappa":None,
+                "number_images":int(float(raw_run_data.get("Nframes", 0))),
+                "omega":None,
+                "osc_axis":"phi",
+                "osc_start":float(raw_run_data.get("start", 0.0)),
+                "osc_width":float(raw_run_data.get("width", 0.0)),
+                "phi":float(raw_run_data.get("start", 0.0)),
+                "run_number":None,
+                "site_tag":self.tag,
+                "start_image_number":int(float(raw_run_data.get("first_image", 0))),
+                "time":float(raw_run_data.get("time", 0.0)),
+                "transmission":float(raw_run_data.get("trans", 0.0)),
+                "twotheta":None
+            }
+        """
+
+
+        # Start moving images
 
     sys.exit()
 
