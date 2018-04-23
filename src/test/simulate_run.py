@@ -32,6 +32,7 @@ from argparse import RawTextHelpFormatter
 import glob
 import hashlib
 import importlib
+import json
 # import logging
 # import multiprocessing
 import os
@@ -42,13 +43,14 @@ from pprint import pprint
 # import shutil
 import subprocess
 import sys
-# import time
+import time
 import unittest
 
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 import test_sets
+import database.redis_adapter as redis_adapter
 import detectors.detector_utils as detector_utils
 import utils.global_vars as rglobals
 import utils.log
@@ -151,10 +153,15 @@ def main():
     if not os.path.exists(commandline_args.target):
         raise IOError("Target directory %s does not exist" % commandline_args.target)
 
+    # Set up redis connection
+    if ID:
+        redis_database = redis_adapter.Database(settings=SITE.CONTROL_DATABASE_SETTINGS)
+        redis = redis_database.connect_to_redis()
+
     # Gather the images
     source_template = os.path.join(commandline_args.source, commandline_args.template)
     source_images = glob.glob(source_template)
-    pprint(source_images)
+    # pprint(source_images)
 
     # Gather the run info
     detector = detector_utils.get_detector_file(source_images[0])
@@ -167,43 +174,69 @@ def main():
         sys.exit(9)
 
     first_image_header = detector_module.read_header(source_images[0])
+    print "first"
     pprint(first_image_header)
     last_image_header = detector_module.read_header(source_images[-1])
+    print "last"
     pprint(last_image_header)
+
+    # Sleep for desired delay before "collection"
+    time.sleep(commandline_args.delay)
 
     # Running as site?
     if ID:
-
         # Signal the run info
-        """
         run_data = {
-                "anomalous":None,
-                "beamline":raw_run_data.get("beamline", None),              # Non-standard
-                "beam_size_x":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
-                "beam_size_y":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
-                "directory":raw_run_data.get("directory", None),
-                "distance":float(raw_run_data.get("dist", 0.0)),
-                "energy":float(raw_run_data.get("energy", 0.0)),
-                "file_ctime":datetime.datetime.fromtimestamp(self.run_time).isoformat(),
-                "image_prefix":raw_run_data.get("image_prefix", None),
-                "kappa":None,
-                "number_images":int(float(raw_run_data.get("Nframes", 0))),
-                "omega":None,
-                "osc_axis":"phi",
-                "osc_start":float(raw_run_data.get("start", 0.0)),
-                "osc_width":float(raw_run_data.get("width", 0.0)),
-                "phi":float(raw_run_data.get("start", 0.0)),
-                "run_number":None,
-                "site_tag":self.tag,
-                "start_image_number":int(float(raw_run_data.get("first_image", 0))),
-                "time":float(raw_run_data.get("time", 0.0)),
-                "transmission":float(raw_run_data.get("trans", 0.0)),
-                "twotheta":None
+                "anomalous":          None,
+                "beamline":           first_image_header.get("beamline", None),              # Non-standard
+                "beam_size_x":        float(first_image_header.get("beamsize", 0.0)),     # Non-standard
+                "beam_size_y":        float(first_image_header.get("beamsize", 0.0)),     # Non-standard
+                "directory":          first_image_header.get("directory", None),
+                "distance":           float(first_image_header.get("distance", 0.0)),
+                "energy":             float(first_image_header.get("energy", 0.0)),
+                "image_prefix":       first_image_header.get("image_prefix", None),
+                "kappa":              None,
+                "number_images":      last_image_header['image_number'] - first_image_header['image_number'] + 1,
+                "omega":              None,
+                "osc_axis":           first_image_header.get("axis", "phi"),
+                "osc_start":          float(first_image_header.get("osc_start", 0.0)),
+                "osc_width":          float(first_image_header.get("osc_range", 0.0)),
+                "phi":                float(first_image_header.get("osc_startstart", 0.0)),
+                "run_number":         first_image_header.get("run_number", None),
+                "site_tag":           ID,
+                "start_image_number": first_image_header.get("image_number", 1),
+                "testing_override":   True,
+                "time":               float(first_image_header.get("time", 0.0)),
+                "transmission":       float(first_image_header.get("transmission", 0.0)),
+                "twotheta":           None
             }
-        """
+        # Put into exchangable format
+        run_data_json = json.dumps(run_data)
+        if commandline_args.active:
+            # Publish to Redis
+            redis.publish("run_data:%s" % ID, run_data_json)
+            # Push onto redis list in case no one is currently listening
+            redis.lpush("runs_data:%s" % ID, run_data_json)
 
-
-        # Start moving images
+    # Start moving images
+    for source_image in source_images:
+        target_image = os.path.join(commandline_args.target, os.path.basename(source_image))
+        print source_image, ">>>", target_image
+        # Move image
+        if commandline_args.active:
+            shutil.copyfile(source_image, target_image)
+            # Announce on redis
+            if ID:
+                # Publish to Redis
+                redis.publish("image_collected:%s" % ID, target_image)
+                # Push onto redis list in case no one is currently listening
+                redis.lpush("images_collected:%s" % ID, target_image)
+        
+        # Sleep to simulate an image collection
+        time.sleep(first_image_header.get("time", 0.0))
+    
+        # Sleep for desired interval
+        time.sleep(commandline_args.interval)
 
     sys.exit()
 
@@ -243,7 +276,7 @@ def get_commandline():
                         action="store",
                         dest="interval",
                         type=float,
-                        default=0.2,
+                        default=0.0,
                         help="Interval in seconds between copying frames")
 
     # Force
