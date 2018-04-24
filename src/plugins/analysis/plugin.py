@@ -41,7 +41,7 @@ from distutils.spawn import find_executable
 import logging
 from multiprocessing import Process, Queue
 from threading import Thread
-from queue import Queue as tqueue
+from Queue import Queue as tqueue
 import os
 from pprint import pprint
 import shutil
