@@ -59,6 +59,9 @@ DETECTORS = {
     ("MARCCD", "7"): {                                  # APS 22BM
         "detector": "sercat_rayonix_mx300",
         },
+    ("MARCCD", "45"): {
+        "detector": "camd_mar_165"
+        },                   # CAMD
     # ("MARCCD", "101"): {                                # APS 22ID
     #     "detector": "sercat_rayonix_mx300hs",
     #     # "site": "sercat_id"

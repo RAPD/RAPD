@@ -403,6 +403,7 @@ def main():
     if site and not site_module:
         site_file = utils.site.determine_site(site_arg=site)
         site_module = importlib.import_module(site_file)
+    
     # Have a detector - read in file data
     if not detector_module:
         raise Exception("No detector identified")

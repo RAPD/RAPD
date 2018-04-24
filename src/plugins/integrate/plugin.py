@@ -870,6 +870,10 @@ class RapdPlugin(Process):
                     newline=False)
         self.xds_run(xdsdir)
 
+        # If known indexing error occurs, catch them and take corrective action
+        
+
+
         # Integrate
         # Override spacegroup?
         if self.spacegroup != False:
