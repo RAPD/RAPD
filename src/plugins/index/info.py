@@ -165,3 +165,22 @@ DEFAULT_PREFERENCES = {
 
 
     }
+
+
+DETECTOR_TO_BEST = {
+    "ADSC": "q315",
+    "ADSC-Q315": "q315",
+    "ADSC-HF4M": "hf4m",
+    "mar_165": "mar165",
+    "mar300": "mar300",
+    "Pilatus-6M": "pilatus6m",
+    "PILATUS": "pilatus6m",
+    "raxis":"raxis",
+    "rayonix_mx225": "mar225",
+    "rayonix_mx300": "mx300",
+    "rayonix_mx300hs": "mx300hs",
+    "ray300": "ray300",
+    "Dectris Eiger 9M": "eiger9m",
+    "Eiger-9M": "eiger9m",
+    "Eiger-16M": "eiger16m",
+    }
