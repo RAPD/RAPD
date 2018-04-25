@@ -45,7 +45,6 @@ import math
 import multiprocessing
 from multiprocessing import Process, Queue
 import os
-# import os.path
 from pprint import pprint
 import re
 import shutil
@@ -850,7 +849,6 @@ class RapdPlugin(Process):
             xdsinp,
             "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
         xdsinp = self.change_xds_inp(xdsinp, "JOB=XYCORR INIT COLSPOT \n\n")
-        #xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
         xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s %s\n" %(self.image_data['start'],
                                                                     last) )
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
@@ -871,8 +869,21 @@ class RapdPlugin(Process):
         self.xds_run(xdsdir)
 
         # If known indexing error occurs, catch them and take corrective action
-        
-
+        if not os.path.exists("XPARM.XDS"):
+            self.logger.exception("Initial indexing has failed - retrying with first half of images")
+            self.tprint(arg="\n  Initial indexing has failed - retrying with first half of images",
+                        level=30,
+                        color="red")
+            # Try indexing with first half of images
+            number_images = last - self.image_data["start"] + 1
+            xdsinp = self.change_xds_inp(xdsinp, "SPOT_RANGE=%s %s\n" %(self.image_data["start"],
+                                                                        self.image_data["start"]+int(number_images/2)))
+            self.write_file(xdsfile, xdsinp)
+            self.tprint(arg="  Indexing again",
+                    level=99,
+                    color="white",
+                    newline=False)
+            self.xds_run(xdsdir)
 
         # Integrate
         # Override spacegroup?
@@ -1444,37 +1455,37 @@ class RapdPlugin(Process):
             file.writelines(file_input)
         return
 
-    def find_spot_range(self, first, last, osc, input):
-        """
-        Finds up to two spot ranges for peak picking.
-        Ideally the two ranges each cover 5 degrees of data and
-        are 90 degrees apart.  If the data set is 10 degrees or
-        less, return a single spot range equal to the entire data
-        set. If the data set is less than 90 degrees, return two
-        spot ranges representing the first 5 degrees and the middle
-        5 degrees of data.
-        """
-        self.logger.debug('FastIntegration::find_spot_range')
-        self.logger.debug('     first_frame = %s', first)
-        self.logger.debug('     last_frame = %s', last)
-        self.logger.debug('     frame_width = %s', osc)
+    # def find_spot_range(self, first, last, osc, input):
+    #     """
+    #     Finds up to two spot ranges for peak picking.
+    #     Ideally the two ranges each cover 5 degrees of data and
+    #     are 90 degrees apart.  If the data set is 10 degrees or
+    #     less, return a single spot range equal to the entire data
+    #     set. If the data set is less than 90 degrees, return two
+    #     spot ranges representing the first 5 degrees and the middle
+    #     5 degrees of data.
+    #     """
+    #     self.logger.debug('FastIntegration::find_spot_range')
+    #     self.logger.debug('     first_frame = %s', first)
+    #     self.logger.debug('     last_frame = %s', last)
+    #     self.logger.debug('     frame_width = %s', osc)
 
-        # Determine full oscillation range of the data set.
-        fullrange = (float(last) - float(first) + 1) * float(osc)
-        # If the full oscillation range is 10 degrees or less
-        # return a single spot_range equal to the full data set
-        if fullrange <= 10:
-            input.append('SPOT_RANGE=%s %s\n\n' %(first, last))
-        else:
-            endspot1 = int(first) + int(5 / float(osc)) - 1
-            input.append('SPOT_RANGE=%s %s\n\n' %(first, endspot1))
-            if fullrange < 95:
-                spot2_start = int((int(last) - int(first) + 1) / 2)
-            else:
-                spot2_start = int(90 / float(osc))
-            spot2_end = spot2_start + int(5 / float(osc)) - 1
-            input.append('SPOT_RANGE=%s %s\n\n' %(spot2_start, spot2_end))
-        return input
+    #     # Determine full oscillation range of the data set.
+    #     fullrange = (float(last) - float(first) + 1) * float(osc)
+    #     # If the full oscillation range is 10 degrees or less
+    #     # return a single spot_range equal to the full data set
+    #     if fullrange <= 10:
+    #         input.append('SPOT_RANGE=%s %s\n\n' %(first, last))
+    #     else:
+    #         endspot1 = int(first) + int(5 / float(osc)) - 1
+    #         input.append('SPOT_RANGE=%s %s\n\n' %(first, endspot1))
+    #         if fullrange < 95:
+    #             spot2_start = int((int(last) - int(first) + 1) / 2)
+    #         else:
+    #             spot2_start = int(90 / float(osc))
+    #         spot2_end = spot2_start + int(5 / float(osc)) - 1
+    #         input.append('SPOT_RANGE=%s %s\n\n' %(spot2_start, spot2_end))
+    #     return input
 
     def xds_run(self, directory):
         """
@@ -1733,105 +1744,105 @@ class RapdPlugin(Process):
         
         #return input
 
-    def check_for_xds_errors_OLD(self, dir, input):
-        """
-        Examines results of an XDS run and searches for known problems.
-        Original RAPD would overwrite XDS.LOG with each step, so this 
-        would only have the last step, but RAPD2 appends all results!!
-        """
-        self.logger.debug('FastIntegration::check_for_xds_errors')
-        self.tprint(arg="  Checking XDS output for errors",
-                    level=99,
-                    color="white")
+    # def check_for_xds_errors_OLD(self, dir, input):
+    #     """
+    #     Examines results of an XDS run and searches for known problems.
+    #     Original RAPD would overwrite XDS.LOG with each step, so this 
+    #     would only have the last step, but RAPD2 appends all results!!
+    #     """
+    #     self.logger.debug('FastIntegration::check_for_xds_errors')
+    #     self.tprint(arg="  Checking XDS output for errors",
+    #                 level=99,
+    #                 color="white")
 
-        os.chdir(dir)
-        # Enter a loop that looks for an error, then tries to correct it
-        # and the reruns xds.
-        # Loop should continue until all errors are corrected, or only
-        # an unknown error is detected.
-        xdslog = open('XDS.LOG', 'r').readlines()
-        for line in xdslog:
-            if '! ERROR !' in line:
-                # An error was found in XDS.LOG, now figure out what it was.
-                if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line:
-                    self.logger.debug('    Found an indexing error')
-                    self.tprint(arg="\n  Found an indexing error",
-                                level=10,
-                                color="red")
+    #     os.chdir(dir)
+    #     # Enter a loop that looks for an error, then tries to correct it
+    #     # and the reruns xds.
+    #     # Loop should continue until all errors are corrected, or only
+    #     # an unknown error is detected.
+    #     xdslog = open('XDS.LOG', 'r').readlines()
+    #     for line in xdslog:
+    #         if '! ERROR !' in line:
+    #             # An error was found in XDS.LOG, now figure out what it was.
+    #             if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line:
+    #                 self.logger.debug('    Found an indexing error')
+    #                 self.tprint(arg="\n  Found an indexing error",
+    #                             level=10,
+    #                             color="red")
 
-                    # Try to fix by extending the data range
-                    tmp = input[-1].split('=')
-                    first, last = tmp.split()
-                    if int(last) == (int(self.image_data('start'))
-                                     + int(self.image_data('total')) - 1):
-                        self.logger.debug(
-                            '         FAILURE: Already using the full data range available.')
-                        return False
-                    else:
-                        input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
-                        self.write_file('XDS.INP', input)
-                        os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Extending spot range",
-                                    level=10,
-                                    color="white",
-                                    newline=False)
-                        self.xds_run(dir)
-                        return input
-                elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
-                    self.logger.debug('    Found inaccurate indexing solution error')
-                    self.logger.debug('    Will try to continue anyway')
-                    self.tprint(
-                        arg="  Found inaccurate indexing solution error - try to continue anyway",
-                        level=30,
-                        color="red")
+    #                 # Try to fix by extending the data range
+    #                 tmp = input[-1].split('=')
+    #                 first, last = tmp.split()
+    #                 if int(last) == (int(self.image_data('start'))
+    #                                  + int(self.image_data('total')) - 1):
+    #                     self.logger.debug(
+    #                         '         FAILURE: Already using the full data range available.')
+    #                     return False
+    #                 else:
+    #                     input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
+    #                     self.write_file('XDS.INP', input)
+    #                     os.system('mv XDS.LOG initialXDS.LOG')
+    #                     self.tprint(arg="\n  Extending spot range",
+    #                                 level=10,
+    #                                 color="white",
+    #                                 newline=False)
+    #                     self.xds_run(dir)
+    #                     return input
+    #             elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
+    #                 self.logger.debug('    Found inaccurate indexing solution error')
+    #                 self.logger.debug('    Will try to continue anyway')
+    #                 self.tprint(
+    #                     arg="  Found inaccurate indexing solution error - try to continue anyway",
+    #                     level=30,
+    #                     color="red")
 
-                    # Inaccurate indexing solution, can try to continue with DEFPIX,
-                    # INTEGRATE, and CORRECT anyway
-                    self.logger.debug(' The length of input is %s' % len(input))
-                    if 'JOB=DEFPIX' in input[-2]:
-                        self.logger.debug('Error = %s' %line)
-                        self.logger.debug(
-                            'XDS failed to run with inaccurate indexing solution error.')
-                        self.tprint(
-                            arg="\n  XDS failed to run with inaccurate indexing solution error.",
-                            level=30,
-                            color="red")
-                        return False
-                    else:
-                        input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
-                                     + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
-                        self.write_file('XDS.INP', input)
-                        os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Integrating with suboptimal indexing solution",
-                                    level=99,
-                                    color="white",
-                                    newline=False)
-                        self.xds_run(dir)
-                        return input
-                elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
-                    self.logger.debug('  Found failure in determining spot size parameters.')
-                    self.logger.debug(
-                        '  Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
-                    self.tprint(arg="\n  Found failure in determining spot size parameters.",
-                                level=99,
-                                color="red")
+    #                 # Inaccurate indexing solution, can try to continue with DEFPIX,
+    #                 # INTEGRATE, and CORRECT anyway
+    #                 self.logger.debug(' The length of input is %s' % len(input))
+    #                 if 'JOB=DEFPIX' in input[-2]:
+    #                     self.logger.debug('Error = %s' %line)
+    #                     self.logger.debug(
+    #                         'XDS failed to run with inaccurate indexing solution error.')
+    #                     self.tprint(
+    #                         arg="\n  XDS failed to run with inaccurate indexing solution error.",
+    #                         level=30,
+    #                         color="red")
+    #                     return False
+    #                 else:
+    #                     input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
+    #                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+    #                     self.write_file('XDS.INP', input)
+    #                     os.system('mv XDS.LOG initialXDS.LOG')
+    #                     self.tprint(arg="\n  Integrating with suboptimal indexing solution",
+    #                                 level=99,
+    #                                 color="white",
+    #                                 newline=False)
+    #                     self.xds_run(dir)
+    #                     return input
+    #             elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
+    #                 self.logger.debug('  Found failure in determining spot size parameters.')
+    #                 self.logger.debug(
+    #                     '  Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
+    #                 self.tprint(arg="\n  Found failure in determining spot size parameters.",
+    #                             level=99,
+    #                             color="red")
 
-                    input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
-                    input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
-                    self.write_file('XDS.INP', input)
-                    os.system('mv XDS.LOG initialXDS.LOG')
-                    self.tprint(
-                        arg="  Integrating after failure in determining spot size parameters",
-                        level=99,
-                        color="white",
-                        newline=False)
-                    self.xds_run(dir)
-                    return input
-                else:
-                    # Unanticipated Error, fail the error check by returning False.
-                    self.logger.debug('Error = %s' %line)
-                    return False
-        return input
+    #                 input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
+    #                 input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
+    #                 self.write_file('XDS.INP', input)
+    #                 os.system('mv XDS.LOG initialXDS.LOG')
+    #                 self.tprint(
+    #                     arg="  Integrating after failure in determining spot size parameters",
+    #                     level=99,
+    #                     color="white",
+    #                     newline=False)
+    #                 self.xds_run(dir)
+    #                 return input
+    #             else:
+    #                 # Unanticipated Error, fail the error check by returning False.
+    #                 self.logger.debug('Error = %s' %line)
+    #                 return False
+    #     return input
 
     def write_forkscripts(self, node_list, osc):
         """
