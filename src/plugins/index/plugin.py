@@ -77,23 +77,6 @@ from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
 
-DETECTOR_TO_BEST = {
-    "ADSC": "q315",
-    "ADSC-Q315": "q315",
-    "ADSC-HF4M": "hf4m",
-    "Pilatus-6M": "pilatus6m",
-    "PILATUS": "pilatus6m",
-    "raxis":"raxis",
-    "rayonix_mx225": "mar225",
-    "rayonix_mx300": "mx300",
-    "rayonix_mx300hs": "mx300hs",
-    "mar300": "mar300",
-    "ray300": "ray300",
-    "Dectris Eiger 9M": "eiger9m",
-    "Eiger-9M": "eiger9m",
-    "Eiger-16M": "eiger16m",
-    }
-
 VERSIONS = {
     "best": (
         "Version 3.2.0",
@@ -1005,7 +988,7 @@ class RapdPlugin(Process):
             dose = 500001
 
         # Put together the command for labelit.index
-        best_detector = DETECTOR_TO_BEST.get(self.image1.get("detector"), False)
+        best_detector = info.DETECTOR_TO_BEST.get(self.image1.get("detector"), False)
         if not best_detector:
             self.tprint(arg="RAPD does not have a BEST definition for your detector type %s"
                         % self.image1.get("detector"),
@@ -1237,7 +1220,7 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                detector_found = best.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
+                detector_found = best.check_best_detector(info.DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
                 # No detector in best param file - bail on best
                 if not detector_found:
                     self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
