@@ -97,7 +97,7 @@ def parse_strategy(inp, anom=False):
         "reflections_total": reflections_total,
         "reflections_unique": reflections_unique
     }
-    pprint(strategy)
+    # pprint(strategy)
 
     return {
         "log": log,

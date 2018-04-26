@@ -353,7 +353,8 @@ def analyze_data_sources(sources,
                          start_image=False,
                          end_image=False,
                          hdf5_image_range=False,
-                         hdf5_wedge_range=False):
+                         hdf5_wedge_range=False,
+                         timeout=1):
     """
     Return information on files or directory from input
     """
