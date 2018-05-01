@@ -26,23 +26,9 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
+import multiprocessing
 import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
 import sys
-# import time
-# import unittest
-# import urllib2
 import uuid
 
 # RAPD imports
@@ -129,11 +115,7 @@ def get_commandline():
                         dest="all_clusters",
                         default=False,
                         help="make all agglomerative clusters greater than cutoff value")
-    # parser.add_argument("--cell",
-    #                     dest="cell",
-    #                     nargs="6",
-    #                     default=(50, 100, 150, 90, 90, 90),
-    #                     help="provide unit cell dimensions")
+
     parser.add_argument("-c", "--cutoff",
                         dest="cutoff",
                         type=float,
@@ -153,29 +135,58 @@ def get_commandline():
                         dest="method",
                         default="complete",
                         help="set alternative clustering method: single, complete, average, or weighted")
+# Number of processors to use
+    parser.add_argument("--nproc",
+                       action="store",
+                       dest="nproc",
+                       type=int,
+                       default=multiprocessing.cpu_count(),
+                       help="Number of processors to use. Defaults to the number of \
+                             processors available")
     parser.add_argument("-o", "--output_prefix",
                         dest="prefix",
                         default="merged",
                         help="set a prefix for output files. Used in rerun as the name of the .pkl file")
     parser.add_argument("-p", "--precheck",
-                        action="store_false",
+                        action="store_false", # Automatic default of True
                         dest="precheck",
-                        default=True,
                         help="precheck for duplicate or incorrect data files, default=True")
-#    parser.add_argument("-q", "--qsub", action="store_true", dest="cluster_use", default=False,
-#                      help = "use qsub on a cluster to execute the job, default is sh for a single computer")
+
+# Resolution
     parser.add_argument("-r", "--resolution",
                         dest="resolution",
                         type=float,
                         default=0,
                         help="set a resolution cutoff for merging data")
-    parser.add_argument("-s", "--spacegroup",
-                        dest="spacegroup",
-                        help="set a user-defined spacegroup")
+
+# Spacegroup
+    parser.add_argument("-sg", "--sg", "--spacegroup",
+                       action="store",
+                       dest="spacegroup",
+                       default=False,
+                       help="Input a spacegroup")
+
+# Unit cell
+    parser.add_argument("-u", "--unit", "--unitcell",
+                       action="store",
+                       dest="unitcell",
+                       default=False,
+                       nargs=6,
+                       type=float,
+                       help="input a unit cell a b c alpha beta gamma")
+
+# Allow starting at a later point in the process
     parser.add_argument("--rerun",
                         dest="start_point",
                         default="start",
                         help="use pickle file and run merging again starting at: clustering, dendrogram")
+
+# Allow running in either no restriction (sloppy) or restricted (strict) mode.  Default is sloppy.
+    parser.add_argument("--strict",
+                        action="store_true",
+                        dest="strict",
+                        help="Have clustering run with strict parameters. Setting spacegroup or unitcell \
+                        automatically forces strict mode.")
 
     # Run in test mode
     parser.add_argument("-t", "--test",
@@ -214,18 +225,6 @@ def get_commandline():
                         dest="clean",
                         help="Clean up intermediate files")
 
-    # Color
-    #parser.add_argument("--color",
-    #                       action="store_false",
-    #                       dest="no_color",
-    #                       help="Color the terminal output")
-
-    # No color
-    parser.add_argument("--nocolor",
-                        action="store_true",
-                        dest="no_color",
-                        help="Do not color the terminal output")
-
     # JSON Output
     parser.add_argument("-j", "--json",
                         dest="run_mode",
@@ -237,12 +236,6 @@ def get_commandline():
                         dest="run_mode",
                         help="Specifically set the run mode: interactive, json, server, subprocess"
                         )
-
-    # Multiprocessing
-    parser.add_argument("--nproc",
-                        dest="nproc",
-                        type=int,
-                        help="Number of processors to employ")
 
     # Positional argument
     parser.add_argument(action="store",
@@ -279,24 +272,15 @@ def get_commandline():
     # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
     if args.spacegroup:
         args.spacegroup = space_group_symbols(args.spacegroup).number()
-        print 'Spacegroup number is' + str(args.spacegroup)
-    # Turn cell into a tuple
-    # if args.cell:
-    #     args.cell=tuple(args.cell)
-    try:
-        method_list = ['single', 'complete', 'average', 'weighted']
-        if [i for i in method_list if i in args.method]:
-            args.method = args.method
-    except:
-        print 'Unrecognized method.'
-        sys.exit()
-    try:
-        rerun_list = ['start', 'clustering', 'dendrogram']
-        if [i for i in rerun_list if i in args.start_point]:
-            args.start_point = args.start_point
-    except:
-        print 'Unrecognized option for rerunning HCMerge.'
-        sys.exit()
+        args.strict = True
+    else:
+        # If user has not set a spacegroup, then default to 0.
+        args.spacegroup = 0
+
+    # Unit Cell Check to set strict mode
+    if args.unitcell:
+        args.strict = True
+            
     # Deal with negative integers and what happens if cpu_count() raises NotImplementedError
     if args.nproc <= 0:
         try:
@@ -308,6 +292,23 @@ def get_commandline():
         args.json = True
     else:
         args.json = False
+    
+    # Set the clustering method
+    try:
+        method_list = ['single', 'complete', 'average', 'weighted']
+        if [i for i in method_list if i in args.method]:
+            args.method = args.method
+    except:
+        print 'Unrecognized method.'
+        sys.exit()
+
+    try:
+        rerun_list = ['start', 'clustering', 'dendrogram']
+        if [i for i in rerun_list if i in args.start_point]:
+            args.start_point = args.start_point
+    except:
+        print 'Unrecognized option for rerunning HCMerge.'
+        sys.exit()
 
     try:
         run_mode_list = ['interactive', 'json', 'server', 'subprocess']
@@ -353,8 +354,7 @@ def main():
     else:
         terminal_log_level = 50
 
-    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
 
     print_welcome_message(tprint)
 
@@ -362,22 +362,26 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="default")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
+
+    # Set working directory to go up or hcmerge rerun will break
+    environmental_vars['RAPD_DIR_INCREMENT'] = "UP"
+
     logger.debug("" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
-        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="default")
 
     # Should working directory go up or down?
-    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
-
+    
     # Construct the command
     command = construct_command(commandline_args=commandline_args,
                                 logger=logger)
@@ -389,10 +393,10 @@ def main():
 
     # Print plugin info
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="white")
-    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="default")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="default")
+    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="default")
+    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="default")
 
     # Run the plugin
     plugin.RapdPlugin(command, tprint, logger)
