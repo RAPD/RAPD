@@ -58,7 +58,8 @@ import uuid
 
 from multiprocessing import Process, cpu_count
 import matplotlib
-# Force matplotlib to not use any Xwindows backend.  Must be called before any other matplotlib/pylab import.
+# Force matplotlib to not use any Xwindows backend.
+# Must be called before any other matplotlib/pylab import.
 matplotlib.use('Agg')
 import hashlib
 from itertools import combinations, groupby
@@ -193,11 +194,11 @@ class RapdPlugin(multiprocessing.Process):
         else:
             self.user_spacegroup = 0 # Default to None
 
-        # Check for unit cell
-        if self.settings.has_key('cell'):
-            self.cell = self.settings['cell']
+        # Check for unit cell.  This is a list.
+        if self.settings.has_key('unitcell'):
+            self.unitcell = self.settings['unitcell']
         else:
-            self.cell = False
+            self.unitcell = False
 
         # Check for user-defined high resolution cutoff
         if self.settings.has_key('resolution'):
@@ -219,27 +220,35 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check whether to add labels to the dendrogram
         if self.settings.has_key('labels'):
-            self.labels=self.settings['labels']
+            self.labels = self.settings['labels']
         else:
             self.labels = False
 
         # Check whether to start at the beginning or skip to a later step
         if self.settings.has_key('start_point'):
-            self.start_point=self.settings['start_point']
+            self.start_point = self.settings['start_point']
         else:
-            self.start_point= 'start'
+            self.start_point = 'start'
 
         # Check whether to skip prechecking files during preprocess
         if self.settings.has_key('precheck'):
-            self.precheck=self.settings['precheck']
+            self.precheck = self.settings['precheck']
         else:
             self.precheck = True
 
         # Set resolution for dendrogram image
         if self.settings.has_key('dpi'):
-            self.dpi=self.settings['dpi']
+            self.dpi = self.settings['dpi']
         else:
             self.dpi = 100
+
+        # Set running in strict or sloppy mode
+        if self.settings.has_key('strict'):
+            if self.settings.has_key('spacegroup') or self.settings.has_key('unitcell'):
+                self.strict = True
+            self.strict = self.settings['strict']
+        else:
+            self.strict = False
 
         # Check on number of processors
         if self.settings.has_key('nproc'):
@@ -305,15 +314,8 @@ class RapdPlugin(multiprocessing.Process):
                 types.append(reflection_file.file_type()) # Get types for format test
                 hashset[dataset] = hashlib.md5(open(dataset, 'rb').read()).hexdigest() # hash for duplicates test
                 # Test for SCA format
-                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.cell == False:
+                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.unitcell == False:
                     self.logger.error('HCMerge::Unit Cell required for scalepack no merge original index format.')
-                # if reflection_file.file_type() == 'scalepack_no_merge_original_index' or reflection_file.file_type() == 'scalepack_merge':
-                #     self.logger.error('HCMerge::Scalepack format. Aborted')
-                #     raise ValueError("Scalepack Format. Unmerged mtz format required.")
-                # # Test reflection files to make sure they are XDS or MTZ format
-                # elif reflection_file.file_type() != 'xds_ascii' and reflection_file.file_type() != 'ccp4_mtz':
-                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Not XDS or MTZ format.' % reflection_file.file_name())
-                #     raise ValueError("%s has incorrect file format. Unmerged reflections in XDS format only." % reflection_file.file_name())
                 # Test for all the same format
                 elif len(set(types)) > 1:
                     self.logger.error('HCMerge::Too Many File Types')
@@ -329,10 +331,16 @@ class RapdPlugin(multiprocessing.Process):
                     self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
                     raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
                 # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
-                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary
-                # elif ((reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
-                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections.' % reflection_file.file_name())
-                #     raise ValueError("%s Reflection Check Failed. Must be unmerged reflections." % reflection_file.file_name())
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and (reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
+                    self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections in strict mode.' % reflection_file.file_name())
+                    raise ValueError("%s Reflection Check Failed. Must be unmerged reflections in strict mode." % reflection_file.file_name())
+                # Test reflection file if sca and make sure it isn't merged by checking file type
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and reflection_file.file_type() == 'scalepack_merge'):
+                    self.logger.error('HCMerge::Scalepack Merged format. Strict Mode On. Aborted.')
+                    raise ValueError("Scalepack Format. Unmerged reflections required in Strict Mode.")
+                
             # Test reflection files to make sure there are no duplicates
             combos_temp =  self.make_combinations(self.datasets,2)
             for combo in combos_temp:
@@ -341,11 +349,8 @@ class RapdPlugin(multiprocessing.Process):
                     self.logger.error('HCMerge::Same file Entered Twice. %s deleted from list.' % combo[1])
 
         # Make and move to the work directory
-        # if os.path.isdir(self.dirs['work']) == False:
-        #     os.makedirs(self.dirs['work'])
-        #     os.chdir(self.dirs['work'])
-        # else:
         os.chdir(self.dirs['work'])
+
         # convert all files to mtz format
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
@@ -359,6 +364,9 @@ class RapdPlugin(multiprocessing.Process):
                 command.append('xdsin '+dataset+' \n')
                 command.append('lauegroup %s \n' % sg)
                 command.append('choose spacegroup %s \n' % sg)
+                if 'scalepack_no_merge_original_index' in set(types):
+                    command.append('cell ' + str(self.unitcell[0]) + ' ' + str(self.unitcell[1]) + ' ' + str(self.unitcell[2]) + \
+                    ' ' + str(self.unitcell[3]) + ' ' + str(self.unitcell[4]) + ' ' + str(self.unitcell[5]) + '\n')
                 command.append('eof\n')
                 comfile = open(out_file+'_import.sh','w')
                 comfile.writelines(command)
@@ -547,8 +555,9 @@ class RapdPlugin(multiprocessing.Process):
         for hklin in in_files:
             command.append('hklin '+hklin+' \n')
             # Add ability to do batches
-        # Make TOLERANCE huge to accept unit cell variations
-        command.append('tolerance 1000.0 \n')
+        # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
+        if self.strict != False:
+            command.append('tolerance 1000.0 \n')
         # Add LAUEGROUP if user has chosen a spacegroup
         if self.user_spacegroup:
             command.append('lauegroup %s \n' % space_group_symbols(self.user_spacegroup).universal_hermann_mauguin())
@@ -648,8 +657,6 @@ class RapdPlugin(multiprocessing.Process):
                                  stdout = subprocess.PIPE,
                                  stderr = subprocess.PIPE).communicate()
 
-
-#        sts = os.waitpid(p.pid, 1)[1]
 
     def get_batch(self, in_file):
         """
