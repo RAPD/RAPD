@@ -122,6 +122,21 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
+def is_run_from_imagename(imagename):
+    """
+    Determine if image is in a run from the image
+    """
+    
+    # Tease out the info from the file name
+    directory, basename, image_prefix, run_number, image_number = parse_file_name(imagename)
+
+    # Run number 0 for snaps at NECAT
+    if run_number > 0:
+        return True
+    else:
+        return False
+    
+
 def calculate_flux(header, site_params):
     """
     Calculate the flux as a function of transmission and aperture size.
@@ -184,6 +199,7 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+
     path_split    = fullname.split(os.path.sep)
     data_root_dir = False
 
@@ -196,6 +212,7 @@ def get_data_root_dir(fullname):
     for p in path_split:
         if p.startswith('gpfs'):
             st = path_split.index(p)
+            break
         else:
             st = 0
     if path_split[st].startswith("gpfs"):
@@ -214,7 +231,7 @@ def get_data_root_dir(fullname):
     else:
         data_root_dir = False
 
-    #return the determined directory
+    # return the determined directory
     return data_root_dir
 
 def base_read_header_OLD(image,
@@ -393,11 +410,18 @@ def main(args):
     else:
         raise Error("No test image input!")
 
-    # Read the header
-    header = read_header(test_image)
+    # File exists
+    if os.path.exists(test_image):
+        # Read the header
+        header = read_header(test_image)
 
-    # And print it out
-    pprint.pprint(header)
+        # And print it out
+        pprint.pprint(header)
+
+    # No file
+    else:
+        print "data root dir:", get_data_root_dir(test_image)
+        print "is run:", is_run_from_imagename(test_image)
 
 if __name__ == "__main__":
 

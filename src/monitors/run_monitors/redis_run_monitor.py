@@ -28,6 +28,7 @@ __status__ = "Development"
 
 # Standard imports
 import logging
+import sys
 import threading
 import time
 
@@ -37,6 +38,7 @@ import importlib
 # RAPD imports
 from utils.overwatch import Registrar
 from utils.text import json
+#import json
 from bson.objectid import ObjectId
 
 # Constants
@@ -102,7 +104,7 @@ class Monitor(threading.Thread):
 
         # Figure out where we are going to look
         for site_tag in self.tags:
-            self.run_lists.append(("run_data:"+site_tag, site_tag))
+            self.run_lists.append(("runs_data:"+site_tag, site_tag))
 
         self.logger.debug("run_lists: %s", str(self.run_lists))
 
@@ -147,15 +149,11 @@ class Monitor(threading.Thread):
             for __ in range(ow_round_interval):
 
                 for run_list, site_tag in self.run_lists:
-
-                    # self.logger.debug("Querying %s %s", run_list, site_tag)
-
-                    # Try to pop the oldest image off the list
                     raw_run_data = self.redis.rpop(run_list)
-
                     # Have new run data
-                    if raw_run_data:
+                    if raw_run_data not in (None, ""):
                         # Parse into python object
+                        #print raw_run_data
                         run_data = json.loads(raw_run_data)
 
                         # Notify core thread that an image has been collected

@@ -30,7 +30,7 @@ __status__ = "Development"
 import glob
 import importlib
 import os
-import pprint
+from pprint import pprint
 import shutil
 import sys
 import tempfile
@@ -213,7 +213,7 @@ def get_detector_file(image):
         # print i.vendortype
         # print i.parameters["DETECTOR_SN"]
     except (IOError, AttributeError, RuntimeError):
-        # print error
+        print error
         return False
 
     # print ">>>%s<<<" % i.vendortype
@@ -222,8 +222,10 @@ def get_detector_file(image):
     v_type = i.vendortype.strip()
     sn = str(i.parameters["DETECTOR_SN"]).strip()
 
+    # pprint(detector_list.DETECTORS)
+
     if (v_type, sn) in detector_list.DETECTORS:
-        # print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
+        # print "%s: %s %s %s" % (image, detector_list.DETECTORS[(v_type, sn)], v_type, sn)
         return detector_list.DETECTORS[(v_type, sn)]
     else:
         return False
@@ -299,7 +301,7 @@ def merge_xds_input(base, new):
                         line = new.pop(x)
                         break
         except IndexError:
-            print 'nothing left in inp1'
+            # print 'nothing left in inp1'
             skip = True
         #new_inp.append("%s%s"%('='.join(line), '\n'))
         new_inp.append(line)
@@ -494,6 +496,7 @@ def main(test_images):
 
         else:
             print "%20s::%s" % ("detector", "unknown")
+            print "RAPD uses (vendortype, DETECTOR_SN) as a key for its detector registry"
         # except:
         #     print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
 
@@ -510,14 +513,13 @@ def main(test_images):
             for key in keys:
                 print "%20s::%s" % (key, header[key])
 
-
         if tmp_dir:
             shutil.rmtree(tmp_dir)
 
 
 
 if __name__ == "__main__":
-    """
+    
     # Get image name from the commandline
     if len(sys.argv) > 1:
         test_images = sys.argv[1:]
@@ -532,5 +534,5 @@ if __name__ == "__main__":
     print '----TEST-----'
     for line in inp1.XDSINP:
         print line
-    
+    """
     
