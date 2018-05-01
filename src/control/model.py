@@ -441,7 +441,6 @@ class Model(object):
         self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
 
         # Image is in a run
-        #if isinstance(place_in_run, int) and isinstance(run_id, str):
         if isinstance(place_in_run, int):
 
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
@@ -724,8 +723,23 @@ class Model(object):
         """
         self.logger.debug("%s %s", site_tag, fullname)
 
+        # Flag for snap
+        could_be_snap = True
+
         # The detector
         detector = self.detectors[site_tag.upper()]
+
+        # If the detector can determine if run or snap
+        if hasattr(detector, "is_run_from_imagename"):
+            # Make sure we have a function
+            if type(detector.is_run_from_imagename) == "function":
+                self.logger.debug("Have function")
+                # See if we have a SNAP
+                if detector.is_run_from_imagename(fullname) == True:
+                    self.logger.debug("Could NOT be a snap")
+                    could_be_snap = False
+                else:                
+                    return "SNAP", None
 
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
@@ -735,7 +749,7 @@ class Model(object):
                           basename,
                           image_prefix,
                           run_number,
-                          image_number)
+                          image_number)        
 
         # Look for run information for this image
         run_info = self.query_in_run(site_tag=site_tag,
@@ -746,11 +760,16 @@ class Model(object):
                                      minutes=self.site.RUN_WINDOW,
                                      return_type="dict")
 
-        # No run information - SNAP
+        # No run information
         if not run_info:
-            return "SNAP", None
+            # SNAP
+            if could_be_snap:
+                return "SNAP", None
+            # RUN
+            else:
+                return "RUN", None
 
-        # NOT a snap
+        # Have run information
         else:
             # run_info is a list of dicts - take most recent match
             run_info = run_info[0]

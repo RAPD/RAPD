@@ -25,7 +25,8 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
-  new_result_timeout: number;
+  new_result_timeout: any;
+  orphan_children: any = {};
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -60,12 +61,16 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
     let self = this;
 
+    // console.log(data);
+
     for (let result of data) {
+
+      console.log(result);
 
       // My kind of data
       if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
 
-        // console.log('Adding to', this.result_types[this.result_type], 'results');
+        console.log('Adding to', this.result_types[this.result_type], 'results');
 
         // Filter for age & status
         if (! result.display) {
@@ -78,7 +83,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Look for index of result
-        var index = this.data_results.findIndex(function(elem) {
+        var data_results_index = this.data_results.findIndex(function(elem) {
           if (elem._id === result._id) {
             return true;
           } else {
@@ -86,22 +91,22 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           }
         });
         // Update
-        // console.log('  index:', index);
-        if (index !== -1) {
+        if (data_results_index !== -1) {
           // console.log('  Updated data');
-          this.data_results[index] = result;
+          this.data_results[data_results_index] = result;
         // Insert
         } else {
           // console.log('  New data');
           this.data_results.unshift(result);
+          data_results_index = 0;
         }
 
         // Update parent objects
         if (result.parent_id) {
-          // console.log('Have parent_id', result.parent_id);
+          console.log('Have parent_id', result.parent_id);
           var parent_result = this.getResult(result.parent_id);
           if (parent_result) {
-            // console.log('parent_result:', parent_result);
+            console.log('parent_result:', parent_result);
             // Look for index of result
             if (parent_result.children) {
               var my_index = parent_result.children.findIndex(function(elem) {
@@ -112,32 +117,53 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
                 }
               });
               // Update
-              // console.log('  my_index:', my_index);
+              console.log('  my_index:', my_index);
               if (my_index !== -1) {
-                // console.log('  Updated data');
+                console.log('  Updated data');
                 parent_result.children[my_index] = result;
               // Insert
               } else {
-                // console.log('  New data');
+                console.log('  New data');
                 parent_result.children.unshift(result);
               }
             }
+          // No parent result yet
+          } else {
+            console.log('No parent_result yet');
+            // Create entry for orphan child results
+            if (! (result.parent_id in this.orphan_children)) {
+              this.orphan_children[result.parent_id] = [];
+            }
+            console.log('Add to orphan_children');
+            this.orphan_children[result.parent_id].push(result);
+          }
+        
+        // No parent - check for children
+        } else {
+          if (result._id in this.orphan_children) {
+            console.log('Adding orphan children to parent');
+            this.data_results[data_results_index].children =  this.orphan_children[result._id];
+            delete this.orphan_children[result._id];
+          } else {
+            this.data_results[data_results_index].children = [];
           }
         }
 
         // Update children
         // console.log('result.children');
-        if (result.children) {
-          // console.log('Have children', result.children);
-          result.children.forEach(function(elem, index) {
-            // console.log('  child:', elem);
-            var child_result = self.getResult(elem);
-            // console.log('  child_result:', child_result);
-            if (child_result) {
-                result.children[index] = child_result;
-            }
-          });
-        }
+        // if (result.children.length > 0) {
+        //   console.log('Have children', result.children);
+        //   result.children.forEach(function(elem, index) {
+        //     console.log('  child:', elem);
+        //     var child_result = self.getResult(elem);
+        //     console.log('  child_result:', child_result);
+        //     if (child_result) {
+        //         result.children[index] = child_result;
+        //     }
+        //   });
+        // }
+
+
       }
     }
 
@@ -170,7 +196,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   private onClick(id:string) {
 
-    // console.log('onClick', id);
+    console.log('onClick', id);
 
     // Save the current result as the active result
     this.active_result = id;

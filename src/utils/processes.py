@@ -31,12 +31,12 @@ import os
 import signal
 import shlex
 #import time
-import subprocess32 as subprocess
-from subprocess import Popen, PIPE, STDOUT
+#import subprocess32 as subprocess
+from subprocess import Popen, call, PIPE, STDOUT
 from multiprocessing import Pool
 
 import threading
-import subprocess
+#import subprocess
 
 class LocalSubprocess(threading.Thread):
 
@@ -98,7 +98,93 @@ class LocalSubprocess(threading.Thread):
 # myclass.join()
 # print myclass.stdout
 
+def local_process(command, shell=False):
+    if shell:
+        # If requesting shell
+        proc = call(command, shell=True)
+    elif isinstance(command, basestring):
+        # If command is a string and no shell.
+        proc = call(shlex.split(command))
+    else:
+        # no shell and command is a list already.
+        proc = call(command)
+    return proc
+
 def local_subprocess(command,
+                     logfile=False,
+                     pid_queue=False,
+                     result_queue=False,
+                     tag=False,
+                     shell=False):
+    """
+    Run job as subprocess on local machine. based on xutils.processLocal
+
+    Arguments
+    ---------
+    commands - a dict with various data for running. Recognized fields are:
+        command - the command to be run in the subprocess
+        logfile - name of a logfile to be generated. The logfile will be STDOUT+STDERR
+        pid_queue - a multiprocessing.Queue for placing PID of subprocess in
+        tag - an identifying tag to be useful to the caller
+    """
+    # Need the PIPE otherwise PHENIX jobs dont finish for some reason... 
+    #proc = Popen(command, 
+    #             shell=True,
+    if shell:
+        # If requesting shell
+        proc = Popen(command, 
+                 stdout=PIPE,
+                 stderr=PIPE,
+                 shell=True,
+                 bufsize=-1)
+    elif isinstance(command, basestring):
+        # If command is a string and no shell.
+        proc = Popen(shlex.split(command), 
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     bufsize=-1           )
+    else:
+        # no shell and command is a list already.
+        proc = Popen(command, 
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     bufsize=-1           )
+    # print "  running...", command
+    # Send back PID if have pid_queue
+    if pid_queue:
+        pid_queue.put(proc.pid)
+
+    try:
+        # Get the stdout and stderr from process
+        stdout, stderr = proc.communicate()
+        # print "  done..."
+    except KeyboardInterrupt:
+        #sys.exit()
+        os._exit()
+
+    # Put results on a Queue, if given
+    if result_queue:
+        result = {
+            "pid": proc.pid,
+            "returncode": proc.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "tag": tag
+        }
+        result_queue.put(result)
+
+    # Write out a log file, if name passed in
+    if logfile:
+        try:
+            with open(logfile, "w") as out_file:
+                out_file.write(stdout)
+                out_file.write(stderr)
+        # Found that jobs not getting effectively killed by multiprocess Pool at times
+        except IOError:
+            pass
+
+    # print "  finished...", command
+def local_subprocess_OLD(command,
                      logfile=False,
                      pid_queue=False,
                      result_queue=False,

@@ -40,6 +40,8 @@ import base64
 from distutils.spawn import find_executable
 import logging
 from multiprocessing import Process, Queue
+from threading import Thread
+from Queue import Queue as tqueue
 import os
 from pprint import pprint
 import shutil
@@ -48,6 +50,7 @@ import sys
 import time
 import unittest
 import numpy
+import shlex
 
 # RAPD imports
 import plugins.subcontractors.molrep as molrep
@@ -58,12 +61,12 @@ import plugins.subcontractors.xtriage as xtriage
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 from utils.text import json
-from bson.objectid import ObjectId
+#from bson.objectid import ObjectId
 import utils.xutils as xutils
-# import info
+import utils.processes as process
+import info
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
-
 
 # Software dependencies
 VERSIONS = {
@@ -75,6 +78,8 @@ VERSIONS = {
         "Version: 1.11.1",
     )
 }
+# Setup multiprocessing.Pool to launch jobs
+#POOL = process.mp_pool(4)
 
 class RapdPlugin(Process):
     """
@@ -98,9 +103,16 @@ class RapdPlugin(Process):
     cell_output = Queue()
     sample_type = "protein"
     solvent_content = 0.55
-    stats_timer = 180
     # test = True
     volume = None
+    # Set initital status so we can add to it
+    status = 1
+
+    # Set the timer from info.py
+    if getattr(info, "STATS_TIMER", False):
+        stats_timer = info.STATS_TIMER
+    else:
+        stats_timer = 180
 
     do_molrep = True
     do_phaser = True
@@ -109,6 +121,9 @@ class RapdPlugin(Process):
     molrep_output_raw = None
     phaser_results = None
 
+    jobs = {}
+
+
     results = {
         "command": None,
         "parsed": {},
@@ -116,7 +131,7 @@ class RapdPlugin(Process):
         "process": {}
     }
 
-    def __init__(self, command, tprint=False, logger=False):
+    def __init__(self, command, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
 
         # Keep track of start time
@@ -129,6 +144,8 @@ class RapdPlugin(Process):
             # Otherwise get the logger Instance
             self.logger = logging.getLogger("RAPDLogger")
             self.logger.debug("__init__")
+        
+        self.verbose = verbosity
 
         # Store tprint for use throughout
         if tprint:
@@ -140,7 +157,8 @@ class RapdPlugin(Process):
             self.tprint = func
 
         # Some logging
-        self.logger.info(command)
+        if self.verbose and self.logger:
+            self.logger.info(command)
         # pprint(command)
 
         # Store passed-in variables
@@ -156,7 +174,7 @@ class RapdPlugin(Process):
 
     def run(self):
         """Execution path of the plugin"""
-
+        #self.finish_phaser_ncs()
         self.preprocess()
         self.process()
         self.postprocess()
@@ -165,7 +183,8 @@ class RapdPlugin(Process):
         """Set up for plugin action"""
 
         # self.tprint("preprocess")
-        self.logger.debug("preprocess")
+        if self.verbose and self.logger:
+            self.logger.debug("preprocess")
         self.tprint(arg=0, level="progress")
 
         # Handle sample type from commandline
@@ -190,6 +209,7 @@ class RapdPlugin(Process):
         self.tprint("  Volume: %f" % self.volume, level=20, color="white")
 
         # Handle ribosome sample types
+        # FIX THIS SINCE IT WILL ALWAYS BE default!!
         if (self.command["preferences"]["sample_type"] != "default" and \
             self.volume > 25000000.0) or \
             self.command["preferences"]["sample_type"] == "ribosome": #For 30S
@@ -259,7 +279,7 @@ calculation",
         # Describe the process
         self.results["process"] = self.command.get("process", {})
         # Status is now 1 (starting)
-        self.results["process"]["status"] = 1
+        self.results["process"]["status"] = self.status
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
 
@@ -271,9 +291,19 @@ calculation",
             "id":ID,
             "version":VERSION
         }
+    def update_status(self):
+        """Update the status and send back results."""
+        if self.status == 1:
+            self.status = 25
+        else:
+            self.status += 25
+        self.results["process"]["status"] = self.status
+        self.handle_return()
 
     def process(self):
         """Run plugin action"""
+        if self.verbose and self.logger:
+            self.logger.debug("preprocess")
 
         self.tprint("\nAnalyzing the data file", level=30, color="blue")
 
@@ -286,19 +316,21 @@ calculation",
         # self.run_labelit_precession()
         # self.tprint(arg=40, level="progress")
 
-        # Output to terminal
-        self.print_xtriage_results()
-        self.print_plots()
-
         # Run the pdbquery
         if self.preferences.get("pdbquery", False):
             self.process_pdb_query()
+        
+        self.jobs_monitor()
 
     def postprocess(self):
         """Clean up after plugin action"""
-
-        self.logger.debug("postprocess")
+        if self.verbose and self.logger:
+            self.logger.debug("postprocess")
         # self.tprint("postprocess", level=10, color="white")
+
+        # Output to terminal
+        self.print_xtriage_results()
+        self.print_plots()
 
         # Cleanup my mess.
         self.clean_up()
@@ -316,6 +348,60 @@ calculation",
         # Write credits to screen
         self.print_credits()
 
+    def jobs_monitor(self):
+        """Monitor running jobs and finsh them when they complete."""
+        timed_out = False
+        timer = 0
+        jobs = self.jobs.keys()
+        if jobs != ['None']:
+            counter = len(jobs)
+            while counter != 0:
+                for job in jobs:
+                    if job.is_alive() == False:
+                        if self.jobs[job].get('name') == 'xtriage':
+                            self.finish_xtriage()
+                        if self.jobs[job].get('name') == 'molrep':
+                            self.finish_molrep()
+                        if self.jobs[job].get('name') == 'NCS':
+                            self.finish_phaser_ncs()
+                        jobs.remove(job)
+                        del self.jobs[job]
+                        counter -= 1
+                time.sleep(0.2)
+                timer += 0.2
+                """
+                if self.verbose:
+                  if round(timer%1,1) in (0.0,1.0):
+                      print 'Waiting for AutoStat jobs to finish '+str(timer)+' seconds'
+                """
+                if self.stats_timer:
+                    if timer >= self.stats_timer:
+                        timed_out = True
+                        break
+            if timed_out:
+                if self.verbose:
+                    self.logger.debug('AutoStat timed out.')
+                    print 'AutoStat timed out.'
+                
+                pids = [self.jobs[job].get('pid') for job in self.jobs]
+                for pid in pids:
+                    xutils.killChildren(pid)
+                """
+                for pid in self.pids.values():
+                    #jobs are not sent to cluster
+                    Utils.killChildren(self,pid)
+                for job in jobs:
+                    if self.jobs_output[job] == 'xtriage':
+                        self.postprocessXtriage()
+                    if self.jobs_output[job] == 'molrep':
+                        self.postprocessMolrep()
+                    if self.jobs_output[job] == 'NCS':
+                        self.postprocessNCS()
+                """
+            if self.verbose:
+                self.logger.debug('AutoStats Queue finished.')
+
+
     def run_xtriage(self):
         """
         Run Xtriage and the parse the output
@@ -323,22 +409,27 @@ calculation",
         Xtriage has to be run and the log file read in as the log file has more information than
         reported to STDOUT
         """
-
-        self.logger.debug("run_xtriage")
+        if self.verbose and self.logger:
+            self.logger.debug("run_xtriage")
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
+        
+        if self.verbose and self.logger:
+            self.logger.debug(command)
 
-        # print command
+        pid_queue = Queue()
+        job = Process(target=process.local_subprocess, kwargs={'command': command,
+                                                               'pid_queue':pid_queue})
+        job.start()
+        self.jobs[job] = {'name': 'xtriage',
+                          'pid': pid_queue.get()}
 
-        xtriage_proc = subprocess.Popen([command,],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        shell=True)
-        xtriage_proc.wait()
-
+    def finish_xtriage(self):
+        if self.verbose and self.logger:
+            self.logger.debug('finish_xtriage')
         # Read raw output
         if os.path.exists("logfile.log"):
             self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
@@ -349,18 +440,18 @@ self.command["input_data"]["datafile"]
             self.results["parsed"]["xtriage"] = \
                 xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
                                         logger=self.logger)
-            return True
-
         # No log file
         else:
             self.results["raw"]["xtriage"] = False
             self.results["parsed"]["xtriage"] = False
-            return False
+
+        # Update the status number and return results
+        self.update_status()
 
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
-
-        self.logger.debug("run_molrep")
+        if self.verbose and self.logger:
+            self.logger.debug("run_molrep")
 
         if self.do_molrep:
 
@@ -371,87 +462,95 @@ self.command["input_data"]["datafile"]
             command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
                       % self.command["input_data"]["datafile"]
 
-            molrep_proc = subprocess.Popen([command,],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
-                                           shell=True)
-            stdout, _ = molrep_proc.communicate()
-            molrep_output_raw = stdout
+            molrep_queue = Queue()
+            job = Process(target=process.local_subprocess, kwargs={'command': command,
+                                                                   #'result_queue': self.molrep_queue,
+                                                                   #'logfile' : "molrep_selfrf.log",
+                                                                   'pid_queue':molrep_queue,
+                                                                   'shell': True})
+            job.start()
+            self.jobs[job] = {'name': 'molrep',
+                              'pid': molrep_queue.get()}
 
-            # Store raw output
-            self.results["raw"]["molrep"] = molrep_output_raw.split("\n")
+    def finish_molrep(self):
+        """Get Molrep results"""
+        if self.verbose and self.logger:
+            self.logger.debug('finish_molrep')
 
-            # Save the output in log form
-            with open("molrep_selfrf.log", "w") as out_file:
-                out_file.write(stdout)
+        jobs = {}
+        # Store raw output
+        log = open('molrep.doc','r').readlines()
+        self.results["raw"]["molrep"] = log
 
-            # Parse the Molrep log
-            parsed_molrep_results = molrep.parse_raw_output(self.results["raw"]["molrep"])
+        # Parse the Molrep log
+        parsed_molrep_results = molrep.parse_raw_output(log)
 
-            # Convert the Molrep postscript file to JPEG, if convert is available
-            crop_sizes = {
-                "60": "254X305+265+410",
-                "90": "254X305+265+110",
-                "120": "256X305+10+410",
-                "180": "256X305+10+110",
-            }
+        # Convert the Molrep postscript file to JPEG, if convert is available
+        crop_sizes = {
+            "60": "254X305+265+410",
+            "90": "254X305+265+110",
+            "120": "256X305+10+410",
+            "180": "256X305+10+110",
+        }
+        # Launch all the jobs
+        results_queue = {}
+        convert_executables = ("convert", "/usr/local/bin/convert")
+        for convert_executable in convert_executables:
+            # print "Trying %s" % convert_executable
+            if find_executable(convert_executable):
+                for label, size in crop_sizes.iteritems():
+                    command = [convert_executable,
+                               "molrep_rf.ps",
+                               "-crop",
+                               size,
+                               "-quality",
+                               "50",
+                               "molrep_rf_%s.jpg" % label]
 
-            convert_executables = ("convert", "/usr/local/bin/convert")
-            for convert_executable in convert_executables:
-                # print "Trying %s" % convert_executable
-                if find_executable(convert_executable):
-                    for label, size in crop_sizes.iteritems():
-                        # print [convert_executable,
-                        #        "molrep_rf.ps",
-                        #        "-crop",
-                        #        size,
-                        #        "-quality",
-                        #        "50",
-                        #        "molrep_rf_%s.jpg" % label]
-                        convert_proc = subprocess.Popen([convert_executable,
-                                                         "molrep_rf.ps",
-                                                         "-crop",
-                                                         size,
-                                                         "-quality",
-                                                         "50",
-                                                         "molrep_rf_%s.jpg" % label],
-                                                        stdout=subprocess.PIPE,
-                                                        stderr=subprocess.PIPE,
-                                                        shell=False)
-                        _, stderr = convert_proc.communicate()
-                        # print _
-                        # print stderr
-                        if stderr:
-                            self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
-                                        level=30,
-                                        color="red")
-                            parsed_molrep_results["self_rotation_images"] = False
-                            break
-                        else:
-                            parsed_molrep_results["self_rotation_images"] = True
-                            parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath("molrep_rf_%s.jpg" % label)
-                            # read in the image and encode
-                            with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
-                                encoded_string = base64.b64encode(image_file.read())
-                                parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+                    results_queue[label] = tqueue()
+                    job = Thread(target=process.local_subprocess, kwargs={'command': command,
+                                                                           'result_queue': results_queue[label],
+                                                                           'pid_queue':results_queue[label]})
+                    job.start()
+                    jobs[job] = {'name': label,
+                                 'pid': results_queue[label].get()}
+                # Wait for jobs to complete and gather results
+                while len(jobs.keys()):
+                    for job in jobs.keys():
+                        if not job.is_alive():
+                            label = jobs[job].get('name')
+                            del jobs[job]
+                            output = results_queue[label].get()
+                            if output.get('stderr'):
+                                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                                            level=30,
+                                            color="red")
+                                parsed_molrep_results["self_rotation_images"] = False
+                                break
+                            else:
+                                parsed_molrep_results["self_rotation_images"] = True
+                                parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath("molrep_rf_%s.jpg" % label)
+                                # read in the image and encode
+                                with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
+                                    encoded_string = base64.b64encode(image_file.read())
+                                    parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+                # Break out of the loop trying multiple convert executables
+                if parsed_molrep_results["self_rotation_images"]:
+                    break
+            else:
+                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                            level=30,
+                            color="red")
+                parsed_molrep_results["self_rotation_image"] = False
 
-                    # Break out of the loop trying multiple convert executables
-                    if parsed_molrep_results["self_rotation_images"]:
-                        break;
-                else:
-                    self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
-                                level=30,
-                                color="red")
-                    parsed_molrep_results["self_rotation_image"] = False
-
-            self.results["parsed"]["molrep"] = parsed_molrep_results
-
-        return True
+        self.results["parsed"]["molrep"] = parsed_molrep_results
+        # Update the status number and return results
+        self.update_status()
 
     def run_phaser_ncs(self):
         """Run Phaser tNCS and anisotropy correction"""
-
-        self.logger.debug("run_phaser_ncs")
+        if self.verbose and self.logger:
+            self.logger.debug("run_phaser_ncs")
 
         if self.do_phaser:
 
@@ -461,24 +560,29 @@ self.command["input_data"]["datafile"]
 
             command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
                       self.command["input_data"]["datafile"]
+            
+            self.phaser_queue = Queue()
+            job = Process(target=process.local_subprocess, kwargs={'command': command,
+                                                                   'result_queue': self.phaser_queue,
+                                                                   'logfile' : "phaser_ncs.log",
+                                                                   'pid_queue':self.phaser_queue,
+                                                                   'shell': True})
+            job.start()
+            self.jobs[job] = {'name': 'NCS',
+                              'pid': self.phaser_queue.get()}
 
-            phaser_proc = subprocess.Popen([command,],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
-                                           shell=True)
-            stdout, _ = phaser_proc.communicate()
-            phaser_output_raw = stdout
+    def finish_phaser_ncs(self):
+        if self.verbose and self.logger:
+            self.logger.debug('finish_phaser_ncs')
 
-            # Store raw output
-            self.results["raw"]["phaser"] = phaser_output_raw.split("\n")
+        # Store raw output
+        output = self.phaser_queue.get()
+        self.results["raw"]["phaser"] = output['stdout'].split("\n")
 
-            # Save the output in log form
-            with open("phaser_ncs.log", "w") as out_file:
-                out_file.write(stdout)
+        self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
 
-            self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
-
-        return True
+        # Update the status number and return results
+        self.update_status()
 
     # def run_labelit_precession(self):
     #     """Run labelit to make precession photos"""

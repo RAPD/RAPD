@@ -39,9 +39,6 @@ import time
 # CCTBX Imports
 from cctbx.sgtbx import space_group_symbols
 
-# CCTBX Imports
-from cctbx.sgtbx import space_group_symbols
-
 # RAPD imports
 import detectors.detector_utils as detector_utils
 # import utils.log
@@ -90,11 +87,25 @@ dp_parser.add_argument("--json",
                        dest="json",
                        help="Output only final and full JSON")
 
+# Set filedescriptor for JSON output
+dp_parser.add_argument("--json-fd",
+                       action="store",
+                       dest="json_fd",
+                       default=False,
+                       help="Output json to a file descriptor. No need to also use --json, unless you want JSON on the terminal too.")
+
 # Output progress updates?
 dp_parser.add_argument("--progress",
                        action="store_true",
                        dest="progress",
                        help="Output progress updates to the terminal")
+
+# Set filehandle for progress output
+dp_parser.add_argument("--progress-fd",
+                       action="store",
+                       dest="progress_fd",
+                       default=False,
+                       help="Output progress updates to a file descriptor. No need to also use --progress, unless you want JSON on the terminal too.")
 
 # The site
 dp_parser.add_argument("-s", "--site",
@@ -342,7 +353,8 @@ def analyze_data_sources(sources,
                          start_image=False,
                          end_image=False,
                          hdf5_image_range=False,
-                         hdf5_wedge_range=False):
+                         hdf5_wedge_range=False,
+                         timeout=1):
     """
     Return information on files or directory from input
     """

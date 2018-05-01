@@ -1,6 +1,6 @@
 var express  = require('express');
 var router   = express.Router();
-// var mongoose = require('../models/mongoose');
+var mongoose = require('../models/mongoose');
 const config = require('../config');
 
 // Redis
@@ -18,7 +18,12 @@ router.route('/jobs/submit')
 
     let request = req.body.request;
 
-    console.log(request);
+    // Add _id to process is not present
+    if (! request.process.result_id) {
+      request.process.result_id = new mongoose.mongo.ObjectId().toHexString();
+    }
+
+    console.log("REQUEST", request);
 
     redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
       if (err) {

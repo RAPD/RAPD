@@ -70,12 +70,12 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         "INDEX"          : 'phase3.q',
+         "INDEX"          : 'index.q',
          #"INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
          "XDS"            : 'all.q',
-         #"INTEGRATE"      : 'phase2.q',
-         "INTEGRATE"      : 'phase3.q',
+         #"INTEGRATE"      : 'integrate.q',
+         "INTEGRATE"      : 'all.q',
          }
     
     return(d[inp])

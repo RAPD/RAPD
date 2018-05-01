@@ -90,7 +90,11 @@ export class ReindexDialogComponent implements OnInit {
     let request:any = {
       command:'INDEX',
       process:{
+        image1_id: this.data.process.image1_id,
+        image2_id: this.data.process.image2_id,
         parent_id: this.data.process.result_id,
+        result_id: false,
+        session_id: this.data.process.session_id,
         source: 'client',
         status: 0
       },
@@ -106,10 +110,12 @@ export class ReindexDialogComponent implements OnInit {
     request.image2 = this.data.image2;
 
     // Directories is a copy from parent. Plugin will handle
-    request.directories = this.data.command.directories;
+    request.directories = this.data.results.directories;
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+    request.preferences.spacegroup = parseInt(request.preferences.spacegroup, 10);
+
 
     // Set run mode
     request.preferences.run_mode = 'server';

@@ -77,23 +77,6 @@ from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
 
-DETECTOR_TO_BEST = {
-    "ADSC": "q315",
-    "ADSC-Q315": "q315",
-    "ADSC-HF4M": "hf4m",
-    "Pilatus-6M": "pilatus6m",
-    "PILATUS": "pilatus6m",
-    "raxis":"raxis",
-    "rayonix_mx225": "mar225",
-    "rayonix_mx300": "mx300",
-    "rayonix_mx300hs": "mx300hs",
-    "mar300": "mar300",
-    "ray300": "ray300",
-    "Dectris Eiger 9M": "eiger9m",
-    "Eiger-9M": "eiger9m",
-    "Eiger-16M": "eiger16m",
-    }
-
 VERSIONS = {
     "best": (
         "Version 3.2.0",
@@ -383,7 +366,13 @@ class RapdPlugin(Process):
                 self.results["header%d" % version]["basename"] = \
                     os.path.basename(self.results["header%d" % version]["fullname"])
         """
+
+        # Directory information
+        self.results["directories"] = self.command.get("directories", {})
+
+        # Preferences
         self.results["preferences"] = self.preferences
+        
         # Describe the process
         self.results["process"] = self.command.get("process", {})
         # Status is now 1 (starting)
@@ -999,7 +988,7 @@ class RapdPlugin(Process):
             dose = 500001
 
         # Put together the command for labelit.index
-        best_detector = DETECTOR_TO_BEST.get(self.image1.get("detector"), False)
+        best_detector = info.DETECTOR_TO_BEST.get(self.image1.get("detector"), False)
         if not best_detector:
             self.tprint(arg="RAPD does not have a BEST definition for your detector type %s"
                         % self.image1.get("detector"),
@@ -1231,7 +1220,7 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                detector_found = best.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
+                detector_found = best.check_best_detector(info.DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
                 # No detector in best param file - bail on best
                 if not detector_found:
                     self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
@@ -1539,7 +1528,7 @@ Distance | % Transmission", level=98, color="white")
 
         self.logger.debug("AutoindexingStrategy::run_queue")
         self.tprint(arg="\nStarting strategy calculations", level=98, color="blue")
-        self.tprint(75, level="progress")
+        self.tprint(90, level="progress")
 
         # try:
         def set_best_results(i, x):
@@ -1907,13 +1896,26 @@ Distance | % Transmission", level=98, color="white")
             return (False, False)
 
     def write_json(self, results):
-        """Write a file with the JSON version of the results"""
-
-        json_string = json.dumps(results) #.replace("\\n", "")
+        """
+        Write a file with the JSON version of the results
+        """
+        # Convert
+        json_string = json.dumps(results)
 
         # Output to terminal?
         if self.preferences.get("json", False):
             print json_string
+
+        # Output to an fd?
+        if self.preferences.get("json_fd", False):
+            # Output to terminal if stdout
+            if int(self.preferences.get("json_fd")) == 1:
+                print json_string
+            # Output to fd
+            else:
+                with os.fdopen(int(self.preferences.get("json_fd")), "w") as f:
+                    f.write(json_string)
+                    f.flush()
 
         # Always write a file
         os.chdir(self.working_dir)
@@ -1939,7 +1941,7 @@ Distance | % Transmission", level=98, color="white")
 
         # Plot as long as JSON output is not selected
         if self.preferences.get("show_plots", True) and \
-           (not self.preferences.get("json", False)):
+           (not (self.preferences.get("json", False) or self.preferences.get("json_fd", False))):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
@@ -2892,9 +2894,9 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         current_progress = 0
 
         while ellapsed_time < global_vars.LABELIT_TIMEOUT:
-            prog = int(7*ellapsed_time / 50)
+            prog = int(7*ellapsed_time / 60)
             if prog > current_progress:
-                self.tprint(prog*10, "progress")
+                self.tprint(prog*10, level="progress")
                 current_progress = prog
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)

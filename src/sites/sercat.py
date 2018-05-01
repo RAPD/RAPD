@@ -166,9 +166,8 @@ CONTROL_DATABASE = "mongodb"
 DETECTOR = False
 DETECTOR_SUFFIX = ""
 # Keyed to ID
-#DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
 DETECTORS = {"SERCAT_ID":("SERCAT_DECTRIS_EIGER16M", ""),
-             "SERCAT_BM":("SERCAT_RAYONIX_MX225", "")}
+             "SERCAT_BM":("SERCAT_RAYONIX_MX300", "")}
 
 # Launcher Manager to sort out where to send jobs
 LAUNCHER_MANAGER_LOCK_FILE = "/home/schuerjp/temp/lock/launcher_manager.lock"
@@ -216,7 +215,7 @@ IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs", "_r1_UR", "_r1_UL", "_r1_AR",
 
 # If processing images in NFS shared RAMDISK with different path 
 # than long-term storage that was passed in. Check if they exist.
-ALT_IMAGE_LOCATION = True
+ALT_IMAGE_LOCATION = False
 # Name of class in detector file that runs as server.
 # Set to False if not using server 
 #ALT_IMAGE_SERVER_NAME = 'FileLocation'

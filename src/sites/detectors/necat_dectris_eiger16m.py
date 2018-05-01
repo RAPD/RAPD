@@ -207,6 +207,20 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
+def is_run_from_imagename(imagename):
+    """
+    Determine if image is in a run from the image
+    """
+    
+    # Tease out the info from the file name
+    directory, basename, image_prefix, run_number, image_number = parse_file_name(imagename)
+
+    # Run number 0 for snaps at NECAT
+    if run_number > 0:
+        return True
+    else:
+        return False
+
 def calculate_flux(header, site_params):
     """
     Calculate the flux as a function of transmission and aperture size.
