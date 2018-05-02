@@ -22,7 +22,7 @@ This is an install for sites that are integrating RAPD into their systems and wa
 #### Requirements
 #### Installing
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
-2. Navigate to the install directory 'cd RAPD/install' and run the minimal install `./install_min`
+2. Navigate to the install directory `cd RAPD/install` and run the minimal install `./install_min`
 
 
 
