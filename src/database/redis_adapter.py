@@ -48,7 +48,7 @@ import utils.log
 from utils.text import json
 from bson.objectid import ObjectId
 
-ATTEMPT_LIMIT = 100
+ATTEMPT_LIMIT = 3600
 ATTEMPT_PAUSE = 1.0
 CONNECTION_ATTEMPT_LIMIT = 3600
 
@@ -132,6 +132,7 @@ class RedisClient:
     """
 
     socket_timeout = 1
+    pubsubs = {}
 
     class Error(Exception):
         pass
@@ -367,6 +368,10 @@ class RedisClient:
         # if transform: values = self._transform_value(keys, values)
         return (dict(zip(keys,values)) if return_dict else values)
 
+    #############
+    # SET Methods
+    #############
+
     def sset(self, key, value):
         """
         Set the indicated key value pair.
@@ -412,6 +417,10 @@ class RedisClient:
         else:
             self._raise_ConnectionError(error)
 
+    ################
+    # PUBSUB Methods
+    ################
+
     def publish(self, key, value):
         """
         Publish a value on a given key
@@ -432,14 +441,97 @@ class RedisClient:
         else:
             self._raise_ConnectionError(error)
 
+    def get_message(self, id):
+        """
+        Get message on pubsub connection
+        """
+
+        attempts = 0
+        while attempts < ATTEMPT_LIMIT:
+            try:
+                attempts += 1
+                message = self.pubsubs[id].get_message()
+                break
+            except redis.exceptions.ConnectionError as error:
+                # Pause for specified time
+                # print "try %d" % attempts
+                time.sleep(ATTEMPT_PAUSE)
+        else:
+            self._raise_ConnectionError(error)
+
+        return message
+
     def get_pubsub(self):
         """
-        Returns a pubsub connection
+        Returns a pubsub connection - no error is triggered if no connection
         """
 
-        return self.redis.pubsub()
+        # Create the pubsub object
+        ps = self.redis.pubsub()
 
+        # Give it an id
+        id = len(self.pubsubs) + 1
+        ps._id = id
 
+        # Store a reference
+        self.pubsubs[id] = ps
+
+        # Return the id
+        return id
+
+    def psubscribe(self, id=False, pattern=False):
+        """
+        Add pattern subscription to a pubsub object and return id of pubsub object
+        """
+
+        # No id passed in - create pubsub object
+        if not id:
+            id = self.get_pubsub()
+
+        attempts = 0
+        while attempts < ATTEMPT_LIMIT:
+            try:
+                attempts += 1
+                self.pubsubs[id].psubscribe(pattern)
+                break
+            except redis.exceptions.ConnectionError as error:
+                # Pause for specified time
+                # print "try %d" % attempts
+                time.sleep(ATTEMPT_PAUSE)
+        else:
+            self._raise_ConnectionError(error)
+
+        return id
+
+    def subscribe(self, id=None, channel=None):
+        """
+        Add subscription to a pubsub object and return id of pubsub object
+        """
+
+        if channel:
+
+            # No id passed in - create pubsub object
+            if not id:
+                id = self.get_pubsub()
+
+            attempts = 0
+            while attempts < ATTEMPT_LIMIT:
+                try:
+                    attempts += 1
+                    self.pubsubs[id].subscribe(channel)
+                    break
+                except redis.exceptions.ConnectionError as error:
+                    # Pause for specified time
+                    # print "try %d" % attempts
+                    time.sleep(ATTEMPT_PAUSE)
+            else:
+                self._raise_ConnectionError(error)
+
+            return id
+
+    ###############
+    # WATCH Methods
+    ###############
 
     def watch(self, key, duration=float("inf"), interval=0.5):
         """
@@ -619,19 +711,15 @@ def main():
     pprint(RC.state_connection())
     counter = 0
     ps = RC.get_pubsub()
-    ps.subscribe("foo")
+    RC.subscribe(id=ps, channel="foo")
+    RC.publish("foo", "bar{}".format(counter))
     while True:
         time.sleep(1)
         # print RC.sget("foo")
         # RC.sset("foo", counter)
-        # RC.publish("foo", "bar")
-        try:
-            print ps.get_message()
-        except redis.exceptions.ConnectionError as error:
-            ps.on_connect()
+        print RC.get_message(ps)
+        
         counter += 1
-
-
 
 if __name__ == "__main__":
     main()
