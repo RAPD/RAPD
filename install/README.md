@@ -15,14 +15,14 @@ A number of packages are required for the full install to function properly. The
 
 #### Installing
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
-2. Navigate to the install directory `cd rapd/install` and run the install `./install`  
+2. Navigate to the install directory `cd RAPD/install` and run the install `./install`  
 
 ## Minimal Install
 This is an install for sites that are integrating RAPD into their systems and want a simple version on nodes for data watching, signaling, etc. Unable to process images, etc. with this install.
 #### Requirements
 #### Installing
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
-2. Navigate to the install directory and `./install_min`
+2. Navigate to the install directory 'cd RAPD/install' and run the minimal install `./install_min`
 
 
 
