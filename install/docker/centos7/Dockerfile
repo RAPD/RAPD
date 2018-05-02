@@ -23,7 +23,7 @@ RUN yum -y install bzip2 \
                    wget
 
 RUN echo -e "jkdskpakdjfdlkdvnlsjdsjk\njkdskpakdjfdlkdvnlsjdsjk" | (passwd root)
-RUN adduser -m tester
+RUN adduser tester
 RUN echo -e "bjsdjhdx\nbjsdjhdx" | (passwd tester)
 RUN  echo "tester ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 USER tester
@@ -32,8 +32,6 @@ RUN wget https://sbgrid.org/wiki/downloads/sbgrid-1.0.660-Linux.tgz
 RUN gunzip sbgrid-1.0.660-Linux.tgz
 RUN tar xvf sbgrid-1.0.660-Linux.tar
 WORKDIR /home/tester/sbgrid-1.0.660-Linux
-RUN ./sbgrid activate necat-staff fmurphy 
-
 
 # RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
 # WORKDIR /home/tester/rapd/install
