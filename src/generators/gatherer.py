@@ -65,7 +65,7 @@ class FileGenerator(CommandlineFileGenerator):
                                        "shutil",
                                        "time",
                                        "uuid"),
-                           added_rapd_imports=("from database.redis_adapter import Database as RedisDB"
+                           added_rapd_imports=("from database.redis_adapter import Database as RedisDB",
                                                "utils.commandline",
                                                "from utils.text import json",))
         self.write_gatherer()
@@ -146,61 +146,13 @@ class FileGenerator(CommandlineFileGenerator):
     def write_gatherer(self):
         """Write the gatherer-specific functions"""
 
-        # Import generic detectors
-        gatherer_imports = [
-            "# ADSC Q315",
-            "# import detectors.adsc.adsc_q315 as detector",
-            "# Dectris Pilatus 6M",
-            "# import detectors.dectris.dectris_pilatus6m as detector"
-            "# Rayonix MX300",
-            "# import detectors.rayonix.rayonix_mx300 as detector",
-            "# Rayonix MX300HS",
-            "# import detectors.rayonix.rayonix_mx300hs as detector\n"
-        ]
+        # Any super-specific imports
+        gatherer_imports = []
         self.output_function(gatherer_imports)
 
-        # Information for detector setup
-        gatherer_info = [
-            "# Detector information",
-            "# The RAPD detector type",
-            "DETECTOR = \"rayonix_mx300\"",
-            "# The detector vendor as it appears in the header",
-            "VENDORTYPE = \"MARCCD\"",
-            "# The detector serial number as it appears in the header",
-            "DETECTOR_SN = 7",
-            "# The detector suffix \"\" if there is no suffix",
-            "DETECTOR_SUFFIX = \"\"",
-            "# Template for image name generation ? for frame number places",
-            "IMAGE_TEMPLATE = \"%s.????\"",
-            "# Is there a run number in the template?",
-            "RUN_NUMBER_IN_TEMPLATE = False",
-            "# This is a version number for internal RAPD use",
-            "# If the header changes, increment this number",
-            "HEADER_VERSION = 1\n"
-        ]
+        # Information appears after imports
+        gatherer_info = []
         self.output_function(gatherer_info)
-
-        # # parse_file_name function
-        # parse_file_name = [
-        #     "def parse_file_name(fullname):",
-        #     "    \"\"\"",
-        #     "    Parse the fullname of an image and return",
-        #     "    (directory, basename, prefix, run_number, image_number)",
-        #     "    Keyword arguments",
-        #     "    fullname -- the full path name of the image file",
-        #     "    \"\"\"",
-        #     "    # Directory of the file",
-        #     "    directory = os.path.dirname(fullname)\n",
-        #     "    # The basename of the file (i.e. basename - suffix)",
-        #     "    basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)\n",
-        #     "    # The prefix, image number, and run number",
-        #     "    sbase = basename.split(\".\")",
-        #     "    prefix = \".\".join(sbase[0:-1])",
-        #     "    image_number = int(sbase[-1])",
-        #     "    run_number = None",
-        #     "    return directory, basename, prefix, run_number, image_number\n",
-        # ]
-        # self.output_function(parse_file_name)
 
         # Gatherer class
         gatherer_class = [
@@ -279,7 +231,7 @@ class FileGenerator(CommandlineFileGenerator):
             "            while self.go:\n",
             "                # 5 rounds of checking",
             "                for ___ in range(5):",
-            "                    # An example of file-based signalling"
+            "                    # An example of file-based signalling",
             "                    # Check if the run info has changed on the disk",
             "                    if self.check_for_run_info():",
             "                        run_data = self.get_run_data()",
