@@ -224,6 +224,7 @@ class RedisClient:
                  password=None, 
                  sentinels=None,
                  master=None,
+                 settings=None
                  logger=False):
         """Initialize the client."""
 
@@ -235,6 +236,25 @@ class RedisClient:
         self.sentinels = sentinels
         self.master =    master
         self.logger =    logger
+
+        # Use the RAPD CONTROL_DATABASE_SETTINGS object
+        if settings:
+            # Sentinel
+            if settings["REDIS_CONNECTION"] == "sentinel":
+                self.host =      None
+                self.port =      None
+                self.db =        None
+                self.password =  settings["REDIS_PASSWORD"] 
+                self.sentinels = settings["REDIS_SENTINEL_HOSTS"] 
+                self.master =    settings["REDIS_MASTER_NAME"] 
+            # Standard
+            else:
+                self.host =      settings["REDIS_HOST"]
+                self.port =      settings["REDIS_PORT"]
+                self.db =        settings["REDIS_DB"]
+                self.password =  settings["REDIS_PASSWORD"] 
+                self.sentinels = None
+                self.master =    None
 
         self._ConnectionError_last_log_time = float("-inf")
 
@@ -616,125 +636,125 @@ class RedisClient:
     # WATCH Methods
     ###############
 
-    def watch(self, key, duration=float("inf"), interval=0.5):
-        """
-        Print the untransformed and transformed values of the specified key for
-        the indicated duration.
+#     def watch(self, key, duration=float("inf"), interval=0.5):
+#         """
+#         Print the untransformed and transformed values of the specified key for
+#         the indicated duration.
 
-        key can be a str, or a tuple or list of keys.
+#         key can be a str, or a tuple or list of keys.
 
-        duration is the number of seconds for which to watch the key.
+#         duration is the number of seconds for which to watch the key.
 
-        interval is the number of seconds to sleep in between repetitions.
-        """
+#         interval is the number of seconds to sleep in between repetitions.
+#         """
 
-        # self.logger.debug("{} key(s):{}, duration:{}, interval:{}".format(tools.cm_name(), key, duration, interval))
+#         # self.logger.debug("{} key(s):{}, duration:{}, interval:{}".format(tools.cm_name(), key, duration, interval))
 
-        start_time = time.time()
-        deadline = start_time + duration
+#         start_time = time.time()
+#         deadline = start_time + duration
 
-        try:
-            while time.time() < deadline:
-                dict_untransformed = self.get(key, transform=False, return_dict=True)
-                dict_transformed = self.get(key, transform=True, return_dict=True)
-                elapsed_time = time.time() - start_time
-                print("[{}] (at {:.1f}s) (Beamline {}):\n\tUntransformed: {}\n\tTransformed:   {}".format(time.asctime(), elapsed_time, self._beamline, dict_untransformed, dict_transformed))
-                time.sleep(interval)
-        except (KeyboardInterrupt, SystemExit):
-            pass
+#         try:
+#             while time.time() < deadline:
+#                 dict_untransformed = self.get(key, transform=False, return_dict=True)
+#                 dict_transformed = self.get(key, transform=True, return_dict=True)
+#                 elapsed_time = time.time() - start_time
+#                 print("[{}] (at {:.1f}s) (Beamline {}):\n\tUntransformed: {}\n\tTransformed:   {}".format(time.asctime(), elapsed_time, self._beamline, dict_untransformed, dict_transformed))
+#                 time.sleep(interval)
+#         except (KeyboardInterrupt, SystemExit):
+#             pass
 
-    def wait(self, key, condition, timeout=float("inf"), interval=0.5, delay=0,
-             true_period=None, use_dict=False):
-        """
-        Wait while the condition is False (i.e. until the condition is True)
-        for the value(s) of the key(s), up to timeout, returning values(s).
+#     def wait(self, key, condition, timeout=float("inf"), interval=0.5, delay=0,
+#              true_period=None, use_dict=False):
+#         """
+#         Wait while the condition is False (i.e. until the condition is True)
+#         for the value(s) of the key(s), up to timeout, returning values(s).
 
-        key can be either a str, or a tuple or list of keys.
+#         key can be either a str, or a tuple or list of keys.
 
-        condition is the desired state(s) at which to stop waiting. It is
-        expressed as a callable function or their sequence. These accept one
-        input argument, i.e. the value(s) of the specified key(s), and return
-        a value which is evaluated as a bool.
+#         condition is the desired state(s) at which to stop waiting. It is
+#         expressed as a callable function or their sequence. These accept one
+#         input argument, i.e. the value(s) of the specified key(s), and return
+#         a value which is evaluated as a bool.
 
-        timeout is the maximum number of seconds for which to monitor the key.
-        self.WaitTimeoutError exception is raised if the condition is still
-        false at the end of the timeout period.
+#         timeout is the maximum number of seconds for which to monitor the key.
+#         self.WaitTimeoutError exception is raised if the condition is still
+#         false at the end of the timeout period.
 
-        interval is the number of seconds to sleep in between checks.
+#         interval is the number of seconds to sleep in between checks.
 
-        delay is the number of seconds to sleep before starting to test
-        condition for the first time. It is independent of the timeout period.
+#         delay is the number of seconds to sleep before starting to test
+#         condition for the first time. It is independent of the timeout period.
 
-        true_period is the minimum number of seconds for which the condition
-        must be true. This is implemented by rechecking the condition after
-        each interval of time. If None, the condition must be true once.
+#         true_period is the minimum number of seconds for which the condition
+#         must be true. This is implemented by rechecking the condition after
+#         each interval of time. If None, the condition must be true once.
 
-        use_dict indicates whether to retrieve and test the value(s) of the
-        specified key(s) as a dict. If True, condition must accordingly accept
-        a dict.
+#         use_dict indicates whether to retrieve and test the value(s) of the
+#         specified key(s) as a dict. If True, condition must accordingly accept
+#         a dict.
 
-        Examples:
-        wait("CENTERING_READY_SV", lambda v: v=="ready", 4*60)
-        wait(("XINBAND_SV", "YINBAND_SV"), lambda v: v[0]==v[1]=="IN")
-        wait(("PUCK_SV", "SAMP_SV"),
-             lambda v: (v["PUCK_SV"]=="A" and v["SAMP_SV"]==1),
-             use_dict=True)
-        """
+#         Examples:
+#         wait("CENTERING_READY_SV", lambda v: v=="ready", 4*60)
+#         wait(("XINBAND_SV", "YINBAND_SV"), lambda v: v[0]==v[1]=="IN")
+#         wait(("PUCK_SV", "SAMP_SV"),
+#              lambda v: (v["PUCK_SV"]=="A" and v["SAMP_SV"]==1),
+#              use_dict=True)
+#         """
 
-        # Note: condition is a function rather than an equality test, as a
-        #       function allows for richer comparisons.
+#         # Note: condition is a function rather than an equality test, as a
+#         #       function allows for richer comparisons.
 
-        # self.logger.debug("{} key(s):{}, timeout:{}, interval:{}, delay:{}, true_period:{}".format(tools.cm_name(), key, timeout, interval, delay, true_period))
+#         # self.logger.debug("{} key(s):{}, timeout:{}, interval:{}, delay:{}, true_period:{}".format(tools.cm_name(), key, timeout, interval, delay, true_period))
 
-        if (not backend.settings.active) and (timeout > 1):
-            # self.logger.info("{} Because application is not running in active mode, timeout will be reduced from {} to 0.".format(tools.cm_name(), timeout))
-            timeout = 0 # also noted in log message above
+#         if (not backend.settings.active) and (timeout > 1):
+#             # self.logger.info("{} Because application is not running in active mode, timeout will be reduced from {} to 0.".format(tools.cm_name(), timeout))
+#             timeout = 0 # also noted in log message above
 
-        condition_is_callable = callable(condition)
-        condition_is_callable_sequence = ((isinstance(condition, list) or isinstance(condition, tuple))
-                                          and all((callable(c) for c in condition)))
-        if not (condition_is_callable or condition_is_callable_sequence):
-            raise TypeError("The specified condition must be either a callable, or a tuple or list sequence of callables.")
+#         condition_is_callable = callable(condition)
+#         condition_is_callable_sequence = ((isinstance(condition, list) or isinstance(condition, tuple))
+#                                           and all((callable(c) for c in condition)))
+#         if not (condition_is_callable or condition_is_callable_sequence):
+#             raise TypeError("The specified condition must be either a callable, or a tuple or list sequence of callables.")
 
-        time.sleep(delay)
-        deadline = time.time() + timeout
+#         time.sleep(delay)
+#         deadline = time.time() + timeout
 
-        condition_true = False
+#         condition_true = False
 
-        while True:
-            value = self.get(key, return_dict=use_dict)
-            self.logger.debug("Value is {}".format(value))
-            # Determine if condition is true or false
-            if condition_is_callable:
-                condition_true = condition(value)
-            elif condition_is_callable_sequence:
-                condition_true = all((c(value) for c in condition))
-            # else TypeError is previously raised
+#         while True:
+#             value = self.get(key, return_dict=use_dict)
+#             self.logger.debug("Value is {}".format(value))
+#             # Determine if condition is true or false
+#             if condition_is_callable:
+#                 condition_true = condition(value)
+#             elif condition_is_callable_sequence:
+#                 condition_true = all((c(value) for c in condition))
+#             # else TypeError is previously raised
 
-            # Handle the four possible logical conditions
-            if condition_true and (not true_period):
-                return value
-            elif condition_true and true_period:
-                try:
-                    if time.time() > true_period_end: #@UndefinedVariable
-                        return value
-                except NameError:
-                    true_period_end = time.time() + true_period
-            elif (not condition_true) and true_period:
-                try: del true_period_end #@UndefinedVariable
-                except NameError: pass
-#           elif (not condition_true) and (not true_period):
-#               pass
+#             # Handle the four possible logical conditions
+#             if condition_true and (not true_period):
+#                 return value
+#             elif condition_true and true_period:
+#                 try:
+#                     if time.time() > true_period_end: #@UndefinedVariable
+#                         return value
+#                 except NameError:
+#                     true_period_end = time.time() + true_period
+#             elif (not condition_true) and true_period:
+#                 try: del true_period_end #@UndefinedVariable
+#                 except NameError: pass
+# #           elif (not condition_true) and (not true_period):
+# #               pass
 
-            # Raise exception if deadline is crossed
-            if time.time() > deadline:
-                true_period_msg = " for the required true period" if true_period else ""
-                msg = "Timeout occurred waiting for the required condition(s) to return True{}. [key(s):{}, timeout:{}, interval:{}, true_period:{}, last_value(s):{}]".format(true_period_msg, key, timeout, interval, true_period, value)
-                logger = self.logger.warning #if backend.settings.active else self.logger.info
-                # logger("{} {}".format(tools.cm_name(), msg))
-                raise self.WaitTimeoutError(msg, key, value, timeout)
+#             # Raise exception if deadline is crossed
+#             if time.time() > deadline:
+#                 true_period_msg = " for the required true period" if true_period else ""
+#                 msg = "Timeout occurred waiting for the required condition(s) to return True{}. [key(s):{}, timeout:{}, interval:{}, true_period:{}, last_value(s):{}]".format(true_period_msg, key, timeout, interval, true_period, value)
+#                 logger = self.logger.warning #if backend.settings.active else self.logger.info
+#                 # logger("{} {}".format(tools.cm_name(), msg))
+#                 raise self.WaitTimeoutError(msg, key, value, timeout)
 
-            time.sleep(interval)
+#             time.sleep(interval)
 
     def print_items(self):
         """
