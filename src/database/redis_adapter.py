@@ -1,6 +1,10 @@
 """
 This is an adapter for RAPD to connect to the results database, when it is a
-REDIS instance
+REDIS instance.
+
+The connection should be automatically reconnecting, and a disconnection should
+be fully recovered from if the disconnection is shorter than 
+ATTEMPT_LIMIT * ATTEMPT_PAUSE seconds
 """
 
 __license__ = """
@@ -133,6 +137,7 @@ class RedisClient:
 
     socket_timeout = 1
     pubsubs = {}
+    sentinel = None
 
     class Error(Exception):
         pass
@@ -212,13 +217,24 @@ class RedisClient:
 
         return state
 
-    def __init__(self, host, port, logger):
+    def __init__(self,
+                 host="localhost",
+                 port=6379,
+                 db=0, 
+                 password=None, 
+                 sentinels=None,
+                 master=None,
+                 logger=False):
         """Initialize the client."""
 
         # Save passed-in variables
-        self.host = host
-        self.port = port
-        self.logger = logger
+        self.host =      host
+        self.port =      port
+        self.db =        db
+        self.password =  password 
+        self.sentinels = sentinels
+        self.master =    master
+        self.logger =    logger
 
         self._ConnectionError_last_log_time = float("-inf")
 
@@ -227,34 +243,48 @@ class RedisClient:
         self._connect() # "with self._connect_lock:" is not necessary in __init__
         atexit.register(self._disconnect)
 
+    ###############
+    # ADMIN Methods
+    ###############
+
     def _connect(self):
         """Connect to server."""
 
         # self.logger.debug(tools.cm_name())
 
-        print "connect"
-
         socket_timeout = self.socket_timeout
 
-        attempt_count = 0
-        while attempt_count < CONNECTION_ATTEMPT_LIMIT:
-            try:
-                # Connect
-                self.redis = redis.Redis(host=self.host, port=self.port, db=0)
-                # self._pool = redis.ConnectionPool(host=self.host, port=self.port, db=0)
-                
-                # Make sure redis server is up
-                _ = self.redis.ping()
-                break
-                # self._connection = redis.Redis(host, socket_timeout=socket_timeout)
-                # redis module reconnects automatically as needed.
-                # socket_timeout is not set to a higher value because it blocks.
-            except redis.exceptions.ConnectionError as e:
-                print "except"
-                self.logger.debug("Connection error {}".format(e))
-                time.sleep(1)
-                attempt_count += 1
-                # self._raise_ConnectionError(e)
+        # Sentinel connection
+        if self.sentinels:
+            self.sentinel = Sentinel(self.sentinels)
+
+            # Assign master connection to self.redis
+            self.redis = self.sentinel.master_for(self.master)
+
+        # Standard connection
+        else:
+            attempt_count = 0
+            while attempt_count < CONNECTION_ATTEMPT_LIMIT:
+                try:
+                    # Connect
+                    self.redis = redis.Redis(host=self.host,
+                                             port=self.port,
+                                             db=self.db,
+                                             password=self.password)
+                    # self._pool = redis.ConnectionPool(host=self.host, port=self.port, db=0)
+                    
+                    # Make sure redis server is up
+                    _ = self.redis.ping()
+                    break
+                    # self._connection = redis.Redis(host, socket_timeout=socket_timeout)
+                    # redis module reconnects automatically as needed.
+                    # socket_timeout is not set to a higher value because it blocks.
+                except redis.exceptions.ConnectionError as e:
+                    print "except"
+                    self.logger.debug("Connection error {}".format(e))
+                    time.sleep(1)
+                    attempt_count += 1
+                    # self._raise_ConnectionError(e)
 
         # # Make sure redis server is up
         # try:
@@ -276,8 +306,10 @@ class RedisClient:
             #self.logger.info("{} Disconnected Redis client from Redis server {host}:{port}.".format(tools.cm_name(), **connection.connection_pool.connection_kwargs))
 
     def _raise_ConnectionError(self, exc):
-        """Raise ConnectionError exception with an error message corresponding
-        to the provided exception."""
+        """
+        Raise ConnectionError exception with an error message corresponding
+        to the provided exception.
+        """
 
         # TODO: Implement functionality of _raise_ConnectionError directly into ConnectionError exception instead. Delete method definition.
 
@@ -296,6 +328,57 @@ class RedisClient:
 
         raise self.ConnectionError(err_msg)
 
+    def discover_master(self):
+        """
+        Return the master instance (host, ip)
+        """
+
+        if self.sentinel and self.master:
+            attempts = 0
+            while attempts < ATTEMPT_LIMIT:
+                try:
+                    attempts += 1
+                    master = self.sentinel.discover_master(self.master)
+                    break
+                except redis.sentinel.MasterNotFoundError as e:
+                    # Pause for specified time
+                    print "try %d" % attempts
+                    time.sleep(ATTEMPT_PAUSE)
+            else:
+                self._raise_ConnectionError(e)
+
+            return master 
+        else:
+            self._raise_ConnectionError("Sentinels not properly defined")
+
+    def discover_slaves(self):
+        """
+        Return the slave instances [(host, ip),]
+        """
+
+        if self.sentinel and self.master:
+            attempts = 0
+            while attempts < ATTEMPT_LIMIT:
+                try:
+                    attempts += 1
+                    master = self.sentinel.discover_slaves(self.master)
+                    break
+                except redis.sentinel.SlaveNotFoundError as e:
+                    # Pause for specified time
+                    print "try %d" % attempts
+                    time.sleep(ATTEMPT_PAUSE)
+            else:
+                self._raise_ConnectionError(e)
+
+            return master 
+        else:
+            self._raise_ConnectionError("Sentinels not properly defined")
+
+
+    #############
+    # GET Methods
+    #############
+
     def __getitem__(self, key, return_dict=False):
         """
         Return the value of the specified key(s).
@@ -312,12 +395,12 @@ class RedisClient:
 
         # Get value(s)
         if isinstance(key, str):
-            return self.sget(key, return_dict)
+            return self.get(key, return_dict)
         elif isinstance(key, tuple) or isinstance(key, list):
             return self.mget(key, return_dict)
     get = __getitem__
 
-    def sget(self, key, return_dict=False):
+    def get(self, key, return_dict=False):
         """
         Return the value of `key`.
 
@@ -325,7 +408,7 @@ class RedisClient:
         the keys in the returned dict match the specified key(s).
         """
 
-        # self.logger.debug("sget key:{} return_dict:{}".format(key, return_dict))
+        # self.logger.debug("get key:{} return_dict:{}".format(key, return_dict))
 
         # Retrieve value
         attempts = 0
@@ -372,12 +455,12 @@ class RedisClient:
     # SET Methods
     #############
 
-    def sset(self, key, value):
+    def set(self, key, value):
         """
         Set the indicated key value pair.
         """
 
-        self.logger.debug("sset key:{} value:{}".format(key, value))
+        self.logger.debug("set key:{} value:{}".format(key, value))
 
         # Set
         attempts = 0
@@ -393,7 +476,7 @@ class RedisClient:
         else:
             self._raise_ConnectionError(error)
 
-    __setitem__ = sset
+    __setitem__ = set
 
     def mset(self, mapping):
         """
@@ -436,7 +519,7 @@ class RedisClient:
                 break
             except redis.exceptions.ConnectionError as error:
                 # Pause for specified time
-                # print "try %d" % attempts
+                print "try %d" % attempts
                 time.sleep(ATTEMPT_PAUSE)
         else:
             self._raise_ConnectionError(error)
@@ -454,7 +537,7 @@ class RedisClient:
                 break
             except redis.exceptions.ConnectionError as error:
                 # Pause for specified time
-                # print "try %d" % attempts
+                print "try %d" % attempts
                 time.sleep(ATTEMPT_PAUSE)
         else:
             self._raise_ConnectionError(error)
@@ -706,7 +789,8 @@ def main():
                                   level=10,
                                   console=True)
 
-    RC = RedisClient(host="127.0.0.1", port="6379", logger=logger)
+
+    RC = RedisClient(host="127.0.0.1", port="6379", password="foobared", logger=logger)
     pprint(RC.state_server())
     pprint(RC.state_connection())
     counter = 0
@@ -715,11 +799,31 @@ def main():
     RC.publish("foo", "bar{}".format(counter))
     while True:
         time.sleep(1)
-        # print RC.sget("foo")
-        # RC.sset("foo", counter)
+        # print RC.get("foo")
+        # RC.set("foo", counter)
         print RC.get_message(ps)
         
         counter += 1
+
+    """
+    RC = RedisClient(sentinels=[("164.54.212.172", 26379)], master="remote_master", logger=logger)
+    ps = RC.get_pubsub()
+    RC.subscribe(id=ps, channel="foo")
+    counter = 0 
+    while True:
+        time.sleep(1)
+        
+        # print RC.discover_master()
+        # print RC.discover_slaves()
+        # print RC.set("foo", counter)
+        # print RC.get("foo")
+        # RC.publish("foo", "bar{}".format(counter))
+        print RC.get_message(ps)
+
+        counter += 1
+    """
+
+
 
 if __name__ == "__main__":
     main()
