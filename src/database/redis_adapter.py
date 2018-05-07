@@ -614,6 +614,16 @@ class RedisClient:
         value = self.redis.rpop(key)
         return value
                
+    ##############
+    # HASH Methods
+    ##############
+    @connectionErrorWrapper
+    def hmset(self, key, mapping):
+        """
+        HMSET a key with the attached mapping
+        """
+        self.redis.hmset(key, mapping)
+
 
     ################
     # PUBSUB Methods
@@ -897,40 +907,40 @@ class RedisClient:
 
 #             time.sleep(interval)
 
-    def print_items(self):
-        """
-        Print all key-value pairs for the current server and beamline.
+    # def print_items(self):
+    #     """
+    #     Print all key-value pairs for the current server and beamline.
 
-        This method is for debugging only.
-        """
+    #     This method is for debugging only.
+    #     """
 
-        # self.logger.debug(tools.cm_name())
-        # self._reconnect_if_beamline_mismatch()
+    #     # self.logger.debug(tools.cm_name())
+    #     # self._reconnect_if_beamline_mismatch()
 
-        # Create a list of keys
-        keys = [key for key, key_dict in backend.redis_console_keys.keys.items() if self._beamline in key_dict["bl"]] # @UnusedVariable
-        connection = redis.Redis(connection_pool=self._pool)
-        keys = list(connection.keys())
-        keys.sort()
+    #     # Create a list of keys
+    #     keys = [key for key, key_dict in backend.redis_console_keys.keys.items() if self._beamline in key_dict["bl"]] # @UnusedVariable
+    #     connection = redis.Redis(connection_pool=self._pool)
+    #     keys = list(connection.keys())
+    #     keys.sort()
 
-        # Print keys and their values
-        for key in keys:
-            print_str = "\t{}:{}".format(self._beamline, key)
-            try:
-                desc = backend.redis_console_keys.keys[key]["desc"]
-                if desc: print_str += " ({})".format(desc)
-            except KeyError:
-                pass
-            try:
-                backend.redis_console_keys.keys[key]["transform"]
-            except KeyError:
-                print_str += " (not transformed)"
-            try:
-                print_str += ": {}".format(repr(self[key]))
-            except Exception as e:
-                self.logger.exception("An exception occurred while getting value of key {}. The exception is: {}".format(key, e))
-            else:
-                print(print_str)
+    #     # Print keys and their values
+    #     for key in keys:
+    #         print_str = "\t{}:{}".format(self._beamline, key)
+    #         try:
+    #             desc = backend.redis_console_keys.keys[key]["desc"]
+    #             if desc: print_str += " ({})".format(desc)
+    #         except KeyError:
+    #             pass
+    #         try:
+    #             backend.redis_console_keys.keys[key]["transform"]
+    #         except KeyError:
+    #             print_str += " (not transformed)"
+    #         try:
+    #             print_str += ": {}".format(repr(self[key]))
+    #         except Exception as e:
+    #             self.logger.exception("An exception occurred while getting value of key {}. The exception is: {}".format(key, e))
+    #         else:
+    #             print(print_str)
 
 def main():
     """
