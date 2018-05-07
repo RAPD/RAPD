@@ -47,13 +47,13 @@ class EventHandler(pyinotify.ProcessEvent):
     Process pyinotify events
     """
     
-    def __init__(rapd_redis=None, remote_redis=None,logger=None):
+    def __init__(redis_rapd=None, redis_remote=None,logger=None):
         """
         Initialize the event handler with connections
         """
 
-        self.rapd_redis = rapd_redis
-        self.remote_redis = remote_redis
+        self.redis_rapd = redis_rapd
+        self.redis_remote = redis_remote
         self.logger = logger
 
     def process_IN_MOVED_TO(self, event):
@@ -61,25 +61,32 @@ class EventHandler(pyinotify.ProcessEvent):
         This is the final step for a file being created
         """
         self.logger.debug("%s has been moved" % event.pathname)
+        
         if (event.pathname.endswith('.cbf')):
             # Notify downstream consumers via redis
             error_count = 0
             while error_count < 10:
                 try:
                     # RAPD1
-                    self.rapd_redis.lpush("images_collected_C", event.pathname)
-                    self.rapd_redis.publish("image_collected_C", event.pathname)
+                    self.redis_rapd.lpush("images_collected_C", event.pathname)
+                    self.redis_rapd.publish("image_collected_C", event.pathname)
                     # RAPD2
-                    self.rapd_redis.lpush("images_collected:NECAT_C", event.pathname)
-                    self.rapd_redis.publish("image_collected:NECAT_C", event.pathname)
+                    self.redis_rapd.lpush("images_collected:NECAT_C", event.pathname)
+                    self.redis_rapd.publish("image_collected:NECAT_C", event.pathname)
                     # REMOTE
-                    self.remote_redis.publish("filecreate:C", event.pathname)
+                    self.redis_remote.publish("filecreate:C", event.pathname)
                     break
                 except redis.ConnectionError:
                     self.logger.error("%s has not been sent to RAPD!!" % event.pathname)
                     error_count += 1
                     time.sleep(1)
     
+    def process_IN_DELETE_SELF(self, event):
+        """
+        A watched directory is deleted
+        """
+        self.logger.debug("%s has been deleted" % event.pathname)
+
     def process_default(self, event):
         """
         Eventually, this method is called for all other types of events.
@@ -126,13 +133,12 @@ class DirectoryHandler(threading.Thread):
                     counter += 1
             return False
 
-        def add_watch_descriptor(wd, directory):
+        def add_watch_descriptor(wdd, directory):
             """
             Add watch descriptor to watched_dirs
             """
-            
             if wd:
-                self.watched_dirs.append(wd)
+                self.watched_dirs.append(wdd)
                 self.logger.debug("Adding watch for directory %s" % directory)
             else: 
                 self.logger.debug("Error adding watch for directory" % directory)
@@ -145,17 +151,19 @@ class DirectoryHandler(threading.Thread):
                 remove_dir = self.watched_dirs.pop(3)
                 self.logger.debug("Removing %s from watched directories" % remove_dir)
                 if remove_dir:
-                    self.watch_manager.rm_watch(wdd[remove_dir], rec=True)
+                    self.watch_manager.rm_watch(wdd[], rec=True)
                 else:
                     logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
 
         have = False
 
         # Make sure we are not already watching this directory
-        for wdd in self.watched_dirs:
-            # Watching already >> exit
+        for i in range(len(self.watched_dirs)):
+            wdd = self.watched_dirs[i]
+            # Watching already remove first
             if (wdd.has_key(self.current_dir)):
-                have = True
+                __ = self.watched_dirs.pop(i)
+                self.watch_manager.rm_watch(wdd.values()[0], rec=True)
                 break
 
         if not have:
@@ -257,15 +265,7 @@ class Gatherer(object):
         DATA_DIR = "datadir_%s" % self.tag
 
         start_dir = False
-        error_count = 0
-        while error_count < 10:
-            try:
-                start_dir = self.redis_beamline.get(DATA_DIR)
-                break
-            except redis.ConnectionError:
-                self.logger.error("Connection Error in get %d" % counter)
-                error_count += 1
-                time.sleep(1)
+        start_dir = self.redis_beamline.get(DATA_DIR)
         current_dir = ""
         if start_dir:
             self.logger.debug("Call to watch  %s from Redis memory store" % start_dir)
@@ -273,7 +273,7 @@ class Gatherer(object):
             # Create a directory handler
             DirectoryHandler(current_dir=current_dir,
                              watch_manager=watch_manager,
-                             watched_dirs=watched_dirs, 
+                             watched_dirs=_watched_dirs, 
                              logger=self.logger)
 
         # Listen for new directory
