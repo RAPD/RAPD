@@ -130,44 +130,16 @@ class Gatherer(object):
                 if counter % 5 == 0:
                     self.ow_registrar.update({"site_id":self.site.ID})
                     counter = 0
-
-                # Increment counter
-                counter += 1
+                else:
+                    # Increment counter
+                    counter += 1
 
                 # Pause
                 time.sleep(1)
+
         except KeyboardInterrupt:
             self.stop()
 
-        # A RUN & IMAGES EXAMPLE
-        # Some logging
-        self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
-        self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
-        self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
-        self.logger.debug("  Will push new datasets onto runs_data:%s" % self.tag)
-
-            while self.go:
-
-                # 5 rounds of checking
-                for ___ in range(5):
-                    # An example of file-based signalling
-                    # Check if the run info has changed on the disk
-                    if self.check_for_run_info():
-                        run_data = self.get_run_data()
-                        if run_data:
-                        # Handle the run information
-                        self.handle_run(run_raw=current_run_raw)
-
-                        # 20 image checks
-                        for __ in range(20):
-                            # Check if the image file has changed
-                            if self.check_for_image_collected():
-                                image_name = self.get_image_data()
-                                if image_name:
-                                    self.handle_image(image_name)
-                                break
-                            else:
-                                time.sleep(0.05)
     def stop(self):
         """
         Stop the loop
@@ -209,179 +181,87 @@ class Gatherer(object):
 
         # NECAT uses Redis to communicate with the beamline
         # Connect to beamline Redis to monitor if run is launched
-        # self.redis_beamline = RedisDB(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        self.redis_beamline = RedisDB(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
 
         # NECAT uses Redis to communicate with the remote system
         # Connect to remote system Redis to monitor if run is launched
-        # self.redis_beamline = RedisDB(settings=self.site.REMOTE_ADAPTER_SETTINGS)
+        self.redis_remote = RedisDB(settings=self.site.REMOTE_ADAPTER_SETTINGS)
 
-    handle_run(self, run_raw):
+    def handle_run(self, run_raw):
         """
         Handle the raw run information
         """
 
         # Run information is encoded in JSON format
-        run_data = json.loads(current_run_raw)
+        # run_data = json.loads(current_run_raw)
+
+        # Get extra run information and pack it up
+        run_data = self.get_run_data(run_raw)
 
         # Determine if the run should be ignored
-
-        # If you need to manipulate the run information or add to it, here's the place
+        if self.ignored(run_data["directory"]):
+            self.logger.debug("Directory %s is marked to be ignored - skipping", run_data["directory"])
+            return False
 
         # Put into exchangable format
         run_data_json = json.dumps(run_data)
 
-        # Publish to Redis
-        self.redis.publish("run_data:%s" % self.tag, run_data_json)
+        # RAPD
+        self.redis_rapd.publish("run_data:%s" % self.tag, run_data_json)
+        self.redis_rapd.lpush("runs_data:%s" % self.tag, run_data_json)
 
-        # Push onto redis list in case no one is currently listening
-        self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
+        # Remote
+        self.redis_remote.hmset("current_run_C", run_data)
+        self.redis_remote.publish("current_run_C", run_data_json)
 
-    handle_image(self, image_name):
+    def ignored(self, dir):
         """
-        Handle a new image
+        Check if folder is supposed to be ignored
         """
-
-        self.logger.debug("image_collected:%s %s",
-                          self.tag,
-                          image_name)
-
-        # Publish to Redis
-        red.publish("image_collected:%s" % self.tag, image_name)
-
-        # Push onto redis list in case no one is currently listening
-        red.lpush("images_collected:%s" % self.tag, image_name)
-
-    # Used for file-based run information checking example
-    def check_for_run_info(self):
-        """
-        Returns True if run_data_file has been changed, False if not
-        """
-
-        # Make sure we have a file to check
-        if self.run_data_file:
-            tries = 0
-            while tries < 5:
-                try:
-                    statinfo = os.stat(self.run_data_file)
-                    break
-                except AttributeError:
-                    if tries == 4:
-                        return False
-                    time.sleep(0.01)
-                    tries += 1
-
-            # The modification time has not changed
-            if self.run_time == statinfo.st_ctime:
-                return False
-
-            # The file has changed
-            else:
-                self.run_time = statinfo.st_ctime
+        for d in self.site.IMAGE_IGNORE_DIRECTORIES:
+            if dir.startswith(d):
                 return True
-        else:
-            return False
+        return False
 
-    # Used for file-based run information example
-    def get_run_data(self):
+    def get_run_data(self, run_info):
         """
-        Return contents of run data file
+        Put together info from run and pass it back
         """
+        # Split it
+        cur_run = run_info.split("_") #runnumber,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
+        #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
+        
+        # Get some more information from beamline redis
+        det_directory = self.redis_beamline.get("ADX_DIRECTORY_SV")
+        run_prefix = self.redis_beamline.get("RUN_PREFIX_SV")
+        
+        # extend path with the '0_0' to path for Pilatus
+        run_directory = os.path.join(det_directory, "0_0")
 
-        if self.run_data_file:
-
-            # Copy the file to prevent conflicts with other programs
-            # Use the ramdisk if it is available
-            if os.path.exists("/dev/shm"):
-                tmp_dir = "/dev/shm/"
-            else:
-                tmp_dir = "/tmp/"
-
-            tmp_file = tmp_dir+uuid.uuid4().hex
-            shutil.copyfile(self.run_data_file, tmp_file)
-
-            # Read in the pickled file
-            f = open(tmp_file, "rb")
-            raw_run_data = pickle.load(f)
-            f.close()
-            self.logger.debug(raw_run_data)
-
-            # Remove the temporary file
-            os.unlink(tmp_file)
-
-            # Standardize the run information
-            """
-            The necessary fields are:
-                directory,
-                image_prefix,
-                run_number,
-                start_image_number,
-                number_images,
-                distance,
-                phi,
-                kappa,
-                omega,
-                osc_axis,
-                osc_start,
-                osc_width,
-                time,
-                transmission,
-                energy,
-                anomalous
-            """
-            run_data = {
-                "anomalous":None,
-                "beamline":raw_run_data.get("beamline", None),              # Non-standard
-                "beam_size_x":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
-                "beam_size_y":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
-                "directory":raw_run_data.get("directory", None),
-                "distance":float(raw_run_data.get("dist", 0.0)),
-                "energy":float(raw_run_data.get("energy", 0.0)),
-                "file_ctime":datetime.datetime.fromtimestamp(self.run_time).isoformat(),
-                "image_prefix":raw_run_data.get("image_prefix", None),
-                "kappa":None,
-                "number_images":int(float(raw_run_data.get("Nframes", 0))),
-                "omega":None,
-                "osc_axis":"phi",
-                "osc_start":float(raw_run_data.get("start", 0.0)),
-                "osc_width":float(raw_run_data.get("width", 0.0)),
-                "phi":float(raw_run_data.get("start", 0.0)),
-                "run_number":None,
-                "site_tag":self.tag,
-                "start_image_number":int(float(raw_run_data.get("first_image", 0))),
-                "time":float(raw_run_data.get("time", 0.0)),
-                "transmission":float(raw_run_data.get("trans", 0.0)),
-                "twotheta":None
-            }
-
-        else:
-            run_data = False
+        # Standardize the run information
+        run_data = {
+            "anomalous":          None,
+            "beamline":           self.tag,                                # Non-standard
+            "directory":          run_directory,
+            "distance":           float(cur_run[3]),
+            "energy":             float(cur_run[4]),
+            "image_prefix":       run_prefix,
+            "kappa":              None,
+            "number_images":      int(cur_run[2]),
+            "omega":              None,
+            "osc_axis":           "phi",
+            "osc_start":          float(cur_run[6]),
+            "osc_width":          float(cur_run[7]),
+            "phi":                0.0,
+            "run_number":         int(cur_run[0]),
+            "site_tag":           self.tag,
+            "start_image_number": int(cur_run[1]),
+            "time":               float(cur_run[8]),
+            "transmission":       float(cur_run[5]),
+            "twotheta":           None
+        }
 
         return run_data
-
-    # Used for file-based image example
-    def check_for_image_collected(self):
-        """
-        Returns True if image information file has new timestamp, False if not
-        """
-
-        tries = 0
-        while tries < 5:
-            try:
-                statinfo = os.stat(self.image_data_file)
-                break
-            except:
-                if tries == 4:
-                    return False
-                time.sleep(0.01)
-                tries += 1
-
-        # The modification time has not changed
-        if self.image_time == statinfo.st_mtime:
-            return False
-        # The file has changed
-        else:
-            self.image_time = statinfo.st_mtime
-            return True
 
 def get_commandline():
     """
