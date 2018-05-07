@@ -520,6 +520,27 @@ class RedisClient:
         else:
             self._raise_ConnectionError(error)
 
+    ##############
+    # LIST Methods
+    ##############
+    def lpush(self, key, value):
+        """
+        LPUSH a values onto a given list
+        """
+
+        attempts = 0
+        while attempts < ATTEMPT_LIMIT:
+            try:
+                attempts += 1
+                self.redis.lpush(key, value)
+                break
+            except redis.exceptions.ConnectionError as error:
+                # Pause for specified time
+                print "try %d" % attempts
+                time.sleep(ATTEMPT_PAUSE)
+        else:
+            self._raise_ConnectionError(error)
+
     ################
     # PUBSUB Methods
     ################
