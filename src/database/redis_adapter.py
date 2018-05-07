@@ -56,6 +56,23 @@ ATTEMPT_LIMIT = 3600
 ATTEMPT_PAUSE = 1.0
 CONNECTION_ATTEMPT_LIMIT = 3600
 
+
+def connectionErrorWrapper(func):
+    def wrapper(*args, **kwargs):
+        attempts = 0
+        while attempts < ATTEMPT_LIMIT:
+            try:
+                attempts += 1
+                return func(*args, **kwargs)
+                break
+            except redis.exceptions.ConnectionError as e:
+                # Pause for specified time
+                print "try %d" % attempts
+                time.sleep(ATTEMPT_PAUSE)
+        else:
+            args[0]._raise_ConnectionError(error)
+    return wrapper
+
 class Database(object):
     """
     Provides connection to REDIS for Model.
@@ -224,7 +241,7 @@ class RedisClient:
                  password=None, 
                  sentinels=None,
                  master=None,
-                 settings=None
+                 settings=None,
                  logger=False):
         """Initialize the client."""
 
@@ -420,6 +437,7 @@ class RedisClient:
             return self.mget(key, return_dict)
     get = __getitem__
 
+    @connectionErrorWrapper
     def get(self, key, return_dict=False):
         """
         Return the value of `key`.
@@ -431,21 +449,38 @@ class RedisClient:
         # self.logger.debug("get key:{} return_dict:{}".format(key, return_dict))
 
         # Retrieve value
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                value = self.redis.get(key)
-                break
-            except redis.exceptions.ConnectionError as e:
-                # Pause for specified time
-                print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(e)
-
+        value = self.redis.get(key)
+        
+        # Wrap in dict if requested
         return ({key: value} if return_dict else value)
 
+    # def get(self, key, return_dict=False):
+    #     """
+    #     Return the value of `key`.
+
+    #     `return_dict` indicates whether to return values in a dict. If True,
+    #     the keys in the returned dict match the specified key(s).
+    #     """
+
+    #     # self.logger.debug("get key:{} return_dict:{}".format(key, return_dict))
+
+    #     # Retrieve value
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             value = self.redis.get(key)
+    #             break
+    #         except redis.exceptions.ConnectionError as e:
+    #             # Pause for specified time
+    #             print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(e)
+
+    #     return ({key: value} if return_dict else value)
+
+    @connectionErrorWrapper
     def mget(self, keys, return_dict=False):
         """
         Return the values of the sequence `keys`.
@@ -457,24 +492,41 @@ class RedisClient:
         the keys in the returned dict match the specified key(s).
         """
 
-        # self.logger.log(5, "{} keys:{} transform:{} return_dict:{}".format(tools.cm_name(), keys, transform, return_dict))
-
         # Retrieve values
-        try:
-            connection = redis.Redis(connection_pool=self._pool)
-            values = connection.mget(keys)
-        except redis.exceptions.ConnectionError as e:
-            self._raise_ConnectionError(e)
-        # self.logger.log(5 if transform else logging.DEBUG, "{} keys:{} values:{}".format(tools.cm_name(), keys, repr(values)))
+        values = self.redis.mget(keys)
 
-        # Transform and return values
-        # if transform: values = self._transform_value(keys, values)
         return (dict(zip(keys,values)) if return_dict else values)
+
+    # def mget(self, keys, return_dict=False):
+    #     """
+    #     Return the values of the sequence `keys`.
+
+    #     `transform` indicates whether to apply transformations to the value
+    #     before returning it, as defined in the self._transform_value method.
+
+    #     `return_dict` indicates whether to return values in a dict. If True,
+    #     the keys in the returned dict match the specified key(s).
+    #     """
+
+    #     # self.logger.log(5, "{} keys:{} transform:{} return_dict:{}".format(tools.cm_name(), keys, transform, return_dict))
+
+    #     # Retrieve values
+    #     try:
+    #         connection = redis.Redis(connection_pool=self._pool)
+    #         values = connection.mget(keys)
+    #     except redis.exceptions.ConnectionError as e:
+    #         self._raise_ConnectionError(e)
+    #     # self.logger.log(5 if transform else logging.DEBUG, "{} keys:{} values:{}".format(tools.cm_name(), keys, repr(values)))
+
+    #     # Transform and return values
+    #     # if transform: values = self._transform_value(keys, values)
+    #     return (dict(zip(keys,values)) if return_dict else values)
 
     #############
     # SET Methods
     #############
 
+    @connectionErrorWrapper
     def set(self, key, value):
         """
         Set the indicated key value pair.
@@ -482,22 +534,32 @@ class RedisClient:
 
         self.logger.debug("set key:{} value:{}".format(key, value))
 
-        # Set
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                self.redis.set(key, str(value))
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+        self.redis.set(key, str(value))
+
+    # def set(self, key, value):
+    #     """
+    #     Set the indicated key value pair.
+    #     """
+
+    #     self.logger.debug("set key:{} value:{}".format(key, value))
+
+    #     # Set
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             self.redis.set(key, str(value))
+    #             break
+    #         except redis.exceptions.ConnectionError as error:
+    #             # Pause for specified time
+    #             print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(error)
 
     __setitem__ = set
 
+    @connectionErrorWrapper
     def mset(self, mapping):
         """
         Set the key value pairs which are in the dict `mapping`.
@@ -505,85 +567,115 @@ class RedisClient:
 
         # self.logger.debug("{} mapping:{}".format(tools.cm_name(), mapping))
 
+        # Get the mapping ready
         mapping = {k: str(v) for k, v in mapping.items()}
-        # Set
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                self.redis.mset(mapping)
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                # print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+
+        # Set in redis
+        self.redis.mset(mapping)
+
+
+    # def mset(self, mapping):
+    #     """
+    #     Set the key value pairs which are in the dict `mapping`.
+    #     """
+
+    #     # self.logger.debug("{} mapping:{}".format(tools.cm_name(), mapping))
+
+    #     mapping = {k: str(v) for k, v in mapping.items()}
+    #     # Set
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             self.redis.mset(mapping)
+    #             break
+    #         except redis.exceptions.ConnectionError as error:
+    #             # Pause for specified time
+    #             # print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(error)
 
     ##############
     # LIST Methods
     ##############
+    @connectionErrorWrapper
     def lpush(self, key, value):
         """
         LPUSH a values onto a given list
         """
+        self.redis.lpush(key, value)
 
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                self.redis.lpush(key, value)
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+    @connectionErrorWrapper
+    def rpop(self, key):
+        """
+        RPOP a value off a given list
+        """
+        value = self.redis.rpop(key)
+        return value
+               
 
     ################
     # PUBSUB Methods
     ################
-
+    @connectionErrorWrapper
     def publish(self, key, value):
         """
         Publish a value on a given key
         """
 
         # print "publish {} {}".format(key, value)
+        self.redis.publish(key, value)
 
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                self.redis.publish(key, value)
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+    # def publish(self, key, value):
+    #     """
+    #     Publish a value on a given key
+    #     """
 
+    #     # print "publish {} {}".format(key, value)
+
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             self.redis.publish(key, value)
+    #             break
+    #         except redis.exceptions.ConnectionError as error:
+    #             # Pause for specified time
+    #             print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(error)
+
+    @connectionErrorWrapper
     def get_message(self, id):
         """
         Get message on pubsub connection
         """
 
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                message = self.pubsubs[id].get_message()
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+        message = self.pubsubs[id].get_message()
 
         return message
+
+    # def get_message(self, id):
+    #     """
+    #     Get message on pubsub connection
+    #     """
+
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             message = self.pubsubs[id].get_message()
+    #             break
+    #         except redis.exceptions.ConnectionError as error:
+    #             # Pause for specified time
+    #             print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(error)
+
+    #     return message
 
     def get_pubsub(self):
         """
@@ -603,6 +695,7 @@ class RedisClient:
         # Return the id
         return id
 
+    @connectionErrorWrapper
     def psubscribe(self, id=False, pattern=False):
         """
         Add pattern subscription to a pubsub object and return id of pubsub object
@@ -612,21 +705,35 @@ class RedisClient:
         if not id:
             id = self.get_pubsub()
 
-        attempts = 0
-        while attempts < ATTEMPT_LIMIT:
-            try:
-                attempts += 1
-                self.pubsubs[id].psubscribe(pattern)
-                break
-            except redis.exceptions.ConnectionError as error:
-                # Pause for specified time
-                # print "try %d" % attempts
-                time.sleep(ATTEMPT_PAUSE)
-        else:
-            self._raise_ConnectionError(error)
+        self.pubsubs[id].psubscribe(pattern)
 
         return id
 
+    # def psubscribe(self, id=False, pattern=False):
+    #     """
+    #     Add pattern subscription to a pubsub object and return id of pubsub object
+    #     """
+
+    #     # No id passed in - create pubsub object
+    #     if not id:
+    #         id = self.get_pubsub()
+
+    #     attempts = 0
+    #     while attempts < ATTEMPT_LIMIT:
+    #         try:
+    #             attempts += 1
+    #             self.pubsubs[id].psubscribe(pattern)
+    #             break
+    #         except redis.exceptions.ConnectionError as error:
+    #             # Pause for specified time
+    #             # print "try %d" % attempts
+    #             time.sleep(ATTEMPT_PAUSE)
+    #     else:
+    #         self._raise_ConnectionError(error)
+
+    #     return id
+
+    @connectionErrorWrapper
     def subscribe(self, id=None, channel=None):
         """
         Add subscription to a pubsub object and return id of pubsub object
@@ -638,20 +745,33 @@ class RedisClient:
             if not id:
                 id = self.get_pubsub()
 
-            attempts = 0
-            while attempts < ATTEMPT_LIMIT:
-                try:
-                    attempts += 1
-                    self.pubsubs[id].subscribe(channel)
-                    break
-                except redis.exceptions.ConnectionError as error:
-                    # Pause for specified time
-                    # print "try %d" % attempts
-                    time.sleep(ATTEMPT_PAUSE)
-            else:
-                self._raise_ConnectionError(error)
-
             return id
+
+    # def subscribe(self, id=None, channel=None):
+    #     """
+    #     Add subscription to a pubsub object and return id of pubsub object
+    #     """
+
+    #     if channel:
+
+    #         # No id passed in - create pubsub object
+    #         if not id:
+    #             id = self.get_pubsub()
+
+    #         attempts = 0
+    #         while attempts < ATTEMPT_LIMIT:
+    #             try:
+    #                 attempts += 1
+    #                 self.pubsubs[id].subscribe(channel)
+    #                 break
+    #             except redis.exceptions.ConnectionError as error:
+    #                 # Pause for specified time
+    #                 # print "try %d" % attempts
+    #                 time.sleep(ATTEMPT_PAUSE)
+    #         else:
+    #             self._raise_ConnectionError(error)
+
+    #         return id
 
     ###############
     # WATCH Methods
@@ -831,18 +951,19 @@ def main():
                                   console=True)
 
 
-    RC = RedisClient(host="127.0.0.1", port="6379", password="foobared", logger=logger)
+    RC = RedisClient(host="127.0.0.1", port="6379", logger=logger) #, password="foobared", logger=logger)
     pprint(RC.state_server())
     pprint(RC.state_connection())
     counter = 0
-    ps = RC.get_pubsub()
-    RC.subscribe(id=ps, channel="foo")
-    RC.publish("foo", "bar{}".format(counter))
+    # ps = RC.get_pubsub()
+    # RC.subscribe(id=ps, channel="foo")
+    # RC.publish("foo", "bar{}".format(counter))
     while True:
         time.sleep(1)
         # print RC.get("foo")
         # RC.set("foo", counter)
-        print RC.get_message(ps)
+        # print RC.get_message(ps)
+        print RC.lpush("fool", "bar%d" % counter)
         
         counter += 1
 
@@ -863,8 +984,6 @@ def main():
 
         counter += 1
     """
-
-
 
 if __name__ == "__main__":
     main()
