@@ -37,7 +37,7 @@ import time
 
 # RAPD imports
 from database.redis_adapter import Database as RedisDB
-import utils
+import utils.commandline as commandline
 
 MASK = pyinotify.ALL_EVENTS
 NUMBER_WATCHED = 20
@@ -364,7 +364,7 @@ def get_commandline():
 
     # Parse the commandline arguments
     commandline_description = "Data gatherer"
-    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+    parser = argparse.ArgumentParser(parents=[commandline.base_parser],
                                      description=commandline_description) 
 
     return parser.parse_args()
