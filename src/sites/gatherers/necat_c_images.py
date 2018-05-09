@@ -166,14 +166,14 @@ class DirectoryHandler(threading.Thread):
         have = False
 
         # Make sure we are not already watching this directory
-        for wdd in self.watched_dirs:            
-            # Watching already remove first
-            if (wdd.has_key(self.current_dir)):
-                self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
-                __ = self.watched_dirs.pop(i)
-                self.watch_manager.rm_watch(wdd.values()[0])
-                self.logger.debug("  removed")
-                break
+        # for wdd in self.watched_dirs:            
+        #     # Watching already remove first
+        #     if (wdd.has_key(self.current_dir)):
+        #         self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
+        #         __ = self.watched_dirs.pop(i)
+        #         self.watch_manager.rm_watch(wdd.values()[0])
+        #         self.logger.debug("  removed")
+        #         break
 
         if not have:
             count = 0
@@ -291,7 +291,7 @@ class Gatherer(object):
                     self.logger.debug("New directory to watch %s'" % newdir)
                     DirectoryHandler(current_dir=newdir, 
                                      watch_manager=watch_manager,
-                                     watched_dirs=watch_manager,
+                                     watched_dirs=watched_dirs,
                                      logger=self.logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
