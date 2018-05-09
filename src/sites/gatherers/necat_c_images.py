@@ -151,7 +151,7 @@ class DirectoryHandler(threading.Thread):
                 remove_dir = self.watched_dirs.pop(3)
                 self.logger.debug("Removing %s from watched directories" % remove_dir)
                 if remove_dir:
-                    self.watch_manager.rm_watch(wdd[], rec=True)
+                    self.watch_manager.rm_watch(wdd[remove_dir], rec=True)
                 else:
                     logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
 
