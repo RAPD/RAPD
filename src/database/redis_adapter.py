@@ -600,6 +600,14 @@ class Database:
     # LIST Methods
     ##############
     @connectionErrorWrapper
+    def lpop(self, key):
+        """
+        LPOP a value off a given list
+        """
+        value = self.redis.lpop(key)
+        return value
+    
+    @connectionErrorWrapper
     def lpush(self, key, value):
         """
         LPUSH a values onto a given list

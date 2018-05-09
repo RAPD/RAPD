@@ -69,7 +69,7 @@ class EventHandler(pyinotify.ProcessEvent):
         """
         self.logger.debug("%s has been moved" % event.pathname)
         
-        if (event.pathname.endswith('.cbf')):
+        if event.pathname.endswith('.cbf'):
             # RAPD1
             self.redis_rapd.lpush("images_collected_C", event.pathname)
             self.redis_rapd.publish("image_collected_C", event.pathname)
@@ -157,14 +157,14 @@ class DirectoryHandler(threading.Thread):
         have = False
 
         # Make sure we are not already watching this directory
-        # for wdd in self.watched_dirs:            
-        #     # Watching already remove first
-        #     if (wdd.has_key(self.current_dir)):
-        #         self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
-        #         __ = self.watched_dirs.pop(i)
-        #         self.watch_manager.rm_watch(wdd.values()[0])
-        #         self.logger.debug("  removed")
-        #         break
+        for directory, watch_descriptor in self.watched_dirs.iteritems():            
+            # Watching already remove first
+            if directory == self.current_dir:
+                self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
+                __ = self.watched_dirs.pop(directory)
+                self.watch_manager.rm_watch(watch_descriptor)
+                self.logger.debug("  removed")
+                break
 
         if not have:
             count = 0
@@ -174,7 +174,6 @@ class DirectoryHandler(threading.Thread):
                         wdd = self.watch_manager.add_watch(self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
                         self.watched_dirs.append(wdd)
                         self.logger.debug("DirectoryHandler.run %s watch added" % self.current_dir)
-                        self.logger.debug(wdd)
                         # Minimize the number of dirs being watched
                         # trim_dirs(wdd=wdd)
                         # Break out of the loop
