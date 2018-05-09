@@ -241,7 +241,7 @@ class Gatherer(object):
         """
         self.logger.info("Gatherer.run")
 
-        _watched_dirs = []
+        watched_dirs = []
 
         # Set up overwatcher
         self.ow_registrar = Registrar(site=self.site,
@@ -301,7 +301,10 @@ class Gatherer(object):
                     have = False
                     current_dir = newdir
                     self.logger.debug("New directory to watch %s'" % newdir)
-                    DirectoryHandler(newdir, self.logger)
+                    DirectoryHandler(current_dir=newdir, 
+                                     watch_manager=watch_manager,
+                                     watched_dirs=watch_manager,
+                                     logger=self.logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
                 if counter % 5 == 0:
