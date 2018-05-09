@@ -27,6 +27,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
+import argparse
 import atexit
 import logging, logging.handlers
 import os
