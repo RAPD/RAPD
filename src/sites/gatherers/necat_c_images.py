@@ -252,7 +252,9 @@ class Gatherer(object):
         watch_manager = pyinotify.WatchManager()
 
         # Set up the notifier for files being made
-        notifier = pyinotify.ThreadedNotifier(watch_manager, EventHandler(logger=self.logger))
+        notifier = pyinotify.ThreadedNotifier(watch_manager, EventHandler(redis_rapd=self.redis_rapd,
+                                                                          redis_remote=self.redis_remote,
+                                                                          logger=self.logger))
         notifier.start()
 
         # Try exiting the pyinotify gracefully
