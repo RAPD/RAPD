@@ -33,11 +33,11 @@ import logging, logging.handlers
 import os
 import pyinotify
 import threading
-# from threading import Timer
 import time
 
 # RAPD imports
 from database.redis_adapter import Database as RedisDB
+import utils
 
 MASK = pyinotify.ALL_EVENTS
 NUMBER_WATCHED = 20
