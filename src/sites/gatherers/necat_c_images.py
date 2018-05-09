@@ -37,7 +37,10 @@ import time
 
 # RAPD imports
 from database.redis_adapter import Database as RedisDB
-import utils.commandline as commandline
+import utils.commandline as ucommandline
+import utils.lock as ulock
+import utils.log as ulog
+import utils.site as usite
 
 MASK = pyinotify.ALL_EVENTS
 NUMBER_WATCHED = 20
@@ -364,7 +367,7 @@ def get_commandline():
 
     # Parse the commandline arguments
     commandline_description = "Data gatherer"
-    parser = argparse.ArgumentParser(parents=[commandline.base_parser],
+    parser = argparse.ArgumentParser(parents=[ucommandline.base_parser],
                                      description=commandline_description) 
 
     return parser.parse_args()
@@ -379,7 +382,7 @@ def main():
     commandline_args = get_commandline() 
 
     # Get the environmental variables 
-    environmental_vars = utils.site.get_environmental_variables() 
+    environmental_vars = usite.get_environmental_variables() 
     site = commandline_args.site 
 
     # If no commandline site, look to environmental args 
@@ -388,7 +391,7 @@ def main():
             site = environmental_vars["RAPD_SITE"] 
 
     # Determine the site 
-    site_file = utils.site.determine_site(site_arg=site) 
+    site_file = usite.determine_site(site_arg=site) 
 
     # Handle no site file 
     if site_file == False: 
@@ -399,14 +402,14 @@ def main():
     SITE = importlib.import_module(site_file) 
 
     # Single process lock? 
-    utils.lock.file_lock(SITE.GATHERER_LOCK_FILE) 
+    ulock.file_lock(SITE.GATHERER_LOCK_FILE) 
 
     # Set up logging 
     if commandline_args.verbose: 
         log_level = 10 
     else: 
         log_level = SITE.LOG_LEVEL 
-    logger = utils.log.get_logger(logfile_dir="/tmp", 
+    logger = ulog.get_logger(logfile_dir="/tmp", 
                                   logfile_id="rapd_gatherer", 
                                   level=log_level 
                                  ) 
