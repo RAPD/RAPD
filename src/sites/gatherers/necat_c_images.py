@@ -349,7 +349,7 @@ class Gatherer(object):
 
         # Figure out which host we are on
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
-        self.logger.debug("IP Address:",self.ip_address)
+        self.logger.debug("IP Address: %s" % self.ip_address)
 
         # Now grab the file locations, beamline from settings
         if self.site.GATHERERS.has_key(self.ip_address):
