@@ -275,42 +275,33 @@ class Gatherer(object):
         atexit.register(exit_gracefully)
 
         # Start by adding the current dir in the beamline redis db
-        DATA_DIR = "datadir_%s" % self.tag
+        DATA_DIR = "ADX_SUBDIR_SV" # "datadir_%s" % self.tag
 
-        start_dir = False
-        start_dir = self.redis_beamline.get(DATA_DIR)
-        current_dir = ""
-        if start_dir:
-            self.logger.debug("Call to watch  %s from Redis memory store" % start_dir)
-            current_dir = start_dir
-            # Create a directory handler
-            DirectoryHandler(current_dir=current_dir,
-                             watch_manager=watch_manager,
-                             watched_dirs=_watched_dirs, 
-                             logger=self.logger)
+        # start_dir = False
+        # start_dir = self.redis_beamline.get(DATA_DIR)
+        # current_dir = ""
+        # if start_dir:
+        #     self.logger.debug("Call to watch  %s from Redis memory store" % start_dir)
+        #     current_dir = start_dir
+        #     # Create a directory handler
+        #     DirectoryHandler(current_dir=current_dir,
+        #                      watch_manager=watch_manager,
+        #                      watched_dirs=_watched_dirs, 
+        #                      logger=self.logger)
 
         # Listen for new directory
         current_dir = ""
         time.sleep(0.5)
         counter = 0
         try:
-            while True: 
-                newdir = False
-                error_count = 0
-                while error_count < 10:
-                    try:
-                        newdir = self.redis_beamline.get(DATA_DIR)
-                        break
-                    except redis.ConnectionError:
-                        logger.error("Connection Error in get %d" % counter)
-                        error_count += 1
-                        time.sleep(1)
-                if newdir:
-                    if (newdir != current_dir):
-                        have = False
-                        current_dir = newdir
-                        logger.debug('New directory to watch %s' % newdir)
-                        DirectoryHandler(newdir, logger)
+            while True:
+                print counter
+                newdir = self.redis_beamline.get(DATA_DIR)
+                if (newdir != current_dir):
+                    have = False
+                    current_dir = newdir
+                    logger.debug("New directory to watch %s'" % newdir)
+                    DirectoryHandler(newdir, logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
                 if counter % 5 == 0:
