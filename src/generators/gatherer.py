@@ -59,10 +59,12 @@ class FileGenerator(CommandlineFileGenerator):
         self.write_docstrings()
         self.write_imports(write_list=("argparse",
                                        "from collections import OrderedDict",
+                                       "importlib",
                                        "json",
                                        "os",
                                        "re",
                                        "shutil",
+                                       "socket",
                                        "time",
                                        "uuid"),
                            added_rapd_imports=("from database.redis_adapter import Database as RedisDB",
