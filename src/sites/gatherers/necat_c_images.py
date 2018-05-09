@@ -70,23 +70,14 @@ class EventHandler(pyinotify.ProcessEvent):
         self.logger.debug("%s has been moved" % event.pathname)
         
         if (event.pathname.endswith('.cbf')):
-            # Notify downstream consumers via redis
-            error_count = 0
-            while error_count < 10:
-                try:
-                    # RAPD1
-                    self.redis_rapd.lpush("images_collected_C", event.pathname)
-                    self.redis_rapd.publish("image_collected_C", event.pathname)
-                    # RAPD2
-                    self.redis_rapd.lpush("images_collected:NECAT_C", event.pathname)
-                    self.redis_rapd.publish("image_collected:NECAT_C", event.pathname)
-                    # REMOTE
-                    self.redis_remote.publish("filecreate:C", event.pathname)
-                    break
-                except redis.ConnectionError:
-                    self.logger.error("%s has not been sent to RAPD!!" % event.pathname)
-                    error_count += 1
-                    time.sleep(1)
+            # RAPD1
+            self.redis_rapd.lpush("images_collected_C", event.pathname)
+            self.redis_rapd.publish("image_collected_C", event.pathname)
+            # RAPD2
+            self.redis_rapd.lpush("images_collected:NECAT_C", event.pathname)
+            self.redis_rapd.publish("image_collected:NECAT_C", event.pathname)
+            # REMOTE
+            self.redis_remote.publish("filecreate:C", event.pathname)
     
     def process_IN_DELETE_SELF(self, event):
         """
