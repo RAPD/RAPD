@@ -54,7 +54,7 @@ class EventHandler(pyinotify.ProcessEvent):
     Process pyinotify events
     """
     
-    def __init__(self, redis_rapd=None, redis_remote=None,logger=None):
+    def __init__(self, redis_rapd=None, redis_remote=None, logger=None):
         """
         Initialize the event handler with connections
         """
@@ -133,10 +133,10 @@ class DirectoryHandler(threading.Thread):
             counter = 0
             while (counter < 120):
                 if os.path.isdir(in_dir):
-                    logger.debug("%s exists" % in_dir)
+                    self.logger.debug("%s exists" % in_dir)
                     return True
                 else:
-                    logger.debug("%s does not exist" % in_dir)
+                    self.logger.debug("%s does not exist" % in_dir)
                     time.sleep(0.5)
                     counter += 1
             return False
@@ -189,7 +189,7 @@ class DirectoryHandler(threading.Thread):
                         # Break out of the loop
                         break
                     except pyinotify.WatchManagerError, err:
-                        logger.exception(err, err.wmd)
+                        self.logger.exception(err, err.wmd)
                         count = count + 1
                         time.sleep(1)
                 else:
@@ -301,7 +301,7 @@ class Gatherer(object):
                     have = False
                     current_dir = newdir
                     self.logger.debug("New directory to watch %s'" % newdir)
-                    DirectoryHandler(newdir, logger)
+                    DirectoryHandler(newdir, self.logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
                 if counter % 5 == 0:
