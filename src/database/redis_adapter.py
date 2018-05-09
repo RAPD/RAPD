@@ -618,13 +618,6 @@ class Database:
     # HASH Methods
     ##############
     @connectionErrorWrapper
-    def hmset(self, key, mapping):
-        """
-        HMSET a key with the attached mapping
-        """
-        self.redis.hmset(key, mapping)
-
-    @connectionErrorWrapper
     def hget(self, key, field):
         """
         HGET field on a key
@@ -638,6 +631,19 @@ class Database:
         """
         return self.redis.hgetall(key)
 
+    @connectionErrorWrapper
+    def hmset(self, key, mapping):
+        """
+        HMSET a key with the attached mapping
+        """
+        self.redis.hmset(key, mapping)
+
+    @connectionErrorWrapper
+    def hset(self, key, field, value):
+        """
+        Sets field in the hash stored at key to value.
+        """
+        self.redis.hset(key, field, value)
 
     ################
     # PUBSUB Methods
