@@ -312,28 +312,24 @@ REMOTE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER
 ##
 ## Aggregators
 ## Be extra careful when modifying
-CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
-                             'DATABASE_HOST':DB_HOST,
-                             #'DATABASE_PORT':SECRETS.DB_PORT,
-                             'DATABASE_USER':DB_USER,
-                             'DATABASE_PASSWORD':DB_PASSWORD,
-                             'DATABASE_STRING':DB_STRING,
-                             'DATABASE_NAME_DATA':"rapd_data",
-                             'DATABASE_NAME_USERS':"rapd_users",
-                             'DATABASE_NAME_CLOUD':"rapd_cloud",
-                             # Connection can be 'pool' for database on single computer, or
-                             # 'sentinal' for high availability on redundant computers.
-                             'REDIS_CONNECTION':"sentinel",
-                             "REDIS_HOST":REDIS_HOST,
-                             "REDIS_PORT":REDIS_PORT,
-                             "REDIS_DB":REDIS_DB,
-                             "REDIS_PASSWORD":REDIS_PASSWORD,
-                             "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-                             "REDIS_MASTER_NAME":REDIS_MASTER_NAME,
-                             }
+CONTROL_DATABASE_SETTINGS = {
+    # MongoDB
+    "CONTROL_DATABASE":     CONTROL_DATABASE,
+    "DATABASE_STRING":      MONGO_CONNECTION_STRING,
+    "DATABASE_NAME_DATA":   "rapd_data",
+    "DATABASE_NAME_USERS":  "rapd_users",
+    "DATABASE_NAME_CLOUD":  "rapd_cloud",
+    # Redis
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
+    "REDIS_PASSWORD":       REDIS_PASSWORD,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+}
 
 LAUNCHER_SETTINGS = {
-    #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
@@ -341,28 +337,27 @@ LAUNCHER_SETTINGS = {
 
 LAUNCH_SETTINGS = {
     "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
-    #"LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
-    #                    LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
 
-IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          'REDIS_CONNECTION':"sentinel",
-                          "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                          "REDIS_HOST":REDIS_HOST,
-                          "REDIS_PORT":REDIS_PORT,
-                          "REDIS_DB":REDIS_DB,
-                          }
+IMAGE_MONITOR_SETTINGS = {
+    "REDIS_CLUSTER":         REDIS_CLUSTER,
+    "REDIS_CONNECTION":      REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME" :    REDIS_MASTER_NAME,
+    "REDIS_HOST":            REDIS_HOST,
+    "REDIS_PORT":            REDIS_PORT,
+    "REDIS_DB":              REDIS_DB,
+}
 
-RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                        "REDIS_CONNECTION":"sentinel",
-                        "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                        "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                        "REDIS_HOST":REDIS_HOST,
-                        "REDIS_PORT":REDIS_PORT,
-                        "REDIS_DB":REDIS_DB,
-                          }
+RUN_MONITOR_SETTINGS = {
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME" :   REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB
+}
 
 CLOUD_MONITOR_SETTINGS = {
         "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,

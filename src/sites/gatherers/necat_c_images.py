@@ -29,9 +29,11 @@ __status__ = "Production"
 
 import argparse
 import atexit
+import importlib
 import logging, logging.handlers
 import os
 import pyinotify
+import socket
 import threading
 import time
 
@@ -40,6 +42,7 @@ from database.redis_adapter import Database as RedisDB
 import utils.commandline as ucommandline
 import utils.lock as ulock
 import utils.log as ulog
+from utils.overwatch import Registrar
 import utils.site as usite
 
 MASK = pyinotify.ALL_EVENTS
@@ -51,7 +54,7 @@ class EventHandler(pyinotify.ProcessEvent):
     Process pyinotify events
     """
     
-    def __init__(redis_rapd=None, redis_remote=None,logger=None):
+    def __init__(self, redis_rapd=None, redis_remote=None,logger=None):
         """
         Initialize the event handler with connections
         """
