@@ -141,15 +141,15 @@ class DirectoryHandler(threading.Thread):
                     counter += 1
             return False
 
-        def add_watch_descriptor(wdd, directory):
-            """
-            Add watch descriptor to watched_dirs
-            """
-            if wd:
-                self.watched_dirs.append(wdd)
-                self.logger.debug("Adding watch for directory %s" % directory)
-            else: 
-                self.logger.debug("Error adding watch for directory" % directory)
+        # def add_watch_descriptor(wdd, directory):
+        #     """
+        #     Add watch descriptor to watched_dirs
+        #     """
+        #     if wd:
+        #         self.watched_dirs.append(wdd)
+        #         self.logger.debug("Adding watch for directory %s" % directory)
+        #     else: 
+        #         self.logger.debug("Error adding watch for directory" % directory)
 
         def trim_dirs(wdd):
             """
@@ -166,8 +166,7 @@ class DirectoryHandler(threading.Thread):
         have = False
 
         # Make sure we are not already watching this directory
-        for i in range(len(self.watched_dirs)):
-            wdd = self.watched_dirs[i]
+        for wdd in self.watched_dirs:            
             # Watching already remove first
             if (wdd.has_key(self.current_dir)):
                 self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
@@ -182,10 +181,11 @@ class DirectoryHandler(threading.Thread):
                 if (checkForDir(self.current_dir)):
                     try:
                         wdd = self.watch_manager.add_watch(self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
-                        add_watch_descriptor(wdd, self.current_dir)
+                        self.watched_dirs.append(wdd)
                         self.logger.debug("DirectoryHandler.run %s watch added" % self.current_dir)
+                        self.logger.debug(wdd)
                         # Minimize the number of dirs being watched
-                        trim_dirs(wdd=wdd)
+                        # trim_dirs(wdd=wdd)
                         # Break out of the loop
                         break
                     except pyinotify.WatchManagerError, err:
@@ -276,18 +276,6 @@ class Gatherer(object):
 
         # Start by adding the current dir in the beamline redis db
         DATA_DIR = "ADX_SUBDIR_SV" # "datadir_%s" % self.tag
-
-        # start_dir = False
-        # start_dir = self.redis_beamline.get(DATA_DIR)
-        # current_dir = ""
-        # if start_dir:
-        #     self.logger.debug("Call to watch  %s from Redis memory store" % start_dir)
-        #     current_dir = start_dir
-        #     # Create a directory handler
-        #     DirectoryHandler(current_dir=current_dir,
-        #                      watch_manager=watch_manager,
-        #                      watched_dirs=_watched_dirs, 
-        #                      logger=self.logger)
 
         # Listen for new directory
         current_dir = ""
