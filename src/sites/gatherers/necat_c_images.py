@@ -251,8 +251,20 @@ class Gatherer(object):
 
         # A RUN & IMAGES EXAMPLE
         # Some logging
-        self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
+        self.logger.debug("  Will publish new images on filecreate:C")
+        self.logger.debug("  Will publish new images on image_collected:C")
+        self.logger.debug("  Will push new images onto images_collected:C")
+        self.logger.debug("  Will publish new images on image_collected:%s" % self.tag)
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
+
+        # RAPD1
+                    self.redis_rapd.lpush("images_collected_C", event.pathname)
+                    self.redis_rapd.publish("image_collected_C", event.pathname)
+                    # RAPD2
+                    self.redis_rapd.lpush("images_collected:NECAT_C", event.pathname)
+                    self.redis_rapd.publish("image_collected:NECAT_C", event.pathname)
+                    # REMOTE
+                    self.redis_remote.publish("filecreate:C", event.pathname)
 
         # Set up the WatchManager
         watch_manager = pyinotify.WatchManager()
