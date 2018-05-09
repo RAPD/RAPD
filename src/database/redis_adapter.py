@@ -624,6 +624,20 @@ class Database:
         """
         self.redis.hmset(key, mapping)
 
+    @connectionErrorWrapper
+    def hget(self, key, field):
+        """
+        HGET field on a key
+        """
+        return self.redis.hget(key, field)
+
+    @connectionErrorWrapper
+    def hgetall(self, key):
+        """
+        HGETALL a mapping on a key
+        """
+        return self.redis.hgetall(key)
+
 
     ################
     # PUBSUB Methods
@@ -636,6 +650,19 @@ class Database:
 
         # print "publish {} {}".format(key, value)
         self.redis.publish(key, value)
+
+    ####################
+    # EXPIRATION Methods
+    ####################
+    @connectionErrorWrapper
+    def expire(self, key, seconds):
+        """
+        Set a timeout on key
+        """
+
+        self.redis.expire(key, seconds)
+
+
 
     # def publish(self, key, value):
     #     """
