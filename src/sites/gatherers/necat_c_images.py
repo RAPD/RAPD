@@ -300,7 +300,7 @@ class Gatherer(object):
                 if (newdir != current_dir):
                     have = False
                     current_dir = newdir
-                    logger.debug("New directory to watch %s'" % newdir)
+                    self.logger.debug("New directory to watch %s'" % newdir)
                     DirectoryHandler(newdir, logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
