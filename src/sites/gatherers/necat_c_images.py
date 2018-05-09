@@ -127,12 +127,13 @@ class DirectoryHandler(threading.Thread):
 
         def checkForDir(in_dir):
             """
-            Check for directory existence
+            Check for directory existence on filesystem
             """
             self.logger.debug("Checking for %s existence" % in_dir)
             counter = 0
             while (counter < 120):
-                if (os.path.isdir(in_dir)):
+                if os.path.isdir(in_dir):
+                    logger.debug("%s exists" % in_dir)
                     return True
                 else:
                     logger.debug("%s does not exist" % in_dir)
@@ -160,7 +161,7 @@ class DirectoryHandler(threading.Thread):
                 if remove_dir:
                     self.watch_manager.rm_watch(wdd[remove_dir], rec=True)
                 else:
-                    logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
+                    self.logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
 
         have = False
 
@@ -169,8 +170,10 @@ class DirectoryHandler(threading.Thread):
             wdd = self.watched_dirs[i]
             # Watching already remove first
             if (wdd.has_key(self.current_dir)):
+                self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
                 __ = self.watched_dirs.pop(i)
-                self.watch_manager.rm_watch(wdd.values()[0], rec=True)
+                self.watch_manager.rm_watch(wdd.values()[0])
+                self.logger.debug("  removed")
                 break
 
         if not have:
