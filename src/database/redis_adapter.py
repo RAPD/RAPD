@@ -73,74 +73,74 @@ def connectionErrorWrapper(func):
             args[0]._raise_ConnectionError(error)
     return wrapper
 
-class Database(object):
-    """
-    Provides connection to REDIS for Model.
-    """
+# class Database(object):
+#     """
+#     Provides connection to REDIS for Model.
+#     """
 
-    client = None
+#     client = None
 
-    def __init__(self, settings):
+#     def __init__(self, settings):
 
-        """
-        Initialize the adapter
+#         """
+#         Initialize the adapter
 
-        Keyword arguments
-        host --
-        port --
-        user --
-        password --
-        settings --
-        """
+#         Keyword arguments
+#         host --
+#         port --
+#         user --
+#         password --
+#         settings --
+#         """
 
-        # Get the logger
-        self.logger = logging.getLogger("RAPDLogger")
+#         # Get the logger
+#         self.logger = logging.getLogger("RAPDLogger")
 
-        # Store passed in variables
-        # Using the settings "shorthand"
+#         # Store passed in variables
+#         # Using the settings "shorthand"
 
-        # Used for a Redis connection pool
-        self.redis_host = settings.get("REDIS_HOST", False)
-        self.redis_port = settings.get("REDIS_PORT", False)
-        self.redis_db = settings.get("REDIS_DB", False)
+#         # Used for a Redis connection pool
+#         self.redis_host = settings.get("REDIS_HOST", False)
+#         self.redis_port = settings.get("REDIS_PORT", False)
+#         self.redis_db = settings.get("REDIS_DB", False)
 
-        # Used for a more reliable sentinal connection.
-        self.sentinal_hosts = settings.get("REDIS_SENTINEL_HOSTS", False)
-        self.sentinal_name = settings.get("REDIS_MASTER_NAME", False)
+#         # Used for a more reliable sentinal connection.
+#         self.sentinal_hosts = settings.get("REDIS_SENTINEL_HOSTS", False)
+#         self.sentinal_name = settings.get("REDIS_MASTER_NAME", False)
 
-        if settings.get("REDIS_CONNECTION", False) == "pool":
-            self.pool = True
-        else:
-            self.pool = False
+#         if settings.get("REDIS_CONNECTION", False) == "pool":
+#             self.pool = True
+#         else:
+#             self.pool = False
 
-        # A lock for troublesome fast-acting data entry
-        #self.LOCK = threading.Lock()
-    def connect_to_redis(self):
-        if self.pool:
-            return self.connect_redis_pool()
-        else:
-            return self.connect_redis_manager_HA()
+#         # A lock for troublesome fast-acting data entry
+#         #self.LOCK = threading.Lock()
+#     def connect_to_redis(self):
+#         if self.pool:
+#             return self.connect_redis_pool()
+#         else:
+#             return self.connect_redis_manager_HA()
 
-    def connect_redis_pool(self):
-        # Create a pool connection
-        pool = redis.ConnectionPool(host=self.redis_host,
-                                    port=self.redis_port,
-                                    db=self.redis_db)
-        # Save the pool for a clean exit.
-        self.pool = redis.Redis(connection_pool=pool)
-        # The return the connection
-        return self.pool
+#     def connect_redis_pool(self):
+#         # Create a pool connection
+#         pool = redis.ConnectionPool(host=self.redis_host,
+#                                     port=self.redis_port,
+#                                     db=self.redis_db)
+#         # Save the pool for a clean exit.
+#         self.pool = redis.Redis(connection_pool=pool)
+#         # The return the connection
+#         return self.pool
 
-    def connect_redis_manager_HA(self):
-        return (Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
+#     def connect_redis_manager_HA(self):
+#         return (Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
 
-    def stop(self):
-        pass
-        #if self.pool:
-        #    self.pool.close()
+#     def stop(self):
+#         pass
+#         #if self.pool:
+#         #    self.pool.close()
 
 
-class RedisClient:
+class Database:
     """
     Provide an interface using which to communicate with a Redis server.
 

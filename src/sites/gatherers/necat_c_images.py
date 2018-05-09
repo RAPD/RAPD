@@ -387,8 +387,7 @@ def main():
 
     # If no commandline site, look to environmental args 
     if site == None: 
-        if environmental_vars["RAPD_SITE"]: 
-            site = environmental_vars["RAPD_SITE"] 
+        site = environmental_vars["RAPD_SITE"] 
 
     # Determine the site 
     site_file = usite.determine_site(site_arg=site) 
