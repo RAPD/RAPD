@@ -98,14 +98,13 @@ class DirectoryHandler(threading.Thread):
     """
     Handles a new directory to add
     """
-    def __init__(self, current_dir, watch_manager, watched_dirs, logger):
+    def __init__(self, current_dir, watch_manager, logger):
 
         logger.debug("DirectoryHandler.__init__ %s" % current_dir)
 
         # Store variables
         self.current_dir = current_dir
         self.watch_manager = watch_manager
-        self.watched_dirs = watched_dirs
         self.logger = logger
 
         # Initialize thread
@@ -132,61 +131,40 @@ class DirectoryHandler(threading.Thread):
                     counter += 1
             return False
 
-        # def add_watch_descriptor(wdd, directory):
+        # def trim_dirs(wdd):
         #     """
-        #     Add watch descriptor to watched_dirs
+        #     Keep the watched directories reasonable in number
         #     """
-        #     if wd:
-        #         self.watched_dirs.append(wdd)
-        #         self.logger.debug("Adding watch for directory %s" % directory)
-        #     else: 
-        #         self.logger.debug("Error adding watch for directory" % directory)
-
-        def trim_dirs(wdd):
-            """
-            Keep the watched directories reasonable in number
-            """
-            while len(dirs) > NUMBER_WATCHED:
-                remove_dir = self.watched_dirs.pop(3)
-                self.logger.debug("Removing %s from watched directories" % remove_dir)
-                if remove_dir:
-                    self.watch_manager.rm_watch(wdd[remove_dir], rec=True)
-                else:
-                    self.logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
-
-        have = False
+        #     while len(dirs) > NUMBER_WATCHED:
+        #         remove_dir = self.watched_dirs.pop(3)
+        #         self.logger.debug("Removing %s from watched directories" % remove_dir)
+        #         if remove_dir:
+        #             self.watch_manager.rm_watch(wdd[remove_dir], rec=True)
+        #         else:
+        #             self.logger.debug('Not removing watch %s is an empty watch descriptor' % str(wdd))
 
         # Make sure we are not already watching this directory
-        for directory, watch_descriptor in self.watched_dirs.iteritems():            
-            # Watching already remove first
-            if directory == self.current_dir:
-                self.logger.debug("%s already being watched - remove from watch" % self.current_dir)
-                __ = self.watched_dirs.pop(directory)
-                self.watch_manager.rm_watch(watch_descriptor)
-                self.logger.debug("  removed")
-                break
+        watch_descriptor = self.watch_manager.get_path(self.current_dir)
+        if watch_descriptor:
+            self.watch_manager.rm_watch(watch_descriptor)
 
-        if not have:
-            count = 0
-            while (count < 5):
-                if (checkForDir(self.current_dir)):
-                    try:
-                        wdd = self.watch_manager.add_watch(self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
-                        self.watched_dirs.append(wdd)
-                        self.logger.debug("DirectoryHandler.run %s watch added" % self.current_dir)
-                        # Minimize the number of dirs being watched
-                        # trim_dirs(wdd=wdd)
-                        # Break out of the loop
-                        break
-                    except pyinotify.WatchManagerError, err:
-                        self.logger.exception(err, err.wmd)
-                        count = count + 1
-                        time.sleep(1)
-                else:
-                    count += 1
-                    self.logger.debug("ERROR!! %s will not be watched" % start_dir)
-        else:
-            self.logger.debug("Already watching %s" % current_dir)
+        count = 0
+        while (count < 5):
+            if (checkForDir(self.current_dir)):
+                try:
+                    wdd = self.watch_manager.add_watch(self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
+                    self.logger.debug("DirectoryHandler.run %s watch added" % self.current_dir)
+                    # Minimize the number of dirs being watched
+                    # trim_dirs(wdd=wdd)
+                    # Break out of the loop
+                    break
+                except pyinotify.WatchManagerError, err:
+                    self.logger.exception(err, err.wmd)
+                    count = count + 1
+                    time.sleep(1)
+            else:
+                count += 1
+                self.logger.debug("ERROR!! %s will not be watched" % start_dir)
 
 class Gatherer(object):
     """
