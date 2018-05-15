@@ -69,7 +69,7 @@ from iotbx import reflection_file_reader
 from cctbx import miller
 from cctbx.array_family import flex
 from cctbx.sgtbx import space_group_symbols
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage, dendrogram, to_tree
 #from hcluster import linkage, dendrogram
 
 import cPickle as pickle # For storing dicts as pickle files for later use
@@ -513,9 +513,11 @@ class RapdPlugin(multiprocessing.Process):
             self.print_results(self.merged_files)
         # Prints JSON of results to the terminal
         elif run_mode == "json":
+            dendrogram = self.json_dendrogram(self.matrix, self.data_files)
             self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
-                             'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
-                             'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+                    'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(), 
+                    'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+
         # Traditional mode as at the beamline
         elif run_mode == "server":
             pass
@@ -524,10 +526,6 @@ class RapdPlugin(multiprocessing.Process):
             return {'data_files': self.data_files, 'id_list': self.id_list,
                     'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                     'merged_files': self.merged_files, 'data_dir': self.dirs['data']}
-        # A subprocess with terminal printing
-        elif run_mode == "subprocess-interactive":
-            self.print_results(self.merged_files)
-            return self.results
 
     def make_combinations(self, files, number=2):
         """
@@ -976,6 +974,27 @@ class RapdPlugin(multiprocessing.Process):
             dendrogram(matrix, color_threshold = 1 - self.cutoff, no_plot=True)
             self.logger.error('HCMerge::matplotlib.pylab unavailable in your version of cctbx.  Plot not generated.')
 
+    def getNewick(self, node, newick, parentdist, leaf_names):
+        """
+        Get Newick format
+        https://stackoverflow.com/questions/28222179/save-dendrogram-to-newick-format
+
+        tree = scipy.cluster.hierarchy.to_tree(Z,False)
+        getNewick(tree, "", tree.dist, leaf_names)
+        """
+        if node.is_leaf():
+            return "%s:%.3f%s" % (leaf_names[node.id], parentdist - node.dist, newick)
+        else:
+            if len(newick) > 0:
+                newick = "):%.3f%s" % (parentdist - node.dist, newick)
+            else:
+                newick = ");"
+            newick = self.getNewick(node.get_left(), newick, node.dist, leaf_names)
+            newick = self.getNewick(node.get_right(), ",%s" % (newick), node.dist, leaf_names)
+            newick = "(%s" % (newick)
+            return newick
+
+    
     def make_log(self, files):
         """
         Makes a log file of the merging results
@@ -1126,6 +1145,13 @@ class RapdPlugin(multiprocessing.Process):
         os.chdir(self.dirs['work'])
         with open("result.json", 'w') as outfile:
             outfile.writelines(json_string)
+    
+    def json_dendrogram(self, Z, leaf_names):
+        """Make a Newick json suitable for use with http://bl.ocks.org/kueda/1036776 which uses d3 to make a phylogenetic tree"""
+
+        tree = to_tree(Z,False)
+        json = self.getNewick(tree, "", tree.dist, leaf_names)
+        return json
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
