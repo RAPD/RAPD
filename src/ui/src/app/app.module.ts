@@ -73,8 +73,6 @@ import { DialogNewProjectComponent } from './shared/components/dialog-new-projec
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
 
-
-
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
 }
