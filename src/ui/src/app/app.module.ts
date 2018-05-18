@@ -17,7 +17,7 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { RapdMaterialModule } from './rapd.module';
+import { RapdMaterialModule } from './material.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
 
@@ -82,6 +82,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
 @NgModule({
   declarations: [
     AppComponent,
+    //
     MaintoolbarComponent,
     WelcomepanelComponent,
     PageNotFoundComponent,
@@ -93,10 +94,12 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ProjectspanelComponent,
     AdminpanelComponent,
     TaskspanelComponent,
+    //
     MxSessionpanelComponent,
     MxResultContainerComponent,
     MxResultslistPanelComponent,
     MxResultPanelComponent,
+    
     Highlight,
     UnauthorizedpanelComponent,
     UserDialogComponent,
@@ -105,11 +108,13 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     LoginDialogComponent,
     ChangepassDialogComponent,
     CommunicateDialogComponent,
+    //
     Index3b34200Component,
     HeaderDialogComponent,
     ReindexDialogComponent,
     IntegrateBd11200Component,
     AnalysisF068200Component,
+    //
     LogCardComponent,
     RunDialogComponent,
     MxImageComponent,
@@ -153,23 +158,27 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
               //  }),
               // HTTP_PROVIDERS ],
   entryComponents: [
-    AnalysisF068200Component,
     AppComponent,
+    // General components
+    ErrorDialogComponent,
+    ConfirmDialogComponent,
+    // Admin task components
     ChangepassDialogComponent,
     DialogNewProjectComponent,
     DialogSelectProjectComponent,
     GroupDialogComponent,
-    HeaderDialogComponent,
+    LoginDialogComponent,
+    SessionDialogComponent,
+    UserDialogComponent,
+    // Plugin components
+    AnalysisF068200Component,
     Index3b34200Component,
     IntegrateBd11200Component,
-    LoginDialogComponent,
+    // Plugin helpers
+    HeaderDialogComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
     RunDialogComponent,
-    SessionDialogComponent,
-    UserDialogComponent,
-    ErrorDialogComponent,
-    ConfirmDialogComponent
   ],
   bootstrap: [AppComponent]
 })
