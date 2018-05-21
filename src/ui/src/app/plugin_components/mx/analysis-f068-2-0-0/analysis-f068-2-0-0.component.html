@@ -161,10 +161,12 @@
   <!-- <mat-tab label="PDBQuery">
   </mat-tab> -->
   <mat-tab label="Self-Rotation">
-    <img src={{result.parsed.molrep.self_rotation_image_60}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_90}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_120}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_180}}/>
+    <div *ngIf="(result.parsed.molrep)?.self_rotation_image_60">
+      <img src={{result.parsed.molrep.self_rotation_image_60}}/>
+      <img src={{result.parsed.molrep.self_rotation_image_90}}/>
+      <img src={{result.parsed.molrep.self_rotation_image_120}}/>
+      <img src={{result.parsed.molrep.self_rotation_image_180}}/>
+    </div>
   </mat-tab>
   <!-- <mat-tab label="Precessions">
   </mat-tab> -->

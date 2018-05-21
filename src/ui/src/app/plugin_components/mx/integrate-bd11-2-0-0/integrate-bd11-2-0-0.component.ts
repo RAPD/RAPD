@@ -155,10 +155,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
           this.setPlot('Rmerge vs Frame');
         }
       }
-      // Analysis
-      if (data.results.analysis) {
-        // this.initAnalysis();
-      }
     }
   }
 
@@ -175,23 +171,23 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  initAnalysis() {
+  // initAnalysis() {
     
-    let plugin = this.full_result.results.analysis.plugin;
-    const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-    console.log(component_name);
-    console.log(analysis_components);
+  //   let plugin = this.full_result.results.analysis.plugin;
+  //   const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+  //   console.log(component_name);
+  //   console.log(analysis_components);
 
-    // Create a componentfactoryResolver instance
-    const factory = this.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+  //   // Create a componentfactoryResolver instance
+  //   const factory = this.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
 
-    // Create the component
-    this.analysis_component = this.analysistarget.createComponent(factory);
-    console.log(this.analysistarget);
+  //   // Create the component
+  //   this.analysis_component = this.analysistarget.createComponent(factory);
+  //   console.log(this.analysistarget);
 
-    // Set the component current_result value
-    this.analysis_component.instance.result = this.full_result.results.analysis;
-  }
+  //   // Set the component current_result value
+  //   this.analysis_component.instance.result = this.full_result.results.analysis;
+  // }
 
   // onChange(event:any) {
 
@@ -201,35 +197,52 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   onViewModeSelect(event) {
 
+    console.log('onViewModeSelect', event.value);
+
     var self = this;
 
     // Wait 100ms and then load up the interface
     setTimeout(function() {
       // Looking at an analysis
-      if (this.view_mode === 'analysis') {
-        
+      if (event.value === 'analysis') {
+            
         console.log(self.full_result.results.analysis);
-        
+
         // If there is analysis data, determine the component to use
         if (self.full_result.results.analysis) {
 
           let plugin = self.full_result.results.analysis.plugin;
           const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-          console.log(component_name);
-          console.log(analysis_components);
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
 
           // Create the component
           self.analysis_component = self.analysistarget.createComponent(factory);
-          console.log(self.analysistarget);
+
+          // Set the component current_result value
+          self.analysis_component.instance.result = self.full_result.results.analysis;
+        }
+
+      // PDBQuery
+      } else if (event.value === 'pdbquery') {
+        // If there is analysis data, determine the component to use
+        if (self.full_result.results.pdbquery) {
+
+          let plugin = self.full_result.results.analysis.plugin;
+          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+
+          // Create a componentfactoryResolver instance
+          const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+
+          // Create the component
+          self.analysis_component = self.analysistarget.createComponent(factory);
 
           // Set the component current_result value
           self.analysis_component.instance.result = self.full_result.results.analysis;
         }
       }
-    }, 100);
+    }, 200);
   }
 
   onPlotSelect(plot_key:string) {
