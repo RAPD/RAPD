@@ -74,6 +74,7 @@ import { DialogSelectProjectComponent } from './shared/components/dialog-select-
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
+import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -125,6 +126,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     DialogNewProjectComponent,
     ErrorDialogComponent,
     ConfirmDialogComponent,
+    UploadDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -182,6 +184,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReindexDialogComponent,
     ReintegrateDialogComponent,
     RunDialogComponent,
+    UploadDialogComponent,
   ],
   bootstrap: [AppComponent]
 })
