@@ -7,8 +7,6 @@ import { Component,
          ViewChild,
          ViewContainerRef } from '@angular/core';
 
-// import { FormControl } from '@angular/forms';
-
 import { MatDialog,
          MAT_DIALOG_DATA,
          MatSnackBar,
@@ -24,16 +22,19 @@ import { RunDialogComponent } from '../run-dialog/run-dialog.component';
 import { ReintegrateDialogComponent } from '../reintegrate-dialog/reintegrate-dialog.component';
 import { DialogSelectProjectComponent } from '../../../shared/components/dialog-select-project/dialog-select-project.component';
 
-// Import analysis plugin components here
+// Import encapsulated plugin components here
 import * as mx from '../';
-var analysis_values = [];
 var analysis_components = {};
+var pdbquery_components = {};
 for (let key in mx) {
   console.log(key);
+  // Analysis
   if (key.match('Analysis')) {
-    console.log('YES');
-    analysis_values.push(mx[key]);
     analysis_components[key.toLowerCase()] = mx[key];
+  }
+  // PDBQuery
+  if (key.match('Pdbquery')) {
+    pdbquery_components[key.toLowerCase()] = mx[key];
   }
 }
 
@@ -110,8 +111,10 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
+  @ViewChild('pdbquerytarget', { read: ViewContainerRef }) pdbquerytarget;
 
   analysis_component: any;
+  pdbquery_component: any;
 
   objectKeys = Object.keys;
 
@@ -130,12 +133,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       this.current_result.result_id,
       this.current_result._id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
-  
-    // this.viewModeForm = new FormControl();
-    // this.viewModeForm.valueChanges.
-    // subscribe(form => {
-    //   console.log('change');
-    // });
   }
 
   ngOnDestroy() {
@@ -171,30 +168,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  // initAnalysis() {
-    
-  //   let plugin = this.full_result.results.analysis.plugin;
-  //   const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-  //   console.log(component_name);
-  //   console.log(analysis_components);
-
-  //   // Create a componentfactoryResolver instance
-  //   const factory = this.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
-
-  //   // Create the component
-  //   this.analysis_component = this.analysistarget.createComponent(factory);
-  //   console.log(this.analysistarget);
-
-  //   // Set the component current_result value
-  //   this.analysis_component.instance.result = this.full_result.results.analysis;
-  // }
-
-  // onChange(event:any) {
-
-  //   console.log('Change');
-
-  // }
-
   onViewModeSelect(event) {
 
     console.log('onViewModeSelect', event.value);
@@ -227,20 +200,22 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       // PDBQuery
       } else if (event.value === 'pdbquery') {
         // If there is analysis data, determine the component to use
-        if (self.full_result.results.pdbquery) {
+        // if (self.full_result.results.pdbquery) {
 
-          let plugin = self.full_result.results.analysis.plugin;
-          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          // let plugin = self.full_result.results.analysis.plugin;
+
+          // const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          const component_name = 'pdbquery9a2e100component';
 
           // Create a componentfactoryResolver instance
-          const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+          const factory = self.componentfactoryResolver.resolveComponentFactory(pdbquery_components[component_name]);
 
           // Create the component
-          self.analysis_component = self.analysistarget.createComponent(factory);
+          self.pdbquery_component = self.pdbquerytarget.createComponent(factory);
 
           // Set the component current_result value
-          self.analysis_component.instance.result = self.full_result.results.analysis;
-        }
+          // self.pdbquery_component.instance.result = undefined; // self.full_result.results.analysis;
+        // }
       }
     }, 200);
   }

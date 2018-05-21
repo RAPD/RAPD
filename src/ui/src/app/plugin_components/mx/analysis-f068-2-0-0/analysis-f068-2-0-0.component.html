@@ -1,6 +1,4 @@
 <div class="result-panel child">
-  <!-- <mat-card class="rapd-result">
-  <mat-card-content> -->
   <mat-tab-group>
   <mat-tab label="Summary">
     <div fxLayout="row" fxLayoutGap="10px">
@@ -158,8 +156,6 @@
       </div>
     </div>
   </mat-tab>
-  <!-- <mat-tab label="PDBQuery">
-  </mat-tab> -->
   <mat-tab label="Self-Rotation">
     <div *ngIf="(result.parsed.molrep)?.self_rotation_image_60">
       <img src={{result.parsed.molrep.self_rotation_image_60}}/>
@@ -168,8 +164,6 @@
       <img src={{result.parsed.molrep.self_rotation_image_180}}/>
     </div>
   </mat-tab>
-  <!-- <mat-tab label="Precessions">
-  </mat-tab> -->
   <mat-tab label="Logs">
     <app-log-card
       [log]="result.raw.xtriage"
@@ -185,6 +179,4 @@
     </app-log-card>
   </mat-tab>
 </mat-tab-group>
-<!-- </mat-card-content>
-</mat-card> -->
 </div>
