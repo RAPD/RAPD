@@ -64,6 +64,8 @@ import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
+import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
+
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
 import { MxImageComponent } from './plugin_components/mx/mx-image/mx-image.component';
@@ -97,7 +99,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     MxResultContainerComponent,
     MxResultslistPanelComponent,
     MxResultPanelComponent,
-    
+    //
     Highlight,
     UnauthorizedpanelComponent,
     UserDialogComponent,
@@ -108,15 +110,17 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     CommunicateDialogComponent,
     //
     Index3b34200Component,
-    HeaderDialogComponent,
-    ReindexDialogComponent,
     IntegrateBd11200Component,
     AnalysisF068200Component,
+    Pdbquery9a2e100Component,
+    //
+    HeaderDialogComponent,
+    MxImageComponent,
+    ReindexDialogComponent,
+    ReintegrateDialogComponent,
     //
     LogCardComponent,
     RunDialogComponent,
-    MxImageComponent,
-    ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
     ErrorDialogComponent,
@@ -172,6 +176,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AnalysisF068200Component,
     Index3b34200Component,
     IntegrateBd11200Component,
+    Pdbquery9a2e100Component,
     // Plugin helpers
     HeaderDialogComponent,
     ReindexDialogComponent,

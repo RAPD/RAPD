@@ -1,5 +1,37 @@
 
-This is a README.md
+
+# Create a Plugin UI
+
+Creating an MX plugin UI component, navigate to
+```shell
+rapd/src/ui/src/app/plugin_components/mx
+``` 
+and run the angular-cli command 
+```shell
+$ ng generate component Pdbquery9a2e100 -m
+CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.css (0 bytes)
+CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.html (34 bytes)
+CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.spec.ts (691 bytes)
+CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.ts (305 bytes)
+```
+
+You can add the option `--dry-run` to see what files will be made.
+
+Now add the component to `rapd/src/ui/src/app/app.module.ts`. It should be imported, in declarations, and in entryComponents. I recommend looking at another component such as Pdbquery9a2e100 to see how this is done.
+
+Now add the component to `rapd/src/ui/src/app/plugin_components/mx/index.ts`. The line for Pdbquery9a2e100 looks like
+```typescript
+export * from './pdbquery9a2e100/pdbquery9a2e100.component';
+```
+
+
+
+
+
+
+
+
+# This is a README.md
 
 A quick guide to markdown follows. Thanks to Adam Pritchard's markdown-here
 

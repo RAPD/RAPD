@@ -7,6 +7,8 @@ import { Component,
          ViewChild,
          ViewContainerRef } from '@angular/core';
 
+// import { FormControl } from '@angular/forms';
+
 import { MatDialog,
          MAT_DIALOG_DATA,
          MatSnackBar,
@@ -27,9 +29,9 @@ import * as mx from '../';
 var analysis_values = [];
 var analysis_components = {};
 for (let key in mx) {
-  // console.log(key);
+  console.log(key);
   if (key.match('Analysis')) {
-    // console.log('YES');
+    console.log('YES');
     analysis_values.push(mx[key]);
     analysis_components[key.toLowerCase()] = mx[key];
   }
@@ -49,6 +51,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   full_result: any = {process:{status:0}, results:{}};
 
+  // viewModeForm: FormControl;
   view_mode: string = 'summary';
 
   selected_plot: string;
@@ -127,6 +130,12 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       this.current_result.result_id,
       this.current_result._id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
+  
+    // this.viewModeForm = new FormControl();
+    // this.viewModeForm.valueChanges.
+    // subscribe(form => {
+    //   console.log('change');
+    // });
   }
 
   ngOnDestroy() {
@@ -139,19 +148,22 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
     // Select the default plot to show
     if (data.results) {
+      // Plots
       if (data.results.plots) {
         if ('Rmerge vs Frame' in data.results.plots) {
           this.selected_plot = 'Rmerge vs Frame';
           this.setPlot('Rmerge vs Frame');
         }
       }
+      // Analysis
+      if (data.results.analysis) {
+        // this.initAnalysis();
+      }
     }
   }
 
   // Display the header information
   displayRunInfo() {
-
-
 
     let config = {
       data: {
@@ -163,14 +175,41 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  onViewModeSelect(view_mode:string) {
+  initAnalysis() {
+    
+    let plugin = this.full_result.results.analysis.plugin;
+    const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+    console.log(component_name);
+    console.log(analysis_components);
+
+    // Create a componentfactoryResolver instance
+    const factory = this.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+
+    // Create the component
+    this.analysis_component = this.analysistarget.createComponent(factory);
+    console.log(this.analysistarget);
+
+    // Set the component current_result value
+    this.analysis_component.instance.result = this.full_result.results.analysis;
+  }
+
+  // onChange(event:any) {
+
+  //   console.log('Change');
+
+  // }
+
+  onViewModeSelect(event) {
 
     var self = this;
 
-    console.log(view_mode);
-
+    // Wait 100ms and then load up the interface
     setTimeout(function() {
-      if (view_mode === 'analysis') {
+      // Looking at an analysis
+      if (this.view_mode === 'analysis') {
+        
+        console.log(self.full_result.results.analysis);
+        
         // If there is analysis data, determine the component to use
         if (self.full_result.results.analysis) {
 
@@ -185,8 +224,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
           // Create the component
           self.analysis_component = self.analysistarget.createComponent(factory);
           console.log(self.analysistarget);
+
           // Set the component current_result value
-          // component.instance.current_result = event.value;
           self.analysis_component.instance.result = self.full_result.results.analysis;
         }
       }
