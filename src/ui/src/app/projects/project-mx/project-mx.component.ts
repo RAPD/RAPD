@@ -279,8 +279,8 @@ export class ProjectMxComponent implements OnInit {
     console.log('activateUpload');
 
     // Open the dialog
-    let dialogRef = this.upload_dialog.open(UploadDialogComponent, {
-      upload_data_type: 'mx_data'
+    let uploadDialogRef = this.upload_dialog.open(UploadDialogComponent, {
+      data: { upload_data_type: 'mx_data' }
     });
   }
 

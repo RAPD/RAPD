@@ -13,10 +13,10 @@ import { MatDialogRef,
 export class UploadDialogComponent implements OnInit {
 
   constructor(public dialogRef: MatDialogRef<UploadDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public init_data: any) { }
+              @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
-    console.log(this.init_data);
+    console.log(this.data);
   }
 
 }
