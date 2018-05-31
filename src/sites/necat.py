@@ -312,24 +312,22 @@ REMOTE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER
 ##
 ## Aggregators
 ## Be extra careful when modifying
-CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
-                             'DATABASE_HOST':DB_HOST,
-                             #'DATABASE_PORT':SECRETS.DB_PORT,
-                             'DATABASE_USER':DB_USER,
-                             'DATABASE_PASSWORD':DB_PASSWORD,
-                             'DATABASE_STRING':DB_STRING,
-                             'DATABASE_NAME_DATA':"rapd_data",
-                             'DATABASE_NAME_USERS':"rapd_users",
-                             'DATABASE_NAME_CLOUD':"rapd_cloud",
-                             # Connection can be 'pool' for database on single computer, or
-                             # 'sentinal' for high availability on redundant computers.
-                             'REDIS_CONNECTION':"sentinel",
-                             "REDIS_HOST":REDIS_HOST,
-                             "REDIS_PORT":REDIS_PORT,
-                             "REDIS_DB":REDIS_DB,
-                             "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-                             "REDIS_MASTER_NAME":REDIS_MASTER_NAME,
-                             }
+CONTROL_DATABASE_SETTINGS = {
+    # MongoDB
+    "CONTROL_DATABASE":     CONTROL_DATABASE,
+    "DATABASE_STRING":      MONGO_CONNECTION_STRING,
+    "DATABASE_NAME_DATA":   "rapd_data",
+    "DATABASE_NAME_USERS":  "rapd_users",
+    "DATABASE_NAME_CLOUD":  "rapd_cloud",
+    # Connection can be 'direct' for database on single computer, or
+    # 'sentinel' for high availability on redundant computers.
+    'REDIS_CONNECTION':     REDIS_CONNECTION,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+}
 
 LAUNCHER_SETTINGS = {
     #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
