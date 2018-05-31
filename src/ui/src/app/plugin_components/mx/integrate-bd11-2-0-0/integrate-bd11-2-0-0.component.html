@@ -26,17 +26,18 @@
           </h3>
         </div>
         <div class="rapd-select-panel">
-          <mat-select
-            placeholder="View mode"
-            floatPlaceholder="auto"
-            (change)="onViewModeSelect(view_mode)"
-            [(ngModel)]="view_mode"
-            name="view_mode"
-            value="summary">
-            <mat-option value="summary">Summary</mat-option>
-            <mat-option value="analysis">Analysis</mat-option>
-            <mat-option value="logs">Logs</mat-option>
-          </mat-select>
+              <mat-select
+                placeholder="View mode"
+                floatPlaceholder="auto"
+                (selectionChange)="onViewModeSelect($event)"
+                [(value)]="view_mode"
+                name="view_mode"
+                value="summary">
+                <mat-option value="summary">Summary</mat-option>
+                <mat-option value="analysis">Analysis</mat-option>
+                <mat-option value="pdbquery">PDB Query</mat-option>
+                <mat-option value="logs">Logs</mat-option>
+              </mat-select>
         </div>
       </div>
     </mat-card-header>
@@ -313,6 +314,9 @@
     </mat-card-content>
     <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
       <div #analysistarget></div>
+    </mat-card-content>
+    <mat-card-content *ngIf="view_mode === 'pdbquery'" class="rapd-result">
+      <div #pdbquerytarget></div>
     </mat-card-content>
     <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
       <app-log-card

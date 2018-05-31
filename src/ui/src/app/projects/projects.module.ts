@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { RapdMaterialModule } from '../rapd.module';
+import { RapdMaterialModule } from '../material.module';
 import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { ProjectMxComponent } from './project-mx/project-mx.component';

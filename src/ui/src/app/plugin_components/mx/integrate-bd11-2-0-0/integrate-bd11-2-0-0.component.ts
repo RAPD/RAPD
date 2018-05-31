@@ -22,16 +22,19 @@ import { RunDialogComponent } from '../run-dialog/run-dialog.component';
 import { ReintegrateDialogComponent } from '../reintegrate-dialog/reintegrate-dialog.component';
 import { DialogSelectProjectComponent } from '../../../shared/components/dialog-select-project/dialog-select-project.component';
 
-// Import analysis plugin components here
+// Import encapsulated plugin components here
 import * as mx from '../';
-var analysis_values = [];
 var analysis_components = {};
+var pdbquery_components = {};
 for (let key in mx) {
-  // console.log(key);
+  console.log(key);
+  // Analysis
   if (key.match('Analysis')) {
-    // console.log('YES');
-    analysis_values.push(mx[key]);
     analysis_components[key.toLowerCase()] = mx[key];
+  }
+  // PDBQuery
+  if (key.match('Pdbquery')) {
+    pdbquery_components[key.toLowerCase()] = mx[key];
   }
 }
 
@@ -49,6 +52,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   full_result: any = {process:{status:0}, results:{}};
 
+  // viewModeForm: FormControl;
   view_mode: string = 'summary';
 
   selected_plot: string;
@@ -107,8 +111,10 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
+  @ViewChild('pdbquerytarget', { read: ViewContainerRef }) pdbquerytarget;
 
   analysis_component: any;
+  pdbquery_component: any;
 
   objectKeys = Object.keys;
 
@@ -139,6 +145,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
     // Select the default plot to show
     if (data.results) {
+      // Plots
       if (data.results.plots) {
         if ('Rmerge vs Frame' in data.results.plots) {
           this.selected_plot = 'Rmerge vs Frame';
@@ -151,8 +158,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   // Display the header information
   displayRunInfo() {
 
-
-
     let config = {
       data: {
         run_id:this.full_result.process.run_id,
@@ -163,34 +168,56 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  onViewModeSelect(view_mode:string) {
+  onViewModeSelect(event) {
+
+    console.log('onViewModeSelect', event.value);
 
     var self = this;
 
-    console.log(view_mode);
-
+    // Wait 100ms and then load up the interface
     setTimeout(function() {
-      if (view_mode === 'analysis') {
+      // Looking at an analysis
+      if (event.value === 'analysis') {
+            
+        console.log(self.full_result.results.analysis);
+
         // If there is analysis data, determine the component to use
         if (self.full_result.results.analysis) {
 
           let plugin = self.full_result.results.analysis.plugin;
           const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-          console.log(component_name);
-          console.log(analysis_components);
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
 
           // Create the component
           self.analysis_component = self.analysistarget.createComponent(factory);
-          console.log(self.analysistarget);
+
           // Set the component current_result value
-          // component.instance.current_result = event.value;
           self.analysis_component.instance.result = self.full_result.results.analysis;
         }
+
+      // PDBQuery
+      } else if (event.value === 'pdbquery') {
+        // If there is analysis data, determine the component to use
+        // if (self.full_result.results.pdbquery) {
+
+          // let plugin = self.full_result.results.analysis.plugin;
+
+          // const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          const component_name = 'pdbquery9a2e100component';
+
+          // Create a componentfactoryResolver instance
+          const factory = self.componentfactoryResolver.resolveComponentFactory(pdbquery_components[component_name]);
+
+          // Create the component
+          self.pdbquery_component = self.pdbquerytarget.createComponent(factory);
+
+          // Set the component current_result value
+          // self.pdbquery_component.instance.result = undefined; // self.full_result.results.analysis;
+        // }
       }
-    }, 100);
+    }, 200);
   }
 
   onPlotSelect(plot_key:string) {

@@ -57,6 +57,7 @@ MODES = [
     "base",
     "container",
     "detector",
+    "gatherer",
     "launcher_adapter",
     "plugin",
     "test",
@@ -78,7 +79,7 @@ def main(args):
         print "rapd.generate helps make rapd files"
         if mode in ("--help", "help", "-h"):
             print "  For help with a particular command use `rapd.generate <command> -h`"
-            print "  Availabe commands:"
+            print "  Available commands:"
         else:
             print "%s is not an understood type. Your choices:" % mode
         for allowed_mode in MODES:

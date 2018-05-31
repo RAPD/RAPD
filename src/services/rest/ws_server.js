@@ -228,6 +228,13 @@ function Wss (opt, callback) {
         delete ws_connections[ws.id];
       });
 
+      ws.on('error', function (err) {
+        if (err.code !== 'ECONNRESET') {
+          // Ignore ECONNRESET and re throw anything else
+          throw err
+        }
+      });
+
       // Message incoming from the client
       ws.on('message', function(message) {
 
