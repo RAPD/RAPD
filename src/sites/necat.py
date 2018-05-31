@@ -343,25 +343,23 @@ LAUNCH_SETTINGS = {
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
 
-IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          'REDIS_CONNECTION':"sentinel",
-                          "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                          #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                          "REDIS_HOST":REDIS_HOST,
-                          "REDIS_PORT":REDIS_PORT,
-                          "REDIS_DB":REDIS_DB,
-                          }
+IMAGE_MONITOR_SETTINGS = {
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
+}
 
-RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                        'REDIS_CONNECTION':"sentinel",
-                        "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                        #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                        "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                        "REDIS_HOST":REDIS_HOST,
-                        "REDIS_PORT":REDIS_PORT,
-                        "REDIS_DB":REDIS_DB,
-                          }
+RUN_MONITOR_SETTINGS = {
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME" :   REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB
+}
 
 CLOUD_MONITOR_SETTINGS = {
         "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
@@ -396,10 +394,14 @@ SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":ID,
                                      "REDIS_DB":C_REDIS_DB},
                            }
 
-REMOTE_ADAPTER_SETTINGS = {"ID":ID,
-                           "MONGO_CONNECTION_STRING":MONGO_CONNECTION_STRING,
-                           "REDIS_CLUSTER":REDIS_CLUSTER,
-                           'REDIS_CONNECTION':"sentinel",
-                           "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-                           #"SENTINEL_PORT":SECRETS.SENTINEL_PORT,
-                           "REDIS_MASTER_NAME":REDIS_MASTER_NAME}
+REMOTE_ADAPTER_SETTINGS = {
+    "ID":                      ID,
+    "MONGO_CONNECTION_STRING": MONGO_CONNECTION_STRING,
+    'REDIS_CONNECTION':        REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":       REDIS_MASTER_NAME,
+    "REDIS_HOST":              REDIS_HOST,
+    "REDIS_PORT":              REDIS_PORT,
+    "REDIS_DB":                REDIS_DB,
+}
+
