@@ -51,7 +51,7 @@ import uuid
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as rcredits
-from database.redis_adapter import Database as RedisDB
+from database.redis_adapter import Database
 import utils.commandline
 from utils.text import json
 
@@ -177,15 +177,15 @@ class Gatherer(object):
         self.logger.debug("Gatherer.connect")
 
         # Connect to RAPD Redis
-        self.redis_rapd = RedisDB(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis_rapd = Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # NECAT uses Redis to communicate with the beamline
         # Connect to beamline Redis to monitor if run is launched
-        self.redis_beamline = RedisDB(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        self.redis_beamline = Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
 
         # NECAT uses Redis to communicate with the remote system
         # Connect to remote system Redis to monitor if run is launched
-        self.redis_remote = RedisDB(settings=self.site.REMOTE_ADAPTER_SETTINGS)
+        self.redis_remote = Database(settings=self.site.REMOTE_ADAPTER_SETTINGS)
 
     def handle_run(self, run_raw):
         """
