@@ -16,29 +16,18 @@ export class Pdbquery9a2e100Component implements OnInit {
 
   constructor() { }
 
-  ngOnInit() {
-    // this.raw_result = this.transform(this.result);
-  }
-
-  // transform(val) {
-  //   return JSON.stringify(val, null, 2)
-  //     .replace(' ', '&nbsp;')
-  //     .replace('\n', '<br/>');
-  // }
+  ngOnInit() { }
 
   default_val(val:any, default_val:any, digitsInfo: string = undefined) {
+    // console.log('default_val', val, default_val, digitsInfo);
     if (val === undefined) {
       return default_val;
+    } else if (isNaN(val)) {
+      return val;
+    } else if (digitsInfo) {
+      return formatNumber(val, 'en-US', digitsInfo)
     } else {
-      if (isNaN(val)) {
-        return val;
-      } else {
-        if (digitsInfo) {
-          return formatNumber(val.parseFloat(), 'en-US', digitsInfo)
-        } else {
-          return val;
-        }
-      }
+      return val;
     }
   }
 
