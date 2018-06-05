@@ -78,6 +78,8 @@ import utils.spacegroup as spacegroup
 # Import RAPD plugins
 import plugins.analysis.commandline
 import plugins.analysis.plugin
+import plugins.pdbquery.commandline
+import plugins.pdbquery.plugin
 import utils.xutils as xutils
 
 import info
@@ -143,6 +145,9 @@ class RapdPlugin(Process):
 
     # Store archive directory for internal use
     archive_dir = False
+    
+    # Setup default for using compute_cluster
+    computer_cluster = False
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -180,7 +185,7 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences")
+        #self.preferences = self.command.get("preferences")
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data", {}).get("image_data")
@@ -236,26 +241,28 @@ class RapdPlugin(Process):
         self.procs = 4
 
         # If using a computer cluster, overwrite the self.launcher
-        self.cluster_use = self.preferences.get('cluster_use', False)
-        if self.cluster_use:
+        #self.cluster_use = self.preferences.get('cluster_use', False)
+        if self.preferences.get('computer_cluster', False):
             # Load the cluster adapter
-            cluster_launcher = xutils.load_cluster_adapter(self)
+            computer_cluster = xutils.load_cluster_adapter(self)
             # If it cannot load, then the shell launcher is kept
-            if cluster_launcher:
-                self.launcher = cluster_launcher.process_cluster
+            if computer_cluster:
+                self.launcher = computer_cluster.process_cluster
                 # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-                self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
+                self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
+                self.computer_cluster = computer_cluster
                 if self.ram_use == True:
                     self.jobs = len(self.ram_nodes[0])
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    self.procs, self.jobs = cluster_launcher.get_nproc_njobs()
+                    self.procs, self.jobs = computer_cluster.get_nproc_njobs()
                     #self.jobs = 20
                     #self.procs = 8
             else:
                 if self.logger:
                     self.logger.debug('The cluster_adapter could not be loaded, defaulting to shell launching!!!')
+
 
         self.standalone = self.preferences.get('standalone', False)
 
@@ -598,6 +605,9 @@ class RapdPlugin(Process):
 
         # Run analysis
         self.run_analysis_plugin()
+        
+        # Run pdbquery
+        self.run_pdbquery_plugin()
 
         # Send back results - the final time
         #self.send_results(self.results)
@@ -640,14 +650,7 @@ class RapdPlugin(Process):
             os.chdir(self.dirs["work"])
 
             # Queue to exchange information
-            plugin_queue = Queue()
-
-            # Run mode
-            sub_run_mode = "interactive"
-            if self.preferences["run_mode"] == "interactive":
-                sub_run_mode = "subprocess-interactive"
-            elif self.preferences["run_mode"] == "server":
-                sub_run_mode = "subprocess"
+            #plugin_queue = Queue()
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -656,13 +659,14 @@ class RapdPlugin(Process):
                 datafile = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
-                nproc = self.preferences.get("nproc", 1)
-                pdbquery = False  #TODO
+                nproc = self.procs
                 progress = self.preferences.get("progress", False)
-                queue = plugin_queue
-                run_mode = sub_run_mode
+                #queue = plugin_queue
+                run_mode = self.preferences.get("run_mode", False)
+                computer_cluster = self.computer_cluster
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
+                db_settings = self.site.CONTROL_DATABASE_SETTINGS
                 test = False
 
             analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
@@ -678,12 +682,80 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
             # Run the plugin
-            plugin_instance = plugin.RapdPlugin(analysis_command,
-                                                self.tprint,
-                                                self.logger)
+            plugin_instance = plugin.RapdPlugin(command=analysis_command,
+                                                processed_results = self.results,
+                                                launcher=self.launcher,
+                                                tprint=self.tprint,
+                                                logger=self.logger)
+            plugin_instance.start()
+            
+            # Back to where we were, in case it matters
+            os.chdir(start_dir)
+
+        # Do not run analysis
+        else:
+            self.results["results"]["analysis"] = False
+            
+    def run_pdbquery_plugin(self):
+        """Set up and run the analysis plugin"""
+
+        self.logger.debug("run_pdbquery_plugin")
+
+        # Run analysis
+        if self.preferences.get("pdbquery", False):
+
+            # Now Launch PDBQuery
+            self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
+            self.tprint("  This can take a while...", level=30, color="white")
+            
+            # Make sure we are in the work directory
+            start_dir = os.getcwd()
+            os.chdir(self.dirs["work"])
+
+            # Construct the pdbquery plugin command
+            class PdbqueryArgs(object):
+                """Object for command construction"""
+                clean = self.preferences.get("clean_up", False)
+                datafile = self.results["results"]["mtzfile"]
+                dir_up = self.preferences.get("dir_up", False)
+                json = self.preferences.get("json", True)
+                nproc = self.procs
+                progress = self.preferences.get("progress", False)
+                # return_queue = multiprocessing.Queue()
+                #computer_cluster = self.preferences.get('computer_cluster', False)
+                run_mode = self.preferences.get("run_mode", False)
+                computer_cluster = self.computer_cluster
+                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                pdbs = False
+                contaminants = True
+                ##run_mode = None
+                search = True
+                test = False
+                verbose = True
+                #no_color = False
+    
+            pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
+    
+            # The pdbquery plugin
+            plugin = plugins.pdbquery.plugin
+    
+            # Print out plugin info
+            self.tprint(arg="\nPlugin information", level=10, color="blue")
+            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+    
+            # Run the plugin
+            plugin_instance = plugin.RapdPlugin(command=pdbquery_command,
+                                                processed_results = self.results,
+                                                launcher=self.launcher,
+                                                tprint=self.tprint,
+                                                logger=self.logger)
 
             plugin_instance.start()
             
+            """
             # Allow multiple returns for each part of analysis.
             while True:
                 analysis_result = plugin_queue.get()
@@ -691,7 +763,7 @@ class RapdPlugin(Process):
                 self.send_results(self.results)
                 if analysis_result['process']["status"] in (-1, 100):
                     break
-            
+            """
             #analysis_result = plugin_queue.get()
             #self.results["results"]["analysis"] = analysis_result
 
@@ -700,7 +772,7 @@ class RapdPlugin(Process):
 
         # Do not run analysis
         else:
-            self.results["results"]["analysis"] = False
+            self.results["results"]["pdbquery"] = False
 
     def ram_total(self, xdsinput):
         """
