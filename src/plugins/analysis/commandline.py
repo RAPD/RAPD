@@ -47,13 +47,23 @@ def construct_command(commandline_args):
         }
 
     # Working directory
-    work_dir = commandline_utils.check_work_dir(
+    if commandline_args.test:
+        # Don't make a new directory
+        work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_analysis_%s" % ".".join(
                 os.path.basename(commandline_args.datafile).split(".")[:-1])),
-        active=True,
+        active=False,
         up=commandline_args.dir_up)
+    else:
+        work_dir = commandline_utils.check_work_dir(
+            os.path.join(
+                os.path.abspath(os.path.curdir),
+                "rapd_analysis_%s" % ".".join(
+                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            active=True,
+            up=commandline_args.dir_up)
 
     command["directories"] = {
         "work": work_dir
@@ -61,7 +71,8 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile)
+        "datafile": os.path.abspath(commandline_args.datafile),
+        "db_settings": commandline_args.db_settings,
     }
 
     # Plugin settings
@@ -69,13 +80,14 @@ def construct_command(commandline_args):
         "clean": commandline_args.clean,
         "dir_up": commandline_args.dir_up,
         "nproc": commandline_args.nproc,
-        "pdbquery": commandline_args.pdbquery,
+        #"pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
         "show_plots": commandline_args.show_plots,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
+        "computer_cluster": commandline_args.computer_cluster,
     }
 
     # Interprocess communication

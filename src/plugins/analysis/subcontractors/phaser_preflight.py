@@ -53,7 +53,7 @@ from bson.objectid import ObjectId
 # Phenix imports
 import phaser
 
-def run_phaser_module(args):
+def run_phaser_module_OLD(args):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
