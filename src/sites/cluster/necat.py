@@ -255,7 +255,9 @@ def process_cluster(command,
         if logfile == False:
             fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
             logfile = fd.name
-        
+    if not batch_queue:
+         batch_queue ='all.q'
+    
     counter = 0
 
     #'-clear' can be added to the options to eliminate the general.q

@@ -66,6 +66,25 @@ def construct_command(commandline_args):
         }
 
     # Work directory
+    """
+    if commandline_args.test:
+        # Don't make a new directory
+        work_dir = commandline_utils.check_work_dir(
+            os.path.join(
+                os.path.abspath(os.path.curdir),
+                "rapd_pdbquery_%s" %  ".".join(
+                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            active=False,
+            up=commandline_args.dir_up)
+    else:
+        work_dir = commandline_utils.check_work_dir(
+            os.path.join(
+                os.path.abspath(os.path.curdir),
+                "rapd_pdbquery_%s" %  ".".join(
+                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            active=True,
+            up=commandline_args.dir_up)
+    """
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
@@ -81,7 +100,8 @@ def construct_command(commandline_args):
     # Information on input
     command["input_data"] = {
         "datafile": os.path.abspath(commandline_args.datafile),
-        "pdbs": commandline_args.pdbs
+        "pdbs": commandline_args.pdbs,
+        "db_settings": commandline_args.db_settings
     }
 
     # Plugin settings
@@ -93,6 +113,8 @@ def construct_command(commandline_args):
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
         "test": commandline_args.test,
+        "computer_cluster": commandline_args.computer_cluster,
+        #"results_queue": commandline_args.results_queue,
     }
 
     return command

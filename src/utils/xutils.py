@@ -2217,8 +2217,8 @@ def getPDBInfo_OLD(self,inp,matthews=True,cell_analysis=False):
     self.logger.exception('**ERROR in Utils.getPDBInfo')
     return(False)
   """
-def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
-    """Get info from PDB of mmCIF file"""
+def get_pdb_info_OLD(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
+    """Get info from PDB of mmCIF file"""# moved to plugins.subcontractors.phaser
 
     # Get rid of ligands and water so Phenix won't error.
     np = 0
@@ -2229,6 +2229,12 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
     res1 = 0.0
     d = {}
     l = []
+    
+    print cif_file
+    print dres
+    print matthews
+    print cell_analysis
+    print data_file
 
     # Read in the file
     cif_file = convert_unicode(cif_file)
@@ -2281,7 +2287,8 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     temp.write_pdb_file(file_name=n)
                     if matthews:
                         # Run Matthews Calc. on chain
-                        phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
+                        #phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
+                        phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
                     else:
                         res1 = run_phaser_module(n)
 
@@ -2290,15 +2297,17 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                                    'MWna': na1*330,
                                    'MWaa': np1*110,
                                    'MW': na1*330+np1*110,
-                                   'NMol': phaser_return["z"],
-                                   'SC': phaser_return["solvent_content"],
-                                   'res': phaser_return["target_resolution"]}
+                                   'NMol': phaser_return.get("z", nmol),
+                                   'SC': phaser_return.get("solvent_content", sc),
+                                   'res': phaser_return.get("target_resolution", res1)}
         np += np1
         na += na1
 
     # Run on entire PDB
     if matthews:
-        phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
+        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
+        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        """
         d['all'] = {'file': cif_file,
                     'NRes': np+na,
                     'MWna': na*330,
@@ -2307,16 +2316,18 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     'NMol': phaser_return["z"],
                     'SC': phaser_return["solvent_content"],
                     'res': phaser_return["target_resolution"]}
+        """
     else:
-        phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        d['all'] = {'file': cif_file,
-                    'NRes': np+na,
-                    'MWna': na*330,
-                    'MWaa': np*110,
-                    'MW': na*330+np*110,
-                    'NMol': phaser_return["z"],
-                    'SC': phaser_return["solvent_content"],
-                    'res': phaser_return["target_resolution"]}
+        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
+        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+    d['all'] = {'file': cif_file,
+                'NRes': np+na,
+                'MWna': na*330,
+                'MWaa': np*110,
+                'MW': na*330+np*110,
+                'NMol': phaser_return.get("z", nmol),
+                'SC': phaser_return.get("solvent_content", sc),
+                'res': phaser_return.get("target_resolution", res1)}
     return d
 
 def getSGInfo_OLD(self,inp):
@@ -2368,7 +2379,7 @@ def getSGInfo_OLD(self,inp):
     self.logger.exception('**ERROR in Utils.getSGInfo')
     return(False)
 
-def get_spacegroup_info(cif_file):
+def get_spacegroup_info_OLD(cif_file):
     """Get info from PDB of mmCIF file"""
 
     # print "get_spacegroup_info", cif_file, os.getcwd()
@@ -2555,7 +2566,7 @@ def getRes_OLD(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
-def get_res(datafile):
+def get_res_OLD(datafile):
     """Return resolution limit of dataset"""
 
     datafile = convert_unicode(datafile)
@@ -2937,7 +2948,7 @@ def readMarHeader(inp):
   f.close()
 
 
-def runPhaserModule(self, inp=False):
+def runPhaserModule_OLD(self, inp=False):
   """
   Run separate module of Phaser to get results before running full job.
   Setup so that I can read the data in once and run multiple modules.
@@ -3077,7 +3088,7 @@ def runPhaserModule(self, inp=False):
     else:
       return(0.0)
 
-def run_phaser_module(inp=False):
+def run_phaser_module_OLD(inp=False): # Now in plugins.subcontractors.phaser
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
@@ -3201,7 +3212,8 @@ def run_phaser_module(inp=False):
             phaser_preflight = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             phaser_preflight.wait()
             stdout, _ = phaser_preflight.communicate()
-            preflight_return = json.loads(stdout.rstrip())
+            #preflight_return = json.loads(stdout.rstrip())
+            preflight_return = stdout.rstrip()
 
             return preflight_return
 

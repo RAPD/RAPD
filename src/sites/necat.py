@@ -72,7 +72,6 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
                 #'BEAM_CENTER_X' : (163.2757684023,
                 #                 0.0003178917,
@@ -115,16 +114,24 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
-                'BEAM_CENTER_X' : (163.2757684023,
-                                 0.0003178917,
-                                 -5.0236657815e-06,
-                                 5.8164218288e-09),
-                'BEAM_CENTER_Y' : (155.1904879862,
-                                 -0.0014631216,
-                                 8.60559283424e-07,
-                                 -2.5709929645e-10)
+                'BEAM_CENTER_X' : (163.996842788,
+                                 -0.00156332638728,
+                                 -2.56247974068e-06,
+                                 3.95732036737e-09),
+                'BEAM_CENTER_Y' : (154.666305262,
+                                 -0.000454510045038,
+                                 -1.12749547412e-06,
+                                 8.49370631749e-10)
+                
+                #'BEAM_CENTER_X' : (163.2757684023,
+                #                 0.0003178917,
+                #                 -5.0236657815e-06,
+                #                 5.8164218288e-09),
+                #'BEAM_CENTER_Y' : (155.1904879862,
+                #                 -0.0014631216,
+                #                 8.60559283424e-07,
+                #                 -2.5709929645e-10)
                 },
              }
 # Copy E to T for testing
@@ -373,10 +380,10 @@ CLOUD_MONITOR_SETTINGS = {
         "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
         #"LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
         "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
-        "UI_HOST":UI_HOST,
-        "UI_PORT":UI_PORT,
-        "UI_USER":UI_USER,
-        "UI_PASSWORD":UI_PASSWORD,
+        #"UI_HOST":UI_HOST,
+        #"UI_PORT":UI_PORT,
+        #"UI_USER":UI_USER,
+        #"UI_PASSWORD":UI_PASSWORD,
         #"UPLOAD_DIR":UPLOAD_DIR
         }
 
