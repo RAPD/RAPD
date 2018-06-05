@@ -13,6 +13,106 @@
       
       <div fxLayout="column">
         <table>
+
+          <tr style="vertical-align:top;">
+            <td style="padding:0 0 0 0;">
+              <div class="rapd-corral" [ngClass]="selected_integrated_data.length > 0 ? 'background-green': ''">
+                <div class="rapd-corral-pen">
+                  <div class="rapd-corral-heading">
+                    Raw Data
+                  </div>
+                  <mat-list dense class="rapd-corral-content" style="padding-top:0px;">
+                    <ng-container *ngFor="let source_datum of project.source_data">
+                      <mat-list-item
+                        *ngIf="source_datum.plugin_type==='INTEGRATE'"
+                        (click)="toggleSourceDataIntegrateSelection(source_datum._id)"
+                        [ngClass]="selected_integrated_data.indexOf(source_datum._id) != -1 ? 'active-result': ''">
+                        {{source_datum.repr}}
+                      </mat-list-item>
+                    </ng-container>
+                  </mat-list>
+                </div>
+              </div>
+            </td>
+            <td style="padding:0 0 0 0;">
+              <!-- Connect Integrated source data to actions -->
+              <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div>
+            </td>
+            <td style="padding:0 0 0 0;">
+              
+              <!-- 1 Integration is selected -->
+              <!-- <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
+                <div class="rapd-corral-pen">
+                  <div class="rapd-corral-heading">
+                    Actions
+                  </div>
+                  <mat-list dense class="rapd-corral-content">
+                    <ng-container *ngFor="let action of actions.INTEGRATE[0]">
+                      <mat-list-item >
+                        <button mat-button color="primary"
+                        (click)="selectSingleIntgrationAction(action)">
+                          <mat-icon>{{action_icons[action]}}</mat-icon>
+                          {{action}}
+                        </button> 
+                      </mat-list-item>
+                    </ng-container>
+                  </mat-list>
+                </div>
+              </div> -->
+            
+              <!-- >1 Integration is selected -->
+              <!-- <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
+                <div class="rapd-corral-pen">
+                  <div class="rapd-corral-heading">
+                    Actions
+                  </div>
+                  <mat-list dense class="rapd-corral-content">
+                    <ng-container *ngFor="let action of actions.INTEGRATE[1]">
+                      <mat-list-item>
+                        {{action}}
+                      </mat-list-item>
+                    </ng-container>
+                  </mat-list>
+                </div>
+              </div> -->
+            </td>
+            <td style="padding:0 0 0 0;">
+              <!-- Connect Integrated source data to actions -->
+              <!-- <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div> -->
+            </td>
+            <td style="padding:0 0 0 0;">
+              
+              <!-- 1 Integration is selected -->
+              <!-- <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
+                <div class="rapd-corral-pen">
+                  <div class="rapd-corral-heading">
+                    Results
+                  </div>
+                  <mat-list dense class="rapd-corral-content">
+                    <ng-container *ngFor="let action of actions.INTEGRATE[0]">
+                    </ng-container>
+                  </mat-list>
+                </div>
+              </div> -->
+            
+              <!-- >1 Integration is selected -->
+              <!-- <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
+                <div class="rapd-corral-pen">
+                  <div class="rapd-corral-heading">
+                    Actions
+                  </div>
+                  <mat-list dense class="rapd-corral-content">
+                    <ng-container *ngFor="let action of actions.INTEGRATE[1]">
+                      <mat-list-item>
+                        {{action}}
+                      </mat-list-item>
+                    </ng-container>
+                  </mat-list>
+                </div>
+              </div> -->
+            </td>
+          </tr>
+
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
               <div class="rapd-corral" [ngClass]="selected_integrated_data.length > 0 ? 'background-green': ''">
@@ -118,6 +218,8 @@
               </div> -->
             </td>
           </tr>
+
+
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
               <div class="rapd-corral" [ngClass]="selected_indexed_data.length > 0 ? 'background-green': ''">
@@ -174,4 +276,7 @@
 
     </div>
   </mat-card-content>
+  <mat-toolbar class="result-panel-action-bar">
+      <button mat-button color="primary" (click)="activateUpload()"> <mat-icon>cloud_upload</mat-icon>Upload Data</button>
+  </mat-toolbar>
 </mat-card>

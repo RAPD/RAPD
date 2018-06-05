@@ -41,15 +41,11 @@ router.route('/resultsbysession/:session_id')
               message: err
             });
           } else {
-            console.log(results.length, 'results found for session', req.params.session_id);
+            // console.log(results.length, 'results found for session', req.params.session_id);
             res.status(200).json({
               success: true,
               results: results
             });
-            // console.log(req.decoded._doc);
-            // let new_activity = new Activity({
-            //   activity_type:'get_resultsbysession'
-            // }).save();
           }
         });
     });

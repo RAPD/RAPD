@@ -38,7 +38,6 @@ const runs_routes =           require('./routes/runs');
 const sessions_routes =       require('./routes/sessions');
 const users_routes =          require('./routes/users');
 
-
 // Redis
 var Redis = require('ioredis');
 var redis_client = new Redis(config.redis_connection);
@@ -54,7 +53,6 @@ const Login =    mongoose.ctrl_conn.model('Login', require('./models/login').Log
 // User and Group uses auth_conn
 const User =  mongoose.auth_conn.model('User', require('./models/user').UserSchema);
 const Group = mongoose.auth_conn.model('Group', require('./models/group').GroupSchema);
-
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {

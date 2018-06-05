@@ -24,16 +24,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-rapd_adscserver provides an xmlrpclib  server that watches xf_status and
-marcollect on an adsc data collection computer to provide information back
-to rapd_server via to rapd_adsc
-
-This server is used at 24ID-E with an ADSC Q315 detector
-
-If you are adapting rapd to your locality, you will need to check this
-carefully.
-"""
 # Standard imports
 import argparse
 import datetime
@@ -58,7 +48,7 @@ import utils.site
 import utils.text as text
 from utils.text import json
 #import json
-from bson.objectid import ObjectId
+# from bson.objectid import ObjectId
 
 class Gatherer(object):
     """

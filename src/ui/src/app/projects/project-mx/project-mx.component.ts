@@ -3,12 +3,16 @@ import { Component,
          OnInit,  
          ViewChild,
          ViewContainerRef } from '@angular/core';
+
 import { Router,
          ActivatedRoute,
          ParamMap } from '@angular/router';
-import {MatDialog,
-        MatDialogRef,
-        MAT_DIALOG_DATA} from '@angular/material';
+
+import { MatDialog,
+         MatDialogRef,
+         MAT_DIALOG_DATA,
+         MatSnackBar,
+         MatToolbarModule } from '@angular/material';
 
 import 'rxjs/add/operator/switchMap';
 import { Observable } from 'rxjs/Observable';
@@ -19,6 +23,7 @@ import { WebsocketService } from '../../shared/services/websocket.service';
 import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { ErrorDialogComponent } from '../../shared/dialogs/error-dialog/error-dialog.component';
 import { ReintegrateDialogComponent } from '../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
+import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
 
 // Import agent components here
 import * as mx from '../../plugin_components/mx';
@@ -66,7 +71,8 @@ export class ProjectMxComponent implements OnInit {
     private componentfactoryResolver: ComponentFactoryResolver,
     public confirm_dialog: MatDialog,
     public error_dialog: MatDialog,
-    public reintegrate_dialog: MatDialog
+    public reintegrate_dialog: MatDialog,
+    public upload_dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -202,9 +208,6 @@ export class ProjectMxComponent implements OnInit {
             }
           }
         );
-
-    
-
   }
 
   activateRemoveConfirm(result_id:string) {
@@ -268,6 +271,16 @@ export class ProjectMxComponent implements OnInit {
                               }
                             });
       }
+    });
+  }
+
+  activateUpload() {
+
+    console.log('activateUpload');
+
+    // Open the dialog
+    let uploadDialogRef = this.upload_dialog.open(UploadDialogComponent, {
+      data: { upload_data_type: 'mx_data' }
     });
   }
 

@@ -65,12 +65,12 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
     for (let result of data) {
 
-      console.log(result);
+      // console.log(result);
 
       // My kind of data
       if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
 
-        console.log('Adding to', this.result_types[this.result_type], 'results');
+        // console.log('Adding to', this.result_types[this.result_type], 'results');
 
         // Filter for age & status
         if (! result.display) {
@@ -103,10 +103,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Update parent objects
         if (result.parent_id) {
-          console.log('Have parent_id', result.parent_id);
+          // console.log('Have parent_id', result.parent_id);
           var parent_result = this.getResult(result.parent_id);
           if (parent_result) {
-            console.log('parent_result:', parent_result);
+            // console.log('parent_result:', parent_result);
             // Look for index of result
             if (parent_result.children) {
               var my_index = parent_result.children.findIndex(function(elem) {
@@ -117,31 +117,31 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
                 }
               });
               // Update
-              console.log('  my_index:', my_index);
+              // console.log('  my_index:', my_index);
               if (my_index !== -1) {
-                console.log('  Updated data');
+                // console.log('  Updated data');
                 parent_result.children[my_index] = result;
               // Insert
               } else {
-                console.log('  New data');
+                // console.log('  New data');
                 parent_result.children.unshift(result);
               }
             }
           // No parent result yet
           } else {
-            console.log('No parent_result yet');
+            // console.log('No parent_result yet');
             // Create entry for orphan child results
             if (! (result.parent_id in this.orphan_children)) {
               this.orphan_children[result.parent_id] = [];
             }
-            console.log('Add to orphan_children');
+            // console.log('Add to orphan_children');
             this.orphan_children[result.parent_id].push(result);
           }
         
         // No parent - check for children
         } else {
           if (result._id in this.orphan_children) {
-            console.log('Adding orphan children to parent');
+            // console.log('Adding orphan children to parent');
             this.data_results[data_results_index].children =  this.orphan_children[result._id];
             delete this.orphan_children[result._id];
           } else {

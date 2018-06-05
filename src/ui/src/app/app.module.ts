@@ -17,7 +17,7 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { RapdMaterialModule } from './rapd.module';
+import { RapdMaterialModule } from './material.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
 
@@ -64,6 +64,8 @@ import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
+import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
+
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
 import { MxImageComponent } from './plugin_components/mx/mx-image/mx-image.component';
@@ -72,8 +74,7 @@ import { DialogSelectProjectComponent } from './shared/components/dialog-select-
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
-
-
+import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -82,6 +83,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
 @NgModule({
   declarations: [
     AppComponent,
+    //
     MaintoolbarComponent,
     WelcomepanelComponent,
     PageNotFoundComponent,
@@ -93,10 +95,12 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ProjectspanelComponent,
     AdminpanelComponent,
     TaskspanelComponent,
+    //
     MxSessionpanelComponent,
     MxResultContainerComponent,
     MxResultslistPanelComponent,
     MxResultPanelComponent,
+    //
     Highlight,
     UnauthorizedpanelComponent,
     UserDialogComponent,
@@ -105,19 +109,24 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     LoginDialogComponent,
     ChangepassDialogComponent,
     CommunicateDialogComponent,
+    //
     Index3b34200Component,
-    HeaderDialogComponent,
-    ReindexDialogComponent,
     IntegrateBd11200Component,
     AnalysisF068200Component,
+    Pdbquery9a2e100Component,
+    //
+    HeaderDialogComponent,
+    MxImageComponent,
+    ReindexDialogComponent,
+    ReintegrateDialogComponent,
+    //
     LogCardComponent,
     RunDialogComponent,
-    MxImageComponent,
-    ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
     ErrorDialogComponent,
     ConfirmDialogComponent,
+    UploadDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -153,23 +162,29 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
               //  }),
               // HTTP_PROVIDERS ],
   entryComponents: [
-    AnalysisF068200Component,
     AppComponent,
+    // General components
+    ErrorDialogComponent,
+    ConfirmDialogComponent,
+    // Admin task components
     ChangepassDialogComponent,
     DialogNewProjectComponent,
     DialogSelectProjectComponent,
     GroupDialogComponent,
-    HeaderDialogComponent,
+    LoginDialogComponent,
+    SessionDialogComponent,
+    UserDialogComponent,
+    // Plugin components
+    AnalysisF068200Component,
     Index3b34200Component,
     IntegrateBd11200Component,
-    LoginDialogComponent,
+    Pdbquery9a2e100Component,
+    // Plugin helpers
+    HeaderDialogComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
     RunDialogComponent,
-    SessionDialogComponent,
-    UserDialogComponent,
-    ErrorDialogComponent,
-    ConfirmDialogComponent
+    UploadDialogComponent,
   ],
   bootstrap: [AppComponent]
 })

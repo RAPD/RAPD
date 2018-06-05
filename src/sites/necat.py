@@ -326,18 +326,18 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_NAME_DATA":   "rapd_data",
     "DATABASE_NAME_USERS":  "rapd_users",
     "DATABASE_NAME_CLOUD":  "rapd_cloud",
-    # Connection can be 'direct' for database on single computer, or
-    # 'sentinel' for high availability on redundant computers.
-    'REDIS_CONNECTION':     REDIS_CONNECTION,
+
+    # Redis
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
     "REDIS_HOST":           REDIS_HOST,
     "REDIS_PORT":           REDIS_PORT,
     "REDIS_DB":             REDIS_DB,
+    "REDIS_PASSWORD":       REDIS_PASSWORD,
     "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
     "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
 }
 
 LAUNCHER_SETTINGS = {
-    #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
@@ -345,8 +345,6 @@ LAUNCHER_SETTINGS = {
 
 LAUNCH_SETTINGS = {
     "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
-    #"LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
-    #                    LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
 
@@ -391,14 +389,22 @@ CLOUD_MONITOR_SETTINGS = {
 #                         "REDIS_HOST":SITE_REDIS_IP,
 #                         "REDIS_PORT":SITE_REDIS_PORT,
 #                         "REDIS_DB":SITE_REDIS_DB}
-SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":ID,
-                                     "REDIS_HOST":E_REDIS_IP,
-                                     "REDIS_PORT":E_REDIS_PORT,
-                                     "REDIS_DB":E_REDIS_DB},
-                         "NECAT_C": {"ID":ID,
-                                     "REDIS_HOST":C_REDIS_IP,
-                                     "REDIS_PORT":C_REDIS_PORT,
-                                     "REDIS_DB":C_REDIS_DB},
+SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":                   ID,
+                                     "REDIS_CONNECTION":     E_REDIS_CONNECTION,
+                                     "REDIS_HOST":           E_REDIS_IP,
+                                     "REDIS_PORT":           E_REDIS_PORT,
+                                     "REDIS_DB":             E_REDIS_DB,
+                                     "REDIS_PASSWORD":       E_REDIS_PASSWORD,
+                                     "REDIS_SENTINEL_HOSTS": E_SENTINEL_HOSTS,
+                                     "REDIS_MASTER_NAME":    E_REDIS_MASTER_NAME,},
+                         "NECAT_C": {"ID":                   ID,
+                                     "REDIS_CONNECTION":     C_REDIS_CONNECTION,
+                                     "REDIS_HOST":           C_REDIS_IP,
+                                     "REDIS_PORT":           C_REDIS_PORT,
+                                     "REDIS_DB":             C_REDIS_DB,
+                                     "REDIS_PASSWORD":       C_REDIS_PASSWORD,
+                                     "REDIS_SENTINEL_HOSTS": C_SENTINEL_HOSTS,
+                                     "REDIS_MASTER_NAME":    C_REDIS_MASTER_NAME,},
                            }
 
 REMOTE_ADAPTER_SETTINGS = {
@@ -411,4 +417,3 @@ REMOTE_ADAPTER_SETTINGS = {
     "REDIS_PORT":              REDIS_PORT,
     "REDIS_DB":                REDIS_DB,
 }
-

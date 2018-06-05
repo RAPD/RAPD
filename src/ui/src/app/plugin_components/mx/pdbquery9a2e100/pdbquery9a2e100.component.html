@@ -1,0 +1,86 @@
+<div class="result-panel child">
+    <mat-tab-group>
+        <mat-tab label="Contaminants">
+            <div fxLayout="row" fxLayoutGap="10px">
+                <div fxFlex="none">
+                    <div>
+                        <h3>Contaminant Search</h3>
+                        <table class="rapd-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
+                                </tr>
+                                <tr>
+                                    <th>PDB ID</th>
+                                    <th>Description</th>
+                                    <th>LL Gain</th>
+                                    <th>RF Z-score</th>
+                                    <th>TF Z-score</th>
+                                    <th># Clashes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let key of objectKeys(this.result.results.common_contaminants)">
+                                    <!-- <tr *ngIf="result.results.common_contaminants[key].solution === false"> -->
+                                    <td>{{key}}</td>
+                                    <td>{{default_val(result.results.common_contaminants[key].description, 'A protein')}}</td>
+                                    <td>{{default_val(result.results.common_contaminants[key].gain, 'No Solution', '1.1-1')}}</td>
+                                    <td>{{default_val(result.results.common_contaminants[key].rfz, '-')}}</td>
+                                    <td>{{default_val(result.results.common_contaminants[key].tfz, '-')}}</td>
+                                    <td>{{default_val(result.results.common_contaminants[key].clash, '-')}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+        <mat-tab label="Cell Search">
+                <div fxLayout="row" fxLayoutGap="10px">
+                    <div fxFlex="none">
+                        <div>
+                            <h3>Search Based On Unit Cell Similarity</h3>
+                            <table class="rapd-table">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th colspan=4 class="rapd-table-span">Phaser Stats</th>
+                                    </tr>
+                                    <tr>
+                                        <th>PDB ID</th>
+                                        <th>Description</th>
+                                        <th>LL Gain</th>
+                                        <th>RF Z-score</th>
+                                        <th>TF Z-score</th>
+                                        <th># Clashes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let key of objectKeys(this.result.results.search_results)">
+                                        <td>{{key}}</td>
+                                        <td>{{default_val(result.results.search_results[key].description, 'A protein')}}</td>
+                                        <td>{{default_val(result.results.search_results[key].gain, 'No Solution', '1.1-1')}}</td>
+                                        <td>{{default_val(result.results.search_results[key].rfz, '-')}}</td>
+                                        <td>{{default_val(result.results.search_results[key].tfz, '-')}}</td>
+                                        <td>{{default_val(result.results.search_results[key].clash, '-')}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+        <mat-tab label="Raw">
+                <div fxLayout="row" fxLayoutGap="10px">
+                    <div fxFlex="none">
+                        <div>
+                            <pre>{{result | json}}</pre>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+    </mat-tab-group>
+</div>
