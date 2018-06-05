@@ -38,7 +38,7 @@ import threading
 import time
 
 # RAPD imports
-from database.redis_adapter import Database as RedisDB
+from database.redis_adapter import Database
 import utils.commandline as ucommandline
 import utils.lock as ulock
 import utils.log as ulog
@@ -308,15 +308,15 @@ class Gatherer(object):
         self.logger.debug("Gatherer.connect")
 
         # Connect to RAPD Redis
-        self.redis_rapd = RedisDB(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis_rapd = Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # NECAT uses Redis to communicate with the beamline
         # Connect to beamline Redis to monitor if run is launched
-        self.redis_beamline = RedisDB(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        self.redis_beamline = Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
 
         # NECAT uses Redis to communicate with the remote system
         # Connect to remote system Redis to monitor if run is launched
-        self.redis_remote = RedisDB(settings=self.site.REMOTE_ADAPTER_SETTINGS)
+        self.redis_remote = Database(settings=self.site.REMOTE_ADAPTER_SETTINGS)
 
 def get_commandline():
     """
@@ -367,9 +367,9 @@ def main():
     else: 
         log_level = SITE.LOG_LEVEL 
     logger = ulog.get_logger(logfile_dir="/tmp", 
-                                  logfile_id="rapd_gatherer", 
-                                  level=log_level 
-                                 ) 
+                             logfile_id="rapd_gatherer", 
+                             level=log_level 
+                            ) 
     logger.debug("Commandline arguments:") 
     for pair in commandline_args._get_kwargs(): 
         logger.debug("  arg:%s  val:%s" % pair) 

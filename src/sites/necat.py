@@ -319,6 +319,7 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_NAME_DATA":   "rapd_data",
     "DATABASE_NAME_USERS":  "rapd_users",
     "DATABASE_NAME_CLOUD":  "rapd_cloud",
+
     # Redis
     "REDIS_CONNECTION":     REDIS_CONNECTION,
     "REDIS_HOST":           REDIS_HOST,
@@ -341,13 +342,12 @@ LAUNCH_SETTINGS = {
 }
 
 IMAGE_MONITOR_SETTINGS = {
-    "REDIS_CLUSTER":         REDIS_CLUSTER,
-    "REDIS_CONNECTION":      REDIS_CONNECTION,
-    "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-    "REDIS_MASTER_NAME" :    REDIS_MASTER_NAME,
-    "REDIS_HOST":            REDIS_HOST,
-    "REDIS_PORT":            REDIS_PORT,
-    "REDIS_DB":              REDIS_DB,
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
 }
 
 RUN_MONITOR_SETTINGS = {
@@ -400,12 +400,13 @@ SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":                   ID,
                                      "REDIS_MASTER_NAME":    C_REDIS_MASTER_NAME,},
                            }
 
-REMOTE_ADAPTER_SETTINGS = {"ID":ID,
-                           "MONGO_CONNECTION_STRING": MONGO_CONNECTION_STRING,
-                           "REDIS_CONNECTION":        "sentinel",
-                           "REDIS_HOST":              REDIS_HOST,
-                           "REDIS_PORT":              REDIS_PORT,
-                           "REDIS_DB":                REDIS_DB,
-                           "REDIS_PASSWORD":          REDIS_PASSWORD,
-                           "REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
-                           "REDIS_MASTER_NAME":       REDIS_MASTER_NAME}
+REMOTE_ADAPTER_SETTINGS = {
+    "ID":                      ID,
+    "MONGO_CONNECTION_STRING": MONGO_CONNECTION_STRING,
+    'REDIS_CONNECTION':        REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":       REDIS_MASTER_NAME,
+    "REDIS_HOST":              REDIS_HOST,
+    "REDIS_PORT":              REDIS_PORT,
+    "REDIS_DB":                REDIS_DB,
+}

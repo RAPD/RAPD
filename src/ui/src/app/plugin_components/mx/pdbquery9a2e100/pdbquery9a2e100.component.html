@@ -11,6 +11,7 @@
                                     <th></th>
                                     <th></th>
                                     <th colspan=4 class="rapd-table-span">Phaser Stats</th>
+                                    <th></th>
                                 </tr>
                                 <tr>
                                     <th>PDB ID</th>
@@ -19,6 +20,7 @@
                                     <th>RF Z-score</th>
                                     <th>TF Z-score</th>
                                     <th># Clashes</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -30,6 +32,8 @@
                                     <td>{{default_val(result.results.common_contaminants[key].rfz, '-')}}</td>
                                     <td>{{default_val(result.results.common_contaminants[key].tfz, '-')}}</td>
                                     <td>{{default_val(result.results.common_contaminants[key].clash, '-')}}</td>
+                                    <td *ngIf="result.results.common_contaminants[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
+                                    <td *ngIf="result.results.common_contaminants[key].pdb === undefined"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -38,41 +42,85 @@
             </div>
         </mat-tab>
         <mat-tab label="Cell Search">
-                <div fxLayout="row" fxLayoutGap="10px">
-                    <div fxFlex="none">
-                        <div>
-                            <h3>Search Based On Unit Cell Similarity</h3>
-                            <table class="rapd-table">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th colspan=4 class="rapd-table-span">Phaser Stats</th>
-                                    </tr>
-                                    <tr>
-                                        <th>PDB ID</th>
-                                        <th>Description</th>
-                                        <th>LL Gain</th>
-                                        <th>RF Z-score</th>
-                                        <th>TF Z-score</th>
-                                        <th># Clashes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr *ngFor="let key of objectKeys(this.result.results.search_results)">
-                                        <td>{{key}}</td>
-                                        <td>{{default_val(result.results.search_results[key].description, 'A protein')}}</td>
-                                        <td>{{default_val(result.results.search_results[key].gain, 'No Solution', '1.1-1')}}</td>
-                                        <td>{{default_val(result.results.search_results[key].rfz, '-')}}</td>
-                                        <td>{{default_val(result.results.search_results[key].tfz, '-')}}</td>
-                                        <td>{{default_val(result.results.search_results[key].clash, '-')}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+            <div fxLayout="row" fxLayoutGap="10px">
+                <div fxFlex="none">
+                    <div>
+                        <h3>Search Based On Unit Cell Similarity</h3>
+                        <table class="rapd-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th>PDB ID</th>
+                                    <th>Description</th>
+                                    <th>LL Gain</th>
+                                    <th>RF Z-score</th>
+                                    <th>TF Z-score</th>
+                                    <th># Clashes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let key of objectKeys(this.result.results.search_results)">
+                                    <td>{{key}}</td>
+                                    <td>{{default_val(result.results.search_results[key].description, 'A protein')}}</td>
+                                    <td>{{default_val(result.results.search_results[key].gain, 'No Solution', '1.1-1')}}</td>
+                                    <td>{{default_val(result.results.search_results[key].rfz, '-')}}</td>
+                                    <td>{{default_val(result.results.search_results[key].tfz, '-')}}</td>
+                                    <td>{{default_val(result.results.search_results[key].clash, '-')}}</td>
+                                    <td *ngIf="result.results.search_results[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
+                                    <td *ngIf="result.results.search_results[key].pdb === undefined"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </mat-tab>
+            </div>
+        </mat-tab>
+        <mat-tab label="Custom Search">
+            <div fxLayout="row" fxLayoutGap="10px">
+                <div fxFlex="none">
+                    <div>
+                        <h3>Search with Submitted PDB</h3>
+                        <table class="rapd-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th>PDB ID</th>
+                                    <th>Description</th>
+                                    <th>LL Gain</th>
+                                    <th>RF Z-score</th>
+                                    <th>TF Z-score</th>
+                                    <th># Clashes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let key of objectKeys(this.result.results.custom_structures)">
+                                    <td>{{key}}</td>
+                                    <td>{{default_val(result.results.custom_structures[key].description, 'A protein')}}</td>
+                                    <td>{{default_val(result.results.custom_structures[key].gain, 'No Solution', '1.1-1')}}</td>
+                                    <td>{{default_val(result.results.custom_structures[key].rfz, '-')}}</td>
+                                    <td>{{default_val(result.results.custom_structures[key].tfz, '-')}}</td>
+                                    <td>{{default_val(result.results.custom_structures[key].clash, '-')}}</td>
+                                    <td *ngIf="result.results.custom_structures[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
+                                    <td *ngIf="result.results.custom_structures[key].pdb === undefined"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
         <mat-tab label="Raw">
                 <div fxLayout="row" fxLayoutGap="10px">
                     <div fxFlex="none">
