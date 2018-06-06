@@ -65,6 +65,7 @@ import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/head
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
+import { Hcmerge4cba100Component } from './plugin_components/mx/hcmerge4cba100/hcmerge4cba100.component';
 
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
@@ -75,6 +76,7 @@ import { DialogNewProjectComponent } from './shared/components/dialog-new-projec
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
+
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -114,6 +116,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     IntegrateBd11200Component,
     AnalysisF068200Component,
     Pdbquery9a2e100Component,
+    Hcmerge4cba100Component,
     //
     HeaderDialogComponent,
     MxImageComponent,
@@ -127,6 +130,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ErrorDialogComponent,
     ConfirmDialogComponent,
     UploadDialogComponent,
+    Hcmerge4cba100Component,
   ],
   imports: [
     BrowserModule,
@@ -179,6 +183,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     Index3b34200Component,
     IntegrateBd11200Component,
     Pdbquery9a2e100Component,
+    Hcmerge4cba100Component,
     // Plugin helpers
     HeaderDialogComponent,
     ReindexDialogComponent,

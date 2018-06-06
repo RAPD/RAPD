@@ -6,24 +6,37 @@ Creating an MX plugin UI component, navigate to
 ```shell
 rapd/src/ui/src/app/plugin_components/mx
 ``` 
-and run the angular-cli command 
+and run the angular-cli command to create the plugin UI
 ```shell
-$ ng generate component Pdbquery9a2e100 -m
+$ ng generate component Pdbquery9a2e100 -m ../../app.module.ts --dry-run 
 CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.css (0 bytes)
 CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.html (34 bytes)
 CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.spec.ts (691 bytes)
 CREATE src/app/plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component.ts (305 bytes)
 ```
 
-You can add the option `--dry-run` to see what files will be made.
+You need to remove the option `--dry-run` to actually make the files.
 
-Now add the component to `rapd/src/ui/src/app/app.module.ts`. It should be imported, in declarations, and in entryComponents. I recommend looking at another component such as Pdbquery9a2e100 to see how this is done.
+The component name is derived from:
+```
+  Pdbquery9a2e100
+  Pdbquery........9a2e..100
+  plugin name     ID    Ver
+```
+In the rapd/src/plugins directory there is a pdbquery directory. The plugin.py in that directory has
+```python
+ID = "9a2e"
+VERSION = "1.0.0"
+```
+This is how the correct UI component is called to display the corresponding result. This also enables multiple ID/version combinations. Change the data coming out of a plugin, increment the version, and generate a new UI to display the new data.
+
+The component has been added to `rapd/src/ui/src/app/app.module.ts`. It should be imported, in declarations, and in entryComponents. I recommend looking at another component such as Pdbquery9a2e100 to see how this is done - basically make sure your new plugin component appears next to the Pdbquery9a2e100 component.
 
 Now add the component to `rapd/src/ui/src/app/plugin_components/mx/index.ts`. The line for Pdbquery9a2e100 looks like
 ```typescript
 export * from './pdbquery9a2e100/pdbquery9a2e100.component';
 ```
-
+You may notice that there is an admonition in this file to make sure plugins that may appear inside other plugin results need to appear in this file before those files. For example analysis can appear inside integration, so it must be above integration in this file.
 
 
 

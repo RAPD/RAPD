@@ -32,7 +32,7 @@ PLUGIN_TYPE = "PDBQUERY"
 PLUGIN_SUBTYPE = "EXPERIMENTAL"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-ID = "9a2e422625e811e79866ac87a3333966"
+ID = "9a2e"
 VERSION = "1.0.0"
 
 # Standard imports
