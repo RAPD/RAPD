@@ -133,7 +133,7 @@ if [[ $PLATFORM == "Linux" ]]; then
     if [ $CENTOS_VERSION_MAJOR == "6" ]; then
       MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
     elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
-      MODULES_LIST="gcc-c++ make wget subversion git ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python bzip2-devel"
+      MODULES_LIST="gcc-c++ make bzip2 wget subversion git ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python bzip2-devel"
     fi
 
     function isinstalled {

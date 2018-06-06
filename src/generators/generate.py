@@ -61,6 +61,7 @@ MODES = [
     "launcher_adapter",
     "plugin",
     "test",
+    "ui_component"
     ]
 
 def main(args):
@@ -120,50 +121,16 @@ def get_commandline():
     commandline handling - made to pass through to called methods
     """
 
-    # print "get_commandline"
-
     args = sys.argv[:]
 
     if len(args) < 2:
         print text.red + "The specified command is invalid. For available options, see `rapd.generate help`." + text.stop
-        sys.exit(9)
+        args = ["help"]
 
     else:
         args = args[1:]
 
     return args
-
-    # # Parse the commandline arguments
-    # commandline_description = "Generate RAPD files"
-    # parser = argparse.ArgumentParser(description=commandline_description)
-    #
-    # # A True/False flag
-    # parser.add_argument("-v", "--verbise",
-    #                     action="store_true",
-    #                     dest="verbose",
-    #                     help="Control verbosity")
-    #
-    # # File name to be generated
-    # parser.add_argument(action="store",
-    #                     dest="type",
-    #                     nargs=1,
-    #                     default="base",
-    #                     choices=TYPES,
-    #                     help="Type of file to be generated")
-    #
-    # # File name to be generated
-    # parser.add_argument(action="store",
-    #                     dest="file",
-    #                     nargs="?",
-    #                     default=False,
-    #                     help="Name of file to be generated")
-    #
-    # # Print help message is no arguments
-    # if len(sys.argv[1:])==0:
-    #     parser.print_help()
-    #     parser.exit()
-    #
-    # return parser.parse_args()
 
 if __name__ == "__main__":
 
