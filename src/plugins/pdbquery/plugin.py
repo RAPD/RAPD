@@ -33,7 +33,7 @@ PLUGIN_TYPE = "PDBQUERY"
 PLUGIN_SUBTYPE = "EXPERIMENTAL"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-ID = "9a2e422625e811e79866ac87a3333966"
+ID = "9a2e"
 VERSION = "2.0.0"
 
 # Standard imports
@@ -219,29 +219,29 @@ class RapdPlugin(Thread):
         self.tprint(arg=0, level="progress")
 
         # Glean some information on the input file
-        #self.input_spacegroup, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
-        self.input_spacegroup, self.cell, self.volume = get_mtz_info(self.datafile)
+        #self.input_spacegroup, self.cell, self.volume = get_mtz_info(self.datafile)
+        input_spacegroup, self.cell, volume = get_mtz_info(self.datafile)
         self.dres = get_res(self.datafile)
-        self.input_spacegroup_num = int(xutils.convert_spacegroup(self.input_spacegroup))
-        self.laue = xutils.get_sub_groups(self.input_spacegroup_num, "simple")
+        input_spacegroup_num = int(xutils.convert_spacegroup(input_spacegroup))
+        self.laue = xutils.get_sub_groups(input_spacegroup_num, "simple")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
         self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
-        self.tprint("  Spacegroup: %s  (%d)" % (self.input_spacegroup, self.input_spacegroup_num),
+        self.tprint("  Spacegroup: %s  (%d)" % (input_spacegroup, input_spacegroup_num),
                     level=10,
                     color="white")
         self.tprint("  Cell: %f.2 %f.2 %f.2 %f.2 %f.2 %f.2" % tuple(self.cell),
                     level=10,
                     color="white")
-        self.tprint("  Volume: %f.1" % self.volume, level=10, color="white")
+        self.tprint("  Volume: %f.1" % volume, level=10, color="white")
         self.tprint("  Resolution: %f.1" % self.dres, level=10, color="white")
         # self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
 
         # Set by number of residues in AU. Ribosome (70s) is 24k.
-        self.est_res_number = xutils.calc_res_number(self.input_spacegroup,
+        self.est_res_number = xutils.calc_res_number(input_spacegroup,
                                                      se=False,
-                                                     volume=self.volume,
+                                                     volume=volume,
                                                      sample_type=self.sample_type,
                                                      solvent_content=self.solvent_content)
         if self.est_res_number > 5000:
@@ -307,7 +307,14 @@ class RapdPlugin(Thread):
         # Add link to processed dataset
         if self.processed_results:
             #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
+            # This links to MongoDB results._id
             self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
+            # This links to a session
+            self.results["process"]["session_id"] = self.processed_results.get("process", {}).get("session_id", False)
+            # Identify parent type
+            self.results["process"]["parent"] = self.processed_results.get("plugin", {})
+            # The repr
+            self.results["process"]["repr"] = self.processed_results.get("process", {}).get("repr", "Unknown")
 
         # Describe plugin
         self.results["plugin"] = {

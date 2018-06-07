@@ -748,10 +748,10 @@ class RapdPlugin(Process):
     
             # Run the plugin
             self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
-                                                processed_results = self.results,
-                                                computer_cluster=self.computer_cluster,
-                                                tprint=self.tprint,
-                                                logger=self.logger)
+                                                  processed_results = self.results,
+                                                  computer_cluster=self.computer_cluster,
+                                                  tprint=self.tprint,
+                                                  logger=self.logger)
 
             self.pdbq_process.start()
             

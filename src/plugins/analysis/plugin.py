@@ -294,7 +294,14 @@ calculation",
         # Add link to processed dataset
         if self.processed_results:
             #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
+            # This links to MongoDB results._id
             self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
+            # This links to a session
+            self.results["process"]["session_id"] = self.processed_results.get("process", {}).get("session_id", False)
+            # Identify parent type
+            self.results["process"]["parent"] = self.processed_results.get("plugin", {})
+            # The repr
+            self.results["process"]["repr"] = self.processed_results.get("process", {}).get("repr", "Unknown")
 
         # Describe plugin
         self.results["plugin"] = {
@@ -322,6 +329,8 @@ calculation",
         if self.preferences.get("run_mode") == "server":
 
             self.logger.debug("Sending back on redis")
+
+            self.logger.debug(self.results)
 
             #if results.get('results', False):
             #    if results['results'].get('data_produced', False):
