@@ -214,6 +214,8 @@ class FileGenerator(object):
         p1 = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         output = p1.communicate()[0]
         print output
+        
+        # Make sure the component was properly created
 
         # Add it to app.module.ts
 

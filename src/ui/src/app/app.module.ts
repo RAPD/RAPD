@@ -66,6 +66,7 @@ import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
 import { Hcmerge4cba100Component } from './plugin_components/mx/hcmerge4cba100/hcmerge4cba100.component';
+// INSERT POINT FOR PLUGIN COMPONENTS IMPORT
 
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
@@ -117,6 +118,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AnalysisF068200Component,
     Pdbquery9a2e100Component,
     Hcmerge4cba100Component,
+    // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
     //
     HeaderDialogComponent,
     MxImageComponent,
@@ -184,6 +186,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     IntegrateBd11200Component,
     Pdbquery9a2e100Component,
     Hcmerge4cba100Component,
+    // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS
     // Plugin helpers
     HeaderDialogComponent,
     ReindexDialogComponent,
