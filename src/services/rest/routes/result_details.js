@@ -79,40 +79,75 @@ router.route('/result_details/:result_id')
                           return false;
                         } else {
                           detailed_result._doc.image1 = image1;
+                          return detailed_result;
                           // console.log('POPULATED image1');
                           // console.log(detailed_result);
                           // Now look for image2
-                          if ('image2_id' in detailed_result._doc.process) {
+                          // if ('image2_id' in detailed_result._doc.process) {
 
-                            // Manually populate
-                            Image.
-                            findOne({_id:detailed_result._doc.process.image1_id}).
-                            exec(function(err, image2) {
-                              if (err) {
-                                console.error(err);
-                                return false;
-                              } else {
-                                detailed_result._doc.image1 = image2;
-                                // console.log('POPULATED image2');
-                                // console.log(detailed_result);
-                                // Send back
-                                res.status(200).json({
-                                    success: true,
-                                    results: detailed_result
-                                });
-                              }
-                            });
+                          //   // Manually populate
+                          //   Image.
+                          //   findOne({_id:detailed_result._doc.process.image1_id}).
+                          //   exec(function(err, image2) {
+                          //     if (err) {
+                          //       console.error(err);
+                          //       return false;
+                          //     } else {
+                          //       detailed_result._doc.image1 = image2;
+                          //       // console.log('POPULATED image2');
+                          //       // console.log(detailed_result);
+                          //       // Send back
+                          //       res.status(200).json({
+                          //           success: true,
+                          //           results: detailed_result
+                          //       });
+                          //     }
+                          //   });
 
-                          // No image2_id
-                          } else {
-                            // Send back
-                            res.status(200).json({
-                                success: true,
-                                results: detailed_result
-                            });
-                          }
+                          // // No image2_id
+                          // } else {
+                          //   // Send back
+                          //   res.status(200).json({
+                          //       success: true,
+                          //       results: detailed_result
+                          //   });
+                          // }
                         }
-                      });
+                      })
+                      .then(function(detailed_result) {
+                        if ('image2_id' in detailed_result._doc.process) {
+
+                          // Manually populate
+                          Image.
+                          findOne({_id:detailed_result._doc.process.image1_id}).
+                          exec(function(err, image2) {
+                            if (err) {
+                              console.error(err);
+                              return false;
+                            } else {
+                              detailed_result._doc.image1 = image2;
+                              // console.log('POPULATED image2');
+                              // console.log(detailed_result);
+                              // Send back
+                              // res.status(200).json({
+                              //     success: true,
+                              //     results: detailed_result
+                              // });
+                              return detailed_result;
+                            }
+                          });
+
+                        // No image2_id
+                        } else {
+                          // Send back
+                          // res.status(200).json({
+                          //     success: true,
+                          //     results: detailed_result
+                          // });
+                          return detailed_result;
+                        }
+                      })
+                      .then();
 
                     // No image1_id
                     } else {

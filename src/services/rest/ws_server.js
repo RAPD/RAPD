@@ -411,10 +411,7 @@ function Wss (opt, callback) {
 
               // Now get the result
               ResultModel.
-                // findOne({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 findOne({'process.result_id':mongoose.Types.ObjectId(data._id)}).
-                // where('result_type').in(result_type_trans[data_type][data_class]).
-                // sort('-timestamp').
                 exec(function(err, detailed_result) {
                   // Error
                   if (err) {
