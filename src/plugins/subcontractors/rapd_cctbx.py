@@ -36,8 +36,9 @@ import os
 #from bson.objectid import ObjectId
 from utils.xutils import convert_unicode, fix_R3_sg
 
-#from plugins.subcontractors.python_phaser import run_phaser_module
-import plugins.subcontractors.rapd_phaser as rapd_phaser
+from plugins.subcontractors.rapd_phaser import run_phaser_module
+#import plugins.subcontractors.rapd_phaser as rapd_phaser
+
 
 from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
@@ -159,7 +160,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
         # Limit to 10 chains?!?
         if nchains < 10:
             # Do not split up PDB if run from cell analysis
-            if cell_analysis == False and repeat == False:
+            if not cell_analysis and not repeat:
 
                 # Save info for each chain.
                 if np1 or na1:
@@ -169,14 +170,17 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
 
                     # Long was of making sure that user does not have directory named '.pdb' or
                     # '.cif'
-                    n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
+                    #n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
+                    n = os.path.join(os.path.dirname(cif_file), "%s_%s.cif" % \
+                    
                         (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], \
                         chain.id))
-                    temp.write_pdb_file(file_name=n)
+                    #temp.write_pdb_file(file_name=n)
+                    temp.write_mmcif_file(file_name=n)
                     if matthews:
                         # Run Matthews Calc. on chain
                         #phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        phaser_return = rapd_phaser.run_phaser_module(data_file, (np1, na1, dres, n))
+                        phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
                     else:
                         res1 = run_phaser_module(n)
 
@@ -194,10 +198,10 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
     # Run on entire PDB
     if matthews:
         #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = rapd_phaser.run_phaser_module(data_file, (np, na, dres, cif_file))
+        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
     else:
         #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = rapd_phaser.run_phaser_module(data_file, (np, na, dres, cif_file))
+        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
     d['all'] = {'file': cif_file,
                 'NRes': np+na,
                 'MWna': na*330,

@@ -48,8 +48,7 @@ from utils.xutils import convert_unicode
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
-    redis_database = redis_database.Database(settings=settings)
-    return redis_database.connect_to_redis()
+    return redis_database.Database(settings=settings)
 
 def run_phaser_pdbquery_OLD(command):
     """
@@ -203,11 +202,36 @@ def mp_job(func):
         if not kwargs.get('script', False):
             # Pop out the launcher
             launcher = kwargs.pop('launcher')
+            #computer_cluster = kwargs.pop('computer_cluster')
             # Create a unique identifier for Phaser results
             kwargs['output_id'] = 'Phaser_%d'%random.randint(0, 10000)
             # Signal to launch run
             kwargs['script'] = True
-            if kwargs.get('computer_cluster', False):
+            if kwargs.get('pool', False):
+                # If running on local machine
+                pool = kwargs.pop('pool')
+                f = write_script(kwargs)
+                new_kwargs={"command": "rapd2.python %s"%f,
+                            #"command": "which rapd2.python",
+                            "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
+                            #"shell" : True
+                                       }
+                proc = pool.apply_async(launcher, kwds=new_kwargs,)
+                return (proc, 'junk', kwargs['output_id'])
+            else:
+                # If running on computer cluster
+                f = write_script(kwargs)
+                pid_queue = Queue()
+                proc = Process(target=launcher,
+                               kwargs={"command": "rapd2.python %s"%f,
+                                       "pid_queue": pid_queue,
+                                       "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
+                                       })
+                proc.start()
+                return (proc, pid_queue.get(), kwargs['output_id'])
+            """
+            #if kwargs.get('computer_cluster', False):
+            if computer_cluster:
                 # If running on computer cluster
                 f = write_script(kwargs)
                 pid_queue = Queue()
@@ -230,13 +254,14 @@ def mp_job(func):
                                        }
                 proc = pool.apply_async(launcher, kwds=new_kwargs,)
                 return (proc, 'junk', kwargs['output_id'])
+            """
 
         else:
             # Remove extra input params used to setup job
-            l = ['script', 'computer_cluster', 'test']
+            l = ['script', 'test']
             for k in l:
                 # pop WON'T error out if key not found!
-                _ = kwargs.pop(k)
+                _ = kwargs.pop(k, None)
             # Just launch job
             return func(**kwargs)
     return wrapper
@@ -372,23 +397,24 @@ def run_phaser(datafile,
             log.write(r.summary())
             log.close()
 
-    # Parse results
-    for p in r.getTopSet().ANNOTATION.split():
-        if p.count('RFZ'):
-            if p.count('=') in [1]:
-                rfz = float(p.split('=')[-1])
-        if p.count('RF*0'):
-            rfz = "NC"
-        if p.count('TFZ'):
-            if p.count('=') in [1]:
-                tfz = float(p.split('=')[-1])
-        if p.count('TF*0'):
-            tfz = "NC"
-
-    tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
-    tncs = bool(len(tncs_test))
-
     if r.foundSolutions():
+        rfz = None
+        tfz = None
+        tncs = False
+        # Parse results
+        for p in r.getTopSet().ANNOTATION.split():
+            if p.count('RFZ'):
+                if p.count('=') in [1]:
+                    rfz = float(p.split('=')[-1])
+            if p.count('RF*0'):
+                rfz = "NC"
+            if p.count('TFZ'):
+                if p.count('=') in [1]:
+                    tfz = float(p.split('=')[-1])
+            if p.count('TF*0'):
+                tfz = "NC"
+        tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
+        tncs = bool(len(tncs_test))
         phaser_result = {"solution": r.foundSolutions(),
                          "pdb": r.getTopPdbFile(),
                          "mtz": r.getTopMtzFile(),
@@ -673,12 +699,15 @@ def run_phaser_module(datafile, inp=False):
         i0.setCELL6(r.getUnitCell())
         i0.setMUTE(True)
         i0.setREFL_DATA(r.getDATA())
-        i0.addENSE_PDB_ID("junk",f,0.7)
+        if f[-3:] in ('cif'):
+            i0.addENSE_CIT_ID('model', convert_unicode(f), 0.7)
+        else:
+            i0.addENSE_PDB_ID("model",convert_unicode(f),0.7)
         #i.addSEAR_ENSE_NUM("junk",5)
         r1 = phaser.runMR_ELLG(i0)
         #print r1.logfile()
         if r1.Success():
-            res0 = r1.get_target_resolution('junk')
+            res0 = r1.get_target_resolution('model')
         del(r1)
         return res0
     
@@ -761,7 +790,7 @@ def run_phaser_module(datafile, inp=False):
     
     #Read the dataset
     i = phaser.InputMR_DAT()
-    i.setHKLI(datafile)
+    i.setHKLI(convert_unicode(datafile))
     i.setLABI_F_SIGF('F','SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)

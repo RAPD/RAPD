@@ -163,20 +163,22 @@ class Gatherer(object):
         self.logger.debug("NecatGatherer.stop")
 
         self.go = False
-        self.redis_database.stop()
-        self.bl_database.stop()
+        #self.redis_database.stop()
+        #self.bl_database.stop()
 
     def connect(self):
         """Connect to redis host"""
         # Connect to control redis for publishing run data info
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # Connect to beamline Redis to monitor if run is launched
-        self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
-        self.bl_redis = self.bl_database.connect_redis_pool()
+        #self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        #self.bl_redis = self.bl_database.connect_redis_pool()
+        self.bl_redis = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
         #self.pipe = self.bl_redis.pipeline()
 
     def set_host(self):

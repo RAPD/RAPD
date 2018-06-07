@@ -38,7 +38,8 @@ import database.redis_adapter as redis_database
 # from utils import pysent
 
 # Constants
-POLLING_REST = 0.1      # Time to rest between checks for new image
+#POLLING_REST = 0.1      # Time to rest between checks for new image
+POLLING_REST = 0.01      # Time to rest between checks for new image
 
 class Monitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
@@ -110,8 +111,10 @@ class Monitor(threading.Thread):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        self.redis_database = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        redis_database = importlib.import_module('database.redis_adapter')
+        #self.redis_database = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
+        #self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
 
     def run(self):
         """Orchestrate the monitoring for new images in redis db"""

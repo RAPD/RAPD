@@ -107,13 +107,14 @@ def construct_command(commandline_args):
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
+        "json": commandline_args.json,
         "contaminants": commandline_args.contaminants,
         "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
         "test": commandline_args.test,
-        "computer_cluster": commandline_args.computer_cluster,
+        #"computer_cluster": commandline_args.computer_cluster,
         #"results_queue": commandline_args.results_queue,
     }
 

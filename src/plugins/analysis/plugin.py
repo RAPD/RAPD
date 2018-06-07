@@ -134,7 +134,7 @@ class RapdPlugin(Process):
         "process": {}
     }
 
-    def __init__(self, command, processed_results=False, launcher=False, tprint=False, logger=False, verbosity=False):
+    def __init__(self, command, processed_results=False, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
 
         # Keep track of start time
@@ -149,15 +149,9 @@ class RapdPlugin(Process):
             self.logger.debug("__init__")
         
         self.verbose = verbosity
-        
-        # Used for Redis connection to send results back
-        self.site = site
-        
+
         # Used for sending results back to DB
         self.processed_results = processed_results
-        
-        #Used for PDBQuery
-        self.launcher = launcher
 
         # Store tprint for use throughout
         if tprint:
@@ -296,6 +290,11 @@ calculation",
         self.results["process"]["status"] = self.status
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        
+        # Add link to processed dataset
+        if self.processed_results:
+            #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
+            self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
 
         # Describe plugin
         self.results["plugin"] = {
@@ -310,10 +309,12 @@ calculation",
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.db_settings)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.db_settings)
+        #self.redis = redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.db_settings,
+                                             logger=self.logger)
 
-    def send_results(self, results):
+    def send_results(self):
         """Let everyone know we are working on this"""
 
         self.logger.debug("send_results")
@@ -327,7 +328,7 @@ calculation",
             #        pprint(results['results'].get('data_produced'))
 
             # Transcribe results
-            json_results = json.dumps(results)
+            json_results = json.dumps(self.results)
 
             # Get redis instance
             if not self.redis:
@@ -344,8 +345,9 @@ calculation",
             self.status = 25
         else:
             self.status += 25
+        if self.status > 90:
+            self.status = 90
         self.results["process"]["status"] = self.status
-        self.handle_return()
 
     def process(self):
         """Run plugin action"""
@@ -358,8 +360,8 @@ calculation",
         self.tprint(arg=10, level="progress")
         self.run_molrep()
         self.tprint(arg=20, level="progress")
-        #self.run_phaser_ncs()
-        #self.tprint(arg=30, level="progress")
+        self.run_phaser_ncs()
+        self.tprint(arg=30, level="progress")
         # self.run_labelit_precession()
         # self.tprint(arg=40, level="progress")
 
@@ -386,10 +388,14 @@ calculation",
         self.write_json()
 
         # Notify inerested party
-        self.handle_return()
+        #self.handle_return()
+        self.send_results()
 
         # Write credits to screen
         self.print_credits()
+        
+        # Message in logger
+        self.logger.debug('Analysis finished')
 
     def jobs_monitor(self):
         """Monitor running jobs and finsh them when they complete."""
@@ -488,8 +494,10 @@ self.command["input_data"]["datafile"]
             self.results["raw"]["xtriage"] = False
             self.results["parsed"]["xtriage"] = False
 
-        # Update the status number and return results
+        # Update the status number
         self.update_status()
+        # return results
+        self.send_results()
 
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
@@ -589,8 +597,10 @@ self.command["input_data"]["datafile"]
         self.results["parsed"]["molrep"] = parsed_molrep_results
         # Update the status number and return results
         self.update_status()
+        # return results
+        self.send_results()
 
-    def run_phaser_ncs_OLD(self): # USe module in plugins.subcontractors.python_phaser
+    def run_phaser_ncs(self): # USe module in plugins.subcontractors.python_phaser
         """Run Phaser tNCS and anisotropy correction"""
         if self.verbose and self.logger:
             self.logger.debug("run_phaser_ncs")
@@ -626,6 +636,8 @@ self.command["input_data"]["datafile"]
 
         # Update the status number and return results
         self.update_status()
+        # return results
+        self.send_results()
 
     # def run_labelit_precession(self):
     #     """Run labelit to make precession photos"""
@@ -635,59 +647,6 @@ self.command["input_data"]["datafile"]
     #             "run":
     #         }], output=None, logger=self.logger)
 
-    def process_pdb_query(self):
-        """Prepare and run PDBQuery"""
-        self.logger.debug("process_pdb_query")
-
-        self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
-        self.tprint("  This can take a while...", level=30, color="white")
-
-        # Construct the pdbquery plugin command
-        class PdbqueryArgs(object):
-            """Object for command construction"""
-            clean = True
-            contaminants = True
-            datafile = self.command["input_data"]["datafile"]
-            dir_up = self.preferences.get("dir_up", False)
-            json = False
-            no_color = False
-            nproc = self.preferences.get("nproc", 1)
-            pdbs = False
-            progress = self.preferences.get("progress", False)
-            # return_queue = multiprocessing.Queue()
-            computer_cluster = self.preferences.get('computer_cluster', False)
-            run_mode = None
-            search = True
-            test = True
-            verbose = True
-
-        # Set the run mode dependent on this plugin's run mode
-        run_mode = self.preferences.get("run_mode")
-        if run_mode in ("interactive", "subprocess-interactive"):
-            PdbqueryArgs.run_mode = "subprocess-interactive"
-        elif run_mode in ("subprocess", "json", "server"):
-            PdbqueryArgs.run_mode = "subprocess"
-
-        pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
-
-        # The pdbquery plugin
-        plugin = plugins.pdbquery.plugin
-
-        # Print out plugin info
-        self.tprint(arg="\nPlugin information", level=10, color="blue")
-        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
-        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
-
-        # Run the plugin
-        pdbquery_result = plugin.RapdPlugin(pdbquery_command,
-                                            self.launcher,
-                                            self.tprint,
-                                            self.logger)
-
-        self.results["pdbquery"] = pdbquery_result
-
     def clean_up(self):
         """Clean up the working directory"""
 
@@ -696,7 +655,7 @@ self.command["input_data"]["datafile"]
 
         if self.preferences.get("clean", False):
 
-            self.logger.debug("Cleaning up Phaser files and folders")
+            self.logger.debug("Cleaning up Analysis files and folders")
             #TODO
             # Change to work dir
             os.chdir(self.command["directories"]["work"])
@@ -707,7 +666,7 @@ self.command["input_data"]["datafile"]
             # for target in files_to_clean:
             #     shutil.rmtree(target)
 
-    def handle_return(self):
+    def handle_return_OLD(self):
         """Output data to consumer"""
 
         self.logger.debug("handle_return")

@@ -110,8 +110,9 @@ class LauncherAdapter(object):
         # Connect to redis
         redis_database = importlib.import_module('database.redis_adapter')
 
-        redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_db.connect_to_redis()
+        #redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = redis_db.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
     def process(self):
         """The main action of the adapter"""

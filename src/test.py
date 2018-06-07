@@ -806,7 +806,10 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
-red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/upenn/christianson_E_3591/images/nicholas/runs/0004_12/0004_12_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/upenn/christianson_E_3591/images/nicholas/runs/0004_12/0004_12_1_000001.cbf'),
+
+red.lpush('images_collected:NECAT_E', '/gpfs2/users/upenn/christianson_E_3591/images/jeremy/runs/JDO_PUCK2_A14_Run4/JDO_PUCK2_A14_Run4_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/cornell/heninglin_E_3589/images/ian/runs/P113_11/P113_11_1_000001.cbf'),
 
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
@@ -835,7 +838,7 @@ red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/upenn/christianson
 #print red.lrange('run_data:NECAT_E', 0, -1)
 
 #print red.llen('current_run_C')
-"""
+
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('images_collected:NECAT_E')
@@ -850,11 +853,11 @@ print red.llen('runs_data:NECAT_E')
 print red.lrange('runs_data:NECAT_E', 0, 1)
 #red.delete("runs_data:NECAT_E")
 print red.llen('runs_data:NECAT_C')
-print red.lrange('runs_data:NECAT_C', 0, 2)
+print red.lrange('runs_data:NECAT_C', 0, -1)
 #red.delete("runs_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
-"""
+
 
 
 

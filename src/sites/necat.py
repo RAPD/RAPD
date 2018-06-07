@@ -115,11 +115,11 @@ BEAM_INFO = {
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
                 # Beamcenter equation coefficients (b, m1, m2, m3)
-                'BEAM_CENTER_X' : (163.996842788,
+                'BEAM_CENTER_X' : (163.896842788,
                                  -0.00156332638728,
                                  -2.56247974068e-06,
                                  3.95732036737e-09),
-                'BEAM_CENTER_Y' : (154.666305262,
+                'BEAM_CENTER_Y' : (154.566305262,
                                  -0.000454510045038,
                                  -1.12749547412e-06,
                                  8.49370631749e-10)

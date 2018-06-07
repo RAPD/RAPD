@@ -148,6 +148,12 @@ class RapdPlugin(Process):
     
     # Setup default for using compute_cluster
     computer_cluster = False
+    
+    # analysis process
+    analysis_process = False
+    
+    # pdbquery process
+    pdbq_process = False
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -556,8 +562,11 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = redis_database.connect_to_redis()
+        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
     def send_results(self, results):
         """Let everyone know we are working on this"""
@@ -661,9 +670,7 @@ class RapdPlugin(Process):
                 json = self.preferences.get("json", True)
                 nproc = self.procs
                 progress = self.preferences.get("progress", False)
-                #queue = plugin_queue
                 run_mode = self.preferences.get("run_mode", False)
-                computer_cluster = self.computer_cluster
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
                 db_settings = self.site.CONTROL_DATABASE_SETTINGS
@@ -682,12 +689,11 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
             # Run the plugin
-            plugin_instance = plugin.RapdPlugin(command=analysis_command,
+            self.analysis_process = plugin.RapdPlugin(command=analysis_command,
                                                 processed_results = self.results,
-                                                launcher=self.launcher,
                                                 tprint=self.tprint,
                                                 logger=self.logger)
-            plugin_instance.start()
+            self.analysis_process.start()
             
             # Back to where we were, in case it matters
             os.chdir(start_dir)
@@ -721,18 +727,12 @@ class RapdPlugin(Process):
                 json = self.preferences.get("json", True)
                 nproc = self.procs
                 progress = self.preferences.get("progress", False)
-                # return_queue = multiprocessing.Queue()
-                #computer_cluster = self.preferences.get('computer_cluster', False)
                 run_mode = self.preferences.get("run_mode", False)
-                computer_cluster = self.computer_cluster
                 db_settings = self.site.CONTROL_DATABASE_SETTINGS
                 pdbs = False
                 contaminants = True
-                ##run_mode = None
                 search = True
                 test = False
-                verbose = True
-                #no_color = False
     
             pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
     
@@ -747,13 +747,13 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
     
             # Run the plugin
-            plugin_instance = plugin.RapdPlugin(command=pdbquery_command,
+            self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
                                                 processed_results = self.results,
-                                                launcher=self.launcher,
+                                                computer_cluster=self.computer_cluster,
                                                 tprint=self.tprint,
                                                 logger=self.logger)
 
-            plugin_instance.start()
+            self.pdbq_process.start()
             
             """
             # Allow multiple returns for each part of analysis.
@@ -1797,7 +1797,19 @@ class RapdPlugin(Process):
                     # Unanticipated Error, fail the error check by returning False.
                     self.logger.debug('Error = %s' %line)
                     warning = True
+
                     #return False
+            if 'forrtl: severe (24): end-of-file during read,' in line:
+                self.logger.debug('Error = %s' %line)
+                self.logger.debug(
+                            'XDS failed to integrate dataset. Crystal may have gone out of beam.')
+                self.tprint(
+                    arg="\n  XDS failed to integrate dataset. Crystal may have gone out of beam.",
+                    level=30,
+                    color="red")
+                #return False
+                warning = True
+            # Did it finish???
             if 'a        b          ISa' in line:
                 finished = True
         
@@ -2703,6 +2715,14 @@ class RapdPlugin(Process):
         self.logger.debug("clean_up")
 
         if self.preferences.get("clean_up", False):
+            # Wait for analysis and pdbquery to finish before deleting the files.
+            if self.analysis_process:
+                while self.analysis_process.is_alive():
+                    time.sleep(1)
+            if self.pdbq_process:
+                while self.pdbq_process.is_alive():
+                    time.sleep(1)
+            
             # Make sure we are in the work directory
             os.chdir(self.dirs["work"])
 

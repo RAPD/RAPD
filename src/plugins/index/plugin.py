@@ -445,8 +445,11 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = redis_database.connect_to_redis()
+        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
     def send_results(self):
         """Let everyone know we are working on this"""

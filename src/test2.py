@@ -21,29 +21,47 @@ logger.debug("__init__")
 
 # Setup cluster
 import sites.necat as site
-
+"""
 from utils.modules import load_module
 cluster_launcher = load_module(site.CLUSTER_ADAPTER)
 launcher = cluster_launcher.process_cluster
 # Setup local_subprocess
 #launcher = local_subprocess
-
+"""
 
 # Setup redis
 redis_database = importlib.import_module('database.redis_adapter')
-redis_database = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
-redis = redis_database.connect_to_redis()
-
+#redis_database = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
+redis = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
+#redis = redis_database.connect_to_redis()
 """
+cif = '/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif'
+l = ['2FGE_E', '2FGE']
+for i in l:
+    print i.split('_')[0]
+    print len(i.split('_'))
+    if len(i.split('_')) not in [1]:
+        print 'gh'
+
+
+
+
+from plugins.subcontractors.rapd_cctbx import get_pdb_info
+pdb_info = get_pdb_info('/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif',
+                       dres=6.0,
+                       matthews=True,
+                       cell_analysis=False,
+                       data_file='/gpfs6/users/necat/rapd2/integrate/2018-06-05/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1_free.mtz')
+print pdb_info
+
 # Cleanup Redis
 l = redis.keys('Phaser_*')
 for k in l:
     redis.delete(k)
 print redis.keys('Phaser_*')
 print redis.get('Phaser_8858')
-
 """
-
+print redis.get('Phaser_6511')
 """
 import plugins.analysis.plugin
 import plugins.analysis.commandline
@@ -82,7 +100,7 @@ plugin_instance.start()
 #analysis_result = plugin_queue.get()
 #print analysis_result
 """
-
+"""
 import plugins.pdbquery.plugin
 import plugins.pdbquery.commandline
 
@@ -123,7 +141,7 @@ plugin_instance = plugin.RapdPlugin(command=pdbquery_command,
                                     logger=logger)
 plugin_instance.start()
 
-
+"""
 """
 from plugins.subcontractors.rapd_phaser import run_phaser
 

@@ -120,8 +120,9 @@ class Monitor(threading.Thread):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        #self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
+        #self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
 
     def run(self):
         self.logger.debug("Running")

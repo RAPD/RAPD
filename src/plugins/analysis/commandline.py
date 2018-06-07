@@ -78,7 +78,7 @@ def construct_command(commandline_args):
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
-        "dir_up": commandline_args.dir_up,
+        #"dir_up": commandline_args.dir_up,
         "nproc": commandline_args.nproc,
         #"pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
@@ -87,12 +87,12 @@ def construct_command(commandline_args):
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
-        "computer_cluster": commandline_args.computer_cluster,
+        #"computer_cluster": commandline_args.computer_cluster,
     }
 
     # Interprocess communication
-    if commandline_args.queue:
-        command["queue"] = commandline_args.queue
+    #if commandline_args.queue:
+    #    command["queue"] = commandline_args.queue
 
     # logger.debug("Command for index plugin: %s", command)
 

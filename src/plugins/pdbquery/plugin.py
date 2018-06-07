@@ -135,7 +135,7 @@ class RapdPlugin(Thread):
     # Timers for processes
     phaser_timer = rglobals.PHASER_TIMEOUT
 
-    def __init__(self, command, processed_results=False, launcher=False, tprint=False, logger=False, verbosity=False):
+    def __init__(self, command, processed_results=False, computer_cluster=False, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
         Thread.__init__ (self)
 
@@ -185,11 +185,13 @@ class RapdPlugin(Thread):
         self.computer_cluster = self.preferences.get("computer_cluster", False)
         
         # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
-        if launcher:
-            self.launcher = launcher
+
+        self.computer_cluster = computer_cluster
+        if self.computer_cluster:
+            self.launcher = self.computer_cluster.process_cluster
         else:
             self.launcher = local_subprocess
-            self.computer_cluster = False
+        
         # Setup a multiprocessing pool if not using a computer cluster.
         if not self.computer_cluster:
             self.pool = mp_pool(self.nproc)
@@ -305,7 +307,7 @@ class RapdPlugin(Thread):
         # Add link to processed dataset
         if self.processed_results:
             #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
-            self.results["process"]["result_id"] = self.processed_results.get("process", {}).get("result_id", False)
+            self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
 
         # Describe plugin
         self.results["plugin"] = {
@@ -325,8 +327,10 @@ class RapdPlugin(Thread):
     def connect_to_redis(self):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.db_settings)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.db_settings)
+        #self.redis = redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.db_settings,
+                                             logger=self.logger)
 
     def send_results(self):
         """Let everyone know we are working on this"""
@@ -579,7 +583,6 @@ class RapdPlugin(Thread):
                 cif_path = self.repository.download_cif(pdb_code, os.path.join(os.getcwd(), cif_file))
             if not cif_path:
                 self.postprocess_invalid_code(pdb_code)
-                #del self.cell_output[pdb_code]
             else:
                 # If mmCIF, checks if file exists or if it is super structure with
                 # multiple PDB codes, and returns False, otherwise sends back SG.
@@ -604,10 +607,10 @@ class RapdPlugin(Thread):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
                     # Need full path for copying pdb files to folders.
                     pdb_info = get_pdb_info(cif_path,
-                                                   dres=self.dres,
-                                                   matthews=True,
-                                                   cell_analysis=False,
-                                                   data_file=self.datafile)
+                                             dres=self.dres,
+                                             matthews=True,
+                                             cell_analysis=False,
+                                             data_file=self.datafile)
                     # Prune if only one chain present, b/c "all" and "A" will be the same.
                     if len(pdb_info.keys()) == 2:
                         for key in pdb_info.keys():
@@ -624,19 +627,19 @@ class RapdPlugin(Thread):
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                                   dres=self.dres,
-                                                   matthews=True,
-                                                   cell_analysis=True,
-                                                   data_file=self.datafile)
+                                             dres=self.dres,
+                                             matthews=True,
+                                             cell_analysis=True,
+                                             data_file=self.datafile)
                     copy = pdb_info["all"]["NMol"]
     
                 # Same number of mols in AU.
                 else:
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                                   dres=self.dres,
-                                                   matthews=False,
-                                                   cell_analysis=True,
-                                                   data_file=self.datafile)
+                                             dres=self.dres,
+                                             matthews=False,
+                                             cell_analysis=True,
+                                             data_file=self.datafile)
     
                 job_description = {
                     "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
@@ -653,23 +656,24 @@ class RapdPlugin(Thread):
                                                  self.large_cell,
                                                  self.dres),
                     "launcher": self.launcher,
-                    "computer_cluster": self.computer_cluster,
                     "db_settings": self.db_settings,
                     "output_id": False}
     
                 if not l:
                     launch_job(job_description)
                 else:
+                    # Remove the cif for the whole structure
+                    #job_description.pop('cif', None)
                     for chain in l:
                         new_code = "%s_%s" % (pdb_code, chain)
                         xutils.folders(self, "Phaser_%s" % new_code)
                         job_description.update({
                             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
                                 new_code)),
-                            #"cif":pdb_info[chain]["file"],
-                            "pdb":pdb_info[chain]["file"],
+                            "cif":pdb_info[chain]["file"],
+                            #"pdb":pdb_info[chain]["file"],
                             "name":new_code,
-                            "copy":pdb_info[chain]["NMol"],
+                            "ncopy":pdb_info[chain]["NMol"],
                             "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
                                                         self.large_cell,
                                                         self.dres)})
@@ -679,7 +683,7 @@ class RapdPlugin(Thread):
         """fix Phaser results and pass back"""
         
         # Add description to results
-        results['description'] = self.cell_output[job_name].get('description')
+        results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
         # Copy tar to working dir
         if results.get('tar', False):
@@ -699,7 +703,11 @@ class RapdPlugin(Thread):
         )
         # Run through result types
         for result_type, pdb_codes in types:
-            if pdb_codes.count(job_name):
+            if pdb_codes.count(job_name.split('_')[0]):
+                # Add chains of PDB to correct list
+                if len(job_name.split('_')) not in [1]:
+                    pdb_codes.append(job_name)
+                # Update results
                 self.results['results'][result_type][job_name] = results
                 break
 
@@ -745,12 +753,24 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s'%info['name']
+            print 'Finished Phaser on %s with id: %s'%(info['name'], info['output_id'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
+            results_json = self.redis.get(info['output_id'])
+            try:
+                results = json.loads(results_json)
+                self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['output_id'])
+            except:
+                print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
+                print results_json
+                self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
+                self.logger.debug(results_json)
+                
+            
             # Send result to postprocess
-            self.postprocess_phaser(info['name'], json.loads(self.redis.get(info['output_id'])))
+            #self.postprocess_phaser(info['name'], json.loads(self.redis.get(info['output_id'])))
             # Delete the Redis key
-            self.redis.delete(info['output_id'])
+            #self.redis.delete(info['output_id'])
             jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
@@ -807,8 +827,6 @@ class RapdPlugin(Thread):
         """Clean up after plugin action"""
 
         self.tprint(arg=90, level="progress")
-        
-        self.write_json()
 
         # Cleanup my mess.
         self.clean_up()
@@ -817,6 +835,8 @@ class RapdPlugin(Thread):
         self.results["process"]["status"] = 100
         self.tprint(arg=100, level="progress")
         #pprint(self.results)
+        
+        self.write_json()
 
         # Send Final results
         self.send_results()
@@ -827,6 +847,9 @@ class RapdPlugin(Thread):
 
         # Print credits
         self.print_credits()
+        
+        # Message in logger
+        self.logger.debug('PDBquery finished')
 
     def clean_up(self):
         """Clean up the working directory"""
@@ -838,12 +861,12 @@ class RapdPlugin(Thread):
 
             # Change to work dir
             os.chdir(self.working_dir)
-
+            """
             # Gather targets and remove
             files_to_clean = glob.glob("Phaser_*")
             for target in files_to_clean:
                 shutil.rmtree(target)
-
+            """
     def print_results(self):
         """Print the results to the commandline"""
 
@@ -853,9 +876,10 @@ class RapdPlugin(Thread):
             """Calculate the ongest field in a set of results"""
             longest_field = 0
             for pdb_code in pdb_codes:
-                length = len(self.cell_output[pdb_code]["description"])
-                if length > longest_field:
-                    longest_field = length
+                if self.cell_output.has_key(pdb_code):
+                    length = len(self.cell_output[pdb_code]["description"])
+                    if length > longest_field:
+                        longest_field = length
             return longest_field
 
         def print_header_line(longest_field):
@@ -872,14 +896,15 @@ class RapdPlugin(Thread):
                         level=99,
                         color="white")
 
-        def print_result_line(my_result, longest_field):
+        def print_result_line(pdb_code, my_result, longest_field):
             """Print the result line in the table"""
 
             print my_result
 
             self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}".format(
                 pdb_code,
-                self.cell_output[pdb_code]["description"],
+                #self.cell_output[pdb_code]["description"],
+                my_result.get("description", "-"),
                 my_result.get("gain", "-"),
                 my_result.get("rfz", "-"),
                 my_result.get("tfz", "-"),
@@ -905,17 +930,21 @@ class RapdPlugin(Thread):
 
                 # Run through the codes
                 for pdb_code in pdb_codes:
-
-                    # Get the result in question
-                    my_result = self.phaser_results[pdb_code]["results"]
-
-                    # Print the result line
-                    print_result_line(my_result, longest_field)
+                    if self.phaser_results.has_key(pdb_code):
+                        # Get the result in question
+                        my_result = self.phaser_results[pdb_code]["results"]
+    
+                        # Print the result line
+                        print_result_line(pdb_code, my_result, longest_field)
 
     def write_json(self):
         """Print out JSON-formatted result"""
 
         json_string = json.dumps(self.results)
+        
+         # If running in JSON mode, print to terminal
+        if self.preferences.get("run_mode") == "json":
+            print json_results
 
         # Output to terminal?
         #if self.preferences.get("json", False):
