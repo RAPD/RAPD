@@ -28,9 +28,11 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
+import shutil
 import string
 import subprocess
 import sys
+import tempfile
 import time
 
 # RAPD imports
@@ -203,98 +205,211 @@ class FileGenerator(object):
         # Make sure we are in the correct directory
         component_dir = os.path.join(self.src_root, "ui/src/app/plugin_components", self.data_type.lower())
         os.chdir(component_dir)
-        if self.args.verbose:
-            print "  Changing directory to %s" % component_dir
 
         # Generate the component
         component_name = string.capwords((self.plugin_type + self.plugin_id + self.plugin_version).replace(".", ""))
-        command = "ng generate component %s --skip-import --dry-run" % component_name
+        command = "ng generate component %s --skip-import " % component_name
+        if self.args.test:
+            command += "--dry-run"
         if self.args.verbose:
-            print "  Running %s" % command
+            print "Running %s" % command
         p1 = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         output = p1.communicate()[0]
-        print output
+        # print output
+        # Look for ERROR in output
+        if "ERROR" in output:
+            if self.args.test:
+                print  "Error generating component", "\n"+output+"\n"
+            else:
+                raise IOError("Error generating component", "\n"+output)
+            
+        """
+        The Schematic workflow failed. See above.
+        ERROR! src/app/plugin_components/mx/index3b34200/index3b34200.component.css already exists.
+        ERROR! src/app/plugin_components/mx/index3b34200/index3b34200.component.html already exists.
+        ERROR! src/app/plugin_components/mx/index3b34200/index3b34200.component.spec.ts already exists.
+        ERROR! src/app/plugin_components/mx/index3b34200/index3b34200.component.ts already exists.
+        """
 
         # Make sure the component was properly created
+        if not os.path.isdir(component_name.lower()):
+            if not self.args.test:
+                raise IOError("Component directory %s not created" % component_name.lower())
 
         # Edit the component to the initial state
         # TS
+        ts_file = os.path.join(component_dir, component_name.lower(), component_name.lower()+'.component.ts')
+        self.write_ts_file(ts_file)
+
         # HTTP
+        html_file = os.path.join(component_dir, component_name.lower(), component_name.lower()+'.component.html')
+        self.write_html_file(ts_file[:-2]+"html")
 
         # Add it to app.module.ts
+        self.add_to_app(component_name, ts_file)
 
         # Add it to index.ts
+        self.add_to_index(ts_file)
 
         # Move back to original directory
         os.chdir(start_dir)
 
-    def write_file_docstring(self):
-        """Write the docstring for file"""
-        self.output_function(["\"\"\"This is a docstring for this container file\"\"\"\n"])
+    def write_ts_file(self, ts_file):
+        """
+        Update generated TS file to a rudimentary state for a new plugin component
+        """
 
-    def write_license(self):
-        """Write the license"""
-        self.output_function(["\"\"\"",] + split_text_blob(_LICENSE) + ["\"\"\"\n"])
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file_name = tmp_file.name
+        in_lines = open(ts_file, "r").readlines()
 
-    def write_docstrings(self):
-        """Write file author docstrings"""
-        self.output_function(["__created__ = \"%d-%02d-%02d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
-                              "__maintainer__ = \"%s\"" % self.args.maintainer,
-                              "__email__ = \"%s\"" % self.args.email,
-                              "__status__ = \"Development\"\n"])
+        for line in in_lines:
 
-    def write_imports(self, write_list=(), added_normal_imports=(), added_rapd_imports=()):
-        """Write the import sections"""
-        standard_imports = ("argparse",
-                            "from collections import OrderedDict",
-                            "datetime",
-                            "glob",
-                            "json",
-                            "logging",
-                            "multiprocessing",
-                            "os",
-                            "pprint",
-                            "pymongo",
-                            "re",
-                            "redis",
-                            "shutil",
-                            "subprocess",
-                            "sys",
-                            "time",
-                            "unittest")
+            tmp_file.write(line)
 
-        rapd_imports = ("commandline_utils",
-                        "detectors.detector_utils as detector_utils",
-                        "utils")
+            # Insert some lines
+            if line.startswith("export class"):
+                tmp_file.write("\n")
+                tmp_file.write("  // Put some initial test data into the component\n")
+                tmp_file.write("  result: any = {'status':'This is the initial data'};\n")
+                tmp_file.write("\n")
+                tmp_file.write("  // A helper method\n")
+                tmp_file.write("  objectKeys = Object.keys;\n")
 
-        self.output_function(["# Standard imports"])
-        for value in standard_imports:
-            if value not in write_list:
-                value = "# import " + value
-            else:
-                value = "import " + value
-            self.output_function([value])
+        # Close the temp file
+        tmp_file.close()
 
-        for value in added_normal_imports:
-            if (value not in write_list) or (value not in added_rapd_imports):
-                self.output_function([value])
+        # Print file for edification
+        if self.args.verbose:
+            print "\nNew file %s" % ts_file
+            for line in open(tmp_file_name, "r").readlines():
+                print "  ", line.rstrip()
 
-        self.output_function(["\n# RAPD imports"])
-        for value in rapd_imports:
-            if (value not in write_list) or (value not in added_rapd_imports):
-                value = "# import " + value
-            else:
-                value = "import " + value
-            self.output_function([value])
+        # Move the new file to replace the naked file
+        if not self.args.test:
+            shutil.move(tmp_file_name, ts_file)
 
-        # Special RAPD imports
-        # print added_rapd_imports
-        for value in added_rapd_imports:
-            if (value not in standard_imports) or (value not in rapd_imports):
-                self.output_function(["import " + value])
+    def write_html_file(self, html_file):
+        """
+        Update generated HTML file to a rudimentary state for a new plugin component
+        """
 
-        # Blank line to keep it readable
-        self.output_function([""])
+        html_lines = """
+<div class="result-panel child">
+    <mat-tab-group>
+        <mat-tab label="Raw">
+                <div fxLayout="row" fxLayoutGap="10px">
+                    <div fxFlex="none">
+                        <div>
+                            <pre>{{result | json}}</pre>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+    </mat-tab-group>
+</div>
+        """
+
+        # Write the file
+        if not self.args.test:
+            with open(html_file, "w") as out_file:
+                out_file.write(html_lines)
+
+        # Print file for edification
+        if self.args.verbose:
+            print "\nNew file %s" % html_file
+            print html_lines
+
+    def add_to_app(self, component_name, ts_file):
+        """
+        Add a plugin component to the app.module.ts
+        """
+
+        component_name += "Component"
+
+        # Derive the imported file name
+        import_file = ts_file[:-3][ts_file.index("/app")+5:]
+        import_line = "import { %s } from '%s';" % (component_name, import_file)
+        # print import_line
+
+        # Derive the app.module.ts location
+        app_module_ts = ts_file[:ts_file.index("/app/")+5]+"app.module.ts"
+        # print app_module_ts
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file_name = tmp_file.name
+        in_lines = open(app_module_ts, "r").readlines()
+
+        # Go through app.module.ts and create new file
+        for line in in_lines:
+
+            # Insert some lines
+            if line.startswith("// INSERT POINT FOR PLUGIN COMPONENTS IMPORT"):
+                tmp_file.write("%s\n" % import_line)
+            elif line.startswith("    // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION"):
+                tmp_file.write("    %s,\n" % component_name)
+            elif line.startswith("    // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS"):
+                tmp_file.write("    %s,\n" % component_name)
+
+            tmp_file.write(line)
+
+        # Close the temp file
+        tmp_file.close()
+
+        # Print file for edification
+        if self.args.verbose:
+            print "\napp.module.ts"
+            for line in open(tmp_file_name, "r").readlines():
+                print "  ", line.rstrip()
+
+        # Move the new file to replace the naked file
+        if not self.args.test:
+            shutil.move(tmp_file_name, app_module_ts)
+        else:
+            os.unlink(tmp_file_name)
+
+    def add_to_index(self, ts_file):
+        """
+        Add a plugin component to the appropriate index.ts
+        """
+
+        # Derive the imported file name
+        export_file = ts_file[:-3][ts_file.index("/app")+5:]
+        export_line = "export * from '%s';" % export_file
+        # print export_line
+
+        # Derive the index.ts file
+        ts_file_split = ts_file.split(os.path.sep)
+        index_ts =  os.path.join(*[os.path.sep]+ts_file_split[:ts_file_split.index("plugin_components")+2]+["index.ts"])
+        # print index_ts
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file_name = tmp_file.name
+        in_lines = open(index_ts, "r").readlines()
+
+        # Go through app.module.ts and create new file
+        for line in in_lines:
+
+            tmp_file.write(line)
+
+            # Insert some lines
+            if line.startswith("// INSERT POINT FOR PLUGIN COMPONENTS"):
+                tmp_file.write("%s\n" % export_line)
+
+        # Close the temp file
+        tmp_file.close()
+
+        # Print file for edification
+        if self.args.verbose:
+            print "\n%s" % index_ts
+            for line in open(tmp_file_name, "r").readlines():
+                print "  ", line.rstrip()
+
+        # Move the new file to replace the naked file
+        if not self.args.test:
+            shutil.move(tmp_file_name, index_ts)
+        else:
+            os.unlink(tmp_file_name)
 
 def get_commandline(args=None):
     """Get the commandline variables and handle them"""
