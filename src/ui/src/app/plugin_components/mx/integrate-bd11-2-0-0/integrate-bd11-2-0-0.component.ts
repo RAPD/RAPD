@@ -200,12 +200,12 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       // PDBQuery
       } else if (event.value === 'pdbquery') {
         // If there is analysis data, determine the component to use
-        // if (self.full_result.results.pdbquery) {
+        if (self.full_result.results.pdbquery) {
 
-          // let plugin = self.full_result.results.analysis.plugin;
+          let plugin = self.full_result.results.analysis.plugin;
 
-          // const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-          const component_name = 'pdbquery9a2e100component';
+          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          // const component_name = 'pdbquery9a2e100component';
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(pdbquery_components[component_name]);
@@ -214,8 +214,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
           self.pdbquery_component = self.pdbquerytarget.createComponent(factory);
 
           // Set the component current_result value
-          // self.pdbquery_component.instance.result = undefined; // self.full_result.results.analysis;
-        // }
+          self.pdbquery_component.instance.result = self.full_result.results.pdbquery;
+        }
       }
     }, 200);
   }
