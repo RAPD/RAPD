@@ -194,7 +194,7 @@ parse_message = function(channel, message) {
  * Populate image data for detailed result
  * 
  */
- populate_image= function (detailed_result, image_key) {
+ populate_image = function (detailed_result, image_key) {
 
   // Create deferred
   var deferred = Q.defer();
@@ -459,9 +459,9 @@ function Wss (opt, callback) {
                   } else {
                     // console.log(detailed_result);
                     if (detailed_result) {
-                      // console.log(Object.keys(detailed_result));
-                      // console.log(detailed_result._doc);
-                      // console.log(detailed_result._doc.process);
+                      console.log(Object.keys(detailed_result));
+                      console.log(detailed_result._doc);
+                      console.log(detailed_result._doc.process);
 
                         // Make sure there is a process
                         if ('process' in detailed_result._doc) {
