@@ -204,7 +204,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
           let plugin = self.full_result.results.pdbquery.plugin;
 
-          const component_name = (plugin.type.toLowerCase().charAt(0).toUpperCase() + plugin.type.toLowerCase().slice(1) + plugin.id.toLowerCase() + plugin.version.replace(/\./g, '') + 'Component');
+          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
           console.log('component_name', component_name);
           // const component_name = 'pdbquery9a2e200component';
 
