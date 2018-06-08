@@ -59,7 +59,7 @@ export class AnalysisF068200Component implements OnInit {
 
     console.log(this.result);
 
-    if ('Intensity plots' in this.result.parsed.xtriage.plots) {
+    if ('Intensity plots' in this.result.results.parsed.xtriage.plots) {
       this.selected_plot = 'Intensity plots';
       this.setPlot('Intensity plots')
     }
@@ -68,10 +68,10 @@ export class AnalysisF068200Component implements OnInit {
 
   setPlot(plot_key:string) {
 
-    console.log('setPlot', plot_key);
+    // console.log('setPlot', plot_key);
 
     // Simplify
-    let plot_data = this.result.parsed.xtriage.plots[plot_key];
+    let plot_data = this.result.results.parsed.xtriage.plots[plot_key];
 
     // Common vars
     this.data.xs = plot_data.x_data;
