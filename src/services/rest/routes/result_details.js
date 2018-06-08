@@ -57,7 +57,7 @@ router.route('/result_details/:result_id')
             
             // Create a mongoose model for the result
             let name = (result._doc.data_type + '_' + result._doc.plugin_type +'_result').toLocaleLowerCase();
-            console.log('name', name);
+            // console.log('name', name);
             let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
             var ResultModel;
             try {

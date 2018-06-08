@@ -64,7 +64,7 @@ import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
-import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
+import { Pdbquery9a2e200Component } from './plugin_components/mx/pdbquery9a2e200/pdbquery9a2e200.component';
 import { Hcmerge4cba100Component } from './plugin_components/mx/hcmerge4cba100/hcmerge4cba100.component';
 // INSERT POINT FOR PLUGIN COMPONENTS IMPORT
 
@@ -116,7 +116,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     Index3b34200Component,
     IntegrateBd11200Component,
     AnalysisF068200Component,
-    Pdbquery9a2e100Component,
+    Pdbquery9a2e200Component,
     Hcmerge4cba100Component,
     // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
     //
@@ -184,7 +184,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AnalysisF068200Component,
     Index3b34200Component,
     IntegrateBd11200Component,
-    Pdbquery9a2e100Component,
+    Pdbquery9a2e200Component,
     Hcmerge4cba100Component,
     // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS
     // Plugin helpers

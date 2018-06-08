@@ -1,6 +1,6 @@
 // Plugins that may have results appear inside other plugins
 export * from './analysis-f068-2-0-0/analysis-f068-2-0-0.component';
-export * from './pdbquery9a2e100/pdbquery9a2e100.component';
+export * from './pdbquery9a2e200/pdbquery9a2e200.component';
 
 // Be sure to place the encapsulated plugins above the encapsulator
 // INSERT POINT FOR PLUGIN COMPONENTS
