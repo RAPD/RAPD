@@ -190,6 +190,36 @@ parse_message = function(channel, message) {
   return deferred.promise;
 };
 
+/*
+ * Populate image data for detailed result
+ * 
+ */
+ populate_image= function (detailed_result, image_key) {
+
+  // Create deferred
+  var deferred = Q.defer();
+
+  // If there is an image_key in result
+  if (image_key in detailed_result._doc.process) {
+
+    // Get the image
+    Image.
+    findOne({_id:detailed_result._doc.process[image_key]}).
+    exec(function(err, image1) {
+      if (err) {
+        console.error(err);
+        deferred.resolve(false);
+      } else {
+        deferred.resolve(image1);
+      }
+    });
+  } else {
+    deferred.resolve(false);
+  }
+  // Return promise
+  return deferred.promise;
+};
+
 // The websocket code
 function Wss (opt, callback) {
 
@@ -430,54 +460,73 @@ function Wss (opt, callback) {
 
                         // Make sure there is a process
                         if ('process' in detailed_result._doc) {
-                          // If there is an image1_id
-                          if ('image1_id' in detailed_result._doc.process) {
-
-                            // Manually populate
-                            Image.
-                              findOne({_id:detailed_result._doc.process.image1_id}).
-                              exec(function(err, image1) {
-                                if (err) {
-                                  console.error(err);
-                                  return false;
-                                } else {
-                                  detailed_result._doc.image1 = image1;
-                                  // console.log('POPULATED image1');
-                                  // console.log(detailed_result);
-                                  // Now look for image2
-                                  if ('image2_id' in detailed_result._doc.process) {
-
-                                    // Manually populate
-                                    Image.
-                                      findOne({_id:detailed_result._doc.process.image1_id}).
-                                      exec(function(err, image2) {
-                                        if (err) {
-                                          console.error(err);
-                                          return false;
-                                        } else {
-                                          detailed_result._doc.image1 = image2;
-                                          // console.log('POPULATED image2');
-                                          // console.log(detailed_result);
-                                          // Send back over the websocket
-                                          ws.send(JSON.stringify({msg_type:'result_details',
-                                                                  success:true,
-                                                                  results:detailed_result}));
-                                        }
-                                      });
-                                  } else {
-                                    // Send back over the websocket
-                                    ws.send(JSON.stringify({msg_type:'result_details',
-                                                            success:true,
-                                                            results:detailed_result}));
-                                  }
-                                }
-                              });
-                          } else {
-                            // Send back over the websocket
+                          
+                          Q.all([
+                            // Image 1
+                            populate_image(detailed_result, 'image1_id'),
+                            // Image 2
+                            populate_image(detailed_result, 'image2_id')
+                          ])
+                          .then(function(results) {
+                            // Assign results to detailed results
+                            detailed_result._doc.image1 = results[0];
+                            detailed_result._doc.image2 = results[1];
+      
+                            // Send back
                             ws.send(JSON.stringify({msg_type:'result_details',
                                                     success:true,
                                                     results:detailed_result}));
-                          }
+                          });
+
+                          // // If there is an image1_id
+                          // if ('image1_id' in detailed_result._doc.process) {
+
+                          //   // Manually populate
+                          //   Image.
+                          //     findOne({_id:detailed_result._doc.process.image1_id}).
+                          //     exec(function(err, image1) {
+                          //       if (err) {
+                          //         console.error(err);
+                          //         return false;
+                          //       } else {
+                          //         detailed_result._doc.image1 = image1;
+                          //         // console.log('POPULATED image1');
+                          //         // console.log(detailed_result);
+                          //         // Now look for image2
+                          //         if ('image2_id' in detailed_result._doc.process) {
+
+                          //           // Manually populate
+                          //           Image.
+                          //             findOne({_id:detailed_result._doc.process.image1_id}).
+                          //             exec(function(err, image2) {
+                          //               if (err) {
+                          //                 console.error(err);
+                          //                 return false;
+                          //               } else {
+                          //                 detailed_result._doc.image1 = image2;
+                          //                 // console.log('POPULATED image2');
+                          //                 // console.log(detailed_result);
+                          //                 // Send back over the websocket
+                          //                 ws.send(JSON.stringify({msg_type:'result_details',
+                          //                                         success:true,
+                          //                                         results:detailed_result}));
+                          //               }
+                          //             });
+                          //         } else {
+                          //           // Send back over the websocket
+                          //           ws.send(JSON.stringify({msg_type:'result_details',
+                          //                                   success:true,
+                          //                                   results:detailed_result}));
+                          //         }
+                          //       }
+                          //     });
+                          // } else {
+                          //   // Send back over the websocket
+                          //   ws.send(JSON.stringify({msg_type:'result_details',
+                          //                           success:true,
+                          //                           results:detailed_result}));
+                          // }
+                        // No 'process' in detailed_result._doc
                         } else {
                           // Send back over the websocket
                           ws.send(JSON.stringify({msg_type:'result_details',
