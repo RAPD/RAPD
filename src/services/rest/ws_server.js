@@ -201,21 +201,26 @@ parse_message = function(channel, message) {
 
   // If there is an image_key in result
   if (image_key in detailed_result._doc.process) {
-
-    // Get the image
-    Image.
-    findOne({_id:detailed_result._doc.process[image_key]}).
-    exec(function(err, image1) {
-      if (err) {
-        console.error(err);
-        deferred.resolve(false);
-      } else {
-        deferred.resolve(image1);
-      }
-    });
+    // Make sure that the value is not false or undefined
+    if (detailed_result._doc.process[image_key]) {
+      // Get the image
+      Image.
+      findOne({_id:detailed_result._doc.process[image_key]}).
+      exec(function(err, image1) {
+        if (err) {
+          console.error(err);
+          deferred.resolve(false);
+        } else {
+          deferred.resolve(image1);
+        }
+      });
+    } else {
+      deferred.resolve(false);
+    }
   } else {
     deferred.resolve(false);
   }
+
   // Return promise
   return deferred.promise;
 };
