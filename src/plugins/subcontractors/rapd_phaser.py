@@ -50,7 +50,7 @@ def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
 
-def run_phaser_pdbquery_OLD(command):
+def run_phaser_pdbquery_script_OLD(command):
     """
     Run phaser for pdbquery
     """
@@ -176,6 +176,85 @@ def run_phaser_pdbquery_OLD(command):
                 "log": "Timed out after %d seconds" % timeout,
                 "status": "ERROR"}
     """
+
+def parse_phaser_output_script_OLD(phaser_log):
+    """Parse Phaser log file"""
+
+    # The phased process has timed out
+    if phaser_log[0].startswith("Timed out after"):
+        phaser_result = {"solution": False,
+                         "message": "Timed out"}
+
+    # Looks like process completed
+    else:
+        pdb = False
+        solution_start = False
+        clash = "NC"
+        end = False
+        temp = []
+        tncs = False
+        nmol = 0
+        for index, line in enumerate(phaser_log):
+            #print line
+            temp.append(line)
+            directory = os.getcwd()
+            if line.count("SPACEGROUP"):
+                spacegroup = line.split()[-1]
+            if line.count("Solution") or line.count("Partial Solution "):
+                if line.count("written"):
+                    if line.count("PDB"):
+                        pdb = line.split()[-1]
+                    if line.count("MTZ"):
+                        mtz = line.split()[-1]
+                if line.count("RFZ="):
+                    solution_start = index
+            if line.count("SOLU SET"):
+                solution_start = index
+            if line.count("SOLU ENSEMBLE"):
+                end = index
+        if solution_start:
+            for line in phaser_log[solution_start:end]:
+                if line.count("SOLU 6DIM"):
+                    nmol += 1
+                for param in line.split():
+                    if param.startswith("RFZ"):
+                        if param.count("=") == 1:
+                            rfz = param[param.find("=")+param.count("="):]
+                    if param.startswith("RF*0"):
+                        rfz = "NC"
+                    if param.startswith("TFZ"):
+                        if param.count("=") == 1:
+                            tfz = param[param.find("=")+param.count("="):]
+                    if param.startswith("TF*0"):
+                        tfz = "NC"
+                    if param.startswith("PAK"):
+                        clash = param[param.find("=")+param.count("="):]
+                    if param.startswith("LLG"):
+                        llgain = float(param[param.find("=")+param.count("="):])
+                    if param.startswith("+TNCS"):
+                        tncs = True
+        if not pdb:
+            phaser_result = {"solution": False,
+                             "message": "No solution"}
+        else:
+            phaser_result = {"solution": True,
+                             "pdb": pdb,
+                             "mtz": mtz,
+                             "gain": llgain,
+                             "rfz": rfz,
+                             "tfz": tfz,
+                             "clash": clash,
+                             "dir": directory,
+                             "spacegroup": spacegroup,
+                             "tNCS": tncs,
+                             "nmol": nmol,
+                             "adf": None,
+                             "peak": None,
+                            }
+
+    pprint(phaser_result)
+    return phaser_result
+
 def mp_job(func):
     """
     wrapper to write command script and launch by multiprocessing.Process or Pool.
@@ -201,8 +280,9 @@ def mp_job(func):
         os.chdir(kwargs.get('work_dir', os.getcwd()))
         if not kwargs.get('script', False):
             # Pop out the launcher
-            launcher = kwargs.pop('launcher')
-            #computer_cluster = kwargs.pop('computer_cluster')
+            launcher = kwargs.pop('launcher', None)
+            # Pop out the batch_queue
+            batch_queue = kwargs.pop('batch_queue', None)
             # Create a unique identifier for Phaser results
             kwargs['output_id'] = 'Phaser_%d'%random.randint(0, 10000)
             # Signal to launch run
@@ -212,10 +292,8 @@ def mp_job(func):
                 pool = kwargs.pop('pool')
                 f = write_script(kwargs)
                 new_kwargs={"command": "rapd2.python %s"%f,
-                            #"command": "which rapd2.python",
                             "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
-                            #"shell" : True
-                                       }
+                            }
                 proc = pool.apply_async(launcher, kwds=new_kwargs,)
                 return (proc, 'junk', kwargs['output_id'])
             else:
@@ -225,37 +303,11 @@ def mp_job(func):
                 proc = Process(target=launcher,
                                kwargs={"command": "rapd2.python %s"%f,
                                        "pid_queue": pid_queue,
+                                       "batch_queue": batch_queue,
                                        "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
                                        })
                 proc.start()
                 return (proc, pid_queue.get(), kwargs['output_id'])
-            """
-            #if kwargs.get('computer_cluster', False):
-            if computer_cluster:
-                # If running on computer cluster
-                f = write_script(kwargs)
-                pid_queue = Queue()
-                proc = Process(target=launcher,
-                               kwargs={"command": "rapd2.python %s"%f,
-                                       "pid_queue": pid_queue,
-                                       "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
-                                       })
-                proc.start()
-                return (proc, pid_queue.get(), kwargs['output_id'])
-
-            elif kwargs.get('pool', False):
-                # If running on local machine
-                pool = kwargs.pop('pool')
-                f = write_script(kwargs)
-                new_kwargs={"command": "rapd2.python %s"%f,
-                            #"command": "which rapd2.python",
-                            "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
-                            #"shell" : True
-                                       }
-                proc = pool.apply_async(launcher, kwds=new_kwargs,)
-                return (proc, 'junk', kwargs['output_id'])
-            """
-
         else:
             # Remove extra input params used to setup job
             l = ['script', 'test']
@@ -303,9 +355,12 @@ def run_phaser(datafile,
     if not work_dir:
         work_dir = os.getcwd()
     os.chdir(work_dir)
-    
+
     if not name:
         name = spacegroup
+
+    # Connect to Redis
+    redis = connect_to_redis(db_settings)
 
     #Read the dataset
     i = phaser.InputMR_DAT()
@@ -447,238 +502,9 @@ def run_phaser(datafile,
 
     # Print the result so it can be seen in the rapd._phaser.log if needed
     print phaser_result
-    # Send results to Redis
-    redis = connect_to_redis(db_settings)
+
     # Key should be deleted once received, but set the key to expire in 24 hours just in case.
     redis.setex(output_id, 86400, json.dumps(phaser_result))
-
-def run_phaser_pdbquery_python_OLD(command):
-    """
-    Run phaser for pdbquery
-    Requires Phaser src code!
-    """
-    # Change to correct directory
-    os.chdir(command["work_dir"])
-
-    # Setup params
-    run_before = command.get("run_before", False)
-    copy = command.get("copy", 1)
-    resolution = command.get("res", False)
-    datafile = command.get("data")
-    input_cif = command.get("cif", False)
-    input_pdb = command.get("pdb", False)
-    spacegroup = command.get("spacegroup")
-    cell_analysis = command.get("cell analysis", False)
-    name = command.get("name", spacegroup)
-    large_cell = command.get("large", False)
-    #timeout = command.get("timeout", False)
-    launcher = command.get("launcher", False)
-    test = command.get("test", False)
-
-    #Read the dataset
-    i = phaser.InputMR_DAT()
-    i.setHKLI(datafile)
-    i.setLABI_F_SIGF('F','SIGF')
-    i.setMUTE(True)
-    r = phaser.runMR_DAT(i)
-    if r.Success():
-        i = phaser.InputMR_AUTO()
-        #i.setREFL_DATA(r.getREFL_DATA())
-        #i.setREFL_DATA(r.DATA_REFL())
-        i.setREFL_F_SIGF(r.getMiller(),r.getFobs(),r.getSigFobs())
-        i.setCELL6(r.getUnitCell())
-        if input_cif:
-            i.addENSE_CIF_ID('model', input_pdb, 0.7)
-        if input_pdb:
-            i.addENSE_PDB_ID('model', input_pdb, 0.7)
-        #i.addSEAR_ENSE_NUMB("model", copy)
-        i.addSEAR_ENSE_NUM("model", copy)
-        i.setSPAC_NAME(spacegroup)
-        if cell_analysis:
-            i.setSGAL_SELE("ALL")
-            # Set it for worst case in orth
-            # number of processes to run in parallel where possible
-            i.setJOBS(1)
-        else:
-            i.setSGAL_SELE("NONE")
-        if run_before:
-            # Picks own resolution
-            # Round 2, pick best solution as long as less that 10% clashes
-            i.setPACK_SELE("PERCENT")
-            i.setPACK_CUTO(0.1)
-            #command += "PACK CUTOFF 10\n"
-        else:
-            # For first round and cell analysis
-            # Only set the resolution limit in the first round or cell analysis.
-            if resolution:
-                i.setRESO_HIGH(resolution)
-            else:
-                # Otherwise it runs a second MR at full resolution!!
-                # I dont think a second round is run anymore.
-                # command += "RESOLUTION SEARCH HIGH OFF\n"
-                if large_cell:
-                    i.setRESO_HIGH(6.0)
-                else:
-                    i.setRESO_HIGH(4.5)
-            i.setSEAR_DEEP(False)
-            # Don"t seem to work since it picks the high res limit now.
-            # Get an error when it prunes all the solutions away and TF has no input.
-            # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
-            # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
-        # Turn off pruning in 2.6.0
-        i.setSEAR_PRUN(False)
-        # Choose more top peaks to help with getting it correct.
-        i.setPURG_ROTA_ENAB(True)
-        i.setPURG_ROTA_NUMB(3)
-        #command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
-        i.setPURG_TRAN_ENAB(True)
-        i.setPURG_TRAN_NUMB(1)
-        #command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
-    
-        # Only keep the top after refinement.
-        i.setPURG_RNP_ENAB(True)
-        i.setPURG_RNP_NUMB(1)
-        #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
-        i.setROOT(name)
-        i.setMUTE(False)
-        # Delete the setup results
-        del(r)
-        # launch the run
-        r = phaser.runMR_AUTO(i)
-        if r.Success():
-            if r.foundSolutions() :
-                print "Phaser has found MR solutions"
-                print "Top LLG = %f" % r.getTopLLG()
-                print "Top PDB file = %s" % r.getTopPdbFile()
-            else:
-                print "Phaser has not found any MR solutions"
-        else:
-            print "Job exit status FAILURE"
-            print r.ErrorName(), "ERROR :", r.ErrorMessage()
-
-        with open('phaser.log', 'w') as log:
-            log.write(r.logfile())
-            log.close()
-        with open('phaser_sum.log', 'w') as log:
-            log.write(r.summary())
-            log.close()
-
-    # Parse results
-    for p in r.getTopSet().ANNOTATION.split():
-        if p.count('RFZ'):
-            if p.count('=') in [1]:
-                rfz = float(p.split('=')[-1])
-        if p.count('RF*0'):
-            rfz = "NC"
-        if p.count('TFZ'):
-            if p.count('=') in [1]:
-                tfz = float(p.split('=')[-1])
-        if p.count('TF*0'):
-            tfz = "NC"
-
-    tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
-    tncs = bool(len(tncs_test))
-
-    if r.foundSolutions():
-        phaser_result = {"solution": r.foundSolutions(),
-                         "pdb": r.getTopPdbFile(),
-                         "mtz": r.getTopMtzFile(),
-                         "gain": float(r.getTopLLG()),
-                         "rfz": rfz,
-                         #"tfz": r.getTopTFZ(),
-                         "tfz": tfz,
-                         "clash": r.getTopSet().PAK,
-                         "dir": os.getcwd(),
-                         "spacegroup": r.getTopSet().getSpaceGroupName().replace(' ', ''),
-                         "tNCS": tncs,
-                         "nmol": r.getTopSet().NUM,
-                         "adf": None,
-                         "peak": None,
-                        }
-    else:
-        phaser_result = {"solution": False,
-                          "message": "No solution"}
-
-    pprint(phaser_result)
-    return phaser_result
-
-def parse_phaser_output_OLD(phaser_log):
-    """Parse Phaser log file"""
-
-    # The phased process has timed out
-    if phaser_log[0].startswith("Timed out after"):
-        phaser_result = {"solution": False,
-                         "message": "Timed out"}
-
-    # Looks like process completed
-    else:
-        pdb = False
-        solution_start = False
-        clash = "NC"
-        end = False
-        temp = []
-        tncs = False
-        nmol = 0
-        for index, line in enumerate(phaser_log):
-            #print line
-            temp.append(line)
-            directory = os.getcwd()
-            if line.count("SPACEGROUP"):
-                spacegroup = line.split()[-1]
-            if line.count("Solution") or line.count("Partial Solution "):
-                if line.count("written"):
-                    if line.count("PDB"):
-                        pdb = line.split()[-1]
-                    if line.count("MTZ"):
-                        mtz = line.split()[-1]
-                if line.count("RFZ="):
-                    solution_start = index
-            if line.count("SOLU SET"):
-                solution_start = index
-            if line.count("SOLU ENSEMBLE"):
-                end = index
-        if solution_start:
-            for line in phaser_log[solution_start:end]:
-                if line.count("SOLU 6DIM"):
-                    nmol += 1
-                for param in line.split():
-                    if param.startswith("RFZ"):
-                        if param.count("=") == 1:
-                            rfz = param[param.find("=")+param.count("="):]
-                    if param.startswith("RF*0"):
-                        rfz = "NC"
-                    if param.startswith("TFZ"):
-                        if param.count("=") == 1:
-                            tfz = param[param.find("=")+param.count("="):]
-                    if param.startswith("TF*0"):
-                        tfz = "NC"
-                    if param.startswith("PAK"):
-                        clash = param[param.find("=")+param.count("="):]
-                    if param.startswith("LLG"):
-                        llgain = float(param[param.find("=")+param.count("="):])
-                    if param.startswith("+TNCS"):
-                        tncs = True
-        if not pdb:
-            phaser_result = {"solution": False,
-                             "message": "No solution"}
-        else:
-            phaser_result = {"solution": True,
-                             "pdb": pdb,
-                             "mtz": mtz,
-                             "gain": llgain,
-                             "rfz": rfz,
-                             "tfz": tfz,
-                             "clash": clash,
-                             "dir": directory,
-                             "spacegroup": spacegroup,
-                             "tNCS": tncs,
-                             "nmol": nmol,
-                             "adf": None,
-                             "peak": None,
-                            }
-
-    pprint(phaser_result)
-    return phaser_result
 
 def run_phaser_module(datafile, inp=False):
     """

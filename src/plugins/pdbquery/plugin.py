@@ -48,7 +48,8 @@ import shutil
 import time
 import importlib
 
-# RAPD imports
+# RAPD 
+from bson.objectid import ObjectId
 from plugins.subcontractors.rapd_phaser import run_phaser
 from plugins.subcontractors.rapd_cctbx import get_pdb_info, get_mtz_info, get_res, get_spacegroup_info
 from plugins.get_cif.plugin import check_pdbq
@@ -131,6 +132,7 @@ class RapdPlugin(Thread):
     
     redis = False
     pool = False
+    batch_queue = False
 
     # Timers for processes
     phaser_timer = rglobals.PHASER_TIMEOUT
@@ -189,9 +191,10 @@ class RapdPlugin(Thread):
         self.computer_cluster = computer_cluster
         if self.computer_cluster:
             self.launcher = self.computer_cluster.process_cluster
+            self.batch_queue = self.computer_cluster.check_queue(self.command.get('command'))
         else:
             self.launcher = local_subprocess
-        
+
         # Setup a multiprocessing pool if not using a computer cluster.
         if not self.computer_cluster:
             self.pool = mp_pool(self.nproc)
@@ -219,16 +222,17 @@ class RapdPlugin(Thread):
         self.tprint(arg=0, level="progress")
 
         # Glean some information on the input file
-        #self.input_spacegroup, self.cell, self.volume = get_mtz_info(self.datafile)
         input_spacegroup, self.cell, volume = get_mtz_info(self.datafile)
+        # Get high resolution limt from MTZ
         self.dres = get_res(self.datafile)
-        input_spacegroup_num = int(xutils.convert_spacegroup(input_spacegroup))
-        self.laue = xutils.get_sub_groups(input_spacegroup_num, "simple")
+        # Determine the Laue group from the MTZ
+        input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
+        self.laue = xutils.get_sub_groups(input_spacegroup_num, "laue")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
         self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
-        self.tprint("  Spacegroup: %s  (%d)" % (input_spacegroup, input_spacegroup_num),
+        self.tprint("  Spacegroup: %s  (%s)" % (input_spacegroup, input_spacegroup_num),
                     level=10,
                     color="white")
         self.tprint("  Cell: %f.2 %f.2 %f.2 %f.2 %f.2 %f.2" % tuple(self.cell),
@@ -303,6 +307,8 @@ class RapdPlugin(Thread):
         self.results["process"]["status"] = self.status
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        # Give it a result_id
+        self.results["process"]["result_id"] = str(ObjectId())
         
         # Add link to processed dataset
         if self.processed_results:
@@ -564,6 +570,7 @@ class RapdPlugin(Thread):
 
         def launch_job(inp):
             """Launch the Phaser job"""
+            #self.logger.debug("process_phaser Launching %s"%inp['name'])
             if self.pool:
                 inp['pool'] = self.pool
             job, pid, output_id = run_phaser(**inp)
@@ -599,7 +606,7 @@ class RapdPlugin(Thread):
 
                 # Now check all SG's
                 spacegroup_num = xutils.convert_spacegroup(spacegroup_pdb)
-                lg_pdb = xutils.get_sub_groups(spacegroup_num, "simple")
+                lg_pdb = xutils.get_sub_groups(spacegroup_num, "laue")
                 self.tprint("      %s spacegroup: %s (%s)" % (cif_path, spacegroup_pdb, spacegroup_num),
                             level=10,
                             color="white")
@@ -664,7 +671,8 @@ class RapdPlugin(Thread):
                                                  self.dres),
                     "launcher": self.launcher,
                     "db_settings": self.db_settings,
-                    "output_id": False}
+                    "output_id": False,
+                    "batch_queue": self.batch_queue}
     
                 if not l:
                     launch_job(job_description)
@@ -753,9 +761,6 @@ class RapdPlugin(Thread):
 
     def jobs_monitor(self):
         """Monitor running jobs and finsh them when they complete."""
-        timed_out = False
-        timer = 0
-        jobs = self.jobs.keys()
 
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
@@ -783,6 +788,11 @@ class RapdPlugin(Thread):
         # Signal to the pool that no more processes will be added
         if self.pool:
             self.pool.close()
+
+        timed_out = False
+        timer = 0
+        jobs = self.jobs.keys()
+
         # Run loop to see when jobs finish
         while len(jobs):
             for job in jobs:
@@ -809,9 +819,10 @@ class RapdPlugin(Thread):
             for job in self.jobs.keys():
                 if self.computer_cluster:
                     # Kill job on cluster:
-                    pass
-                # terminate the job
-                job.terminate()
+                    self.computer_cluster.kill_job(self.jobs[job].get('pid'))
+                else:
+                    # terminate the job
+                    job.terminate()
                 # Get the job info
                 info = self.jobs.pop(job)
                 print 'Timeout Phaser on %s'%info['name']
@@ -822,9 +833,8 @@ class RapdPlugin(Thread):
                 # Delete the Redis key
                 self.redis.delete(info['output_id'])
 
-        # Close the self.pool if used
+        # Join the self.pool if used
         if self.pool:
-            self.pool.close()
             self.pool.join()
 
         if self.verbose and self.logger:

@@ -62,7 +62,7 @@ import plugins.subcontractors.xtriage as xtriage
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 from utils.text import json
-#from bson.objectid import ObjectId
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 from utils.processes import local_subprocess
 import info
@@ -283,6 +283,7 @@ calculation",
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
         self.results["preferences"] = self.preferences
+        self.results["results"] = {"raw":{}, "parsed":{}}
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})
@@ -290,6 +291,8 @@ calculation",
         self.results["process"]["status"] = self.status
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        # Give it a result_id
+        self.results["process"]["result_id"] = str(ObjectId())
         
         # Add link to processed dataset
         if self.processed_results:
@@ -490,18 +493,18 @@ self.command["input_data"]["datafile"]
             self.logger.debug('finish_xtriage')
         # Read raw output
         if os.path.exists("logfile.log"):
-            self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
+            self.results["results"]["raw"]["xtriage"] = open("logfile.log", "r").readlines()
 
             # Move logfile.log
             shutil.move("logfile.log", "xtriage.log")
 
-            self.results["parsed"]["xtriage"] = \
-                xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
+            self.results["results"]["parsed"]["xtriage"] = \
+                xtriage.parse_raw_output(raw_output=self.results["results"]["raw"]["xtriage"],
                                         logger=self.logger)
         # No log file
         else:
-            self.results["raw"]["xtriage"] = False
-            self.results["parsed"]["xtriage"] = False
+            self.results["results"]["raw"]["xtriage"] = False
+            self.results["results"]["parsed"]["xtriage"] = False
 
         # Update the status number
         self.update_status()
@@ -540,7 +543,7 @@ self.command["input_data"]["datafile"]
         jobs = {}
         # Store raw output
         log = open('molrep.doc','r').readlines()
-        self.results["raw"]["molrep"] = log
+        self.results["results"]["raw"]["molrep"] = log
 
         # Parse the Molrep log
         parsed_molrep_results = molrep.parse_raw_output(log)
@@ -603,7 +606,7 @@ self.command["input_data"]["datafile"]
                             color="red")
                 parsed_molrep_results["self_rotation_image"] = False
 
-        self.results["parsed"]["molrep"] = parsed_molrep_results
+        self.results["results"]["parsed"]["molrep"] = parsed_molrep_results
         # Update the status number and return results
         self.update_status()
         # return results
@@ -639,9 +642,9 @@ self.command["input_data"]["datafile"]
 
         # Store raw output
         output = self.phaser_queue.get()
-        self.results["raw"]["phaser"] = output['stdout'].split("\n")
+        self.results["results"]["raw"]["phaser"] = output['stdout'].split("\n")
 
-        self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
+        self.results["results"]["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
 
         # Update the status number and return results
         self.update_status()
@@ -721,7 +724,7 @@ self.command["input_data"]["datafile"]
     def print_xtriage_results(self):
         """Print out the xtriage results"""
 
-        xtriage_results = self.results["parsed"]["xtriage"]
+        xtriage_results = self.results["results"]["parsed"]["xtriage"]
 
         if xtriage_results:
 
@@ -779,9 +782,9 @@ self.command["input_data"]["datafile"]
 
             if self.preferences.get("show_plots", False):
 
-                if self.results["parsed"]["xtriage"]:
+                if self.results["results"]["parsed"]["xtriage"]:
 
-                    xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
+                    xtriage_plots = self.results["results"]["parsed"]["xtriage"]["plots"]
                     # pprint(xtriage_plots.keys())
 
                     self.tprint("\nPlots", level=99, color="blue")

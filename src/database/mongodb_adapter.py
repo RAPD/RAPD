@@ -366,9 +366,6 @@ class Database(object):
         # The coordinating result_id (_id of results collection & process.result_id)
         _result_id = plugin_result["process"].get("result_id")
 
-
-
-
         #
         # Handle any file storage
         #
@@ -458,7 +455,7 @@ class Database(object):
                           _result_id)
 
         # Debugging call to query db
-        debug_result = db[collection_name].find_one({"process.result_id":_result_id})
+        # debug_result = db[collection_name].find_one({"process.result_id":_result_id})
         # self.logger.debug("Found previous plugin result %s" % debug_result._id)
 
         # Update the plugin-specific table

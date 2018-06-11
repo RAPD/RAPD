@@ -174,6 +174,8 @@ RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
 RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
                            "plugins")
 
+# rapd.python path
+RAPD_PYTHON_PATH = '/gpfs6/users/necat/Jon/Programs/RAPD2/RAPD/bin/rapd2.python'
 
 # Method RAPD uses to track groups
 #   uid -- the uid of data root directory corresponds to session.group_id

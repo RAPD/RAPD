@@ -3542,9 +3542,9 @@ def subGroups(self,inp1,inp2='shelx'):
   except:
     self.logger.exception('**ERROR in Utils.subGroups**')
 
-def get_sub_groups(input_sg, mode="simple"):
+def get_sub_groups(input_sg, mode="laue"):
     """Return sub subgroups releated to input spacegroup"""
-
+    # Laue groups
     subgroups1 = {"1": [None],
                   "5": [None],
                   "5.1": [None],
@@ -3577,6 +3577,7 @@ def get_sub_groups(input_sg, mode="simple"):
                   "209": ["210"],
                   "211": ["214"]}
 
+    # SG's for running SHELXD
     subgroups2 = {"3": ["3", "4"],
                   "16": ["16", "17", "17.1", "17.2", "18", "18.1", "18.2", "19"],
                   "20": ["20", "21"],
@@ -3596,6 +3597,7 @@ def get_sub_groups(input_sg, mode="simple"):
                   "209": ["209", "210"],
                   "211": ["211", "214"]}
 
+    # SG's for MR
     subgroups3 = {"3": ["3", "4"],
                   "16": ["16", "17", "17.1", "17.2", "18", "18.1", "18.2", "19"],
                   "20": ["20", "21"],
@@ -3627,9 +3629,10 @@ def get_sub_groups(input_sg, mode="simple"):
         for line in subgroups1.items():
             if line[1].count(input_sg):
                 simple_sg = line[0]
+                break
 
     # Returns Laue group number
-    if mode == "simple":
+    if mode == "laue":
         return simple_sg
     else:
         if mode == "shelx":
