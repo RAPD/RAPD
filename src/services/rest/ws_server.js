@@ -249,6 +249,11 @@ populate_child_result = function (result_id, mode) {
         console.error(err);
         deferred.resolve(false);
       } else {
+        try {
+          child_result.command.input_data.db_settings = undefined;
+        } catch (e) {
+          console.error(e);
+        }
         deferred.resolve(child_result);
       }
     });
