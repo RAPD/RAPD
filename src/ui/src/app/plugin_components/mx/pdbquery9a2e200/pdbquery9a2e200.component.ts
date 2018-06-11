@@ -1,7 +1,11 @@
 import { Component,
          Input, 
-         OnInit } from '@angular/core';
+         OnInit,
+         ViewChild  } from '@angular/core';
 import { formatNumber } from '@angular/common';
+import { MatSort,
+         MatTableDataSource } from '@angular/material';
+// import { MatSortModule } from '@angular/material/sort';
 
 @Component({
   selector: 'app-pdbquery9a2e200',
@@ -16,9 +20,26 @@ export class Pdbquery9a2e200Component implements OnInit {
   @Input() result: any;
   objectKeys = Object.keys;
 
-  constructor() { }
+  contaminants: [any];
+  searches: [any];
+  customs: [any];
 
-  ngOnInit() { }
+  columnsToDisplay = ['ID', 'description', 'gain', 'rfz', 'tfz', 'clash', 'actions'];
+
+  @ViewChild(MatSort) sort: MatSort;
+
+  constructor() {}
+
+  ngOnInit() {
+    this.contaminants = this.result.results.common_contaminants.slice();
+    this.searches = this.result.results.search_results.slice();
+    this.customs = this.result.results.custom_structures.slice();
+
+    // Sort the data
+    this.sortData({active:'gain', direction:'desc'}, 'contaminants');
+    this.sortData({active:'gain', direction:'desc'}, 'searches');
+    this.sortData({active:'gain', direction:'desc'}, 'customs');
+  }
 
   default_val(val:any, default_val:any, digitsInfo: string = undefined) {
     // console.log('default_val', val, default_val, digitsInfo);
@@ -32,5 +53,44 @@ export class Pdbquery9a2e200Component implements OnInit {
       return val;
     }
   }
+  sortData(sort, data_type) {
+        
+    var data;
 
+    // Get the right starting data
+    if (data_type === 'contaminants') {
+      data = this.result.results.common_contaminants.slice();
+    } else if (data_type === 'searches') {
+      data = this.result.results.search_results.slice();
+    } else if (data_type === 'customs') {
+      data = this.result.results.custom_structures.slice();
+    }
+    
+    // If not active or no sort, return as from server
+    if (!sort.active || sort.direction == '') {
+      this[data_type] = data;
+      return;
+    }
+
+    // Sort the data and assign
+    this[data_type] = data.sort((a, b) => {
+      let isAsc = sort.direction == 'asc';
+      switch (sort.active) {
+        case 'ID': return compare(a.ID, b.ID, isAsc);
+        case 'gain': return compare(a.gain, b.gain, isAsc);
+        default: return 0;
+      }
+    });
+  }
+
+}
+
+function compare(a, b, isAsc) {
+  if (a === undefined) {
+    a = -1000;
+  }
+  if (b === undefined) {
+    b = -1000;
+  }
+  return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
 }

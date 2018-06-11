@@ -5,37 +5,47 @@
                 <div fxFlex="none">
                     <div>
                         <h3>Contaminant Search</h3>
-                        <table class="rapd-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th>PDB ID</th>
-                                    <th>Description</th>
-                                    <th>LL Gain</th>
-                                    <th>RF Z-score</th>
-                                    <th>TF Z-score</th>
-                                    <th># Clashes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let key of objectKeys(this.result.results.common_contaminants)">
-                                    <td>{{key}}</td>
-                                    <td>{{default_val(result.results.common_contaminants[key].description, 'A protein')}}</td>
-                                    <td>{{default_val(result.results.common_contaminants[key].gain, 'No Solution', '1.1-1')}}</td>
-                                    <td>{{default_val(result.results.common_contaminants[key].rfz, '-')}}</td>
-                                    <td>{{default_val(result.results.common_contaminants[key].tfz, '-')}}</td>
-                                    <td>{{default_val(result.results.common_contaminants[key].clash, '-')}}</td>
-                                    <td *ngIf="result.results.common_contaminants[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
-                                    <td *ngIf="result.results.common_contaminants[key].pdb === undefined"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                        <table mat-table class="rapd-table" [dataSource]="contaminants" matSort (matSortChange)="sortData($event, 'contaminants')" matSortActive="gain" matSortDirection="desc">
+                          
+                            <ng-container matColumnDef="ID">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
+                                <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
+                            </ng-container>
+                          
+                            <ng-container matColumnDef="description">
+                                <th mat-header-cell *matHeaderCellDef> Description </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="gain">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="gain"> LL Gain </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.gain, 'No Solution', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="rfz">
+                                <th mat-header-cell *matHeaderCellDef> RF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.rfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tfz">
+                                <th mat-header-cell *matHeaderCellDef> TF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.tfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="clash">
+                                <th mat-header-cell *matHeaderCellDef> # Clashes </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+                            <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+                          </table>
                     </div>
                 </div>
             </div>
@@ -45,77 +55,98 @@
                 <div fxFlex="none">
                     <div>
                         <h3>Search Based On Unit Cell Similarity</h3>
-                        <table class="rapd-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th>PDB ID</th>
-                                    <th>Description</th>
-                                    <th>LL Gain</th>
-                                    <th>RF Z-score</th>
-                                    <th>TF Z-score</th>
-                                    <th># Clashes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let key of objectKeys(this.result.results.search_results)">
-                                    <td>{{key}}</td>
-                                    <td>{{default_val(result.results.search_results[key].description, 'A protein')}}</td>
-                                    <td>{{default_val(result.results.search_results[key].gain, 'No Solution', '1.1-1')}}</td>
-                                    <td>{{default_val(result.results.search_results[key].rfz, '-')}}</td>
-                                    <td>{{default_val(result.results.search_results[key].tfz, '-')}}</td>
-                                    <td>{{default_val(result.results.search_results[key].clash, '-')}}</td>
-                                    <td *ngIf="result.results.search_results[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
-                                    <td *ngIf="result.results.search_results[key].pdb === undefined"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        
+                        <table mat-table class="rapd-table" [dataSource]="searches" matSort (matSortChange)="sortData($event, 'searches')" matSortActive="gain" matSortDirection="desc">
+                          
+                            <ng-container matColumnDef="ID">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
+                                <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
+                            </ng-container>
+                          
+                            <ng-container matColumnDef="description">
+                                <th mat-header-cell *matHeaderCellDef> Description </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="gain">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="gain"> LL Gain </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.gain, 'No Solution', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="rfz">
+                                <th mat-header-cell *matHeaderCellDef> RF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.rfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tfz">
+                                <th mat-header-cell *matHeaderCellDef> TF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.tfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="clash">
+                                <th mat-header-cell *matHeaderCellDef> # Clashes </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                            </ng-container>
+
+                          
+                            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+                            <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+                          </table>
                     </div>
                 </div>
             </div>
         </mat-tab>
-        <mat-tab *ngIf="result.results.custom_structures" label="Custom Search">
+        <mat-tab *ngIf="customs.length" label="Custom Search">
             <div fxLayout="row" fxLayoutGap="10px">
                 <div fxFlex="none">
                     <div>
                         <h3>Search with Submitted PDB</h3>
-                        <table class="rapd-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th colspan=4 class="rapd-table-span">Phaser Stats</th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th>PDB ID</th>
-                                    <th>Description</th>
-                                    <th>LL Gain</th>
-                                    <th>RF Z-score</th>
-                                    <th>TF Z-score</th>
-                                    <th># Clashes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let key of objectKeys(this.result.results.custom_structures)">
-                                    <td>{{key}}</td>
-                                    <td>{{default_val(result.results.custom_structures[key].description, 'A protein')}}</td>
-                                    <td>{{default_val(result.results.custom_structures[key].gain, 'No Solution', '1.1-1')}}</td>
-                                    <td>{{default_val(result.results.custom_structures[key].rfz, '-')}}</td>
-                                    <td>{{default_val(result.results.custom_structures[key].tfz, '-')}}</td>
-                                    <td>{{default_val(result.results.custom_structures[key].clash, '-')}}</td>
-                                    <td *ngIf="result.results.custom_structures[key].pdb !== undefined"><button mat-button><mat-icon>get_app</mat-icon></button></td>
-                                    <td *ngIf="result.results.custom_structures[key].pdb === undefined"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        
+                        <table mat-table class="rapd-table" [dataSource]="customs" matSort (matSortChange)="sortData($event, 'customs')" matSortActive="gain" matSortDirection="desc">
+                          
+                            <ng-container matColumnDef="ID">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
+                                <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
+                            </ng-container>
+                          
+                            <ng-container matColumnDef="description">
+                                <th mat-header-cell *matHeaderCellDef> Description </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="gain">
+                                <th mat-header-cell *matHeaderCellDef mat-sort-header="gain"> LL Gain </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.gain, 'No Solution', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="rfz">
+                                <th mat-header-cell *matHeaderCellDef> RF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.rfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tfz">
+                                <th mat-header-cell *matHeaderCellDef> TF Z-score </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.tfz, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="clash">
+                                <th mat-header-cell *matHeaderCellDef> # Clashes </th>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="actions">
+                                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+                            <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+                          </table>
                     </div>
                 </div>
             </div>
