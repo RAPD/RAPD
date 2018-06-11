@@ -250,7 +250,7 @@ populate_child_result = function (result_id, mode) {
         deferred.resolve(false);
       } else {
         try {
-          child_result.command.input_data.db_settings = undefined;
+          child_result._doc.command.input_data.db_settings = undefined;
         } catch (e) {
           console.error(e);
         }
