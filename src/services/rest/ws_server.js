@@ -48,17 +48,18 @@ try {
 }
 
 
+// Handle new message passed from Redis
 sub.on("message", function (channel, message) {
 
   console.log("sub channel " + channel);
 
   // Decode into oject
-  let parsed_message = JSON.parse(message);
+  let message_object = JSON.parse(message);
 
   // Grab out the session_id
   let session_id = false;
   try {
-    session_id = parsed_message.process.session_id;
+    session_id = message_object.process.session_id;
     console.log('Message session:', session_id);
   } catch (e) {
     if (e instanceof TypeError) {
@@ -69,7 +70,7 @@ sub.on("message", function (channel, message) {
   }
 
   // Turn message into messages to send to clients
-  parse_message(channel, parsed_message)
+  parse_message(channel, message_object)
     .then(function (messages_to_send) {
       console.log('messages_to_send', messages_to_send);
       //
@@ -98,7 +99,7 @@ sub.on("message", function (channel, message) {
 sub.subscribe("RAPD_RESULTS");
 
 parse_message = function (channel, message) {
-  console.log('parse_message');
+  // console.log('parse_message');
 
   var deferred = Q.defer();
 
@@ -115,7 +116,8 @@ parse_message = function (channel, message) {
       if (message.command === 'ECHO') {
         console.log('Echo...');
         deferred.resolve(return_array);
-        // Do something for not ECHO
+      
+      // Do something for not ECHO
       } else {
         // Create a result
         let result = {
@@ -133,52 +135,31 @@ parse_message = function (channel, message) {
           timestamp: new Date().toISOString()
         };
         return_array.push(['results', [result]]);
-        console.log('  Pushed results object onto return array');
+        // console.log('  Pushed results object onto return array');
 
         // Create a detailed result
+        Q.all([
+          // Image 1
+          populate_image(message.process.image1_id),
+          // Image 2
+          populate_image(message.process.image2_id),
+          // Analysis
+          populate_child_result(message.results.analysis, 'analysis'),
+          // PDBQuery
+          populate_child_result(message.results.pdbquery, 'pdbquery')
+        ])
+        .then(function (results) {
+                        
+          // Assign results to detailed results
+          message.image1 = results[0];
+          message.image2 = results[1];
+          message.results.analysis = results[2];
+          message.results.pdbquery = results[3];
 
-        // Go through possible images and add their details to the result
-        let possible_images = ['image', 'image1', 'image2'];
-        let index = 0;
-        possible_images.forEach(function (image) {
-
-          // The image key we are looking for
-          let image_key = image + '_id';
-          console.log('  Looking for', image_key);
-
-          // Look for image_ids in process
-          if (message.process[image_key]) {
-            Image
-              .findOne({
-                _id: message.process[image_key]
-              })
-              .exec(function (error, image_result) {
-                // console.log(image_key, error, result);
-                if (error) {
-                  console.error(error);
-                } else if (image_result) {
-                  console.log('Found image data for', image);
-                  message[image] = image_result._doc;
-                }
-                // Done?
-                index += 1;
-                if (index == 3) {
-                  return_array.push(['result_details', message]);
-                  console.log('return_array now has length', return_array.length);
-                  console.log('return_array', return_array);
-                  deferred.resolve(return_array);
-                }
-              });
-          } else {
-            // Done?
-            index += 1;
-            if (index == 3) {
-              return_array.push(['result_details', message]);
-              console.log('return_array now has length', return_array.length);
-              console.log('return_array', return_array);
-              deferred.resolve(return_array);
-            }
-          }
+          return_array.push(['result_details', message]);
+          // console.log('return_array now has length', return_array.length);
+          // console.log('return_array', return_array);
+          deferred.resolve(return_array);
         });
       }
 
@@ -198,31 +179,26 @@ parse_message = function (channel, message) {
  * Populate image data for detailed result
  * 
  */
-populate_image = function (detailed_result, image_key) {
+populate_image = function (image_key) {
 
   // Create deferred
   var deferred = Q.defer();
 
-  // If there is an image_key in result
-  if (image_key in detailed_result._doc.process) {
-    // Make sure that the value is not false or undefined
-    if (detailed_result._doc.process[image_key]) {
-      // Get the image
-      Image.
-      findOne({
-        _id: detailed_result._doc.process[image_key]
-      }).
-      exec(function (err, image1) {
-        if (err) {
-          console.error(err);
-          deferred.resolve(false);
-        } else {
-          deferred.resolve(image1);
-        }
-      });
-    } else {
-      deferred.resolve(false);
-    }
+  // Make sure that the value is not false or undefined
+  if (image_key) {
+    // Get the image
+    Image.
+    findOne({
+      _id: image_key
+    }).
+    exec(function (err, image1) {
+      if (err) {
+        console.error(err);
+        deferred.resolve(false);
+      } else {
+        deferred.resolve(image1);
+      }
+    });
   } else {
     deferred.resolve(false);
   }
@@ -235,7 +211,7 @@ populate_image = function (detailed_result, image_key) {
  * Populate analysis data for detailed result
  * 
  */
-populate_child = function (detailed_result, mode) {
+populate_child_result = function (result_id, mode) {
 
   // Create deferred
   var deferred = Q.defer();
@@ -262,11 +238,11 @@ populate_child = function (detailed_result, mode) {
   }
 
   // If there is a result
-  if (detailed_result._doc.results[mode]) {
+  if (result_id) {
     // Get the analysis result
     ResultModel.
     findOne({
-      _id: detailed_result._doc.results[mode]
+      _id: result_id
     }).
     exec(function (err, child_result) {
       if (err) {
@@ -277,7 +253,7 @@ populate_child = function (detailed_result, mode) {
       }
     });
   } else {
-    deferred.resolve(detailed_result._doc.results[mode]);
+    deferred.resolve(result_id);
   }
 
   // Return promise
@@ -555,13 +531,13 @@ function Wss(opt, callback) {
 
                     Q.all([
                         // Image 1
-                        populate_image(detailed_result, 'image1_id'),
+                        populate_image(detailed_result._doc.process.image1_id),
                         // Image 2
-                        populate_image(detailed_result, 'image2_id'),
+                        populate_image(detailed_result._doc.process.image2_id),
                         // Analysis
-                        populate_child(detailed_result, 'analysis'),
+                        populate_child_result(detailed_result._doc.results.analysis, 'analysis'),
                         // PDBQuery
-                        populate_child(detailed_result, 'pdbquery')
+                        populate_child_result(detailed_result._doc.results.pdbquery, 'pdbquery')
                       ])
                       .then(function (results) {
                         
