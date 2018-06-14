@@ -15,7 +15,7 @@
           </div>
           <div>
             <mat-form-field placeholder="Color Scheme">
-              <mat-select [(ngModel)]="view_color" (change)="doSomething($event)">
+              <mat-select [(ngModel)]="view_color" (selectionChange)="doSomething($event)">
                 <mat-option value="Gray">Gray</mat-option>
                 <mat-option value="Heat">Heat</mat-option>
                 <mat-option value="Rainbow">Rainbow</mat-option>

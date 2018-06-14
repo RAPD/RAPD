@@ -170,7 +170,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   onViewModeSelect(event) {
 
-    console.log('onViewModeSelect', event.value);
+    // console.log('onViewModeSelect', event.value);
 
     var self = this;
 
@@ -179,7 +179,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       // Looking at an analysis
       if (event.value === 'analysis') {
             
-        console.log(self.full_result.results.analysis);
+        // console.log(self.full_result.results.analysis);
 
         // If there is analysis data, determine the component to use
         if (self.full_result.results.analysis) {
@@ -205,7 +205,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
           let plugin = self.full_result.results.pdbquery.plugin;
 
           const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-          console.log('component_name', component_name);
+          // console.log('component_name', component_name);
           // const component_name = 'pdbquery9a2e200component';
 
           // Create a componentfactoryResolver instance
