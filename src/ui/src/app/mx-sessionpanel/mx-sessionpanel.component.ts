@@ -41,6 +41,8 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.sub.unsubscribe();
+    this.websocket_service.unsetSession();
+    this.websocket_service.unsubscribeResults();
   }
 
   tabSelected(event) {

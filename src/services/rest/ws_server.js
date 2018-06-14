@@ -1,34 +1,43 @@
 // Configuration
-const config = require('./config');
+const config = require("./config");
 
 // Core modules
-var http = require('http');
-var url = require('url');
-var WebSocketServer = require('ws').Server;
+var http = require("http");
+var url = require("url");
+var WebSocketServer = require("ws").Server;
 // var SocketIo = require('socket.io');
-var mongoose = require('./models/mongoose');
-Q = require('q');
+var mongoose = require("./models/mongoose");
+Q = require("q");
 // Fix the promise issue in Mongoose
 // mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
-var jwt = require('jsonwebtoken');
-var uuid = require('node-uuid');
+var jwt = require("jsonwebtoken");
+var uuid = require("node-uuid");
 
 // Redis
-var Redis = require('ioredis');
+var Redis = require("ioredis");
 
 // Import models
-var mongoose = require('./models/mongoose');
-const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
-const Image = mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
-const Result = mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
+var mongoose = require("./models/mongoose");
+const Activity = mongoose.ctrl_conn.model(
+  "Activity",
+  require("./models/activity").ActivitySchema
+);
+const Image = mongoose.ctrl_conn.model(
+  "Image",
+  require("./models/image").ImageSchema
+);
+const Result = mongoose.ctrl_conn.model(
+  "Result",
+  require("./models/result").ResultSchema
+);
 
 // Definitions of result types
 var result_type_trans = {
   mx: {
-    snap: ['mx:index+strategy'],
-    sweep: ['mx:integrate'],
+    snap: ["mx:index+strategy"],
+    sweep: ["mx:integrate"],
     merge: [],
     mr: [],
     sad: [],
@@ -47,10 +56,8 @@ try {
   throw e;
 }
 
-
 // Handle new message passed from Redis
-sub.on("message", function (channel, message) {
-
+sub.on("message", function(channel, message) {
   console.log("sub channel " + channel);
 
   // Decode into oject
@@ -60,45 +67,46 @@ sub.on("message", function (channel, message) {
   let session_id = false;
   try {
     session_id = message_object.process.session_id;
-    console.log('Message session:', session_id);
+    console.log("Message session:", session_id);
   } catch (e) {
     if (e instanceof TypeError) {
-      console.error('Result has no session_id');
+      console.error("Result has no session_id");
     } else {
       console.error(e);
     }
   }
 
   // Turn message into messages to send to clients
-  parse_message(channel, message_object)
-    .then(function (messages_to_send) {
-      console.log('messages_to_send', messages_to_send);
-      //
-      // console.log('Will send', messages_to_send.length, 'messages');
-      //
-      // Look for websockets that are watching the same session
-      if (session_id) {
-        Object.keys(ws_connections).forEach(function (socket_id) {
-          console.log(ws_connections[socket_id].session);
-          if (ws_connections[socket_id].session.session_id === session_id) {
-            console.log('Have a live one!');
-            messages_to_send.forEach(function (message) {
-              console.log(message);
-              ws_connections[socket_id].send(JSON.stringify({
+  parse_message(channel, message_object).then(function(messages_to_send) {
+    console.log("messages_to_send", messages_to_send);
+    //
+    // console.log('Will send', messages_to_send.length, 'messages');
+    //
+    // Look for websockets that are watching the same session
+    if (session_id) {
+      Object.keys(ws_connections).forEach(function(socket_id) {
+        console.log(ws_connections[socket_id].session);
+        if (ws_connections[socket_id].session.session_id === session_id) {
+          console.log("Have a live one!");
+          messages_to_send.forEach(function(message) {
+            console.log(message);
+            ws_connections[socket_id].send(
+              JSON.stringify({
                 msg_type: message[0],
                 results: message[1]
-              }));
-            });
-          }
-        });
-      }
-    })
+              })
+            );
+          });
+        }
+      });
+    }
+  });
 });
 
 // Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
 
-parse_message = function (channel, message) {
+var parse_message = function(channel, message) {
   // console.log('parse_message');
 
   var deferred = Q.defer();
@@ -107,17 +115,15 @@ parse_message = function (channel, message) {
   var return_array = [];
 
   switch (channel) {
-
-    case 'RAPD_RESULTS':
-
-      console.log('RAPD_RESULTS');
+    case "RAPD_RESULTS":
+      console.log("RAPD_RESULTS");
 
       // Do nothing for ECHO
-      if (message.command === 'ECHO') {
-        console.log('Echo...');
+      if (message.command === "ECHO") {
+        console.log("Echo...");
         deferred.resolve(return_array);
-      
-      // Do something for not ECHO
+
+        // Do something for not ECHO
       } else {
         // Create a result
         let result = {
@@ -134,7 +140,7 @@ parse_message = function (channel, message) {
           status: message.process.status,
           timestamp: new Date().toISOString()
         };
-        return_array.push(['results', [result]]);
+        return_array.push(["results", [result]]);
         // console.log('  Pushed results object onto return array');
 
         // Create a detailed result
@@ -144,19 +150,17 @@ parse_message = function (channel, message) {
           // Image 2
           populate_image(message.process.image2_id),
           // Analysis
-          populate_child_result(message.results.analysis, 'analysis'),
+          populate_child_result(message.results.analysis, "analysis"),
           // PDBQuery
-          populate_child_result(message.results.pdbquery, 'pdbquery')
-        ])
-        .then(function (results) {
-                        
+          populate_child_result(message.results.pdbquery, "pdbquery")
+        ]).then(function(results) {
           // Assign results to detailed results
           message.image1 = results[0];
           message.image2 = results[1];
           message.results.analysis = results[2];
           message.results.pdbquery = results[3];
 
-          return_array.push(['result_details', message]);
+          return_array.push(["result_details", message]);
           // console.log('return_array now has length', return_array.length);
           // console.log('return_array', return_array);
           deferred.resolve(return_array);
@@ -166,10 +170,9 @@ parse_message = function (channel, message) {
       break;
 
     default:
-      console.log('Don\'t know about this channel.');
+      console.log("Don't know about this channel.");
       deferred.resolve(return_array);
       break;
-
   }
 
   return deferred.promise;
@@ -179,19 +182,16 @@ parse_message = function (channel, message) {
  * Populate image data for detailed result
  * 
  */
-populate_image = function (image_key) {
-
+var populate_image = function(image_key) {
   // Create deferred
   var deferred = Q.defer();
 
   // Make sure that the value is not false or undefined
   if (image_key) {
     // Get the image
-    Image.
-    findOne({
+    Image.findOne({
       _id: image_key
-    }).
-    exec(function (err, image1) {
+    }).exec(function(err, image1) {
       if (err) {
         console.error(err);
         deferred.resolve(false);
@@ -211,28 +211,30 @@ populate_image = function (image_key) {
  * Populate analysis data for detailed result
  * 
  */
-populate_child_result = function (result_id, mode) {
-
+var populate_child_result = function(result_id, mode) {
   // Create deferred
   var deferred = Q.defer();
 
   // Create a mongoose model for the result
-  let collection_name = 'Mx_' + mode + '_result';
+  let collection_name = "Mx_" + mode + "_result";
   var ResultModel;
   try {
     if (mongoose.ctrl_conn.model(collection_name)) {
       ResultModel = mongoose.ctrl_conn.model(collection_name);
     }
   } catch (e) {
-    if (e.name === 'MissingSchemaError') {
-      let schema = new mongoose.Schema({
-        _id: {
-          type: mongoose.Schema.ObjectId,
-          auto: true
+    if (e.name === "MissingSchemaError") {
+      let schema = new mongoose.Schema(
+        {
+          _id: {
+            type: mongoose.Schema.ObjectId,
+            auto: true
+          }
         },
-      }, {
-        strict: false
-      });
+        {
+          strict: false
+        }
+      );
       ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
     }
   }
@@ -240,11 +242,9 @@ populate_child_result = function (result_id, mode) {
   // If there is a result
   if (result_id) {
     // Get the analysis result
-    ResultModel.
-    findOne({
+    ResultModel.findOne({
       _id: result_id
-    }).
-    exec(function (err, child_result) {
+    }).exec(function(err, child_result) {
       if (err) {
         console.error(err);
         deferred.resolve(false);
@@ -267,19 +267,17 @@ populate_child_result = function (result_id, mode) {
 
 // The websocket code
 function Wss(opt, callback) {
-
   // hide "new"
   if (!(this instanceof Wss)) {
-    return new Wss(opt)
+    return new Wss(opt);
   }
 
   var wss = new WebSocketServer({
     server: opt.server
   });
 
-  wss.on('connection', function connection(ws) {
-
-    console.log('Connected');
+  wss.on("connection", function connection(ws) {
+    console.log("Connected");
 
     // Create a session object
     ws.session = {};
@@ -289,14 +287,13 @@ function Wss(opt, callback) {
     ws_connections[ws.id] = ws;
 
     // Create a ping interval to keep websocket connection alive
-    let ping_timer = setInterval(function () {
-      ws.send('ping');
+    let ping_timer = setInterval(function() {
+      ws.send("ping");
     }, 45000);
 
     // Websocket has closed
-    ws.on('close', function () {
-
-      console.log('websocket closed');
+    ws.on("close", function() {
+      console.log("websocket closed");
 
       // Cancel the ping interval
       clearInterval(ping_timer);
@@ -305,30 +302,30 @@ function Wss(opt, callback) {
       delete ws_connections[ws.id];
     });
 
-    ws.on('error', function (err) {
-      if (err.code !== 'ECONNRESET') {
+    ws.on("error", function(err) {
+      if (err.code !== "ECONNRESET") {
         // Ignore ECONNRESET and re throw anything else
-        throw err
+        throw err;
       }
     });
 
     // Message incoming from the client
-    ws.on('message', function (message) {
-
+    ws.on("message", function(message) {
       var data = JSON.parse(message);
       // console.log(data);
 
       // Initializing the websocket
-      if (data.request_type === 'initialize') {
-        jwt.verify(data.token, config.secret, function (err, decoded) {
+      if (data.request_type === "initialize") {
+        jwt.verify(data.token, config.secret, function(err, decoded) {
           if (err) {
             console.error(err);
-            ws.send(JSON.stringify({
-              success: false,
-              message: 'Failed to authenticate token.'
-            }));
+            ws.send(
+              JSON.stringify({
+                success: false,
+                message: "Failed to authenticate token."
+              })
+            );
           } else {
-
             let now = Date.now() / 1000;
             // console.log(now, decoded.iat, decoded.exp, (decoded.exp-now)/(60));
             // The token is valid
@@ -340,153 +337,122 @@ function Wss(opt, callback) {
           }
         });
       } else {
-
         // Guard against non-authorized connections
         if (ws.session === undefined || ws.session === {}) {
           return false;
         }
 
         switch (data.request_type) {
+          // Get results
+          case "get_results":
+            console.log("get_results");
 
-          // Set the session id for the connected websocket
-          case 'set_session':
-            console.log('Session set to ' + data.session_id);
-            this.session.session_id = data.session_id;
-            break;
+            var data_type, data_class;
 
-          case 'unset_session':
-            this.session.session_id = undefined;
-            break;
+            [data_type, data_class] = data.data_type.split(":");
 
-            // Get results
-          case 'get_results':
+            if (data_type === "mx") {
+              if (data_class === "data") {
+                Result.find({
+                  session_id: mongoose.Types.ObjectId(data.session_id)
+                })
+                  .where("result_type")
+                  .in(["mx:index", "mx:integrate"])
+                  // populate('children').
+                  .sort("-timestamp")
+                  .exec(function(err, results) {
+                    if (err) {
+                      return false;
+                    }
+                    console.log("Found", results.length, "results");
+                    // Send back over the websocket
+                    ws.send(
+                      JSON.stringify({
+                        msg_type: "results",
+                        results: results
+                      })
+                    );
+                  });
+              } else if (data_class === "snap") {
+                Result.find({
+                  session_id: mongoose.Types.ObjectId(data.session_id)
+                })
+                  .where("result_type")
+                  .in(result_type_trans[data_type][data_class])
+                  // populate('children').
+                  .sort("-timestamp")
+                  .exec(function(err, results) {
+                    if (err) {
+                      return false;
+                    }
+                    console.log("Found", results.length, "results");
+                    // Send back over the websocket
+                    ws.send(
+                      JSON.stringify({
+                        msg_type: "results",
+                        results: results
+                      })
+                    );
+                  });
+              } else if (data_class === "sweep") {
+                Result.find({
+                  session_id: mongoose.Types.ObjectId(data.session_id)
+                })
+                  .where("result_type")
+                  .in(result_type_trans[data_type][data_class])
+                  // populate('children').
+                  .sort("-timestamp")
+                  .exec(function(err, sessions) {
+                    if (err) {
+                      return false;
+                    }
+                    console.log("Found", sessions.length, "results");
+                    // Send back over the websocket
+                    ws.send(
+                      JSON.stringify({
+                        msg_type: "results",
+                        results: sessions
+                      })
+                    );
+                  });
+              } else if (data_class === "all") {
+                console.log("data.session_id", data.session_id);
 
-            console.log('get_results');
-
-            var data_type,
-              data_class;
-
-            [data_type, data_class] = data.data_type.split(':');
-
-            if (data_type === 'mx') {
-
-              if (data_class === 'data') {
-
-                Result.
-                find({
-                  'session_id': mongoose.Types.ObjectId(data.session_id)
-                }).
-                where('result_type').in(['mx:index', 'mx:integrate']).
-                // populate('children').
-                sort('-timestamp').
-                exec(function (err, results) {
-                  if (err) {
-                    return false;
-                  }
-                  console.log('Found', results.length, 'results');
-                  // Send back over the websocket
-                  ws.send(JSON.stringify({
-                    msg_type: 'results',
-                    results: results
-                  }));
-                });
-              } else if (data_class === 'snap') {
-
-                Result.
-                find({
-                  'session_id': mongoose.Types.ObjectId(data.session_id)
-                }).
-                where('result_type').in(result_type_trans[data_type][data_class]).
-                // populate('children').
-                sort('-timestamp').
-                exec(function (err, results) {
-                  if (err) {
-                    return false;
-                  }
-                  console.log('Found', results.length, 'results');
-                  // Send back over the websocket
-                  ws.send(JSON.stringify({
-                    msg_type: 'results',
-                    results: results
-                  }));
-                });
-              } else if (data_class === 'sweep') {
-
-                Result.
-                find({
-                  'session_id': mongoose.Types.ObjectId(data.session_id)
-                }).
-                where('result_type').in(result_type_trans[data_type][data_class]).
-                // populate('children').
-                sort('-timestamp').
-                exec(function (err, sessions) {
-                  if (err) {
-                    return false;
-                  }
-                  console.log('Found', sessions.length, 'results');
-                  // Send back over the websocket
-                  ws.send(JSON.stringify({
-                    msg_type: 'results',
-                    results: sessions
-                  }));
-                });
-              } else if (data_class === 'all') {
-
-                console.log('data.session_id', data.session_id);
-
-                Result.
-                find({
-                  'session_id': mongoose.Types.ObjectId(data.session_id)
-                }).
-                // populate('children').
-                sort('-timestamp').
-                exec(function (err, results) {
-                  if (err)
-                    return false;
-                  console.log('Found', results.length, 'results');
-                  // Send back over the websocket
-                  ws.send(JSON.stringify({
-                    msg_type: 'results',
-                    results: results
-                  }));
-                });
+                Result.find({
+                  session_id: mongoose.Types.ObjectId(data.session_id)
+                })
+                  // populate('children').
+                  .sort("-timestamp")
+                  .exec(function(err, results) {
+                    if (err) return false;
+                    console.log("Found", results.length, "results");
+                    // Send back over the websocket
+                    ws.send(
+                      JSON.stringify({
+                        msg_type: "results",
+                        results: results
+                      })
+                    );
+                  });
               }
-
             }
 
             // Register activity
             let new_activity = new Activity({
-              source: 'websocket',
-              type: 'get_results',
-              subtype: data.data_type + '_' + data.plugin_type,
+              source: "websocket",
+              type: "get_results",
+              subtype: data.data_type + "_" + data.plugin_type,
               user: ws.session.token._doc._id
             }).save();
 
             break;
 
-          case 'update_result':
-
-            console.log('update_result');
-            console.log(data.result);
-
-            Result.
-            update({
-              _id: data.result._id
-            }, data.result).
-            exec(function (err, res) {
-              console.log(err);
-              console.log(res);
-            });
-
-            break;
-
-            // Get result details
-          case 'get_result_details':
-
-            console.log('get_result_details', data);
+          // Get result details
+          case "get_result_details":
+            console.log("get_result_details", data);
 
             // Create a mongoose model for the result
-            let name = data.data_type + '_' + data.plugin_type + '_result';
+            let name = data.data_type + "_" + data.plugin_type + "_result";
             let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
             var ResultModel;
             try {
@@ -494,92 +460,129 @@ function Wss(opt, callback) {
                 ResultModel = mongoose.ctrl_conn.model(collection_name);
               }
             } catch (e) {
-              if (e.name === 'MissingSchemaError') {
-                let schema = new mongoose.Schema({
-                  _id: {
-                    type: Schema.ObjectId,
-                    auto: true
+              if (e.name === "MissingSchemaError") {
+                let schema = new mongoose.Schema(
+                  {
+                    _id: {
+                      type: Schema.ObjectId,
+                      auto: true
+                    }
                   },
-                }, {
-                  strict: false
-                });
-                // ResultModel = mongoose.model(collection_name, schema);
+                  {
+                    strict: false
+                  }
+                );
                 ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
               }
             }
 
             // Now get the result
-            ResultModel.
-            findOne({
-              'process.result_id': mongoose.Types.ObjectId(data._id)
-            }).
-            exec(function (err, detailed_result) {
+            ResultModel.findOne({
+              "process.result_id": mongoose.Types.ObjectId(data._id)
+            }).exec(function(err, detailed_result) {
               // Error
               if (err) {
                 console.error(err);
-                ws.send(JSON.stringify({
-                  msg_type: 'result_details',
-                  success: false,
-                  results: err
-                }));
+                ws.send(
+                  JSON.stringify({
+                    msg_type: "result_details",
+                    success: false,
+                    results: err
+                  })
+                );
                 return false;
                 // No error
               } else {
                 // console.log(detailed_result);
                 if (detailed_result) {
-                  console.log(Object.keys(detailed_result));
-                  console.log(detailed_result._doc);
-                  console.log(detailed_result._doc.process);
+                  // console.log(Object.keys(detailed_result));
+                  // console.log(detailed_result._doc);
+                  // console.log(detailed_result._doc.process);
 
                   // Make sure there is a process
-                  if ('process' in detailed_result._doc) {
-
+                  if ("process" in detailed_result._doc) {
                     Q.all([
-                        // Image 1
-                        populate_image(detailed_result._doc.process.image1_id),
-                        // Image 2
-                        populate_image(detailed_result._doc.process.image2_id),
-                        // Analysis
-                        populate_child_result(detailed_result._doc.results.analysis, 'analysis'),
-                        // PDBQuery
-                        populate_child_result(detailed_result._doc.results.pdbquery, 'pdbquery')
-                      ])
-                      .then(function (results) {
-                        
-                        // Assign results to detailed results
-                        detailed_result._doc.image1 = results[0];
-                        detailed_result._doc.image2 = results[1];
-                        detailed_result._doc.results.analysis = results[2];
-                        detailed_result._doc.results.pdbquery = results[3];
+                      // Image 1
+                      populate_image(detailed_result._doc.process.image1_id),
+                      // Image 2
+                      populate_image(detailed_result._doc.process.image2_id),
+                      // Analysis
+                      populate_child_result(
+                        detailed_result._doc.results.analysis,
+                        "analysis"
+                      ),
+                      // PDBQuery
+                      populate_child_result(
+                        detailed_result._doc.results.pdbquery,
+                        "pdbquery"
+                      )
+                    ]).then(function(results) {
+                      // Assign results to detailed results
+                      detailed_result._doc.image1 = results[0];
+                      detailed_result._doc.image2 = results[1];
+                      detailed_result._doc.results.analysis = results[2];
+                      detailed_result._doc.results.pdbquery = results[3];
 
-                        // Send back
-                        ws.send(JSON.stringify({
-                          msg_type: 'result_details',
+                      // Send back
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "result_details",
                           success: true,
                           results: detailed_result
-                        }));
-                      });
+                        })
+                      );
+                    });
 
-                  // No 'process' in detailed_result._doc
+                    // No 'process' in detailed_result._doc
                   } else {
                     // Send back over the websocket
-                    ws.send(JSON.stringify({
-                      msg_type: 'result_details',
-                      success: true,
-                      results: detailed_result
-                    }));
+                    ws.send(
+                      JSON.stringify({
+                        msg_type: "result_details",
+                        success: true,
+                        results: detailed_result
+                      })
+                    );
                   }
                 }
 
                 // Register activity
                 let new_activity = new Activity({
-                  source: 'websocket',
-                  type: 'get_result_details',
-                  subtype: data.data_type + '_' + data.plugin_type,
+                  source: "websocket",
+                  type: "get_result_details",
+                  subtype: data.data_type + "_" + data.plugin_type,
                   user: ws.session.token._doc._id
                 }).save();
               }
             });
+            break;
+
+          // Set the session id for the connected websocket
+          case "set_session":
+            console.log("Session set to " + data.session_id);
+            this.session.session_id = data.session_id;
+            break;
+
+          // Unset the session id for the connected websocket
+          case "unset_session":
+            console.log("Unset session");
+            this.session.session_id = undefined;
+            break;
+
+          case "update_result":
+            console.log("update_result");
+            console.log(data.result);
+
+            Result.update(
+              {
+                _id: data.result._id
+              },
+              data.result
+            ).exec(function(err, res) {
+              console.log(err);
+              console.log(res);
+            });
+
             break;
         }
       }
