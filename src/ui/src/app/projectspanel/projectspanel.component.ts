@@ -22,6 +22,9 @@ export class ProjectspanelComponent implements OnInit {
   projects: Project[] = [];
   dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
+  // File uploader
+  public uploader:FileUploader = new FileUploader({url: 'https://evening-anchorage-3159.herokuapp.com/api/'});
+
   constructor(private rest_service: RestService,
               public viewContainerRef: ViewContainerRef,
               public dialog: MatDialog,
