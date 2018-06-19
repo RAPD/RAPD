@@ -58,6 +58,8 @@ import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
 # import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
+#from plugins.subcontractors.rapd_cctbx import get_pdb_info
+from plugins.subcontractors.rapd_phaser import run_phaser_module
 
 import utils.credits as rcredits
 import utils.exceptions as exceptions
@@ -206,10 +208,11 @@ class RapdPlugin(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
+        self.data_file = self.command["input_data"]["datafile"]
+
         # Get information from the data file
         self.input_sg, self.cell, self.volume = \
-            xutils.get_mtz_info(
-                datafile=self.command["input_data"]["datafile"])
+            xutils.get_mtz_info(datafile=self.data_file)
 
         self.tprint("\nReading in datafile", level=30, color="blue")
         self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
@@ -475,9 +478,9 @@ calculation",
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
-self.command["input_data"]["datafile"]
-        
+                  SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
+                  self.data_file
+
         if self.verbose and self.logger:
             self.logger.debug(command)
 
@@ -522,8 +525,8 @@ self.command["input_data"]["datafile"]
                         level=30,
                         color="white")
 
-            command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
-                      % self.command["input_data"]["datafile"]
+            command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop" % \
+                      self.data_file
 
             molrep_queue = Queue()
             job = Process(target=local_subprocess, kwargs={'command': command,
@@ -612,6 +615,27 @@ self.command["input_data"]["datafile"]
         # return results
         self.send_results()
 
+    def run_phaser_ncs_NEW(self): # USe module in plugins.subcontractors.python_phaser
+        """Run Phaser tNCS and anisotropy correction
+           This Python version is having problems generating a readable loggraph
+        """
+        if self.verbose and self.logger:
+            self.logger.debug("run_phaser_ncs")
+
+        if self.do_phaser:
+
+            self.tprint("  Analyzing NCS and anisotropy",
+                        level=30,
+                        color="white")
+
+            self.phaser_queue = Queue()
+            job = Process(target=run_phaser_module, kwargs={'data_file': self.data_file,
+                                                            'result_queue': self.phaser_queue,
+                                                            'tncs': True})
+            job.start()
+            self.jobs[job] = {'name': 'NCS',
+                              'pid': job.pid}
+
     def run_phaser_ncs(self): # USe module in plugins.subcontractors.python_phaser
         """Run Phaser tNCS and anisotropy correction"""
         if self.verbose and self.logger:
@@ -624,7 +648,7 @@ self.command["input_data"]["datafile"]
                         color="white")
 
             command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
-                      self.command["input_data"]["datafile"]
+                      self.data_file
             
             self.phaser_queue = Queue()
             job = Process(target=local_subprocess, kwargs={'command': command,

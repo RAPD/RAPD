@@ -94,7 +94,8 @@ def construct_command(commandline_args):
         up=commandline_args.dir_up)
 
     command["directories"] = {
-        "work": work_dir
+        "work": work_dir,
+        "exchange_dir": commandline_args.exchange_dir
         }
 
     # Information on input

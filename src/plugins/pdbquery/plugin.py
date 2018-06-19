@@ -54,6 +54,7 @@ from plugins.subcontractors.rapd_phaser import run_phaser
 from plugins.subcontractors.rapd_cctbx import get_pdb_info, get_mtz_info, get_res, get_spacegroup_info
 from plugins.get_cif.plugin import check_pdbq
 # from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
+from utils import archive
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.global_vars as rglobals
@@ -324,18 +325,21 @@ class RapdPlugin(Thread):
 
         # Describe plugin
         self.results["plugin"] = {
-            "data_type":DATA_TYPE,
-            "type":PLUGIN_TYPE,
-            "subtype":PLUGIN_SUBTYPE,
-            "id":ID,
-            "version":VERSION
+            "data_type": DATA_TYPE,
+            "type": PLUGIN_TYPE,
+            "subtype": PLUGIN_SUBTYPE,
+            "id": ID,
+            "version": VERSION
         }
 
         # Add fields to results
-        self.results['results'] = {}
-        self.results['results']["custom_structures"] = {}
-        self.results['results']["common_contaminants"] = {}
-        self.results['results']["search_results"] = {}
+        self.results["results"] = {
+            "custom_structures": [],
+            "common_contaminants": [],
+            "search_results": [],
+            "archive_files": [],
+            "data_produced": []
+        }
     
     def connect_to_redis(self):
         """Connect to the redis instance"""
@@ -619,12 +623,11 @@ class RapdPlugin(Thread):
                 # Fewer mols in AU or in common_contaminents.
                 if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
-                    # Need full path for copying pdb files to folders.
-                    pdb_info = get_pdb_info(cif_path,
-                                             dres=self.dres,
-                                             matthews=True,
-                                             cell_analysis=False,
-                                             data_file=self.datafile)
+                    pdb_info = get_pdb_info(cif_file=cif_path,
+                                            data_file=self.datafile,
+                                            dres=self.dres,
+                                            matthews=True,
+                                            chains=True)
                     # Prune if only one chain present, b/c "all" and "A" will be the same.
                     if len(pdb_info.keys()) == 2:
                         for key in pdb_info.keys():
@@ -641,19 +644,19 @@ class RapdPlugin(Thread):
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                             dres=self.dres,
-                                             matthews=True,
-                                             cell_analysis=True,
-                                             data_file=self.datafile)
+                                            data_file=self.datafile,
+                                            dres=self.dres,
+                                            matthews=True,
+                                            chains=False)
                     copy = pdb_info["all"]["NMol"]
     
                 # Same number of mols in AU.
                 else:
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                             dres=self.dres,
-                                             matthews=False,
-                                             cell_analysis=True,
-                                             data_file=self.datafile)
+                                            data_file=self.datafile,
+                                            dres=self.dres,
+                                            matthews=False,
+                                            chains=False)
     
                 job_description = {
                     "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
@@ -677,8 +680,6 @@ class RapdPlugin(Thread):
                 if not l:
                     launch_job(job_description)
                 else:
-                    # Remove the cif for the whole structure
-                    #job_description.pop('cif', None)
                     for chain in l:
                         new_code = "%s_%s" % (pdb_code, chain)
                         xutils.folders(self, "Phaser_%s" % new_code)
@@ -697,10 +698,13 @@ class RapdPlugin(Thread):
     def postprocess_phaser(self, job_name, results):
         """fix Phaser results and pass back"""
         
+        self.logger.debug("postprocess_phaser")
+        self.logger.debug(results)
+
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
-        # Copy tar to working dir
+        # Copy tar & pdbfile to working dir
         if results.get('tar', False):
             orig = results.get('tar')
             new = os.path.join(self.working_dir, os.path.basename(orig))
@@ -709,6 +713,15 @@ class RapdPlugin(Thread):
                 os.unlink(new)
             shutil.copy(orig, new)
             results['tar'] = new
+
+        if results.get("pdb_file", False):
+            orig = results.get("pdb_file")
+            new = os.path.join(self.working_dir, os.path.basename(orig))
+            # If old file in working dir, remove it and recopy.
+            if os.path.exists(new):
+                os.unlink(new)
+            shutil.copy(orig, new)
+            results["pdb_file"] = new
         
          # Three result types to run through
         types = (
@@ -723,15 +736,72 @@ class RapdPlugin(Thread):
                 if len(job_name.split('_')) not in [1]:
                     pdb_codes.append(job_name)
                 # Update results
-                self.results['results'][result_type][job_name] = results
+                #self.results['results'][result_type][job_name] = results
+                self.results['results'][result_type].append(results)
                 break
 
         # Save results for command line
         self.phaser_results[job_name] = {"results": results}
         # Update the status number
         self.update_status()
+        # Move transferring files
+        self.transfer_files(results)
         # Passback new results to RAPD
         self.send_results()
+
+    def transfer_files(self, result):
+        """
+        Transfer files to a directory that the control can access
+        """
+
+        self.logger.debug("transfer_files")
+
+        if self.preferences.get("exchange_dir", False):
+            self.logger.debug("transfer_files",
+                              self.preferences["exchange_dir"])
+
+            # Determine and validate the place to put the data
+            target_dir = os.path.join(
+                self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            # If there is data produced
+            file_to_move = results.get("pdb_file", False)
+            if file_to_move:
+                # Move data
+                target = os.path.join(
+                    target_dir, os.path.basename(file_to_move))
+                shutil.move(file_to_move, target)
+                # Compress data
+                arch_prod_file, arch_prod_hash = archive.compress_file(target)
+                # Remove the file that was compressed
+                os.unlink(target)
+                # Store information
+                new_data_produced = {
+                    "path": arch_prod_file,
+                    "hash": arch_prod_hash,
+                    "description": results.get("ID")
+                }
+                # Add the file to results.data_produced array
+                self.results["results"]["data_produced"].append(
+                    new_data_produced)
+
+            # If there is an archive
+            archive_file = results.get("tar", False)
+            if archive_file:
+                # Move the file
+                target = os.path.join(
+                    target_dir, os.path.basename(archive_file))
+                shutil.move(archive_file, target)
+                # Store information
+                new_archive_file = {
+                    "path": target,
+                    "description": results.get("ID")
+                }
+                # Add to the results.archive_files array
+                self.results["results"]["archive_files"].append(
+                    new_archive_file)
         
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""

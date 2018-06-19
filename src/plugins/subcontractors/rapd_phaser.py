@@ -470,7 +470,8 @@ def run_phaser(datafile,
                 tfz = "NC"
         tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
         tncs = bool(len(tncs_test))
-        phaser_result = {"solution": r.foundSolutions(),
+        phaser_result = {"ID": name,
+                         "solution": r.foundSolutions(),
                          "pdb": r.getTopPdbFile(),
                          "mtz": r.getTopMtzFile(),
                          "gain": float(r.getTopLLG()),
@@ -496,9 +497,11 @@ def run_phaser(datafile,
                         tar.add(fo)
             tar.close()
         phaser_result['tar'] = os.path.join(work_dir, archive)
+        phaser_result["pdb_file"] = os.path.join(work_dir, pdb)
     else:
-        phaser_result = {"solution": False,
-                          "message": "No solution"}
+        phaser_result = {"ID": name,
+                         "solution": False,
+                         "message": "No solution"}
 
     # Print the result so it can be seen in the rapd._phaser.log if needed
     print phaser_result
@@ -506,7 +509,179 @@ def run_phaser(datafile,
     # Key should be deleted once received, but set the key to expire in 24 hours just in case.
     redis.setex(output_id, 86400, json.dumps(phaser_result))
 
-def run_phaser_module(datafile, inp=False):
+def run_phaser_module(data_file,
+                      result_queue=False,
+                      cca=False,
+                      tncs=False,
+                      ellg=False,
+                      mmcif=False,
+                      dres=False,
+                      np=0,
+                      na=0,):
+    """
+    Run separate module of Phaser to get results before running full job.
+    Setup so that I can read the data in once and run multiple modules.
+    data_file - input dataset mtz file
+    result_queue - pass results to queue
+    cca - Run CCA to determine number of molecules in AU, and solvent content (Matthew's Coefficient calc)
+    tncs - Run Anisotropy and tNCS correction on CID plots
+    ellg - Run analysis to determonine optimum Phaser resolution MR.
+    mmcif - input mmcif file. Could also be a PDB file
+    dres - resolution of dataset (ELLG, CCA)
+    np - default number of protein residues (CCA)
+    na - default number of nucleic acid residues (CCA)
+    """
+    
+    target_resolution = 0.0
+    z = 0
+    solvent_content = 0.0
+    
+    def run_ellg():
+        new_res = 0.0
+        i0 = phaser.InputMR_ELLG()
+        i0.setSPAC_HALL(r.getSpaceGroupHall())
+        i0.setCELL6(r.getUnitCell())
+        i0.setMUTE(True)
+        i0.setREFL_DATA(r.getDATA())
+        if mmcif[-3:] in ('cif'):
+            i0.addENSE_CIT_ID('model', convert_unicode(mmcif),0.7)
+        else:
+            i0.addENSE_PDB_ID("model",convert_unicode(mmcif),0.7)
+        r1 = phaser.runMR_ELLG(i0)
+        #print r1.logfile()
+        if r1.Success():
+            # If it worked use the recommended resolution
+            new_res = round(r1.get_target_resolution('model'), 1)
+        del(r1)
+        return new_res
+    
+    def run_cca(res):
+        z0 = 0
+        sc0 = 0.0
+        i0 = phaser.InputCCA()
+        i0.setSPAC_HALL(r.getSpaceGroupHall())
+        i0.setCELL6(r.getUnitCell())
+        i0.setMUTE(True)
+        #Have to set high res limit!!
+        i0.setRESO_HIGH(res)
+        if np > 0:
+            i0.addCOMP_PROT_NRES_NUM(np,1)
+        if na > 0:
+            i0.addCOMP_NUCL_NRES_NUM(na,1)
+        r1 = phaser.runCCA(i0)
+        #print r1.logfile()
+        #print dir(r1)
+        if r1.Success():
+            z0 = r1.getBestZ()
+            sc0 = round(1-(1.23/r1.getBestVM()), 2)
+        del(r1)
+        return (z0, sc0)
+    
+    def run_tncs():
+        # CAN'T GET READABLE loggraph?!?
+        i0 = phaser.InputNCS()
+        i0.setSPAC_HALL(r.getSpaceGroupHall())
+        i0.setCELL6(r.getUnitCell())
+        i0.setREFL_DATA(r.getDATA())
+        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        #i0.setLABI_F_SIGF(f,sigf)
+        i0.setMUTE(True)
+        #i0.setVERB(True)
+        r1 = phaser.runNCS(i0)
+        print dir(r1)
+        print r1.logfile()
+        #for l in r1.loggraph():
+        #    print l
+        print r1.loggraph().size()
+        print r1.output_strings
+        #print r1.hasTNCS()
+        #print r1.summary()
+        print r1.warnings()
+        print r1.ErrorMessage()
+        #print r1.getCentricE4()
+        if r1.Success():
+            return(r1.loggraph())
+    
+    def run_ano():
+        #from cStringIO import StringIO
+        i0 = phaser.InputANO()
+        i0.setSPAC_HALL(r.getSpaceGroupHall())
+        i0.setCELL6(r.getUnitCell())
+        #i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
+        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        #i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
+        i0.setREFL_DATA(r.getDATA())
+        i0.setMUTE(True)
+        r1 = phaser.runANO(i0)
+        print r1.loggraph().__dict__.keys()
+        print r1.loggraph().size()
+        print r1.logfile()
+        """
+        o = phaser.Output()
+        redirect_str = StringIO()
+        o.setPackagePhenix(file_object=redirect_str)
+        r1 = phaser.runANO(i0,o)
+        """
+        
+        if r1.Success():
+            print 'SUCCESS'
+            return(r1)
+
+    # MAIN
+    #Setup which modules are run
+    # Read input MTZ file
+    i = phaser.InputMR_DAT()
+    i.setHKLI(convert_unicode(data_file))
+    i.setLABI_F_SIGF('F','SIGF')
+    i.setMUTE(True)
+    r = phaser.runMR_DAT(i)
+    if r.Success():
+        if ellg:
+            target_resolution = run_ellg()
+        if cca:
+            #Assumes ellg is run as well.
+            z, solvent_content = run_cca(target_resolution)
+        if tncs:
+            n = run_tncs()
+    if cca:
+        out = {"z": z,
+              "solvent_content": solvent_content,
+              "target_resolution": target_resolution}
+        if result_queue:
+            result_queue.put(out)
+        else:
+            return out
+    elif ellg:
+        #ellg run by itself
+        out = {"target_resolution": target_resolution}
+        if result_queue:
+            result_queue.put(out)
+        else:
+            return out
+    else:
+        #tNCS
+        out = n
+        if result_queue:
+            result_queue.put(out)
+        else:
+            return out
+    
+    """
+    if cca:
+        out = {"z": z,
+              "solvent_content": solvent_content,
+              "target_resolution": target_resolution}
+        #Assumes ellg is run as well.
+        return out
+    elif ellg:
+        #ellg run by itself
+        out = {"target_resolution": target_resolution}
+        return out
+    else:
+        #tNCS
+        return n
+    """
+def run_phaser_module_OLD(datafile, inp=False):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.

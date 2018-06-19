@@ -106,7 +106,8 @@ def get_spacegroup_info(cif_file):
     else:
         return str(iotbx_pdb.input(cif_file).crystal_symmetry().space_group_info()).upper().replace(" ", "")
 
-def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
+#def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
+def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
     """Get info from PDB of mmCIF file"""
 
     # Get rid of ligands and water so Phenix won't error.
@@ -118,12 +119,6 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
     res1 = 0.0
     d = {}
     l = []
-    
-    #print cif_file
-    #print dres
-    #print matthews
-    #print cell_analysis
-    #print data_file
 
     # Read in the file
     cif_file = convert_unicode(cif_file)
@@ -160,7 +155,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
         # Limit to 10 chains?!?
         if nchains < 10:
             # Do not split up PDB if run from cell analysis
-            if not cell_analysis and not repeat:
+            if chains and not repeat:
 
                 # Save info for each chain.
                 if np1 or na1:
@@ -172,18 +167,36 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     # '.cif'
                     #n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
                     n = os.path.join(os.path.dirname(cif_file), "%s_%s.cif" % \
-                    
                         (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], \
                         chain.id))
                     #temp.write_pdb_file(file_name=n)
                     temp.write_mmcif_file(file_name=n)
+                    d[chain.id] = {'file': n,
+                                   'NRes': np1+na1,
+                                   'MWna': na1*330,
+                                   'MWaa': np1*110,
+                                   'MW': na1*330+np1*110}
                     if matthews:
                         # Run Matthews Calc. on chain
                         #phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
+                        #phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
+                        phaser_return = run_phaser_module(data_file=data_file,
+                                                          ellg=True,
+                                                          cca=True,
+                                                          mmcif=n,
+                                                          dres=dres,
+                                                          np=np1,
+                                                          na=na1)
+                        d[chain.id].update({'NMol': phaser_return.get("z", nmol),
+                                            'SC': phaser_return.get("solvent_content", sc),
+                                            'res': phaser_return.get("target_resolution", res1)})
                     else:
-                        res1 = run_phaser_module(n)
-
+                        #res1 = run_phaser_module(n)
+                        phaser_return = run_phaser_module(data_file=data_file,
+                                                           ellg=True, 
+                                                           mmcif=n)
+                        d[chain.id].update({'res': phaser_return.get("target_resolution", res1)})
+                    """
                     d[chain.id] = {'file': n,
                                    'NRes': np1+na1,
                                    'MWna': na1*330,
@@ -192,16 +205,38 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                                    'NMol': phaser_return.get("z", nmol),
                                    'SC': phaser_return.get("solvent_content", sc),
                                    'res': phaser_return.get("target_resolution", res1)}
+                    """
+        # Add up residue count
         np += np1
         na += na1
 
+    d['all'] = {'file': cif_file,
+                'NRes': np+na,
+                'MWna': na*330,
+                'MWaa': np*110,
+                'MW': na*330+np*110}
     # Run on entire PDB
     if matthews:
         #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        phaser_return = run_phaser_module(data_file=data_file,
+                                          ellg=True,
+                                          cca=True,
+                                          mmcif=cif_file,
+                                          dres=dres,
+                                          np=np,
+                                          na=na)
+        d['all'].update({'NMol': phaser_return.get("z", nmol),
+                         'SC': phaser_return.get("solvent_content", sc),
+                         'res': phaser_return.get("target_resolution", res1)})
     else:
         #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        phaser_return = run_phaser_module(data_file=data_file,
+                                           ellg=True, 
+                                           mmcif=cif_file)
+        d['all'].update({'res': phaser_return.get("target_resolution", res1)})
+    """
     d['all'] = {'file': cif_file,
                 'NRes': np+na,
                 'MWna': na*330,
@@ -210,4 +245,5 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                 'NMol': phaser_return.get("z", nmol),
                 'SC': phaser_return.get("solvent_content", sc),
                 'res': phaser_return.get("target_resolution", res1)}
+    """
     return d

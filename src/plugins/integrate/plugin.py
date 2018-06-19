@@ -730,6 +730,7 @@ class RapdPlugin(Process):
                 progress = self.preferences.get("progress", False)
                 run_mode = self.preferences.get("run_mode", False)
                 db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                exchange_dir = self.preferences.get("exchange_dir", False)
                 pdbs = False
                 contaminants = True
                 search = True

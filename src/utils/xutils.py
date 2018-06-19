@@ -3328,7 +3328,17 @@ def set_phaser_res(res, large_cell, dres):
     if large_cell:
         if res < 6.0:
             res = 6.0
-    else:
+    # If recommended res is higher than dataset res, use dataset res.
+    elif res < dres:
+        res = dres
+    # If easy solution
+    elif res > 6.0:
+        res = 6.0
+    # If recommended res is 6 to 4.5, use 4.5.
+    elif 4.5 < res < 6.0:
+        res = 4.5
+    #Otherwise use recommended res
+        """
         # If recommended res is higher than dataset res.
         # Use recommend res if lower than 4.5.
         if res > dres:
@@ -3338,6 +3348,7 @@ def set_phaser_res(res, large_cell, dres):
             # If recommended res is 6 to 4.5, use 4.5.
             elif 4.5 < res < 6.0:
               res = 4.5
+        """
     return res
 """
 def setCellSymXDS(self):

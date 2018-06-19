@@ -304,7 +304,7 @@ def get_commandline():
     parser.add_argument(action="store",
                         dest="sources",
                         nargs="*",
-                        help="Directory or files")
+                        help="image file(s)")
 
     # No args? print help
     if len(sys.argv[1:]) == 0:
