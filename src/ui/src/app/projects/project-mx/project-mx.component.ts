@@ -15,8 +15,11 @@ import { MatDialog,
          MatToolbarModule } from '@angular/material';
 
 import 'rxjs/add/operator/switchMap';
-import { Observable } from 'rxjs/Observable';
+// import { Observable } from 'rxjs/Observable';
 
+import { FileUploader } from 'ng2-file-upload';
+
+import { GlobalsService } from "../../shared/services/globals.service";
 import { Project } from '../../shared/classes/project';
 import { RestService } from '../../shared/services/rest.service';
 import { WebsocketService } from '../../shared/services/websocket.service';
@@ -63,9 +66,12 @@ export class ProjectMxComponent implements OnInit {
   // Where results got
   @ViewChild('output_outlet', { read: ViewContainerRef }) outlet;
 
+  public uploader:FileUploader;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private globals_service: GlobalsService,
     private rest_service: RestService,
     private websocket_service: WebsocketService,
     private componentfactoryResolver: ComponentFactoryResolver,
@@ -79,6 +85,18 @@ export class ProjectMxComponent implements OnInit {
     this.id = this.route.snapshot.paramMap.get('id');
     // console.log(this.id);
     this.getProject(this.id);
+
+    this.uploader = new FileUploader({
+      url: this.globals_service.site.restApiUrl + '/upload',
+      autoUpload: true,
+    });
+    //override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
+    this.uploader.onAfterAddingFile = (file)=> { file.withCredentials = false; };
+    //overide the onCompleteItem property of the uploader so we are 
+    //able to deal with the server response.
+    this.uploader.onCompleteItem = (item:any, response:any, status:any, headers:any) => {
+         console.log("ImageUpload:uploaded:", item, status, response);
+     };
   }
 
   getProject(id:string) {
@@ -274,14 +292,18 @@ export class ProjectMxComponent implements OnInit {
     });
   }
 
-  activateUpload() {
+  // activateUpload() {
 
-    console.log('activateUpload');
+  //   console.log('activateUpload');
 
-    // Open the dialog
-    let uploadDialogRef = this.upload_dialog.open(UploadDialogComponent, {
-      data: { upload_data_type: 'mx_data' }
-    });
+  //   // Open the dialog
+  //   let uploadDialogRef = this.upload_dialog.open(UploadDialogComponent, {
+  //     data: { upload_data_type: 'mx_data' }
+  //   });
+  // }
+
+  handleFiles(files:any) { 
+    console.log(files);
   }
 
 }

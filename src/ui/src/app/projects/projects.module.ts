@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { RapdMaterialModule } from '../material.module';
 import { FlexLayoutModule } from '@angular/flex-layout';
 
+import { FileUploadModule } from 'ng2-file-upload';
+
 import { ProjectMxComponent } from './project-mx/project-mx.component';
 
 import { ProjectsRoutingModule } from './projects-routing.module';
@@ -12,6 +14,7 @@ import { ProjectsRoutingModule } from './projects-routing.module';
   imports: [
     CommonModule,
     RapdMaterialModule,
+    FileUploadModule,
     FlexLayoutModule,
     ProjectsRoutingModule
   ],

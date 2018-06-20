@@ -2,6 +2,7 @@ const bodyParser =    require('body-parser');
 const cookieParser =  require('cookie-parser');
 const debug =         require('debug')('backend:server');
 const express =       require('express');
+const cors =          require('cors');
 const session =       require('express-session');
 const RedisStore =    require('connect-redis')(session);
 const http =          require('http');
@@ -13,6 +14,7 @@ const smtpTransport = require('nodemailer-smtp-transport');
 const path =          require('path');
 const randomstring =  require('randomstring');
 const useragent =     require('express-useragent');
+const multer =        require('multer');
 
 // RAPD websocket server
 const Wss =           require('./ws_server');
@@ -23,6 +25,7 @@ const config = require('./config'); // get our config file
 // Create the express app instance
 let app = express();
 let server = http.createServer(app);
+// app.use(cors);
 
 // Routing
 const dashboard_routes =      require('./routes/dashboard');
@@ -76,6 +79,32 @@ let app_session = session({
 });
 app.use(app_session);
 
+// Middleware for uploads
+var upload = multer({
+  dest: config.upload_directory,
+  rename: function (fieldname, filename) {
+    return filename + Date.now();
+  },
+  onFileUploadStart: function (file) {
+    console.log(file.originalname + ' is starting ...');
+  },
+  onFileUploadComplete: function (file) {
+    console.log(file.fieldname + ' uploaded to  ' + file.path);
+  }
+});
+// app.set(multer({
+//   dest: config.download_directory,
+//   rename: function (fieldname, filename) {
+//     return filename + Date.now();
+//   },
+//   onFileUploadStart: function (file) {
+//     console.log(file.originalname + ' is starting ...');
+//   },
+//   onFileUploadComplete: function (file) {
+//     console.log(file.fieldname + ' uploaded to  ' + file.path);
+//   }
+// }));
+
 // Add useragent to make some stuff simpler
 app.use(useragent.express());
 
@@ -98,6 +127,7 @@ let screened_urls = {
   '/api/dashboard/logins':1,
   '/api/dashboard/results':1,
   '/api/overwatches':1,
+  '/api//upload':1,
 }
 var myLogger = function (req, res, next) {
   // console.log('req.url', req.url);
@@ -107,7 +137,7 @@ var myLogger = function (req, res, next) {
       type:req.url
     }).save();
   }
-  next()
+  next();
 }
 app.use(myLogger);
 
@@ -118,9 +148,10 @@ var apiRoutes = express.Router();              // get an instance of the express
 
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
+    console.log(req.method);
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Authorization, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
     // intercepts OPTIONS method from http://johnzhang.io/options-request-in-express
     if ('OPTIONS' === req.method) {
@@ -130,6 +161,22 @@ apiRoutes.use(function(req, res, next) {
     else {
       next();
     }
+});
+
+apiRoutes.post('/upload', upload.any(), function(req, res) {
+  console.log(req);
+  // upload(req, res, function (err) {
+  //   if (err) {
+  //     return res.end(err.toString());
+  //   }
+ 
+    res.end('File is uploaded');
+  // });
+});
+
+apiRoutes.get('/upload', function (req, res) {
+  console.log('upload get');
+  res.end('file catcher example');
 });
 
 // route to authenticate a user (POST http://localhost:8080/api/authenticate)

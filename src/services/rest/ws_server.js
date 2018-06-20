@@ -252,7 +252,7 @@ var populate_child_result = function(result_id, mode) {
         try {
           child_result._doc.command.input_data.db_settings = undefined;
         } catch (e) {
-          console.error(e);
+          // console.error(e);
         }
         deferred.resolve(child_result);
       }

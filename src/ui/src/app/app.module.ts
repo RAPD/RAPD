@@ -30,6 +30,7 @@ import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
 import { Site } from './site';
 import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
+import { FileUploadModule } from 'ng2-file-upload';
 
 import { ProjectsModule } from './projects/projects.module';
 
@@ -146,7 +147,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     NgxDatatableModule,
     ChartsModule,
     ProjectsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    FileUploadModule
   ],
   providers: [ appRoutingProviders,
                LoginGuard,

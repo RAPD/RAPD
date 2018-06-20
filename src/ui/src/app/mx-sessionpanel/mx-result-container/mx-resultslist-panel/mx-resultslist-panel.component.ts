@@ -57,7 +57,8 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   ngOnDestroy() {
-    this.websocket_service.unsubscribeResults(this.incomingData$);
+    // this.websocket_service.unsubscribeResults(this.incomingData$);
+    this.websocket_service.unsubscribeResults();
   }
 
   private handleIncomingData(data: any) {
