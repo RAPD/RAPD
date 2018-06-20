@@ -26,7 +26,7 @@ import { WebsocketService } from '../../shared/services/websocket.service';
 import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { ErrorDialogComponent } from '../../shared/dialogs/error-dialog/error-dialog.component';
 import { ReintegrateDialogComponent } from '../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
-import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
+// import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
 
 // Import agent components here
 import * as mx from '../../plugin_components/mx';
@@ -78,7 +78,7 @@ export class ProjectMxComponent implements OnInit {
     public confirm_dialog: MatDialog,
     public error_dialog: MatDialog,
     public reintegrate_dialog: MatDialog,
-    public upload_dialog: MatDialog
+    // public upload_dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -88,12 +88,13 @@ export class ProjectMxComponent implements OnInit {
 
     this.uploader = new FileUploader({
       url: this.globals_service.site.restApiUrl + '/upload',
+      authToken: localStorage.getItem("id_token"),
       autoUpload: true,
     });
-    //override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
+    // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
     this.uploader.onAfterAddingFile = (file)=> { file.withCredentials = false; };
-    //overide the onCompleteItem property of the uploader so we are 
-    //able to deal with the server response.
+    // overide the onCompleteItem property of the uploader so we are 
+    // able to deal with the server response.
     this.uploader.onCompleteItem = (item:any, response:any, status:any, headers:any) => {
          console.log("ImageUpload:uploaded:", item, status, response);
      };

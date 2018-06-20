@@ -164,7 +164,28 @@ apiRoutes.use(function(req, res, next) {
 });
 
 apiRoutes.post('/upload', upload.any(), function(req, res) {
-  console.log(req);
+  console.log(req.headers);
+  var token = req.headers.authorization.replace('Bearer ', '');
+  console.log(token);
+  // decode token
+  if (token) {
+
+    // Verifies secret and checks exp
+    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+      if (err) {
+        return res.json({success: false,
+                         message: 'Failed to authenticate token.'});
+      } else {
+        console.log('DECODED', decoded);
+        // let now = Date.now()/1000;
+        // // if everything is good, save to request for use in other routes
+        // if (decoded.iat <= now && decoded.exp >= now) {
+        //   req.decoded = decoded;
+        //   next();
+        // }
+      }
+    });
+  }
   // upload(req, res, function (err) {
   //   if (err) {
   //     return res.end(err.toString());
