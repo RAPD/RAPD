@@ -121,6 +121,8 @@ def create_archive(directory, archive_name=False):
     # print "  archive_name: %s" % archive_name
     cwd = os.getcwd()
 
+    directory = os.path.abspath(directory)
+
     if not os.path.isdir(directory):
         return False
 

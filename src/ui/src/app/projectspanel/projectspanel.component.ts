@@ -10,6 +10,7 @@ import { MatDialog,
 import { RestService } from '../shared/services/rest.service';
 import { Project } from '../shared/classes/project';
 import { DialogNewProjectComponent } from '../shared/components/dialog-new-project/dialog-new-project.component';
+import { FileUploadModule } from 'ng2-file-upload';
 
 @Component({
   selector: 'app-projectspanel',
@@ -20,6 +21,9 @@ export class ProjectspanelComponent implements OnInit {
 
   projects: Project[] = [];
   dialogRef: MatDialogRef<DialogNewProjectComponent>;
+
+  // File uploader
+  public uploader:FileUploader = new FileUploader({url: 'https://evening-anchorage-3159.herokuapp.com/api/'});
 
   constructor(private rest_service: RestService,
               public viewContainerRef: ViewContainerRef,
