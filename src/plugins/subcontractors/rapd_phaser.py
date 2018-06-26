@@ -45,11 +45,13 @@ import time
 import phaser
 
 # RAPD imports
+from utils import archive
 from utils.xutils import convert_unicode
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
+
 
 def run_phaser_pdbquery_script_OLD(command):
     """
@@ -131,24 +133,24 @@ def run_phaser_pdbquery_script_OLD(command):
     phaser_com_file.writelines(command)
     phaser_com_file.close()
     os.chmod("phaser.com", stat.S_IRWXU)
-    
+
     if launcher:
         pid_queue = Queue()
         if test:
             proc = Process(target=launcher,
-                       kwargs={"command": 'ls',
-                               "pid_queue": pid_queue,
-                               })
+                           kwargs={"command": 'ls',
+                                   "pid_queue": pid_queue,
+                                   })
         else:
-        
+
             proc = Process(target=launcher,
-                           kwargs={"command": os.path.join(os.getcwd(),'phaser.com'),
-                                   "logfile": os.path.join(os.getcwd(),"phaser.log"),
+                           kwargs={"command": os.path.join(os.getcwd(), 'phaser.com'),
+                                   "logfile": os.path.join(os.getcwd(), "phaser.log"),
                                    "pid_queue": pid_queue,
                                    })
         proc.start()
         return (proc, pid_queue.get())
-    
+
     """
     # Run the phaser process
     phaser_proc = subprocess.Popen(["sh phaser.com"],
@@ -177,6 +179,7 @@ def run_phaser_pdbquery_script_OLD(command):
                 "log": "Timed out after %d seconds" % timeout,
                 "status": "ERROR"}
     """
+
 
 def parse_phaser_output_script_OLD(phaser_log):
     """Parse Phaser log file"""
@@ -231,7 +234,8 @@ def parse_phaser_output_script_OLD(phaser_log):
                     if param.startswith("PAK"):
                         clash = param[param.find("=")+param.count("="):]
                     if param.startswith("LLG"):
-                        llgain = float(param[param.find("=")+param.count("="):])
+                        llgain = float(
+                            param[param.find("=")+param.count("="):])
                     if param.startswith("+TNCS"):
                         tncs = True
         if not pdb:
@@ -251,10 +255,11 @@ def parse_phaser_output_script_OLD(phaser_log):
                              "nmol": nmol,
                              "adf": None,
                              "peak": None,
-                            }
+                             }
 
     pprint(phaser_result)
     return phaser_result
+
 
 def mp_job(func):
     """
@@ -265,17 +270,17 @@ def mp_job(func):
        'pool' - The multiprocessing.Pool if launched on local machine
        'test' - run in test mode (used for debugging)
     """
-    
+
     def write_script(inp):
         # write Phaser command script.
         fo = os.path.join(inp.get('work_dir'), 'phaser_script.py')
         with open(fo, 'w') as f:
             f.write('from plugins.subcontractors.rapd_phaser import run_phaser\n')
-            f.write('input = %s\n'% str(inp))
+            f.write('input = %s\n' % str(inp))
             f.write('run_phaser(**input)\n')
             f.close()
         return fo
-    
+
     @wraps(func)
     def wrapper(**kwargs):
         os.chdir(kwargs.get('work_dir', os.getcwd()))
@@ -285,16 +290,16 @@ def mp_job(func):
             # Pop out the batch_queue
             batch_queue = kwargs.pop('batch_queue', None)
             # Create a unique identifier for Phaser results
-            kwargs['output_id'] = 'Phaser_%d'%random.randint(0, 10000)
+            kwargs['output_id'] = 'Phaser_%d' % random.randint(0, 10000)
             # Signal to launch run
             kwargs['script'] = True
             if kwargs.get('pool', False):
                 # If running on local machine
                 pool = kwargs.pop('pool')
                 f = write_script(kwargs)
-                new_kwargs={"command": "rapd2.python %s"%f,
-                            "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
-                            }
+                new_kwargs = {"command": "rapd2.python %s" % f,
+                              "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
+                              }
                 proc = pool.apply_async(launcher, kwds=new_kwargs,)
                 return (proc, 'junk', kwargs['output_id'])
             else:
@@ -302,7 +307,7 @@ def mp_job(func):
                 f = write_script(kwargs)
                 pid_queue = Queue()
                 proc = Process(target=launcher,
-                               kwargs={"command": "rapd2.python %s"%f,
+                               kwargs={"command": "rapd2.python %s" % f,
                                        "pid_queue": pid_queue,
                                        "batch_queue": batch_queue,
                                        "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
@@ -319,25 +324,26 @@ def mp_job(func):
             return func(**kwargs)
     return wrapper
 
+
 @mp_job
 def run_phaser(datafile,
-              spacegroup,
-              output_id,
-              db_settings,
-              work_dir=False,
-              cif=False,
-              pdb=False,
-              name=False,
-              ncopy=1,
-              cell_analysis=False,
-              resolution=False,
-              large_cell=False,
-              run_before=False,
-              ):
+               spacegroup,
+               output_id,
+               db_settings,
+               work_dir=False,
+               cif=False,
+               pdb=False,
+               name=False,
+               ncopy=1,
+               cell_analysis=False,
+               resolution=False,
+               large_cell=False,
+               run_before=False,
+               ):
     """
     Run Phaser and passes results back to RAPD Redis DB
     **Requires Phaser src code!**
-    
+
     datafile - input data as mtz
     spacegroup - The space group to run MR
     output_id - a Redis key where the results are sent
@@ -363,17 +369,17 @@ def run_phaser(datafile,
     # Connect to Redis
     redis = connect_to_redis(db_settings)
 
-    #Read the dataset
+    # Read the dataset
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(datafile))
-    i.setLABI_F_SIGF('F','SIGF')
+    i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)
     if r.Success():
         i = phaser.InputMR_AUTO()
-        #i.setREFL_DATA(r.getREFL_DATA())
-        #i.setREFL_DATA(r.DATA_REFL())
-        i.setREFL_F_SIGF(r.getMiller(),r.getFobs(),r.getSigFobs())
+        # i.setREFL_DATA(r.getREFL_DATA())
+        # i.setREFL_DATA(r.DATA_REFL())
+        i.setREFL_F_SIGF(r.getMiller(), r.getFobs(), r.getSigFobs())
         i.setCELL6(r.getUnitCell())
         if cif:
             #i.addENSE_CIF_ID('model', cif, 0.7)
@@ -423,20 +429,20 @@ def run_phaser(datafile,
         i.setPURG_TRAN_ENAB(True)
         i.setPURG_TRAN_NUMB(1)
         #command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
-    
+
         # Only keep the top after refinement.
         i.setPURG_RNP_ENAB(True)
         i.setPURG_RNP_NUMB(1)
         #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
         i.setROOT(convert_unicode(name))
-        #i.setMUTE(False)
+        # i.setMUTE(False)
         i.setMUTE(True)
         # Delete the setup results
         del(r)
         # launch the run
         r = phaser.runMR_AUTO(i)
         if r.Success():
-            if r.foundSolutions() :
+            if r.foundSolutions():
                 print "Phaser has found MR solutions"
                 #print "Top LLG = %f" % r.getTopLLG()
                 #print "Top PDB file = %s" % r.getTopPdbFile()
@@ -473,7 +479,8 @@ def run_phaser(datafile,
                         tfz = float(tfz)
             if p.count('TF*0'):
                 tfz = "NC"
-        tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
+        tncs_test = [1 for line in r.getTopSet().unparse().splitlines()
+                     if line.count("+TNCS")]
         tncs = bool(len(tncs_test))
         phaser_result = {"ID": name,
                          "solution": r.foundSolutions(),
@@ -481,7 +488,7 @@ def run_phaser(datafile,
                          "mtz": r.getTopMtzFile(),
                          "gain": float(r.getTopLLG()),
                          "rfz": rfz,
-                         #"tfz": r.getTopTFZ(),
+                         # "tfz": r.getTopTFZ(),
                          "tfz": tfz,
                          "clash": r.getTopSet().PAK,
                          "dir": os.getcwd(),
@@ -490,7 +497,7 @@ def run_phaser(datafile,
                          "nmol": r.getTopSet().NUM,
                          "adf": None,
                          "peak": None,
-                        }
+                         }
         # make tar.bz2 of result files
         l = ['pdb', 'mtz', 'adf', 'peak']
         archive = "%s.tar.bz2" % name
@@ -501,6 +508,8 @@ def run_phaser(datafile,
                     if os.path.exists(fo):
                         tar.add(fo)
             tar.close()
+        # 
+
         phaser_result['tar'] = os.path.join(work_dir, archive)
         phaser_result["pdb_file"] = os.path.join(work_dir, r.getTopPdbFile())
     else:
@@ -515,6 +524,7 @@ def run_phaser(datafile,
     redis.setex(output_id, 86400, json.dumps(phaser_result))
     # Do a little sleep to make sure results are in Redis for postprocess_phaser
     time.sleep(0.1)
+
 
 def run_phaser_module(data_file,
                       result_queue=False,
@@ -538,11 +548,11 @@ def run_phaser_module(data_file,
     np - default number of protein residues (CCA)
     na - default number of nucleic acid residues (CCA)
     """
-    
+
     target_resolution = 0.0
     z = 0
     solvent_content = 0.0
-    
+
     def run_ellg():
         new_res = 0.0
         i0 = phaser.InputMR_ELLG()
@@ -551,9 +561,9 @@ def run_phaser_module(data_file,
         i0.setMUTE(True)
         i0.setREFL_DATA(r.getDATA())
         if mmcif[-3:] in ('cif'):
-            i0.addENSE_CIT_ID('model', convert_unicode(mmcif),0.7)
+            i0.addENSE_CIT_ID('model', convert_unicode(mmcif), 0.7)
         else:
-            i0.addENSE_PDB_ID("model",convert_unicode(mmcif),0.7)
+            i0.addENSE_PDB_ID("model", convert_unicode(mmcif), 0.7)
         r1 = phaser.runMR_ELLG(i0)
         #print r1.logfile()
         if r1.Success():
@@ -561,7 +571,7 @@ def run_phaser_module(data_file,
             new_res = round(r1.get_target_resolution('model'), 1)
         del(r1)
         return new_res
-    
+
     def run_cca(res):
         z0 = 0
         sc0 = 0.0
@@ -569,12 +579,12 @@ def run_phaser_module(data_file,
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
         i0.setMUTE(True)
-        #Have to set high res limit!!
+        # Have to set high res limit!!
         i0.setRESO_HIGH(res)
         if np > 0:
-            i0.addCOMP_PROT_NRES_NUM(np,1)
+            i0.addCOMP_PROT_NRES_NUM(np, 1)
         if na > 0:
-            i0.addCOMP_NUCL_NRES_NUM(na,1)
+            i0.addCOMP_NUCL_NRES_NUM(na, 1)
         r1 = phaser.runCCA(i0)
         #print r1.logfile()
         #print dir(r1)
@@ -583,21 +593,21 @@ def run_phaser_module(data_file,
             sc0 = round(1-(1.23/r1.getBestVM()), 2)
         del(r1)
         return (z0, sc0)
-    
+
     def run_tncs():
         # CAN'T GET READABLE loggraph?!?
         i0 = phaser.InputNCS()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
         i0.setREFL_DATA(r.getDATA())
-        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-        #i0.setLABI_F_SIGF(f,sigf)
+        # i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        # i0.setLABI_F_SIGF(f,sigf)
         i0.setMUTE(True)
-        #i0.setVERB(True)
+        # i0.setVERB(True)
         r1 = phaser.runNCS(i0)
         print dir(r1)
         print r1.logfile()
-        #for l in r1.loggraph():
+        # for l in r1.loggraph():
         #    print l
         print r1.loggraph().size()
         print r1.output_strings
@@ -608,15 +618,15 @@ def run_phaser_module(data_file,
         #print r1.getCentricE4()
         if r1.Success():
             return(r1.loggraph())
-    
+
     def run_ano():
         #from cStringIO import StringIO
         i0 = phaser.InputANO()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
-        #i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
-        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-        #i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
+        # i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
+        # i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        # i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
         i0.setREFL_DATA(r.getDATA())
         i0.setMUTE(True)
         r1 = phaser.runANO(i0)
@@ -629,50 +639,50 @@ def run_phaser_module(data_file,
         o.setPackagePhenix(file_object=redirect_str)
         r1 = phaser.runANO(i0,o)
         """
-        
+
         if r1.Success():
             print 'SUCCESS'
             return(r1)
 
     # MAIN
-    #Setup which modules are run
+    # Setup which modules are run
     # Read input MTZ file
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
-    i.setLABI_F_SIGF('F','SIGF')
+    i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)
     if r.Success():
         if ellg:
             target_resolution = run_ellg()
         if cca:
-            #Assumes ellg is run as well.
+            # Assumes ellg is run as well.
             z, solvent_content = run_cca(target_resolution)
         if tncs:
             n = run_tncs()
     if cca:
         out = {"z": z,
-              "solvent_content": solvent_content,
-              "target_resolution": target_resolution}
+               "solvent_content": solvent_content,
+               "target_resolution": target_resolution}
         if result_queue:
             result_queue.put(out)
         else:
             return out
     elif ellg:
-        #ellg run by itself
+        # ellg run by itself
         out = {"target_resolution": target_resolution}
         if result_queue:
             result_queue.put(out)
         else:
             return out
     else:
-        #tNCS
+        # tNCS
         out = n
         if result_queue:
             result_queue.put(out)
         else:
             return out
-    
+
     """
     if cca:
         out = {"z": z,
@@ -688,18 +698,20 @@ def run_phaser_module(data_file,
         #tNCS
         return n
     """
+
+
 def run_phaser_module_OLD(datafile, inp=False):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
     """
-    #if self.verbose:
+    # if self.verbose:
     #  self.logger.debug('Utilities::runPhaserModule')
-    
+
     target_resolution = 0.0
     z = 0
     solvent_content = 0.0
-    
+
     def run_ellg():
         res0 = 0.0
         i0 = phaser.InputMR_ELLG()
@@ -710,15 +722,15 @@ def run_phaser_module_OLD(datafile, inp=False):
         if f[-3:] in ('cif'):
             i0.addENSE_CIT_ID('model', convert_unicode(f), 0.7)
         else:
-            i0.addENSE_PDB_ID("model",convert_unicode(f),0.7)
-        #i.addSEAR_ENSE_NUM("junk",5)
+            i0.addENSE_PDB_ID("model", convert_unicode(f), 0.7)
+        # i.addSEAR_ENSE_NUM("junk",5)
         r1 = phaser.runMR_ELLG(i0)
         #print r1.logfile()
         if r1.Success():
             res0 = r1.get_target_resolution('model')
         del(r1)
         return res0
-    
+
     def run_cca():
         z0 = 0
         sc0 = 0.0
@@ -726,29 +738,29 @@ def run_phaser_module_OLD(datafile, inp=False):
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
         i0.setMUTE(True)
-        #Have to set high res limit!!
+        # Have to set high res limit!!
         i0.setRESO_HIGH(res0)
         if np > 0:
-            i0.addCOMP_PROT_NRES_NUM(np,1)
+            i0.addCOMP_PROT_NRES_NUM(np, 1)
         if na > 0:
-            i0.addCOMP_NUCL_NRES_NUM(na,1)
+            i0.addCOMP_NUCL_NRES_NUM(na, 1)
         r1 = phaser.runCCA(i0)
         #print r1.logfile()
         if r1.Success():
             z0 = r1.getBestZ()
             sc0 = 1-(1.23/r1.getBestVM())
         del(r1)
-        return (z0,sc0)
-    
+        return (z0, sc0)
+
     def run_ncs():
         i0 = phaser.InputNCS()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
         i0.setREFL_DATA(r.getDATA())
-        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-        #i0.setLABI_F_SIGF(f,sigf)
+        # i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        # i0.setLABI_F_SIGF(f,sigf)
         i0.setMUTE(True)
-        #i0.setVERB(True)
+        # i0.setVERB(True)
         r1 = phaser.runNCS(i0)
         print r1.logfile()
         print r1.loggraph().size()
@@ -756,15 +768,15 @@ def run_phaser_module_OLD(datafile, inp=False):
         #print r1.getCentricE4()
         if r1.Success():
             return(r1)
-    
+
     def run_ano():
         #from cStringIO import StringIO
         i0 = phaser.InputANO()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
-        #i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
-        #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-        #i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
+        # i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
+        # i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+        # i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
         i0.setREFL_DATA(r.getDATA())
         i0.setMUTE(True)
         r1 = phaser.runANO(i0)
@@ -777,12 +789,12 @@ def run_phaser_module_OLD(datafile, inp=False):
         o.setPackagePhenix(file_object=redirect_str)
         r1 = phaser.runANO(i0,o)
         """
-        
+
         if r1.Success():
             print 'SUCCESS'
             return(r1)
-            
-    #Setup which modules are run
+
+    # Setup which modules are run
     matthews = False
     if inp:
         ellg = True
@@ -790,16 +802,16 @@ def run_phaser_module_OLD(datafile, inp=False):
         if type(inp) == str:
             f = inp
         else:
-            np,na,res0,f = inp
+            np, na, res0, f = inp
             matthews = True
     else:
         ellg = False
         ncs = True
-    
-    #Read the dataset
+
+    # Read the dataset
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(datafile))
-    i.setLABI_F_SIGF('F','SIGF')
+    i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)
     if r.Success():
@@ -810,18 +822,19 @@ def run_phaser_module_OLD(datafile, inp=False):
         if ncs:
             n = run_ncs()
     if matthews:
-        #Assumes ellg is run as well.
-        #return (z,sc,res)
+        # Assumes ellg is run as well.
+        # return (z,sc,res)
         return {"z": z,
                 "solvent_content": solvent_content,
                 "target_resolution": target_resolution}
     elif ellg:
-        #ellg run by itself
-        #return target_resolution
+        # ellg run by itself
+        # return target_resolution
         return {"target_resolution": target_resolution}
     else:
-        #NCS
+        # NCS
         return n
+
 
 """
   except:

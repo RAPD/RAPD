@@ -112,16 +112,29 @@ def compress_file(target):
 
     return (output_name, my_hash)
 
-def create_archive(directory, archive_name=False):
+def create_archive(target, directory_name=False):
     """
-    Creates an archive file for the input directory
+    Creates an archive file for the input target
+
+    If target is a directory it just goes,
+    If target is a list of files, it creates a directory, puts the files in it
+    and creates the archive, using directory_name
     """
-    # print "create_archive"
-    # print "  directory: %s" % directory
-    # print "  archive_name: %s" % archive_name
+    
     cwd = os.getcwd()
 
-    if not os.path.isdir(directory):
+    # Handle the input as directory
+    directory = False
+    if os.path.isdir(target):
+        directory = target
+    # Create a directory
+    else:
+        # Handle directory_name missing
+        if not directory_name:
+            return False
+        
+
+    if not directory:
         return False
 
     # Move to directory that contains directory to be archived

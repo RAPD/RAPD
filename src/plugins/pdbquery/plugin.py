@@ -799,6 +799,7 @@ class RapdPlugin(Thread):
                 # Store information
                 new_archive_file = {
                     "path": target,
+                    "hash": "spoof",
                     "description": result.get("ID")
                 }
                 # Add to the results.archive_files array
