@@ -756,18 +756,20 @@ class RapdPlugin(Thread):
 
         self.logger.debug("transfer_files")
 
-        if self.preferences.get("exchange_dir", False):
+        #if self.preferences.get("exchange_dir", False):
+        if self.command["directories"].get("exchange_dir", False):
             self.logger.debug("transfer_files",
-                              self.preferences["exchange_dir"])
+                             self.command["directories"].get("exchange_dir" ))
 
             # Determine and validate the place to put the data
             target_dir = os.path.join(
-                self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
+                #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
+                self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
 
             # If there is data produced
-            file_to_move = results.get("pdb_file", False)
+            file_to_move = result.get("pdb_file", False)
             if file_to_move:
                 # Move data
                 target = os.path.join(
@@ -781,14 +783,14 @@ class RapdPlugin(Thread):
                 new_data_produced = {
                     "path": arch_prod_file,
                     "hash": arch_prod_hash,
-                    "description": results.get("ID")
+                    "description": result.get("ID")
                 }
                 # Add the file to results.data_produced array
                 self.results["results"]["data_produced"].append(
                     new_data_produced)
 
             # If there is an archive
-            archive_file = results.get("tar", False)
+            archive_file = result.get("tar", False)
             if archive_file:
                 # Move the file
                 target = os.path.join(
@@ -797,7 +799,7 @@ class RapdPlugin(Thread):
                 # Store information
                 new_archive_file = {
                     "path": target,
-                    "description": results.get("ID")
+                    "description": result.get("ID")
                 }
                 # Add to the results.archive_files array
                 self.results["results"]["archive_files"].append(
@@ -838,6 +840,7 @@ class RapdPlugin(Thread):
             print 'Finished Phaser on %s with id: %s'%(info['name'], info['output_id'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
             results_json = self.redis.get(info['output_id'])
+            # This try/except is for when results aren't in Redis in time.
             try:
                 results = json.loads(results_json)
                 self.postprocess_phaser(info['name'], results)
@@ -847,11 +850,10 @@ class RapdPlugin(Thread):
                 print results_json
                 self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
                 self.logger.debug(results_json)
-                
             
-            # Send result to postprocess
-            #self.postprocess_phaser(info['name'], json.loads(self.redis.get(info['output_id'])))
-            # Delete the Redis key
+            #results = json.loads(results_json)
+            #print results
+            #self.postprocess_phaser(info['name'], results)
             #self.redis.delete(info['output_id'])
             jobs.remove(job)
 

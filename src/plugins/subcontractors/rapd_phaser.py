@@ -39,6 +39,7 @@ import random
 import importlib
 from functools import wraps
 import tarfile
+import time
 
 # Phaser import
 import phaser
@@ -437,8 +438,8 @@ def run_phaser(datafile,
         if r.Success():
             if r.foundSolutions() :
                 print "Phaser has found MR solutions"
-                print "Top LLG = %f" % r.getTopLLG()
-                print "Top PDB file = %s" % r.getTopPdbFile()
+                #print "Top LLG = %f" % r.getTopLLG()
+                #print "Top PDB file = %s" % r.getTopPdbFile()
             else:
                 print "Phaser has not found any MR solutions"
         else:
@@ -465,7 +466,11 @@ def run_phaser(datafile,
                 rfz = "NC"
             if p.count('TFZ'):
                 if p.count('=') in [1]:
-                    tfz = float(p.split('=')[-1])
+                    tfz = p.split('=')[-1]
+                    if tfz == '*':
+                        tfz = 'arbitrary'
+                    else:
+                        tfz = float(tfz)
             if p.count('TF*0'):
                 tfz = "NC"
         tncs_test = [1 for line in r.getTopSet().unparse().splitlines() if line.count("+TNCS")]
@@ -497,7 +502,7 @@ def run_phaser(datafile,
                         tar.add(fo)
             tar.close()
         phaser_result['tar'] = os.path.join(work_dir, archive)
-        phaser_result["pdb_file"] = os.path.join(work_dir, pdb)
+        phaser_result["pdb_file"] = os.path.join(work_dir, r.getTopPdbFile())
     else:
         phaser_result = {"ID": name,
                          "solution": False,
@@ -508,6 +513,8 @@ def run_phaser(datafile,
 
     # Key should be deleted once received, but set the key to expire in 24 hours just in case.
     redis.setex(output_id, 86400, json.dumps(phaser_result))
+    # Do a little sleep to make sure results are in Redis for postprocess_phaser
+    time.sleep(0.1)
 
 def run_phaser_module(data_file,
                       result_queue=False,
