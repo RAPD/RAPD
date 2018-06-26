@@ -136,20 +136,7 @@ class Gatherer(object):
                         # Push onto redis list in case no one is currently listening
                         self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
                         #self.redis.lpush("runs_data:%s" % self.tag, run_data)
-                        """
-                        ## This loop is for testing##
-                        for i in range(2):
-                            if i == 1:
-                                dir = dir.replace('/epu/', '/epu2/')
-                            run_data['directory'] = dir
-                            self.logger.debug("run_data:%s %s", self.tag, run_data)
-                            # Put into exchangable format
-                            run_data_json = json.dumps(run_data)
-                            # Publish to Redis
-                            self.redis.publish("run_data:%s" % self.tag, run_data_json)
-                            # Push onto redis list in case no one is currently listening
-                            self.redis.lpush("run_data:%s" % self.tag, run_data_json)
-                        """
+
                 time.sleep(0.2)
                 # Have Registrar update status
                 self.ow_registrar.update({"site_id":self.site.ID})
