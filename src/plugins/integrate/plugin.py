@@ -474,7 +474,9 @@ class RapdPlugin(Process):
             self.tprint("\nPartial dataset summary %d-%d" % (first, last), 99, "blue")
             self.print_results(partial_integration_results)
             self.tprint(20, "progress")
-
+        
+        # if no full results, then wait for full dataset
+        if not full_integration_results:
             # Run XDS for the whole wedge of data
             self.tprint("Preparing for full dataset integration", 10, "blue")
             result = self.wait_for_image(final_image)
@@ -1371,7 +1373,8 @@ class RapdPlugin(Process):
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
-        xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        #xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        xdsinp = self.change_xds_inp(xdsinp,'JOB=IDXREF DEFPIX INTEGRATE CORRECT\n')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
@@ -1393,8 +1396,10 @@ class RapdPlugin(Process):
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-                newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
-                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                #newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
+                #newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                newinp = self.change_xds_inp(newinp, 'JOB=INTEGRATE CORRECT\n')
+                newinp = self.change_xds_inp(newinp, 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut)
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
@@ -1814,6 +1819,10 @@ class RapdPlugin(Process):
                             newline=False)
                         #self.xds_run(dir)
                         #return input
+                elif 'CANNOT READ SPOT.XDS' in line:
+                    if not fixed:
+                        self.logger.debug('Could not index. Wait for more frames...')
+                        warning = True
                 else:
                     if not fixed:
                         # Unanticipated Error, fail the error check by returning False.
