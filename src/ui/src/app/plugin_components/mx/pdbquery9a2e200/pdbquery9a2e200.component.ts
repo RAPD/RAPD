@@ -33,7 +33,7 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   @ViewChild(MatSort) sort: MatSort;
 
-  constructor(private rest_service: RestService,,
+  constructor(private rest_service: RestService,
               public snackBar: MatSnackBar) {}
 
   ngOnInit() {

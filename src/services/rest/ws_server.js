@@ -125,6 +125,26 @@ var parse_message = function(channel, message) {
 
         // Do something for not ECHO
       } else {
+        console.log(message.plugin);
+        console.log(message.process);
+        // { subtype: 'CORE',
+        //   version: '2.0.0',
+        //   type: 'ANALYSIS',
+        //   id: 'f068',
+        //   data_type: 'MX' }
+        // { status: 50,
+        //   parent:
+        //   { subtype: 'CORE',
+        //     version: '2.0.0',
+        //     type: 'INTEGRATE',
+        //     id: 'bd11',
+        //     data_type: 'MX' },
+        //   type: 'plugin',
+        //   repr: 'MS01P14ds1_1_[1-1800].cbf',
+        //   session_id: '5b38e3a7ad1d602a3d4b3282',
+        //   parent_id: '5b3a975af468331c90d4e583',
+        //   result_id: '5b3a97f1b77af848335f6ccd' }
+
         // Create a result
         let result = {
           _id: message.process.result_id,
@@ -161,6 +181,14 @@ var parse_message = function(channel, message) {
           message.results.pdbquery = results[3];
 
           return_array.push(["result_details", message]);
+
+          // If result has a parent create a detailed result
+          if (message.process.parent_id) {
+            // Get the response to send to the websocket
+            var response = get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id);
+            return_array.push(["result_details", response]);
+          }
+
           // console.log('return_array now has length', return_array.length);
           // console.log('return_array', return_array);
           deferred.resolve(return_array);
@@ -264,6 +292,99 @@ var populate_child_result = function(result_id, mode) {
   // Return promise
   return deferred.promise;
 };
+
+function get_detailed_result(data_type, plugin_type, result_id) {
+  // Create a mongoose model for the result
+  let name = data_type + "_" + plugin_type + "_result";
+  let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
+  var ResultModel;
+  try {
+    if (mongoose.ctrl_conn.model(collection_name)) {
+      ResultModel = mongoose.ctrl_conn.model(collection_name);
+    }
+  } catch (e) {
+    if (e.name === "MissingSchemaError") {
+      let schema = new mongoose.Schema(
+        {
+          _id: {
+            type: Schema.ObjectId,
+            auto: true
+          }
+        },
+        {
+          strict: false
+        }
+      );
+      ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
+    }
+  }
+
+  // Now get the result
+  ResultModel.findOne({
+    "process.result_id": mongoose.Types.ObjectId(result_id)
+  }).exec(function(err, detailed_result) {
+    // Error
+    if (err) {
+      console.error(err);
+      return {
+        msg_type: "result_details",
+        success: false,
+        results: err
+      };
+
+      // No error
+    } else {
+      // console.log(detailed_result);
+      if (detailed_result) {
+        // console.log(Object.keys(detailed_result));
+        // console.log(detailed_result._doc);
+        // console.log(detailed_result._doc.process);
+
+        // Make sure there is a process
+        if ("process" in detailed_result._doc) {
+          Q.all([
+            // Image 1
+            populate_image(detailed_result._doc.process.image1_id),
+            // Image 2
+            populate_image(detailed_result._doc.process.image2_id),
+            // Analysis
+            populate_child_result(
+              detailed_result._doc.results.analysis,
+              "analysis"
+            ),
+            // PDBQuery
+            populate_child_result(
+              detailed_result._doc.results.pdbquery,
+              "pdbquery"
+            )
+          ]).then(function(results) {
+            // Assign results to detailed results
+            detailed_result._doc.image1 = results[0];
+            detailed_result._doc.image2 = results[1];
+            detailed_result._doc.results.analysis = results[2];
+            detailed_result._doc.results.pdbquery = results[3];
+
+            // Send back
+            return {
+              msg_type: "result_details",
+              success: true,
+              results: detailed_result
+            };
+          });
+
+          // No 'process' in detailed_result._doc
+        } else {
+          // Send back
+          return {
+            msg_type: "result_details",
+            success: true,
+            results: detailed_result
+          };
+        }
+      }
+    }
+  });
+}
 
 // The websocket code
 function Wss(opt, callback) {
@@ -451,110 +572,20 @@ function Wss(opt, callback) {
           case "get_result_details":
             console.log("get_result_details", data);
 
-            // Create a mongoose model for the result
-            let name = data.data_type + "_" + data.plugin_type + "_result";
-            let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
-            var ResultModel;
-            try {
-              if (mongoose.ctrl_conn.model(collection_name)) {
-                ResultModel = mongoose.ctrl_conn.model(collection_name);
-              }
-            } catch (e) {
-              if (e.name === "MissingSchemaError") {
-                let schema = new mongoose.Schema(
-                  {
-                    _id: {
-                      type: Schema.ObjectId,
-                      auto: true
-                    }
-                  },
-                  {
-                    strict: false
-                  }
-                );
-                ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
-              }
-            }
+            // Get the response to send to the websocket
+            var response = get_detailed_result(data.data_type, data.plugin_type, data._id);
 
-            // Now get the result
-            ResultModel.findOne({
-              "process.result_id": mongoose.Types.ObjectId(data._id)
-            }).exec(function(err, detailed_result) {
-              // Error
-              if (err) {
-                console.error(err);
-                ws.send(
-                  JSON.stringify({
-                    msg_type: "result_details",
-                    success: false,
-                    results: err
-                  })
-                );
-                return false;
-                // No error
-              } else {
-                // console.log(detailed_result);
-                if (detailed_result) {
-                  // console.log(Object.keys(detailed_result));
-                  // console.log(detailed_result._doc);
-                  // console.log(detailed_result._doc.process);
+            // Send response over the wire
+            ws.send(JSON.stringify(response));
 
-                  // Make sure there is a process
-                  if ("process" in detailed_result._doc) {
-                    Q.all([
-                      // Image 1
-                      populate_image(detailed_result._doc.process.image1_id),
-                      // Image 2
-                      populate_image(detailed_result._doc.process.image2_id),
-                      // Analysis
-                      populate_child_result(
-                        detailed_result._doc.results.analysis,
-                        "analysis"
-                      ),
-                      // PDBQuery
-                      populate_child_result(
-                        detailed_result._doc.results.pdbquery,
-                        "pdbquery"
-                      )
-                    ]).then(function(results) {
-                      // Assign results to detailed results
-                      detailed_result._doc.image1 = results[0];
-                      detailed_result._doc.image2 = results[1];
-                      detailed_result._doc.results.analysis = results[2];
-                      detailed_result._doc.results.pdbquery = results[3];
+            // Register activity
+            var grd_activity = new Activity({
+              source: "websocket",
+              type: "get_result_details",
+              subtype: data.data_type + "_" + data.plugin_type,
+              user: ws.session.token._doc._id
+            }).save();
 
-                      // Send back
-                      ws.send(
-                        JSON.stringify({
-                          msg_type: "result_details",
-                          success: true,
-                          results: detailed_result
-                        })
-                      );
-                    });
-
-                    // No 'process' in detailed_result._doc
-                  } else {
-                    // Send back over the websocket
-                    ws.send(
-                      JSON.stringify({
-                        msg_type: "result_details",
-                        success: true,
-                        results: detailed_result
-                      })
-                    );
-                  }
-                }
-
-                // Register activity
-                let new_activity = new Activity({
-                  source: "websocket",
-                  type: "get_result_details",
-                  subtype: data.data_type + "_" + data.plugin_type,
-                  user: ws.session.token._doc._id
-                }).save();
-              }
-            });
             break;
 
           // Set the session id for the connected websocket
