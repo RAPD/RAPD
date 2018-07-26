@@ -5,15 +5,15 @@ import { CanActivate,
          Router } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
-import { AuthHttp,
-         JwtHelper } from 'angular2-jwt';
+import { AuthHttp } from 'angular2-jwt';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 import { GlobalsService } from './globals.service';
 
 @Injectable()
 export class AuthService implements CanActivate {
 
-  jwtHelper: JwtHelper = new JwtHelper();
+  helper = new JwtHelperService();
 
   constructor(private globals_service: GlobalsService,
               public http: Http,
@@ -100,13 +100,13 @@ export class AuthService implements CanActivate {
       localStorage.setItem('id_token', token);
 
       console.log(
-        this.jwtHelper.decodeToken(token),
-        this.jwtHelper.getTokenExpirationDate(token),
-        this.jwtHelper.isTokenExpired(token)
+        this.helper.decodeToken(token),
+        this.helper.getTokenExpirationDate(token),
+        this.helper.isTokenExpired(token)
       );
 
       // Save user information
-      let decoded_token = this.jwtHelper.decodeToken(token);
+      let decoded_token = this.helper.decodeToken(token);
       if (decoded_token._doc) {
         var profile = decoded_token._doc;
       } else {
@@ -210,7 +210,7 @@ export class AuthService implements CanActivate {
       //   this.jwtHelper.getTokenExpirationDate(token),
       //   ! this.jwtHelper.isTokenExpired(token)
       // );
-      return ! this.jwtHelper.isTokenExpired(token);
+      return ! this.helper.isTokenExpired(token);
     }
   }
 
