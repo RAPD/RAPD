@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule,
          ReactiveFormsModule } from '@angular/forms';
-// import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { Http,
          HttpModule,
          RequestOptions } from '@angular/http';
@@ -29,7 +29,8 @@ import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
 import { Site } from './site';
-import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
+// import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
+import { JwtModule } from '@auth0/angular-jwt';
 import { FileUploadModule } from 'ng2-file-upload';
 
 import { ProjectsModule } from './projects/projects.module';
@@ -80,8 +81,12 @@ import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-
 import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
 
 
-export function authHttpServiceFactory(http: Http, options: RequestOptions) {
-  return new AuthHttp( new AuthConfig({}), http, options);
+// export function authHttpServiceFactory(http: Http, options: RequestOptions) {
+//   return new AuthHttp( new AuthConfig({}), http, options);
+// }
+
+export function tokenGetter() {
+  return localStorage.getItem('access_token');
 }
 
 @NgModule({
@@ -140,7 +145,15 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpModule,
+    // HttpModule,
+    HttpClientModule,
+    JwtModule.forRoot({
+      config: {
+        tokenGetter: tokenGetter,
+        whitelistedDomains: ['localhost:3000']
+        // blacklistedRoutes: ['localhost:3001/auth/']
+      }
+    }),
     BrowserAnimationsModule,
     RapdMaterialModule,
     FlexLayoutModule,
@@ -160,11 +173,12 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
                GlobalsService,
                Site,
                // Replacement for AUTH_PROVIDERS
-               {
-                 provide: AuthHttp,
-                 useFactory: authHttpServiceFactory,
-                 deps: [ Http, RequestOptions ]
-               } ],
+              //  {
+              //    provide: AuthHttp,
+              //    useFactory: authHttpServiceFactory,
+              //    deps: [ Http, RequestOptions ]
+              //  } 
+             ],
               //  provideAuth({
               //   tokenName: 'token'
               //  }),

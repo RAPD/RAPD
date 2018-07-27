@@ -35,13 +35,14 @@ export class ProjectspanelComponent implements OnInit {
   }
 
   getProjects() {
-    this.rest_service.getProjects()
-      .subscribe(
-        parameters => {
-          // console.log(parameters);
-          this.projects = parameters;
-        }
-      )
+    // TODO
+    // this.rest_service.getProjects()
+    //   .subscribe(
+    //     parameters => {
+    //       // console.log(parameters);
+    //       this.projects = parameters;
+    //     }
+    //   )
   }
 
   newProject() {

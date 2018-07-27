@@ -178,6 +178,8 @@ apiRoutes.post("/authenticate", function(req, res) {
   // Get useragent data
   let ua = req.useragent;
 
+  console.log(req.body);
+
   if (config.authenticate_mode === "mongo") {
     User.getAuthenticated(req.body.email, req.body.password, function(
       err,

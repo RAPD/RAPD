@@ -3,7 +3,9 @@ import { Headers, Response } from "@angular/http";
 
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
-import { AuthHttp } from "angular2-jwt";
+// import { AuthHttp } from "angular2-jwt";
+import { HttpClient,
+         HttpHeaders } from '@angular/common/http';
 import * as moment from "moment-mini";
 
 import { GlobalsService } from "./globals.service";
@@ -19,7 +21,7 @@ import { Run } from "../classes/run";
 export class RestService {
   constructor(
     private globals_service: GlobalsService,
-    private authHttp: AuthHttp
+    private authHttp: HttpClient
   ) {}
 
   //
@@ -30,7 +32,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/dashboard/results")
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -39,7 +41,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/dashboard/logins")
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -50,7 +52,7 @@ export class RestService {
       .get(
         this.globals_service.site.restApiUrl + "/dashboard/server_activities"
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -59,55 +61,55 @@ export class RestService {
   //
 
   // Request a download
-  public getDownloadById(id: string, filename: string): Observable<any> {
-    return (
-      this.authHttp
-        .get(this.globals_service.site.restApiUrl + "/download_by_id/" + id)
-        .map(res => {
-          if (res.status === 200) {
-            // Convert base64 string to byte array
-            var byteCharacters = atob((<any>res)._body);
-            var byteNumbers = new Array(byteCharacters.length);
-            for (var i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            var byteArray = new Uint8Array(byteNumbers);
+  // public getDownloadById(id: string, filename: string): Observable<any> {
+  //   return (
+  //     this.authHttp
+  //       .get(this.globals_service.site.restApiUrl + "/download_by_id/" + id)
+  //       (data => {
+  //         if (data.status === 200) {
+  //           // Convert base64 string to byte array
+  //           var byteCharacters = atob((<any>res)._body);
+  //           var byteNumbers = new Array(byteCharacters.length);
+  //           for (var i = 0; i < byteCharacters.length; i++) {
+  //             byteNumbers[i] = byteCharacters.charCodeAt(i);
+  //           }
+  //           var byteArray = new Uint8Array(byteNumbers);
 
-            // Convert byte array to Blob
-            var blob = new Blob([byteArray], {
-              type: "application/octet-stream"
-            });
+  //           // Convert byte array to Blob
+  //           var blob = new Blob([byteArray], {
+  //             type: "application/octet-stream"
+  //           });
 
-            // Create ObjectURL
-            var url = window.URL.createObjectURL(blob);
+  //           // Create ObjectURL
+  //           var url = window.URL.createObjectURL(blob);
 
-            // Create DOM element with download attribute
-            var pom = document.createElement("a");
-            pom.setAttribute("href", url);
-            pom.setAttribute("download", filename);
+  //           // Create DOM element with download attribute
+  //           var pom = document.createElement("a");
+  //           pom.setAttribute("href", url);
+  //           pom.setAttribute("download", filename);
 
-            // Now trigger download
-            if (document.createEvent) {
-              var event = document.createEvent("MouseEvents");
-              event.initEvent("click", true, true);
-              pom.dispatchEvent(event);
-            } else {
-              pom.click();
-            }
+  //           // Now trigger download
+  //           if (document.createEvent) {
+  //             var event = document.createEvent("MouseEvents");
+  //             event.initEvent("click", true, true);
+  //             pom.dispatchEvent(event);
+  //           } else {
+  //             pom.click();
+  //           }
 
-            // Tell the subscribed caller we are all good
-            return Observable.of({
-              success: true
-            });
-            // There was an error in the REST server
-          } else {
-            return res.json();
-          }
-        })
-        // There was an error
-        .catch(error => this.handleError(error))
-    );
-  }
+  //           // Tell the subscribed caller we are all good
+  //           return Observable.of({
+  //             success: true
+  //           });
+  //           // There was an error in the REST server
+  //         } else {
+  //           return data;
+  //         }
+  //       })
+  //       // There was an error
+  //       // .catch(error => this.handleError(error))
+  //   );
+  // }
 
   //
   // GROUP METHODS
@@ -136,7 +138,7 @@ export class RestService {
   public submitGroup(group: Group): Observable<any> {
     console.log("submitGroup");
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
 
     return this.authHttp
@@ -145,7 +147,7 @@ export class RestService {
         JSON.stringify({ group: group }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -162,7 +164,7 @@ export class RestService {
   public populateGroups(): Observable<any> {
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/groups/populate")
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -187,8 +189,8 @@ export class RestService {
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/image_jpeg/" + req)
       .map(res => {
-        // console.log(res);
-        return res.json();
+        console.log(res);
+        // return res.json();
       })
       .catch(error => this.handleError(error));
   }
@@ -199,7 +201,7 @@ export class RestService {
   public submitJob(request: any): Observable<any> {
     // console.log('submitJob', request);
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
 
     return this.authHttp
@@ -208,7 +210,7 @@ export class RestService {
         JSON.stringify({ request: request }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -220,12 +222,12 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/overwatches")
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
   public stopOverwatch(id: string) {
-    let header: Headers = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -234,14 +236,14 @@ export class RestService {
         JSON.stringify({ id: id }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
   public stopAllOverwatches() {
     // console.log('stopAllOverwatches');
 
-    let header: Headers = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -250,12 +252,12 @@ export class RestService {
         JSON.stringify({ id: "foo" }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
   public startOverwatch(id: string) {
-    let header: Headers = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -264,20 +266,19 @@ export class RestService {
         JSON.stringify({ id: id }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
   //
   // PROJECT methods
   //
-  public getProjects(): Observable<Project[]> {
+  public getProjects() { // TODO :Observable<Project[]> {
     console.log("getProjects");
 
-    return this.authHttp
-      .get(this.globals_service.site.restApiUrl + "/projects")
-      .map(res => res.json().projects)
-      .catch(error => this.handleError(error));
+    // return this.authHttp
+    //   .get(this.globals_service.site.restApiUrl + "/projects")
+    //   .catch(error => this.handleError(error));
   }
 
   public getProject(id: string): Observable<any> {
@@ -285,7 +286,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/projects/" + id)
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -295,7 +296,7 @@ export class RestService {
       this.globals_service.site.restApiUrl + "/projects/" + project._id
     );
 
-    let header: Headers = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -304,7 +305,7 @@ export class RestService {
         JSON.stringify({ project: project }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -323,7 +324,7 @@ export class RestService {
   public addResultToProject(data: any): Observable<any> {
     console.log("addResultToProject");
 
-    let header: Headers = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -335,7 +336,7 @@ export class RestService {
         }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -345,7 +346,7 @@ export class RestService {
   public getResult(_id: string): Observable<any> {
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/results/" + _id)
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -354,7 +355,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/result_details/" + _id)
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -366,7 +367,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/runs/" + _id)
-      .map(res => res.json().run)
+      // .map(res => res.run)
       .catch(error => this.handleError(error));
   }
 
@@ -391,7 +392,7 @@ export class RestService {
   public submitSession(session: Session): Observable<any> {
     console.log("submitSession");
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
 
     return this.authHttp
@@ -400,7 +401,7 @@ export class RestService {
         JSON.stringify({ session: session }),
         { headers: header }
       )
-      .map(res => res.json())
+      // .map(res => res.json())
       .catch(error => this.handleError(error));
   }
 
@@ -419,7 +420,7 @@ export class RestService {
   public getUsers(): Observable<User[]> {
     console.log("getUsers");
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return this.authHttp
@@ -438,7 +439,7 @@ export class RestService {
     console.log("submitUser", user);
     console.log(this.globals_service.site.restApiUrl + "/users/" + user._id);
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append("Content-Type", "application/json");
 
     return (
@@ -458,8 +459,8 @@ export class RestService {
     console.log("deleteUser", _id);
 
     return this.authHttp
-      .delete(this.globals_service.site.restApiUrl + "/users/" + _id)
-      .map(res => res.json());
+      .delete(this.globals_service.site.restApiUrl + "/users/" + _id);
+      // .map(res => res.json());
   }
 
   public getGroups(): Observable<Group[]> {

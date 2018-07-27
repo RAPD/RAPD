@@ -100,9 +100,10 @@ export class Pdbquery9a2e200Component implements OnInit {
       duration: 2000
     });
 
-    this.rest_service
-      .getDownloadById(record._id, record.path)
-      .subscribe(result => {}, error => {});
+    // TODO
+    // this.rest_service
+    //   .getDownloadById(record._id, record.path)
+    //   .subscribe(result => {}, error => {});
   }
 }
 

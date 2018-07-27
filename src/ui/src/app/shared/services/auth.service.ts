@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Headers,
-         Http } from '@angular/http';
+// import { Headers,
+//          Http } from '@angular/http';
 import { CanActivate,
          Router } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
-import { AuthHttp } from 'angular2-jwt';
+// import { AuthHttp } from 'angular2-jwt';
+import { HttpClient,
+         HttpHeaders } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 
 import { GlobalsService } from './globals.service';
@@ -16,8 +18,8 @@ export class AuthService implements CanActivate {
   helper = new JwtHelperService();
 
   constructor(private globals_service: GlobalsService,
-              public http: Http,
-              private auth_http: AuthHttp,
+              // public http: Http,
+              private auth_http: HttpClient,
               private router: Router) { }
 
   canActivate() {
@@ -26,17 +28,12 @@ export class AuthService implements CanActivate {
 
   public login(credentials): Observable<any> {
 
-    // console.log('this.globals_service.site.restApiUrl', this.globals_service.site.restApiUrl);
-
-    // console.log('login', credentials);
-
     let creds = 'uid=' + credentials.uid + '&email=' + credentials.email+ '&password=' + credentials.password;
-    // console.log(creds);
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
 
-    return this.http.post(
+    return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'authenticate',
       creds,
       {headers: header}
@@ -53,11 +50,11 @@ export class AuthService implements CanActivate {
     let creds = 'email=' + credentials.email;
     // console.log(creds);
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
     console.log(header);
 
-    return this.http.post(
+    return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'requestpass',
       creds,
       {headers: header}
@@ -73,7 +70,7 @@ export class AuthService implements CanActivate {
 
     let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
 
     return this.auth_http.post(
@@ -88,13 +85,12 @@ export class AuthService implements CanActivate {
 
   handleAuth(res) {
 
-    // Convert to JSON
-    let res_json = res.json();
-    console.log(res_json);
+    console.log('handleAuth');
+    console.log(res);
 
-    if (res_json.success === true) {
+    if (res.success === true) {
       // Decode token
-      let token = res_json.token;
+      let token = res.token;
 
       // Save raw token
       localStorage.setItem('id_token', token);
@@ -116,10 +112,10 @@ export class AuthService implements CanActivate {
       localStorage.setItem('profile', JSON.stringify(profile));
 
       // Return for consumer
-      return res_json;
+      return res;
     } else {
       // Return for consumer
-      return res_json;
+      return res;
     }
   }
 

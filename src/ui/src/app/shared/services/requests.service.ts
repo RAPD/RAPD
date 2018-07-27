@@ -3,14 +3,17 @@ import { Headers,
          Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
-import { AuthHttp } from 'angular2-jwt';
+// import { AuthHttp } from 'angular2-jwt';
+import { HttpClient,
+         HttpHeaders } from '@angular/common/http';
+
 import { GlobalsService } from './globals.service';
 
 @Injectable()
 export class RequestsService {
 
   constructor(private globals_service: GlobalsService,
-              private authHttp: AuthHttp) { }
+              private authHttp: HttpClient) { }
 
   public submitRequest(request: any): Observable<any> {
 
@@ -18,7 +21,7 @@ export class RequestsService {
     console.log(this.globals_service.site.restApiUrl);
     console.log(request);
 
-    let header = new Headers();
+    let header = new HttpHeaders();
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
