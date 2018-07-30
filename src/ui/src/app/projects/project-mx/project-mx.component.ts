@@ -88,7 +88,7 @@ export class ProjectMxComponent implements OnInit {
 
     this.uploader = new FileUploader({
       url: this.globals_service.site.restApiUrl + '/upload_mx_raw',
-      authToken: localStorage.getItem("id_token"),
+      authToken: localStorage.getItem("access_token"),
       autoUpload: true,
     });
     // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.

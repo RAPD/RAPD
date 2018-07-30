@@ -3,12 +3,13 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule,
          ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
-import { Http,
-         HttpModule,
-         RequestOptions } from '@angular/http';
+import { HttpClientModule,
+         HTTP_INTERCEPTORS } from '@angular/common/http';
+// import { Http,
+//          HttpModule,
+//          RequestOptions } from '@angular/http';
 import { AppComponent } from './app.component';
-import { Router } from '@angular/router';
+// import { Router } from '@angular/router';
 
 import { FlexLayoutModule } from '@angular/flex-layout';
 
@@ -29,8 +30,10 @@ import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
 import { Site } from './site';
-// import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
+
 import { JwtModule } from '@auth0/angular-jwt';
+import { JwtHttpInterceptor } from './shared/interceptors/auth.interceptor';
+
 import { FileUploadModule } from 'ng2-file-upload';
 
 import { ProjectsModule } from './projects/projects.module';
@@ -79,11 +82,6 @@ import { DialogNewProjectComponent } from './shared/components/dialog-new-projec
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
-
-
-// export function authHttpServiceFactory(http: Http, options: RequestOptions) {
-//   return new AuthHttp( new AuthConfig({}), http, options);
-// }
 
 export function tokenGetter() {
   return localStorage.getItem('access_token');
@@ -145,15 +143,14 @@ export function tokenGetter() {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    // HttpModule,
     HttpClientModule,
-    JwtModule.forRoot({
-      config: {
-        tokenGetter: tokenGetter,
-        whitelistedDomains: ['localhost:3000']
-        // blacklistedRoutes: ['localhost:3001/auth/']
-      }
-    }),
+    // JwtModule.forRoot({
+    //   config: {
+    //     tokenGetter: tokenGetter,
+    //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')), 
+    //     // blacklistedRoutes: ['localhost:3001/auth/']
+    //   }
+    // }),
     BrowserAnimationsModule,
     RapdMaterialModule,
     FlexLayoutModule,
@@ -173,16 +170,8 @@ export function tokenGetter() {
                GlobalsService,
                Site,
                // Replacement for AUTH_PROVIDERS
-              //  {
-              //    provide: AuthHttp,
-              //    useFactory: authHttpServiceFactory,
-              //    deps: [ Http, RequestOptions ]
-              //  } 
+               { provide: HTTP_INTERCEPTORS, useClass: JwtHttpInterceptor, multi: true }
              ],
-              //  provideAuth({
-              //   tokenName: 'token'
-              //  }),
-              // HTTP_PROVIDERS ],
   entryComponents: [
     AppComponent,
     // General components

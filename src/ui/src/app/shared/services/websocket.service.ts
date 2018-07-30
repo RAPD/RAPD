@@ -29,7 +29,7 @@ export class WebsocketService {
 
   // Initialize
   initializeWebsocket() {
-    let token = localStorage.getItem("id_token");
+    let token = localStorage.getItem("access_token");
     let self = this;
 
     // Track state

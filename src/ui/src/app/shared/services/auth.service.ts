@@ -7,7 +7,8 @@ import { CanActivate,
 import { Observable } from 'rxjs/Observable';
 // import { AuthHttp } from 'angular2-jwt';
 import { HttpClient,
-         HttpHeaders } from '@angular/common/http';
+         HttpHeaders,
+         HttpParams } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 
 import { GlobalsService } from './globals.service';
@@ -28,17 +29,15 @@ export class AuthService implements CanActivate {
 
   public login(credentials): Observable<any> {
 
-    let creds = 'uid=' + credentials.uid + '&email=' + credentials.email+ '&password=' + credentials.password;
-
-    let header = new HttpHeaders();
-    header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
+    let httpParams = new HttpParams()
+                        .set('uid', credentials.uid)
+                        .set('email', credentials.email)
+                        .set('password', credentials.password);
 
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'authenticate',
-      creds,
-      {headers: header}
+      httpParams
     )
-    // .map(res => res.json())
     .map(res => this.handleAuth(res))
     .catch(error => this.handleError(error));
   }
@@ -57,7 +56,7 @@ export class AuthService implements CanActivate {
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'requestpass',
       creds,
-      {headers: header}
+      // {headers: header}
     )
     // .map(res => res.json())
     .map(res => this.handlePassReq(res))
@@ -76,7 +75,7 @@ export class AuthService implements CanActivate {
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'changepass',
       creds,
-      {headers: header}
+      // {headers: header}
     )
     // .map(res => res.json())
     .map(res => this.handleChangePassReq(res))
@@ -93,7 +92,9 @@ export class AuthService implements CanActivate {
       let token = res.token;
 
       // Save raw token
-      localStorage.setItem('id_token', token);
+      localStorage.setItem('access_token', token);
+      localStorage.setItem('access_token', token);
+      
 
       console.log(
         this.helper.decodeToken(token),
@@ -130,7 +131,7 @@ export class AuthService implements CanActivate {
       // let token = res_json.token;
 
       // Save raw token
-      // localStorage.setItem('id_token', token);
+      // localStorage.setItem('access_token', token);
 
       // console.log(
       //   this.jwtHelper.decodeToken(token),
@@ -161,7 +162,7 @@ export class AuthService implements CanActivate {
       // let token = res_json.token;
 
       // Save raw token
-      // localStorage.setItem('id_token', token);
+      // localStorage.setItem('access_token', token);
 
       // console.log(
       //   this.jwtHelper.decodeToken(token),
@@ -194,8 +195,8 @@ export class AuthService implements CanActivate {
     // console.log('authenticated');
 
     // Check if there's an unexpired JWT
-    // This searches for an item in localStorage with key == 'id_token'
-    let token = localStorage.getItem('id_token');
+    // This searches for an item in localStorage with key == 'access_token'
+    let token = localStorage.getItem('access_token');
     // console.log(token);
 
     if (token === null) {
@@ -215,7 +216,7 @@ export class AuthService implements CanActivate {
     // console.log('logout');
 
     // Remove token from localStorage
-    localStorage.removeItem('id_token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('profile');
 
     // this.userProfile = undefined;

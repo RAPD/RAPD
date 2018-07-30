@@ -145,7 +145,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/groups/" + group._id,
         JSON.stringify({ group: group }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -208,7 +208,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/jobs/submit",
         JSON.stringify({ request: request }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -234,7 +234,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/overwatches/stop/" + id,
         JSON.stringify({ id: id }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -250,7 +250,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/overwatches/stopall",
         JSON.stringify({ id: "foo" }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -264,7 +264,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/overwatches/start/" + id,
         JSON.stringify({ id: id }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -303,7 +303,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/projects/" + project._id,
         JSON.stringify({ project: project }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -334,7 +334,7 @@ export class RestService {
           project_id: data._id,
           result: data.result
         }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -382,10 +382,10 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
-  private extractSessions(res: Response, error) {
-    // console.error(error);
-    let body = res.json();
-    return body.sessions || [];
+  private extractSessions(res, error) {
+    // console.error(res);
+    // let body = res.json();
+    return res.sessions || [];
   }
 
   // Submit a session to be saved in the database
@@ -399,7 +399,7 @@ export class RestService {
       .put(
         this.globals_service.site.restApiUrl + "/sessions/" + session._id,
         JSON.stringify({ session: session }),
-        { headers: header }
+        // { headers: header }
       )
       // .map(res => res.json())
       .catch(error => this.handleError(error));
@@ -447,7 +447,7 @@ export class RestService {
         .put(
           this.globals_service.site.restApiUrl + "/users/" + user._id,
           JSON.stringify({ user: user }),
-          { headers: header }
+          // { headers: header }
         )
         // .map(res => res.json())
         .catch(error => this.handleError(error))

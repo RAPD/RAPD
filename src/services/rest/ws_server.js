@@ -76,31 +76,34 @@ sub.on("message", function(channel, message) {
     }
   }
 
-  // Turn message into messages to send to clients
-  parse_message(channel, message_object).then(function(messages_to_send) {
-    console.log("messages_to_send", messages_to_send);
-    //
-    // console.log('Will send', messages_to_send.length, 'messages');
-    //
-    // Look for websockets that are watching the same session
-    if (session_id) {
-      Object.keys(ws_connections).forEach(function(socket_id) {
-        console.log(ws_connections[socket_id].session);
-        if (ws_connections[socket_id].session.session_id === session_id) {
-          console.log("Have a live one!");
-          messages_to_send.forEach(function(message) {
-            console.log(message);
-            ws_connections[socket_id].send(
-              JSON.stringify({
-                msg_type: message[0],
-                results: message[1]
-              })
-            );
-          });
-        }
-      });
-    }
-  });
+  // Any connections?
+  if (Object.keys(ws_connections).length > 0) {
+    // Turn message into messages to send to clients
+    parse_message(channel, message_object).then(function(messages_to_send) {
+      console.log("messages_to_send", messages_to_send);
+      //
+      // console.log('Will send', messages_to_send.length, 'messages');
+      //
+      // Look for websockets that are watching the same session
+      if (session_id) {
+        Object.keys(ws_connections).forEach(function(socket_id) {
+          console.log(ws_connections[socket_id].session);
+          if (ws_connections[socket_id].session.session_id === session_id) {
+            console.log("Have a live one!");
+            messages_to_send.forEach(function(message) {
+              console.log(message);
+              ws_connections[socket_id].send(
+                JSON.stringify({
+                  msg_type: message[0],
+                  results: message[1]
+                })
+              );
+            });
+          }
+        });
+      }
+    });
+  }
 });
 
 // Subscribe to updates
@@ -397,7 +400,10 @@ function Wss(opt, callback) {
     server: opt.server
   });
 
+  console.log('Wss up!');
+
   wss.on("connection", function connection(ws) {
+    
     console.log("Connected");
 
     // Create a session object

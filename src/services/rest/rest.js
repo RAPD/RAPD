@@ -608,9 +608,9 @@ apiRoutes.get("/", function(req, res) {
 // if (! process.env.NODE_ENV === 'development') {
 // route middleware to verify a token
 apiRoutes.use(function(req, res, next) {
-  // console.log(req.body);
-  // console.log(req.query);
-  // console.log(req.headers);
+  console.log(req.body);
+  console.log(req.query);
+  console.log(req.headers);
 
   // check header or url parameters or post parameters for token
   var token = req.headers.authorization.replace("Bearer ", "");
