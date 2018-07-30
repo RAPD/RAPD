@@ -99,8 +99,14 @@ export class WebsocketService {
       return true;
     }
 
-    let data = JSON.parse(message);
     let self = this;
+
+    var data;
+    if (typeof(message) === 'string') {
+      data = JSON.parse(message);
+    } else {
+      data = message;
+    }
 
     // console.log(data);
 
@@ -120,8 +126,6 @@ export class WebsocketService {
 
       // A detailed result
       case "result_details":
-        //self.result_details_subject.next(data.results);
-        console.log(data.results.process);
         if (data.results) {
           self.details_subscribers.forEach(function(subscriber) {
             if (subscriber._id == data.results.process.result_id) {

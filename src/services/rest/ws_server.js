@@ -400,6 +400,8 @@ function Wss(opt, callback) {
     server: opt.server
   });
 
+  // const wss = new WebSocketServer({ port: 8080 });
+
   console.log('Wss up!');
 
   wss.on("connection", function connection(ws) {

@@ -668,7 +668,7 @@ module.exports = app;
 
 let port = normalizePort(process.env.PORT || config.port);
 app.set("port", port);
-
+console.log('Listening on port', port);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
