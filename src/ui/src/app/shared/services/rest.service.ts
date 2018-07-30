@@ -16,6 +16,13 @@ import { Project } from "../classes/project";
 import { Image } from "../classes/image";
 import { Run } from "../classes/run";
 
+function baseName(str:string):string {
+   var base = new String(str).substring(str.lastIndexOf('/') + 1); 
+    if(base.lastIndexOf(".") != -1)       
+        base = base.substring(0, base.lastIndexOf("."));
+   return base;
+}
+
 @Injectable()
 export class RestService {
   constructor(
@@ -68,6 +75,58 @@ export class RestService {
       .get(this.globals_service.site.restApiUrl + "/download_by_id/" + id,
            {responseType: 'text'})
       .subscribe((res)=>{
+        // Convert base64 string to byte array
+        var byteCharacters = atob(<any>res);
+        var byteNumbers = new Array(byteCharacters.length);
+        for (var i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        // Convert byte array to Blob
+        var blob = new Blob([byteArray], {
+          type: "application/octet-stream"
+        });
+        // Create ObjectURL
+        var url = window.URL.createObjectURL(blob);
+        // Create DOM element with download attribute
+        var pom = document.createElement("a");
+        pom.setAttribute("href", url);
+        pom.setAttribute("download", filename);
+        // Now trigger download
+        if (document.createEvent) {
+          var event = document.createEvent("MouseEvents");
+          event.initEvent("click", true, true);
+          pom.dispatchEvent(event);
+        } else {
+          pom.click();
+        }
+      });
+          //   // Tell the subscribed caller we are all good
+          //   return Observable.of({
+          //     success: true
+          //   });
+          //   // There was an error in the REST server
+          // } else {
+          //   return data;
+          // }
+        // })
+        // // There was an error
+        // .catch(error => this.handleError(error))
+    // );
+  }
+
+  public getDownloadByHash(hash: string, filename: string): void {
+    
+    console.log('getDownloadByHash', hash, filename);
+    
+    // Get the base filename
+    filename = baseName(filename);
+
+    this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_by_hash/" + hash,
+           {responseType: 'text'})
+      .subscribe((res)=>{
+        console.log(res);
         // Convert base64 string to byte array
         var byteCharacters = atob(<any>res);
         var byteNumbers = new Array(byteCharacters.length);

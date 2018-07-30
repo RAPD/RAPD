@@ -37,4 +37,33 @@ router
     readstream.pipe(res);
   });
 
+router
+  .route("/download_by_hash/:hash")
+
+  // Get a file for download
+  .get(function(req, res) {
+    console.log("download_by_hash", req.params.hash);
+
+    var gridfs = Grid(mongoose.ctrl_conn.db);
+
+    gridfs.files.findOne({ 'metadata.hash': req.params.hash}, function (err, file) {
+      console.log(file);
+      var readstream = gridfs.createReadStream({
+        _id: file._id
+      });
+      req.on("error", function(err) {
+        console.error(err);
+        res.send(500, err);
+      });
+      readstream.on("error", function(err) {
+        console.error(err);
+        res.send(500, err);
+      });
+      console.log("Success");
+      readstream.pipe(res);
+    });
+
+    
+  });
+
 module.exports = router;

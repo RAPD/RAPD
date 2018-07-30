@@ -92,18 +92,17 @@ export class Pdbquery9a2e200Component implements OnInit {
   }
 
   // Start the download of data
-  initDownload(record: any) {
-    console.log(record);
-
+  initDownload(record:any) {
+    
     // Signal that the request has been made
     let snackBarRef = this.snackBar.open("Download request submitted", "Ok", {
       duration: 2000
     });
 
     // TODO
-    // this.rest_service
-    //   .getDownloadById(record._id, record.path)
-    //   .subscribe(result => {}, error => {});
+    this.rest_service
+      .getDownloadByHash(record.tar.hash, record.tar.path)
+      .subscribe(result => {}, error => {});
   }
 }
 
