@@ -51,19 +51,22 @@ import time
 import unittest
 import numpy
 import shlex
+import importlib
 
 # RAPD imports
 import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
 # import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
+#from plugins.subcontractors.rapd_cctbx import get_pdb_info
+from plugins.subcontractors.rapd_phaser import run_phaser_module
 
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 from utils.text import json
-#from bson.objectid import ObjectId
+from bson.objectid import ObjectId
 import utils.xutils as xutils
-import utils.processes as process
+from utils.processes import local_subprocess
 import info
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
@@ -117,9 +120,11 @@ class RapdPlugin(Process):
     do_molrep = True
     do_phaser = True
 
-    xtriage_output_raw = None
-    molrep_output_raw = None
-    phaser_results = None
+    #xtriage_output_raw = None
+    #molrep_output_raw = None
+    #phaser_results = None
+    
+    redis = False
 
     jobs = {}
 
@@ -131,7 +136,7 @@ class RapdPlugin(Process):
         "process": {}
     }
 
-    def __init__(self, command, tprint=False, logger=False, verbosity=False):
+    def __init__(self, command, processed_results=False, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
 
         # Keep track of start time
@@ -146,6 +151,9 @@ class RapdPlugin(Process):
             self.logger.debug("__init__")
         
         self.verbose = verbosity
+
+        # Used for sending results back to DB
+        self.processed_results = processed_results
 
         # Store tprint for use throughout
         if tprint:
@@ -169,6 +177,8 @@ class RapdPlugin(Process):
             "process_id": self.command.get("process_id"),
             "status": 1}
 
+        self.db_settings = self.command["input_data"].get("db_settings")
+
         # Start up processing
         Process.__init__(self, name="analysis")
 
@@ -188,8 +198,8 @@ class RapdPlugin(Process):
         self.tprint(arg=0, level="progress")
 
         # Handle sample type from commandline
-        if not self.command["preferences"]["sample_type"] == "default":
-            self.sample_type = self.command["preferences"]["sample_type"]
+        if not self.preferences["sample_type"] == "default":
+            self.sample_type = self.preferences["sample_type"]
 
         # Make the work_dir if it does not exist.
         if os.path.exists(self.command["directories"]["work"]) == False:
@@ -198,10 +208,11 @@ class RapdPlugin(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
+        self.data_file = self.command["input_data"]["datafile"]
+
         # Get information from the data file
         self.input_sg, self.cell, self.volume = \
-            xutils.get_mtz_info(
-                datafile=self.command["input_data"]["datafile"])
+            xutils.get_mtz_info(datafile=self.data_file)
 
         self.tprint("\nReading in datafile", level=30, color="blue")
         self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
@@ -210,9 +221,9 @@ class RapdPlugin(Process):
 
         # Handle ribosome sample types
         # FIX THIS SINCE IT WILL ALWAYS BE default!!
-        if (self.command["preferences"]["sample_type"] != "default" and \
+        if (self.preferences["sample_type"] != "default" and \
             self.volume > 25000000.0) or \
-            self.command["preferences"]["sample_type"] == "ribosome": #For 30S
+            self.preferences["sample_type"] == "ribosome": #For 30S
             self.sample_type = "ribosome"
             self.solvent_content = 0.64
             self.stats_timer = 300
@@ -221,8 +232,8 @@ class RapdPlugin(Process):
         self.tprint("  Solvent content: %s" % self.solvent_content, level=20, color="white")
 
         # Get some data back into the command
-        self.command["preferences"]["sample_type"] = self.sample_type
-        self.command["preferences"]["solvent_content"] = self.solvent_content
+        self.preferences["sample_type"] = self.sample_type
+        self.preferences["solvent_content"] = self.solvent_content
 
         # Construct the results object
         self.construct_results()
@@ -274,7 +285,8 @@ calculation",
 
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
-        self.results["preferences"] = self.command.get("preferences", {})
+        self.results["preferences"] = self.preferences
+        self.results["results"] = {"raw":{}, "parsed":{}}
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})
@@ -282,6 +294,20 @@ calculation",
         self.results["process"]["status"] = self.status
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        # Give it a result_id
+        self.results["process"]["result_id"] = str(ObjectId())
+        
+        # Add link to processed dataset
+        if self.processed_results:
+            #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
+            # This links to MongoDB results._id
+            self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
+            # This links to a session
+            self.results["process"]["session_id"] = self.processed_results.get("process", {}).get("session_id", False)
+            # Identify parent type
+            self.results["process"]["parent"] = self.processed_results.get("plugin", {})
+            # The repr
+            self.results["process"]["repr"] = self.processed_results.get("process", {}).get("repr", "Unknown")
 
         # Describe plugin
         self.results["plugin"] = {
@@ -291,14 +317,52 @@ calculation",
             "id":ID,
             "version":VERSION
         }
+    
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        # Create a pool connection
+        redis_database = importlib.import_module('database.redis_adapter')
+        #redis_database = redis_database.Database(settings=self.db_settings)
+        #self.redis = redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.db_settings,
+                                             logger=self.logger)
+
+    def send_results(self):
+        """Let everyone know we are working on this"""
+
+        self.logger.debug("send_results")
+
+        if self.preferences.get("run_mode") == "server":
+
+            self.logger.debug("Sending back on redis")
+
+            self.logger.debug(self.results)
+
+            #if results.get('results', False):
+            #    if results['results'].get('data_produced', False):
+            #        pprint(results['results'].get('data_produced'))
+
+            # Transcribe results
+            json_results = json.dumps(self.results)
+
+            # Get redis instance
+            if not self.redis:
+                self.connect_to_redis()
+
+            # Send results back
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
+
+    
     def update_status(self):
         """Update the status and send back results."""
         if self.status == 1:
             self.status = 25
         else:
             self.status += 25
+        if self.status > 90:
+            self.status = 90
         self.results["process"]["status"] = self.status
-        self.handle_return()
 
     def process(self):
         """Run plugin action"""
@@ -306,7 +370,7 @@ calculation",
             self.logger.debug("preprocess")
 
         self.tprint("\nAnalyzing the data file", level=30, color="blue")
-
+        
         self.run_xtriage()
         self.tprint(arg=10, level="progress")
         self.run_molrep()
@@ -316,10 +380,6 @@ calculation",
         # self.run_labelit_precession()
         # self.tprint(arg=40, level="progress")
 
-        # Run the pdbquery
-        if self.preferences.get("pdbquery", False):
-            self.process_pdb_query()
-        
         self.jobs_monitor()
 
     def postprocess(self):
@@ -343,10 +403,14 @@ calculation",
         self.write_json()
 
         # Notify inerested party
-        self.handle_return()
+        #self.handle_return()
+        self.send_results()
 
         # Write credits to screen
         self.print_credits()
+        
+        # Message in logger
+        self.logger.debug('Analysis finished')
 
     def jobs_monitor(self):
         """Monitor running jobs and finsh them when they complete."""
@@ -414,15 +478,15 @@ calculation",
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
-self.command["input_data"]["datafile"]
-        
+                  SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
+                  self.data_file
+
         if self.verbose and self.logger:
             self.logger.debug(command)
 
         pid_queue = Queue()
-        job = Process(target=process.local_subprocess, kwargs={'command': command,
-                                                               'pid_queue':pid_queue})
+        job = Process(target=local_subprocess, kwargs={'command': command,
+                                                        'pid_queue':pid_queue})
         job.start()
         self.jobs[job] = {'name': 'xtriage',
                           'pid': pid_queue.get()}
@@ -432,21 +496,23 @@ self.command["input_data"]["datafile"]
             self.logger.debug('finish_xtriage')
         # Read raw output
         if os.path.exists("logfile.log"):
-            self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
+            self.results["results"]["raw"]["xtriage"] = open("logfile.log", "r").readlines()
 
             # Move logfile.log
             shutil.move("logfile.log", "xtriage.log")
 
-            self.results["parsed"]["xtriage"] = \
-                xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
+            self.results["results"]["parsed"]["xtriage"] = \
+                xtriage.parse_raw_output(raw_output=self.results["results"]["raw"]["xtriage"],
                                         logger=self.logger)
         # No log file
         else:
-            self.results["raw"]["xtriage"] = False
-            self.results["parsed"]["xtriage"] = False
+            self.results["results"]["raw"]["xtriage"] = False
+            self.results["results"]["parsed"]["xtriage"] = False
 
-        # Update the status number and return results
+        # Update the status number
         self.update_status()
+        # return results
+        self.send_results()
 
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
@@ -459,15 +525,15 @@ self.command["input_data"]["datafile"]
                         level=30,
                         color="white")
 
-            command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
-                      % self.command["input_data"]["datafile"]
+            command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop" % \
+                      self.data_file
 
             molrep_queue = Queue()
-            job = Process(target=process.local_subprocess, kwargs={'command': command,
-                                                                   #'result_queue': self.molrep_queue,
-                                                                   #'logfile' : "molrep_selfrf.log",
-                                                                   'pid_queue':molrep_queue,
-                                                                   'shell': True})
+            job = Process(target=local_subprocess, kwargs={'command': command,
+                                                           #'result_queue': self.molrep_queue,
+                                                           #'logfile' : "molrep_selfrf.log",
+                                                           'pid_queue':molrep_queue,
+                                                           'shell': True})
             job.start()
             self.jobs[job] = {'name': 'molrep',
                               'pid': molrep_queue.get()}
@@ -480,7 +546,7 @@ self.command["input_data"]["datafile"]
         jobs = {}
         # Store raw output
         log = open('molrep.doc','r').readlines()
-        self.results["raw"]["molrep"] = log
+        self.results["results"]["raw"]["molrep"] = log
 
         # Parse the Molrep log
         parsed_molrep_results = molrep.parse_raw_output(log)
@@ -508,9 +574,9 @@ self.command["input_data"]["datafile"]
                                "molrep_rf_%s.jpg" % label]
 
                     results_queue[label] = tqueue()
-                    job = Thread(target=process.local_subprocess, kwargs={'command': command,
-                                                                           'result_queue': results_queue[label],
-                                                                           'pid_queue':results_queue[label]})
+                    job = Thread(target=local_subprocess, kwargs={'command': command,
+                                                                 'result_queue': results_queue[label],
+                                                                 'pid_queue':results_queue[label]})
                     job.start()
                     jobs[job] = {'name': label,
                                  'pid': results_queue[label].get()}
@@ -543,11 +609,34 @@ self.command["input_data"]["datafile"]
                             color="red")
                 parsed_molrep_results["self_rotation_image"] = False
 
-        self.results["parsed"]["molrep"] = parsed_molrep_results
+        self.results["results"]["parsed"]["molrep"] = parsed_molrep_results
         # Update the status number and return results
         self.update_status()
+        # return results
+        self.send_results()
 
-    def run_phaser_ncs(self):
+    def run_phaser_ncs_NEW(self): # USe module in plugins.subcontractors.python_phaser
+        """Run Phaser tNCS and anisotropy correction
+           This Python version is having problems generating a readable loggraph
+        """
+        if self.verbose and self.logger:
+            self.logger.debug("run_phaser_ncs")
+
+        if self.do_phaser:
+
+            self.tprint("  Analyzing NCS and anisotropy",
+                        level=30,
+                        color="white")
+
+            self.phaser_queue = Queue()
+            job = Process(target=run_phaser_module, kwargs={'data_file': self.data_file,
+                                                            'result_queue': self.phaser_queue,
+                                                            'tncs': True})
+            job.start()
+            self.jobs[job] = {'name': 'NCS',
+                              'pid': job.pid}
+
+    def run_phaser_ncs(self): # USe module in plugins.subcontractors.python_phaser
         """Run Phaser tNCS and anisotropy correction"""
         if self.verbose and self.logger:
             self.logger.debug("run_phaser_ncs")
@@ -559,14 +648,14 @@ self.command["input_data"]["datafile"]
                         color="white")
 
             command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
-                      self.command["input_data"]["datafile"]
+                      self.data_file
             
             self.phaser_queue = Queue()
-            job = Process(target=process.local_subprocess, kwargs={'command': command,
-                                                                   'result_queue': self.phaser_queue,
-                                                                   'logfile' : "phaser_ncs.log",
-                                                                   'pid_queue':self.phaser_queue,
-                                                                   'shell': True})
+            job = Process(target=local_subprocess, kwargs={'command': command,
+                                                           'result_queue': self.phaser_queue,
+                                                           'logfile' : "phaser_ncs.log",
+                                                           'pid_queue':self.phaser_queue,
+                                                           'shell': True})
             job.start()
             self.jobs[job] = {'name': 'NCS',
                               'pid': self.phaser_queue.get()}
@@ -577,12 +666,14 @@ self.command["input_data"]["datafile"]
 
         # Store raw output
         output = self.phaser_queue.get()
-        self.results["raw"]["phaser"] = output['stdout'].split("\n")
+        self.results["results"]["raw"]["phaser"] = output['stdout'].split("\n")
 
-        self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
+        self.results["results"]["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
 
         # Update the status number and return results
         self.update_status()
+        # return results
+        self.send_results()
 
     # def run_labelit_precession(self):
     #     """Run labelit to make precession photos"""
@@ -592,57 +683,6 @@ self.command["input_data"]["datafile"]
     #             "run":
     #         }], output=None, logger=self.logger)
 
-    def process_pdb_query(self):
-        """Prepare and run PDBQuery"""
-        self.logger.debug("process_pdb_query")
-
-        self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
-        self.tprint("  This can take a while...", level=30, color="white")
-
-        # Construct the pdbquery plugin command
-        class PdbqueryArgs(object):
-            """Object for command construction"""
-            clean = True
-            contaminants = True
-            datafile = self.command["input_data"]["datafile"]
-            dir_up = self.preferences.get("dir_up", False)
-            json = False
-            no_color = False
-            nproc = self.preferences.get("nproc", 1)
-            pdbs = False
-            progress = self.preferences.get("progress", False)
-            # return_queue = multiprocessing.Queue()
-            run_mode = None
-            search = True
-            test = True
-            verbose = True
-
-        # Set the run mode dependent on this plugin's run mode
-        run_mode = self.preferences.get("run_mode")
-        if run_mode in ("interactive", "subprocess-interactive"):
-            PdbqueryArgs.run_mode = "subprocess-interactive"
-        elif run_mode in ("subprocess", "json", "server"):
-            PdbqueryArgs.run_mode = "subprocess"
-
-        pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
-
-        # The pdbquery plugin
-        plugin = plugins.pdbquery.plugin
-
-        # Print out plugin info
-        self.tprint(arg="\nPlugin information", level=10, color="blue")
-        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
-        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
-
-        # Run the plugin
-        pdbquery_result = plugin.RapdPlugin(pdbquery_command,
-                                            self.tprint,
-                                            self.logger)
-
-        self.results["pdbquery"] = pdbquery_result
-
     def clean_up(self):
         """Clean up the working directory"""
 
@@ -651,7 +691,7 @@ self.command["input_data"]["datafile"]
 
         if self.preferences.get("clean", False):
 
-            self.logger.debug("Cleaning up Phaser files and folders")
+            self.logger.debug("Cleaning up Analysis files and folders")
             #TODO
             # Change to work dir
             os.chdir(self.command["directories"]["work"])
@@ -662,7 +702,7 @@ self.command["input_data"]["datafile"]
             # for target in files_to_clean:
             #     shutil.rmtree(target)
 
-    def handle_return(self):
+    def handle_return_OLD(self):
         """Output data to consumer"""
 
         self.logger.debug("handle_return")
@@ -708,7 +748,7 @@ self.command["input_data"]["datafile"]
     def print_xtriage_results(self):
         """Print out the xtriage results"""
 
-        xtriage_results = self.results["parsed"]["xtriage"]
+        xtriage_results = self.results["results"]["parsed"]["xtriage"]
 
         if xtriage_results:
 
@@ -766,9 +806,9 @@ self.command["input_data"]["datafile"]
 
             if self.preferences.get("show_plots", False):
 
-                if self.results["parsed"]["xtriage"]:
+                if self.results["results"]["parsed"]["xtriage"]:
 
-                    xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
+                    xtriage_plots = self.results["results"]["parsed"]["xtriage"]["plots"]
                     # pprint(xtriage_plots.keys())
 
                     self.tprint("\nPlots", level=99, color="blue")

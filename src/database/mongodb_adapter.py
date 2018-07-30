@@ -341,14 +341,18 @@ class Database(object):
         plugin_result -- dict of information from plugin - must have a process key pointing to entry
         """
 
-        self.logger.debug("save_plugin_result %s", plugin_result["process"])
+        self.logger.debug("save_plugin_result %s:%s", plugin_result["plugin"]["type"], plugin_result["process"])
+
+        if plugin_result["plugin"]["type"] in ("PDBQUERY", "ANALYSIS"):
+            self.logger.debug(plugin_result)
 
         # Connect to the database
         db = self.get_db_connection()
         fs = gridfs.GridFSBucket(db)
 
         # Clear _id from plugin_result
-        del plugin_result["_id"]
+        if plugin_result.get("_id"):
+            del plugin_result["_id"]
 
         # Add the current timestamp to the plugin_result
         now = datetime.datetime.utcnow()
@@ -439,6 +443,8 @@ class Database(object):
                     else:
                         plugin_result["results"][file_type][index]["_id"] = None
 
+
+
         #
         # Add to plugin-specific results
         #
@@ -449,8 +455,8 @@ class Database(object):
                           _result_id)
 
         # Debugging call to query db
-        debug_result = db[collection_name].find_one({"process.result_id":_result_id})
-        self.logger.debug("Debugging query for previous plugin result %s" % debug_result)
+        # debug_result = db[collection_name].find_one({"process.result_id":_result_id})
+        # self.logger.debug("Found previous plugin result %s" % debug_result._id)
 
         # Update the plugin-specific table
         result1 = db[collection_name].update_one(
@@ -468,9 +474,11 @@ class Database(object):
         else:
             plugin_result_id = result1.upserted_id
             self.logger.debug("%s _id  from upserting %s", collection_name, plugin_result_id)
+        # Add _id to plugin_result
+        plugin_result["_id"] = get_object_id(plugin_result_id)
 
         #
-        # Update results
+        # Update results collection
         #
         result2 = db.results.update_one(
             {"_id":_result_id},
@@ -480,16 +488,16 @@ class Database(object):
                 "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
-                "repr":plugin_result["process"]["repr"],
+                "repr":plugin_result["process"].get("repr", "Unknown"),
                 "result_id":get_object_id(plugin_result_id),
                 "session_id":get_object_id(plugin_result["process"]["session_id"]),
-                "status":plugin_result["process"]["status"],
+                "status":plugin_result["process"].get("status", 0),
                 "timestamp":now,
                 }
             },
             upsert=True)
 
-        # Get the _id from updated entry in plugin_results
+        # Get the _id from updated entry in results
         # Upserted
         if result2.upserted_id:
             result_id = result2.upserted_id
@@ -499,6 +507,10 @@ class Database(object):
             result_id = db.results.find_one(
                 {"result_id":get_object_id(plugin_result_id)},
                 {"_id":1})["_id"]
+
+        # Update parent processes
+        if plugin_result.get("process", {}).get("parent_id", False):
+            self.updateParentProcess(plugin_result)
 
         # Update the session last_process field
         db.sessions.update_one(
@@ -525,6 +537,33 @@ class Database(object):
     #         return(narray.max(), narray.min(), narray.mean(), narray.std())
     #     except:
     #         return(0, 0, 0, 0)
+
+    def updateParentProcess(self, plugin_result):
+        """
+        Update a parent process with the result now passed in
+
+        Keyword arguments
+        plugin_result -- dict of information from plugin
+        """
+
+        self.logger.debug("updateParentProcess")
+
+        # Get connection to database
+        db = self.get_db_connection()
+
+        # Derive parent collection
+        parent_data = plugin_result.get("process").get("parent")
+        parent_collection = (parent_data.get('data_type')+"_"+parent_data.get('type')+"_results").lower()
+        parent_result_id = plugin_result.get("process").get("parent_id")
+
+        # Derive document key
+        child_key = ("results."+plugin_result.get("plugin").get("type")).lower()
+
+        # Update the parent
+        db[parent_collection].update_one({"process.result_id":parent_result_id},
+                                         {"$set":{
+                                             child_key:plugin_result["_id"]
+                                         }})
 
     ############################################################################
     # Functions for runs                                                       #

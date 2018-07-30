@@ -54,10 +54,16 @@ CIF_CACHE = "/tmp/rapd_cache/cif_files"
 TEST_CACHE = "/tmp/rapd_cache/test_data"
 
 # NE-CAT PDBQ Server
-PDBQ_SERVER = "https://rapd.nec.aps.anl.gov/pdbq"
+# tries in order
+#PDBQ_SERVER = "https://rapd.nec.aps.anl.gov/pdbq"
+PDBQ_SERVER = ["https://rapd2.nec.aps.anl.gov/pdbq",
+               "https://wwwdev.ebi.ac.uk/pdbe/search/pdb",
+               "http://www.rcsb.org/pdb/rest"]
+               #"https://www.ebi.ac.uk/pdbe",
 
 # Timeout for phaser MR process
 PHASER_TIMEOUT = 5000
+#PHASER_TIMEOUT = 10
 
 # Time outs for Autointdex+strategies.
 LABELIT_TIMEOUT = 120

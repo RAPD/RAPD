@@ -60,7 +60,9 @@ XDSINP0 = detector.XDSINP
 # only if there are differnces or new keywords.
 # The tuple should contain two items (key and value)
 # ie. XDSINP1 = [("SEPMIN", "4"),]
-XDSINP1 = [(),
+XDSINP1 = [
+          # Signal RAPD2 job
+          ('CLUSTER_NODES', 'RAPD2'),
           ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)

@@ -115,8 +115,8 @@ class Database:
         Return a dict containing keys and values providing information about
         the state of the connection to the Redis server.
         """
-
-        self.logger.debug("state_connection")
+        if self.logger:
+            self.logger.debug("state_connection")
 
         # conn_kwargs = self._pool.connection_kwargs
         # server_addr = (conn_kwargs["host"], conn_kwargs["port"])
@@ -148,14 +148,15 @@ class Database:
     def state_server(self):
         """Return a dict containing keys and values providing some properties
         about the the Redis server."""
-
-        self.logger.debug("state_server")
+        if self.logger:
+            self.logger.debug("state_server")
 
         try:
             # connection = redis.Redis(connection_pool=self._pool)
             info = self.redis.info()
         except redis.exceptions.ConnectionError as e:
-            self.logger.error("Redis info acquisition failure: {}".format(e))
+            if self.logger:
+                self.logger.error("Redis info acquisition failure: {}".format(e))
             # intentionally not self.logger.exception
             state = {}
         else:
@@ -193,7 +194,7 @@ class Database:
                 self.host =      None
                 self.port =      None
                 self.db =        None
-                self.password =  settings["REDIS_PASSWORD"] 
+                self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = settings["REDIS_SENTINEL_HOSTS"] 
                 self.master =    settings["REDIS_MASTER_NAME"] 
             # Standard
@@ -201,7 +202,7 @@ class Database:
                 self.host =      settings["REDIS_HOST"]
                 self.port =      settings["REDIS_PORT"]
                 self.db =        settings["REDIS_DB"]
-                self.password =  settings["REDIS_PASSWORD"] 
+                self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = None
                 self.master =    None
 
@@ -250,7 +251,8 @@ class Database:
                     # socket_timeout is not set to a higher value because it blocks.
                 except redis.exceptions.ConnectionError as e:
                     print "except"
-                    self.logger.debug("Connection error {}".format(e))
+                    if self.logger:
+                        self.logger.debug("Connection error {}".format(e))
                     time.sleep(1)
                     attempt_count += 1
                     # self._raise_ConnectionError(e)
@@ -292,8 +294,9 @@ class Database:
         #     self._ConnectionError_last_log_time = time.time()
         #     logger = self.logger.info
         # else:
-        logger = self.logger.debug
-        logger("{}".format(err_msg))
+        if self.logger:
+            logger = self.logger.debug
+            logger("{}".format(err_msg))
 
         raise self.ConnectionError(err_msg)
 
@@ -342,7 +345,14 @@ class Database:
             return master 
         else:
             self._raise_ConnectionError("Sentinels not properly defined")
-
+    
+    #############
+    # PIPELINE Methods
+    #############
+    
+    def pipeline(self):
+        """return a pipeline instance"""
+        return self.redis.pipeline()
 
     #############
     # GET Methods
@@ -463,8 +473,8 @@ class Database:
         """
         Set the indicated key value pair.
         """
-
-        self.logger.debug("set key:{} value:{}".format(key, value))
+        if self.logger:
+            self.logger.debug("set key:{} value:{}".format(key, value))
 
         self.redis.set(key, str(value))
 
@@ -527,10 +537,43 @@ class Database:
     #             time.sleep(ATTEMPT_PAUSE)
     #     else:
     #         self._raise_ConnectionError(error)
+    @connectionErrorWrapper
+    def setex(self, key, expire_time, value):
+        """
+        Set the indicated key value pair with expire time.
+        """
+        #if self.logger:
+        #    self.logger.debug("set key:{} value:{}".format(key, value))
+
+        self.redis.setex(key, int(expire_time), value)
+    
+    #############
+    # KEY Methods
+    #############
+    @connectionErrorWrapper
+    def keys(self, template):
+        """Searches for keys fitting template."""
+        #self.logger.debug("set key:{} value:{}".format(key, value))
+        return self.redis.keys(template)
+    
+    @connectionErrorWrapper
+    def delete(self, key):
+        """Delete a key"""
+        #self.logger.debug("set key:{} value:{}".format(key, value))
+        return self.redis.delete(key)
+
 
     ##############
     # LIST Methods
     ##############
+    @connectionErrorWrapper
+    def llen(self, key):
+        """
+        LLEN get length of list
+        """
+        value = self.redis.llen(key)
+        return value
+
     @connectionErrorWrapper
     def lpop(self, key):
         """
@@ -547,12 +590,27 @@ class Database:
         self.redis.lpush(key, value)
 
     @connectionErrorWrapper
+    def brpop(self, key):
+        """
+        RPOP a value off a given list
+        """
+        value = self.redis.brpop(key)
+        return value
+    @connectionErrorWrapper
     def rpop(self, key):
         """
         RPOP a value off a given list
         """
         value = self.redis.rpop(key)
         return value
+    
+    @connectionErrorWrapper
+    def rpoplpush(self, list1, list2):
+        """
+        RPOPLPUSH pop a value off a given list and push on another list
+        """
+        value = self.redis.rpoplpush(list1, list2)
+        #return value
                
     ##############
     # HASH Methods

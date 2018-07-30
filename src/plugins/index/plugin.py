@@ -280,7 +280,7 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        self.Pool = Pool(self.preferences.get("nproc", 8))
+        #self.Pool = Pool(self.preferences.get("nproc", 8))
 
         # Set timer for distl. "False" will disable.
         #if self.image2:
@@ -333,6 +333,7 @@ class RapdPlugin(Process):
         self.spacegroup = self.preferences.get("spacegroup", False)
         #self.flux = str(self.image1.get("flux", '3E10'))
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
+        self.clean = self.preferences.get("cleanup", True)
 
         Process.__init__(self, name="AutoindexingStrategy")
         # self.start() is called by the initiator of this script
@@ -444,8 +445,11 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = redis_database.connect_to_redis()
+        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
     def send_results(self):
         """Let everyone know we are working on this"""

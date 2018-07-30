@@ -72,7 +72,6 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
                 #'BEAM_CENTER_X' : (163.2757684023,
                 #                 0.0003178917,
@@ -115,16 +114,24 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
-                'BEAM_CENTER_X' : (163.2757684023,
-                                 0.0003178917,
-                                 -5.0236657815e-06,
-                                 5.8164218288e-09),
-                'BEAM_CENTER_Y' : (155.1904879862,
-                                 -0.0014631216,
-                                 8.60559283424e-07,
-                                 -2.5709929645e-10)
+                'BEAM_CENTER_X' : (163.89684278768254,
+                                 -0.0015633263872817393,
+                                 -2.5624797406798966e-06,
+                                 3.9573203673686396e-09),
+                'BEAM_CENTER_Y' : (154.56630526168037,
+                                 -0.0004545100450374418,
+                                 -1.1274954741267088e-06,
+                                 8.4937063175024929e-10)
+                
+                #'BEAM_CENTER_X' : (163.2757684023,
+                #                 0.0003178917,
+                #                 -5.0236657815e-06,
+                #                 5.8164218288e-09),
+                #'BEAM_CENTER_Y' : (155.1904879862,
+                #                 -0.0014631216,
+                #                 8.60559283424e-07,
+                #                 -2.5709929645e-10)
                 },
              }
 # Copy E to T for testing
@@ -167,6 +174,8 @@ RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
 RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
                            "plugins")
 
+# rapd.python path
+RAPD_PYTHON_PATH = '/gpfs6/users/necat/Jon/Programs/RAPD2/RAPD/bin/rapd2.python'
 
 # Method RAPD uses to track groups
 #   uid -- the uid of data root directory corresponds to session.group_id
@@ -371,10 +380,10 @@ CLOUD_MONITOR_SETTINGS = {
         "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
         #"LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
         "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
-        "UI_HOST":UI_HOST,
-        "UI_PORT":UI_PORT,
-        "UI_USER":UI_USER,
-        "UI_PASSWORD":UI_PASSWORD,
+        #"UI_HOST":UI_HOST,
+        #"UI_PORT":UI_PORT,
+        #"UI_USER":UI_USER,
+        #"UI_PASSWORD":UI_PASSWORD,
         #"UPLOAD_DIR":UPLOAD_DIR
         }
 
