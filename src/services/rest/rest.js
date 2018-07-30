@@ -152,6 +152,7 @@ var apiRoutes = express.Router(); // get an instance of the express Router
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
   console.log(req.method);
+  console.log(">>1<<");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
@@ -194,7 +195,7 @@ apiRoutes.post("/authenticate", function(req, res) {
         console.log("user:", user);
 
         // create a token
-        var token = jwt.sign(user, app.get("superSecret"), {
+        var token = jwt.sign(user.toJSON(), app.get("superSecret"), {
           expiresIn: 86400 // expires in 24 hours
         });
 
@@ -292,7 +293,7 @@ apiRoutes.post("/authenticate", function(req, res) {
 
           return false;
 
-          // AUTHENTICATED - now get Mongo info on user/group
+        // AUTHENTICATED - now get Mongo info on user/group
         } else {
           // Fetch user
           ldap_client.search(
@@ -539,8 +540,11 @@ apiRoutes.post("/authenticate", function(req, res) {
 
 // route to authenticate a user (POST api/requestpass)
 apiRoutes.post("/requestpass", function(req, res) {
-  // console.log('requestpass');
-  // console.log(req.body);
+  console.log(">>2<<");
+  console.log('requestpass');
+  console.log(">>3<<");
+  console.log(req.body);
+  console.log(">>4<<");
   if (config.authenticate_mode === "mongo") {
     User.findOne({ email: req.body.email }).exec(function(err, user) {
       if (err) {

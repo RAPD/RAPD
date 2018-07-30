@@ -19,8 +19,8 @@ router
 
   // get all the sessions (accessed at GET api/sessions)
   .get(function(req, res) {
-    // console.log('In /sessions');
-    // console.log(req.decoded);
+    console.log('In /sessions');
+    console.log(req);
 
     // Sessions for the user's groups
     var query_params;

@@ -18,7 +18,6 @@ export class AuthService implements CanActivate {
   helper = new JwtHelperService();
 
   constructor(private globals_service: GlobalsService,
-              // public http: Http,
               private auth_http: HttpClient,
               private router: Router) { }
 
@@ -28,14 +27,21 @@ export class AuthService implements CanActivate {
 
   public login(credentials): Observable<any> {
 
-    let httpParams = new HttpParams()
-                        .set('uid', credentials.uid)
-                        .set('email', credentials.email)
-                        .set('password', credentials.password);
+    // let httpParams = new HttpParams()
+    //                        .set('uid', credentials.uid)
+    //                        .set('email', credentials.email)
+    //                        .set('password', credentials.password);
+
+    // const headers = new HttpHeaders()
+    //         .set('Content-Type', 'application/application/json');
 
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'authenticate',
-      httpParams
+      {
+        email:credentials.email,
+        password:credentials.password,
+        uid:credentials.uid
+      }
     )
     .map(res => this.handleAuth(res))
     .catch(error => this.handleError(error));
@@ -45,19 +51,18 @@ export class AuthService implements CanActivate {
 
     console.log('requestPass', credentials);
 
-    let creds = 'email=' + credentials.email;
-    // console.log(creds);
+    // let httpParams = new HttpParams()
+    //                        .set('email', credentials.email);
 
-    let header = new HttpHeaders();
-    header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
-    console.log(header);
+    // const headers = new HttpHeaders()
+    //   .set('Content-Type', 'application/application/json');
 
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'requestpass',
-      creds,
-      // {headers: header}
+      {
+        email:credentials.email
+      }
     )
-    // .map(res => res.json())
     .map(res => this.handlePassReq(res))
     .catch(error => this.handleError(error));
   }
@@ -66,17 +71,23 @@ export class AuthService implements CanActivate {
 
     let profile = JSON.parse(localStorage.getItem('profile'));
 
-    let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
+    // let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
 
-    let header = new HttpHeaders();
-    header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
+    // let header = new HttpHeaders();
+    // header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
+
+    // const headers = new HttpHeaders()
+                          // .set('Content-Type', 'application/x-www-form-urlencoded');
+
+    let httpParams = new HttpParams()
+                           .set('email', profile.email)
+                           .set('password', credentials.password);
 
     return this.auth_http.post(
       this.globals_service.site.restApiUrl + 'changepass',
-      creds,
-      // {headers: header}
+      httpParams,
+      // {headers}
     )
-    // .map(res => res.json())
     .map(res => this.handleChangePassReq(res))
     .catch(error => this.handleError(error));
   }
@@ -122,10 +133,10 @@ export class AuthService implements CanActivate {
   handlePassReq(res) {
 
     // Convert to JSON
-    let res_json = res.json();
+    // let res_json = res.json();
     // console.log(res_json);
 
-    if (res_json.success === true) {
+    if (res.success === true) {
       // Decode token
       // let token = res_json.token;
 
@@ -143,10 +154,10 @@ export class AuthService implements CanActivate {
       // localStorage.setItem('profile', JSON.stringify(profile));
 
       // Return for consumer
-      return res_json;
+      return res;
     } else {
       // Return for consumer
-      return res_json;
+      return res;
     }
   }
 
