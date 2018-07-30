@@ -38,8 +38,15 @@
           </h3>
         </div>
         <div class="rapd-select-panel">
-          <mat-select placeholder="View mode" floatPlaceholder="auto" (selectionChange)="onViewModeSelect($event)" [(value)]="view_mode"
-            name="view_mode" value="summary">
+          <mat-select 
+            class="rapd-matselect-panel"
+            placeholder="View mode"
+            floatPlaceholder="auto" 
+            (selectionChange)="onViewModeSelect($event)" 
+            [(value)]="view_mode"
+            style="display:initial;"
+            name="view_mode"
+            value="summary">
             <mat-option value="summary">Summary</mat-option>
             <mat-option value="analysis">Analysis</mat-option>
             <mat-option value="pdbquery">PDB Query</mat-option>

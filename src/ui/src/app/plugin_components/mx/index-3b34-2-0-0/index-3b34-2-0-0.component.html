@@ -33,11 +33,13 @@
         </div>
         <div class="rapd-select-panel">
           <mat-select
+            class="rapd-matselect-panel"
             placeholder="View mode"
             floatPlaceholder="auto"
             [(ngModel)]="view_mode"
             name="view_mode"
-            value="summary">
+            value="summary"
+            style="display:initial;">
             <mat-option value="summary">Summary</mat-option>
             <mat-option value="image">Image</mat-option>
             <mat-option value="details">Details</mat-option>
