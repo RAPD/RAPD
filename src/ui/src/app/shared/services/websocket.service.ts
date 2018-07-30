@@ -64,6 +64,7 @@ export class WebsocketService {
 
     // What to do with the message
     this.ws.onmessage = function(message: MessageEvent) {
+      console.log(message);
       self.handleWebsocketMessage(message.data);
     };
 

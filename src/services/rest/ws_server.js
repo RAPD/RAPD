@@ -188,8 +188,10 @@ var parse_message = function(channel, message) {
           // If result has a parent create a detailed result
           if (message.process.parent_id) {
             // Get the response to send to the websocket
-            var response = get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id);
-            return_array.push(["result_details", response]);
+            get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id)
+            .then(function(response) {
+              return_array.push(["result_details", response]);
+            });
           }
 
           // console.log('return_array now has length', return_array.length);
@@ -297,9 +299,15 @@ var populate_child_result = function(result_id, mode) {
 };
 
 function get_detailed_result(data_type, plugin_type, result_id) {
+  
+  console.log('get_detailed_result', data_type, plugin_type, result_id);
+  
+  var deferred = Q.defer();
+
   // Create a mongoose model for the result
-  let name = data_type + "_" + plugin_type + "_result";
+  let name = (data_type + "_" + plugin_type + "_result").toLowerCase();
   let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
+  console.log(name, collection_name);
   var ResultModel;
   try {
     if (mongoose.ctrl_conn.model(collection_name)) {
@@ -329,15 +337,15 @@ function get_detailed_result(data_type, plugin_type, result_id) {
     // Error
     if (err) {
       console.error(err);
-      return {
+      deferred.resolve({
         msg_type: "result_details",
         success: false,
         results: err
-      };
+      });
 
-      // No error
+    // No error
     } else {
-      // console.log(detailed_result);
+      console.log(detailed_result);
       if (detailed_result) {
         // console.log(Object.keys(detailed_result));
         // console.log(detailed_result._doc);
@@ -367,26 +375,30 @@ function get_detailed_result(data_type, plugin_type, result_id) {
             detailed_result._doc.results.analysis = results[2];
             detailed_result._doc.results.pdbquery = results[3];
 
+            console.log('result_details', detailed_result);
+
             // Send back
-            return {
+            deferred.resolve({
               msg_type: "result_details",
               success: true,
               results: detailed_result
-            };
+            });
           });
 
           // No 'process' in detailed_result._doc
         } else {
           // Send back
-          return {
+          deferred.resolve({
             msg_type: "result_details",
             success: true,
             results: detailed_result
-          };
+          });
         }
       }
     }
   });
+
+  return deferred.promise;
 }
 
 // The websocket code
@@ -581,19 +593,20 @@ function Wss(opt, callback) {
             console.log("get_result_details", data);
 
             // Get the response to send to the websocket
-            var response = get_detailed_result(data.data_type, data.plugin_type, data._id);
+            get_detailed_result(data.data_type, data.plugin_type, data._id)
+            .then(function(response) {
+              // Send response over the wire
+              console.log('response', response);
+              ws.send(JSON.stringify(response));
 
-            // Send response over the wire
-            ws.send(JSON.stringify(response));
-
-            // Register activity
-            var grd_activity = new Activity({
-              source: "websocket",
-              type: "get_result_details",
-              subtype: data.data_type + "_" + data.plugin_type,
-              user: ws.session.token._doc._id
-            }).save();
-
+              // Register activity
+              var grd_activity = new Activity({
+                source: "websocket",
+                type: "get_result_details",
+                subtype: data.data_type + "_" + data.plugin_type,
+                user: ws.session.token._doc._id
+              }).save();
+            });
             break;
 
           // Set the session id for the connected websocket
