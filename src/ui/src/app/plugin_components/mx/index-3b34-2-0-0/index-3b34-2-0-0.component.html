@@ -202,17 +202,19 @@
           </div>
           <div *ngIf="full_result.results.plots" fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
             <div fxFlex="none" class="rapd-plot-header">
-              <div class="rapd-chart-title-panel">
-                <h3>{{selected_plot_label}}</h3>
+              
+              <div class="rapd-titleselect-panel">
+                <mat-select
+                class="rapd-matselect-panel"
+                placeholder="Select plot"
+                (selectionChange)="setPlot(selected_plot)"
+                [(ngModel)]="selected_plot"
+                name="plot">
+                <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                </mat-select>
               </div>
               <div class="rapd-chart-select-panel">
-                <mat-select
-                  placeholder="Select plot"
-                  (selectionChange)="setPlot(selected_plot)"
-                  [(ngModel)]="selected_plot"
-                  name="plot">
-                  <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
-                </mat-select>
+                <!-- <h3>{{selected_plot}}</h3> -->
               </div>
             </div>
             <div fxFlex="grow">

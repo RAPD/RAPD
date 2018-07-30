@@ -42,7 +42,7 @@
                             <ng-container matColumnDef="actions">
                                 <th mat-header-cell *matHeaderCellDef> Actions </th>
                                 <td mat-cell *matCellDef="let element">
-                                    <button mat-button (click)="initDownload(element)">
+                                    <button *ngIf="element.pdb !== undefined" mat-button (click)="initDownload(element)">
                                         <mat-icon>get_app</mat-icon>Download</button>
                                 </td>
                             </ng-container>

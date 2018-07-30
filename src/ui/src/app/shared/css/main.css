@@ -439,6 +439,20 @@ div.rapd-result-paragraph {
 }
 
 /* div that holds a select that looks separate */
+.rapd-titleselect-panel {
+  border-radius: 2px;
+  /*box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);*/
+  /*box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
+              0 2px 2px 0 rgba(0,0,0,.14),
+              0 1px 5px 0 rgba(0,0,0,.12);*/
+  float: left;
+  margin: 1.1em 0 1em 0;
+  padding: 1px 5px 1px 5px;
+  width: 12em;
+}
+
 .rapd-select-panel {
   border-radius: 2px;
   /*box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
@@ -455,6 +469,15 @@ div.rapd-result-paragraph {
 
 .rapd-select-panel .mat-select-value {
   text-align:right;
+}
+
+/* The mat-select boxes above plots */
+.rapd-matselect-panel {
+  width:10em;
+  font-size:1.3em;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  padding:0.5em;
 }
 
 
@@ -479,8 +502,9 @@ div.rapd-result-paragraph {
 
 div.rapd-plot-header {
   /*margint: 30px;*/
-  padding: 1em 1em 1em 1em;
+  /* padding: 1em 1em 1em 1em; */
   width: 100%;
+  margin-left: 3.5em;
 }
 
 div.chart-container {

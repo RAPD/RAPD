@@ -68,7 +68,7 @@ export class AnalysisF068200Component implements OnInit {
 
   setPlot(plot_key:string) {
 
-    // console.log('setPlot', plot_key);
+    console.log('setPlot', plot_key);
 
     // Simplify
     let plot_data = this.result.results.parsed.xtriage.plots[plot_key];
