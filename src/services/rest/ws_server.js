@@ -578,12 +578,14 @@ function Wss(opt, callback) {
               }
             }
 
+            console.log(ws.session.token);
+
             // Register activity
             let new_activity = new Activity({
               source: "websocket",
               type: "get_results",
               subtype: data.data_type + "_" + data.plugin_type,
-              user: ws.session.token._doc._id
+              user: ws.session.token._id
             }).save();
 
             break;
@@ -604,7 +606,7 @@ function Wss(opt, callback) {
                 source: "websocket",
                 type: "get_result_details",
                 subtype: data.data_type + "_" + data.plugin_type,
-                user: ws.session.token._doc._id
+                user: ws.session.token._id
               }).save();
             });
             break;

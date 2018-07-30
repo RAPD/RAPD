@@ -6,13 +6,14 @@
                     <div>
                         <h3>Contaminant Search</h3>
 
-                        <table mat-table class="rapd-table" [dataSource]="contaminants" matSort (matSortChange)="sortData($event, 'contaminants')" matSortActive="gain" matSortDirection="desc">
-                          
+                        <table mat-table class="rapd-table" [dataSource]="contaminants" matSort (matSortChange)="sortData($event, 'contaminants')"
+                            matSortActive="gain" matSortDirection="desc">
+
                             <ng-container matColumnDef="ID">
                                 <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
                                 <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
                             </ng-container>
-                          
+
                             <ng-container matColumnDef="description">
                                 <th mat-header-cell *matHeaderCellDef style="text-align: center;"> Description </th>
                                 <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
@@ -40,12 +41,16 @@
 
                             <ng-container matColumnDef="actions">
                                 <th mat-header-cell *matHeaderCellDef> Actions </th>
-                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" (click)="initDownload(element)" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                                <td mat-cell *matCellDef="let element">
+                                    <button *ngIf="element.pdb !== undefined" (click)="initDownload(element)" mat-button>
+                                        <mat-icon>get_app</mat-icon>
+                                    </button>
+                                </td>
                             </ng-container>
 
                             <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
                             <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
-                          </table>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -55,14 +60,15 @@
                 <div fxFlex="none">
                     <div>
                         <h3>Search Based On Unit Cell Similarity</h3>
-                        
-                        <table mat-table class="rapd-table" [dataSource]="searches" matSort (matSortChange)="sortData($event, 'searches')" matSortActive="gain" matSortDirection="desc">
-                          
+
+                        <table mat-table class="rapd-table" [dataSource]="searches" matSort (matSortChange)="sortData($event, 'searches')" matSortActive="gain"
+                            matSortDirection="desc">
+
                             <ng-container matColumnDef="ID">
                                 <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
                                 <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
                             </ng-container>
-                          
+
                             <ng-container matColumnDef="description">
                                 <th mat-header-cell *matHeaderCellDef style="text-align: center;"> Description </th>
                                 <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
@@ -90,13 +96,17 @@
 
                             <ng-container matColumnDef="actions">
                                 <th mat-header-cell *matHeaderCellDef> Actions </th>
-                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                                <td mat-cell *matCellDef="let element">
+                                    <button *ngIf="element.pdb !== undefined" (click)="initDownload(element)" mat-button>
+                                        <mat-icon>get_app</mat-icon>
+                                    </button>
+                                </td>
                             </ng-container>
 
-                          
+
                             <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
                             <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
-                          </table>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -106,14 +116,15 @@
                 <div fxFlex="none">
                     <div>
                         <h3>Search with Submitted PDB</h3>
-                        
-                        <table mat-table class="rapd-table" [dataSource]="customs" matSort (matSortChange)="sortData($event, 'customs')" matSortActive="gain" matSortDirection="desc">
-                          
+
+                        <table mat-table class="rapd-table" [dataSource]="customs" matSort (matSortChange)="sortData($event, 'customs')" matSortActive="gain"
+                            matSortDirection="desc">
+
                             <ng-container matColumnDef="ID">
                                 <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
                                 <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
                             </ng-container>
-                          
+
                             <ng-container matColumnDef="description">
                                 <th mat-header-cell *matHeaderCellDef style="text-align: center;"> Description </th>
                                 <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
@@ -141,24 +152,28 @@
 
                             <ng-container matColumnDef="actions">
                                 <th mat-header-cell *matHeaderCellDef> Actions </th>
-                                <td mat-cell *matCellDef="let element"> <button *ngIf="element.pdb !== undefined" mat-button><mat-icon>get_app</mat-icon></button> </td>
+                                <td mat-cell *matCellDef="let element">
+                                    <button *ngIf="element.pdb !== undefined" (click)="initDownload(element)" mat-button>
+                                        <mat-icon>get_app</mat-icon>
+                                    </button>
+                                </td>
                             </ng-container>
 
                             <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
                             <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
-                          </table>
+                        </table>
                     </div>
                 </div>
             </div>
         </mat-tab>
         <mat-tab label="Raw">
-                <div fxLayout="row" fxLayoutGap="10px">
-                    <div fxFlex="none">
-                        <div>
-                            <pre>{{result | json}}</pre>
-                        </div>
+            <div fxLayout="row" fxLayoutGap="10px">
+                <div fxFlex="none">
+                    <div>
+                        <pre>{{result | json}}</pre>
                     </div>
                 </div>
-            </mat-tab>
+            </div>
+        </mat-tab>
     </mat-tab-group>
 </div>

@@ -1,32 +1,29 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 // import { Headers,
 //          Http } from '@angular/http';
-import { CanActivate,
-         Router } from '@angular/router';
+import { CanActivate, Router } from "@angular/router";
 
-import { Observable } from 'rxjs/Observable';
-import { HttpClient,
-         HttpHeaders,
-         HttpParams } from '@angular/common/http';
-import { JwtHelperService } from '@auth0/angular-jwt';
+import { Observable } from "rxjs/Observable";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { JwtHelperService } from "@auth0/angular-jwt";
 
-import { GlobalsService } from './globals.service';
+import { GlobalsService } from "./globals.service";
 
 @Injectable()
 export class AuthService implements CanActivate {
-
   helper = new JwtHelperService();
 
-  constructor(private globals_service: GlobalsService,
-              private auth_http: HttpClient,
-              private router: Router) { }
+  constructor(
+    private globals_service: GlobalsService,
+    private auth_http: HttpClient,
+    private router: Router
+  ) {}
 
   canActivate() {
     return this.authenticated();
   }
 
   public login(credentials): Observable<any> {
-
     // let httpParams = new HttpParams()
     //                        .set('uid', credentials.uid)
     //                        .set('email', credentials.email)
@@ -35,21 +32,18 @@ export class AuthService implements CanActivate {
     // const headers = new HttpHeaders()
     //         .set('Content-Type', 'application/application/json');
 
-    return this.auth_http.post(
-      this.globals_service.site.restApiUrl + 'authenticate',
-      {
-        email:credentials.email,
-        password:credentials.password,
-        uid:credentials.uid
-      }
-    )
-    .map(res => this.handleAuth(res))
-    .catch(error => this.handleError(error));
+    return this.auth_http
+      .post(this.globals_service.site.restApiUrl + "authenticate", {
+        email: credentials.email,
+        password: credentials.password,
+        uid: credentials.uid
+      })
+      .map(res => this.handleAuth(res))
+      .catch(error => this.handleError(error));
   }
 
   public requestPass(credentials): Observable<any> {
-
-    console.log('requestPass', credentials);
+    console.log("requestPass", credentials);
 
     // let httpParams = new HttpParams()
     //                        .set('email', credentials.email);
@@ -57,19 +51,16 @@ export class AuthService implements CanActivate {
     // const headers = new HttpHeaders()
     //   .set('Content-Type', 'application/application/json');
 
-    return this.auth_http.post(
-      this.globals_service.site.restApiUrl + 'requestpass',
-      {
-        email:credentials.email
-      }
-    )
-    .map(res => this.handlePassReq(res))
-    .catch(error => this.handleError(error));
+    return this.auth_http
+      .post(this.globals_service.site.restApiUrl + "requestpass", {
+        email: credentials.email
+      })
+      .map(res => this.handlePassReq(res))
+      .catch(error => this.handleError(error));
   }
 
   public changePass(credentials): Observable<any> {
-
-    let profile = JSON.parse(localStorage.getItem('profile'));
+    const profile = JSON.parse(localStorage.getItem("profile"));
 
     // let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
 
@@ -77,24 +68,23 @@ export class AuthService implements CanActivate {
     // header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
 
     // const headers = new HttpHeaders()
-                          // .set('Content-Type', 'application/x-www-form-urlencoded');
+    // .set('Content-Type', 'application/x-www-form-urlencoded');
 
-    let httpParams = new HttpParams()
-                           .set('email', profile.email)
-                           .set('password', credentials.password);
+    // let httpParams = new HttpParams()
+    //   .set("email", profile.email)
+    //   .set("password", credentials.password);
 
-    return this.auth_http.post(
-      this.globals_service.site.restApiUrl + 'changepass',
-      httpParams,
-      // {headers}
-    )
-    .map(res => this.handleChangePassReq(res))
-    .catch(error => this.handleError(error));
+    return this.auth_http
+      .post(this.globals_service.site.restApiUrl + "changepass", {
+        email: profile.email,
+        password: credentials.password1
+      })
+      .map(res => this.handleChangePassReq(res))
+      .catch(error => this.handleError(error));
   }
 
   handleAuth(res) {
-
-    console.log('handleAuth');
+    console.log("handleAuth");
     console.log(res);
 
     if (res.success === true) {
@@ -102,9 +92,8 @@ export class AuthService implements CanActivate {
       let token = res.token;
 
       // Save raw token
-      localStorage.setItem('access_token', token);
-      localStorage.setItem('access_token', token);
-      
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("access_token", token);
 
       console.log(
         this.helper.decodeToken(token),
@@ -120,7 +109,7 @@ export class AuthService implements CanActivate {
         var profile = decoded_token;
       }
       console.log(profile);
-      localStorage.setItem('profile', JSON.stringify(profile));
+      localStorage.setItem("profile", JSON.stringify(profile));
 
       // Return for consumer
       return res;
@@ -131,7 +120,6 @@ export class AuthService implements CanActivate {
   }
 
   handlePassReq(res) {
-
     // Convert to JSON
     // let res_json = res.json();
     // console.log(res_json);
@@ -162,7 +150,6 @@ export class AuthService implements CanActivate {
   }
 
   handleChangePassReq(res) {
-
     // Convert to JSON
     let res_json = res.json();
     console.log(res_json);
@@ -193,7 +180,7 @@ export class AuthService implements CanActivate {
   }
 
   private handleError(error) {
-    console.error('An error occurred', error);
+    console.error("An error occurred", error);
     return Observable.of({
       success: false,
       message: error.toString()
@@ -201,12 +188,11 @@ export class AuthService implements CanActivate {
   }
 
   public authenticated() {
-
     // console.log('authenticated');
 
     // Check if there's an unexpired JWT
     // This searches for an item in localStorage with key == 'access_token'
-    let token = localStorage.getItem('access_token');
+    let token = localStorage.getItem("access_token");
     // console.log(token);
 
     if (token === null) {
@@ -217,23 +203,21 @@ export class AuthService implements CanActivate {
       //   this.jwtHelper.getTokenExpirationDate(token),
       //   ! this.jwtHelper.isTokenExpired(token)
       // );
-      return ! this.helper.isTokenExpired(token);
+      return !this.helper.isTokenExpired(token);
     }
   }
 
   public logout() {
-
     // console.log('logout');
 
     // Remove token from localStorage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('profile');
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("profile");
 
     // this.userProfile = undefined;
     // Redirect to home
     // window.location.href = 'http://localhost:4200';
     //window.location.href = 'http://'+window.location.host;
-    this.router.navigate(['/']);
-
+    this.router.navigate(["/"]);
   }
 }

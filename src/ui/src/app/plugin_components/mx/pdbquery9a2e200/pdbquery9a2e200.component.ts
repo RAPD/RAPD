@@ -4,7 +4,6 @@ import { MatSort, MatSnackBar, MatTableDataSource } from "@angular/material";
 // import { MatSortModule } from '@angular/material/sort';
 import { RestService } from "../../../shared/services/rest.service";
 
-
 @Component({
   selector: "app-pdbquery9a2e200",
   templateUrl: "./pdbquery9a2e200.component.html",
@@ -33,8 +32,10 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   @ViewChild(MatSort) sort: MatSort;
 
-  constructor(private rest_service: RestService,
-              public snackBar: MatSnackBar) {}
+  constructor(
+    private rest_service: RestService,
+    public snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
     this.contaminants = this.result.results.common_contaminants.slice();
@@ -92,17 +93,16 @@ export class Pdbquery9a2e200Component implements OnInit {
   }
 
   // Start the download of data
-  initDownload(record:any) {
-    
+  private initDownload(record: any) {
     // Signal that the request has been made
-    let snackBarRef = this.snackBar.open("Download request submitted", "Ok", {
+    this.snackBar.open("Download request submitted", "Ok", {
       duration: 2000
     });
 
     // TODO
     this.rest_service
-      .getDownloadByHash(record.tar.hash, record.tar.path)
-      .subscribe(result => {}, error => {});
+      .getDownloadByHash(record.tar.hash, record.tar.path);
+      // .subscribe(result => {}, error => {});
   }
 }
 

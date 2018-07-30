@@ -25,10 +25,10 @@ router
     // Sessions for the user's groups
     var query_params;
     // Site admins get all sessions
-    if (req.decoded._doc.role === "site_admin") {
+    if (req.decoded.role === "site_admin") {
       query_params = {};
     } else {
-      query_params = { group: { $in: req.decoded._doc.groups } };
+      query_params = { group: { $in: req.decoded.groups } };
     }
 
     // console.log(query_params);
@@ -154,7 +154,7 @@ router
       // Creating
     } else {
       // Set the creator
-      session.creator = req.decoded._doc._id;
+      session.creator = req.decoded._id;
 
       Session.findOneAndUpdate({ _id: mongoose.Types.ObjectId() }, session, {
         new: true,
