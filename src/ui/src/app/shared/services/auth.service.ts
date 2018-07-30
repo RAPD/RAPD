@@ -5,7 +5,6 @@ import { CanActivate,
          Router } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
-// import { AuthHttp } from 'angular2-jwt';
 import { HttpClient,
          HttpHeaders,
          HttpParams } from '@angular/common/http';

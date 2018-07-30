@@ -3,7 +3,6 @@ import { Headers, Response } from "@angular/http";
 
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
-// import { AuthHttp } from "angular2-jwt";
 import { HttpClient,
          HttpHeaders } from '@angular/common/http';
 import * as moment from "moment-mini";
@@ -61,55 +60,53 @@ export class RestService {
   //
 
   // Request a download
-  // public getDownloadById(id: string, filename: string): Observable<any> {
-  //   return (
-  //     this.authHttp
-  //       .get(this.globals_service.site.restApiUrl + "/download_by_id/" + id)
-  //       (data => {
-  //         if (data.status === 200) {
-  //           // Convert base64 string to byte array
-  //           var byteCharacters = atob((<any>res)._body);
-  //           var byteNumbers = new Array(byteCharacters.length);
-  //           for (var i = 0; i < byteCharacters.length; i++) {
-  //             byteNumbers[i] = byteCharacters.charCodeAt(i);
-  //           }
-  //           var byteArray = new Uint8Array(byteNumbers);
-
-  //           // Convert byte array to Blob
-  //           var blob = new Blob([byteArray], {
-  //             type: "application/octet-stream"
-  //           });
-
-  //           // Create ObjectURL
-  //           var url = window.URL.createObjectURL(blob);
-
-  //           // Create DOM element with download attribute
-  //           var pom = document.createElement("a");
-  //           pom.setAttribute("href", url);
-  //           pom.setAttribute("download", filename);
-
-  //           // Now trigger download
-  //           if (document.createEvent) {
-  //             var event = document.createEvent("MouseEvents");
-  //             event.initEvent("click", true, true);
-  //             pom.dispatchEvent(event);
-  //           } else {
-  //             pom.click();
-  //           }
-
-  //           // Tell the subscribed caller we are all good
-  //           return Observable.of({
-  //             success: true
-  //           });
-  //           // There was an error in the REST server
-  //         } else {
-  //           return data;
-  //         }
-  //       })
-  //       // There was an error
-  //       // .catch(error => this.handleError(error))
-  //   );
-  // }
+  public getDownloadById(id: string, filename: string): void {
+    
+    console.log('getDownloadById', id, filename);
+    
+    this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_by_id/" + id,
+           {responseType: 'text'})
+      .subscribe((res)=>{
+        // Convert base64 string to byte array
+        var byteCharacters = atob(<any>res);
+        var byteNumbers = new Array(byteCharacters.length);
+        for (var i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        // Convert byte array to Blob
+        var blob = new Blob([byteArray], {
+          type: "application/octet-stream"
+        });
+        // Create ObjectURL
+        var url = window.URL.createObjectURL(blob);
+        // Create DOM element with download attribute
+        var pom = document.createElement("a");
+        pom.setAttribute("href", url);
+        pom.setAttribute("download", filename);
+        // Now trigger download
+        if (document.createEvent) {
+          var event = document.createEvent("MouseEvents");
+          event.initEvent("click", true, true);
+          pom.dispatchEvent(event);
+        } else {
+          pom.click();
+        }
+      });
+          //   // Tell the subscribed caller we are all good
+          //   return Observable.of({
+          //     success: true
+          //   });
+          //   // There was an error in the REST server
+          // } else {
+          //   return data;
+          // }
+        // })
+        // // There was an error
+        // .catch(error => this.handleError(error))
+    // );
+  }
 
   //
   // GROUP METHODS

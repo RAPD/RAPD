@@ -3,7 +3,6 @@ import { Headers,
          Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
-// import { AuthHttp } from 'angular2-jwt';
 import { HttpClient,
          HttpHeaders } from '@angular/common/http';
 

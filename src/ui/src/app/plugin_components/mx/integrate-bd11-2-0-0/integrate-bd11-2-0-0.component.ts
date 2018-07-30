@@ -416,14 +416,9 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       duration: 2000
     });
 
-    // TODO
-    // this.rest_service
-    //   .getDownloadById(record._id, record.path)
-    //   .subscribe(result => {}, error => {});
+    // Make the request
+    this.rest_service
+      .getDownloadById(record._id, record.path);
+      // .subscribe(result => {}, error => {});
   }
 }
-
-// this.rest_service.getImageData(this.full_result.process.image_id)
-//                  .subscribe(
-//                    image_data => console.log(image_data),
-//                    error => console.error(error));

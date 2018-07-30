@@ -15,12 +15,12 @@ Grid.mongo = mongoose.mongo;
 router
   .route("/download_by_id/:id")
 
-  // get the session with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
+  // Get a file for download
   .get(function(req, res) {
     console.log("download_by_id", req.params.id);
 
-    // console.log(mongoose.connection);
-    var gridfs = Grid(mongoose.ctrl_conn.connection.db);
+    // console.log(mongoose.ctrl_conn.db);
+    var gridfs = Grid(mongoose.ctrl_conn.db);
 
     var readstream = gridfs.createReadStream({
       _id: req.params.id
