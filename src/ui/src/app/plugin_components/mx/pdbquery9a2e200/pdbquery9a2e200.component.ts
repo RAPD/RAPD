@@ -73,7 +73,7 @@ export class Pdbquery9a2e200Component implements OnInit {
     }
 
     // If not active or no sort, return as from server
-    if (!sort.active || sort.direction == "") {
+    if (!sort.active || sort.direction === "") {
       this[data_type] = data;
       return;
     }
@@ -93,7 +93,10 @@ export class Pdbquery9a2e200Component implements OnInit {
   }
 
   // Start the download of data
-  private initDownload(record: any) {
+  public initDownload(record: any) {
+    
+    console.log('initDownload');
+    
     // Signal that the request has been made
     this.snackBar.open("Download request submitted", "Ok", {
       duration: 2000
