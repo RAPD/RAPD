@@ -62,7 +62,7 @@ router.route('/groups/:group_id')
         uid:group.uid,
         gid:group.gid,
         status:group.status,
-        creator:req.decoded._doc._id
+        creator:req.decoded._id
       });
 
       new_group.save(function(err, return_group) {

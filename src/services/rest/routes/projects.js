@@ -13,8 +13,8 @@ router.route('/projects')
   // route to return all projects
   .get(function(req, res) {
 
-    let query_params = {group:{$in:req.decoded._doc.groups}};
-    if (req.decoded._doc.role == 'site_admin') {
+    let query_params = {group:{$in:req.decoded.groups}};
+    if (req.decoded.role == 'site_admin') {
       query_params = {};
     }
 
@@ -94,7 +94,7 @@ router.route('/projects/:project_id')
     // Creating
     } else {
 
-      project.creator = req.decoded._doc._id;
+      project.creator = req.decoded._id;
 
       // Save the project
       Project.findOneAndUpdate(
@@ -213,13 +213,13 @@ router.route('/projects_add_result')
 
     console.log(project_id);
     console.log(result);
-    console.log(req.decoded._doc);
+    console.log(req.decoded);
     
     // For testing
-    // req.decoded._doc.role = 'foo';
+    // req.decoded.role = 'foo';
 
     // Allowed to add to project?
-    if (req.decoded._doc.role !== 'site_admin') {
+    if (req.decoded.role !== 'site_admin') {
       // User must have Session group_id
       let data_session_id = result.session_id;
       Session.findOne({_id:mongoose.Types.ObjectId(data_session_id)})
@@ -234,8 +234,8 @@ router.route('/projects_add_result')
           });
         // Have group_id
         } else {
-          let group = req.decoded._doc.groups.find(o => o._id === session.group);
-          // console.log(req.decoded._doc.groups);
+          let group = req.decoded.groups.find(o => o._id === session.group);
+          // console.log(req.decoded.groups);
           // console.log(session.group);
           // console.log(group);
           // No match - rejected

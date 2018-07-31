@@ -40,7 +40,7 @@ router
   .route("/upload_mx_raw")
   .post(upload.any(), function(req, res) {
     
-    console.log(req.decoded._doc);
+    console.log(req.decoded);
     console.log(req.files);
     
   // var token = req.headers.authorization.replace("Bearer ", "");

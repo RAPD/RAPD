@@ -1,7 +1,7 @@
 # Notes of interest when programming Routes
 
-### req.decoded._doc
-req.decoded._doc is an Object that looks like this:
+### req.decoded
+req.decoded is an Object that looks like this:
 { role: 'site_admin',  
   groups: [ '59921becef080369c2f07cb3' ],  
   status: 'active',  

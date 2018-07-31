@@ -174,24 +174,24 @@ export class RestService {
   //
   // GROUP METHODS
   //
-  private extractGroups(res: Response, error) {
+  private extractGroups(res, error) {
     // console.log('error', error);
-    let body = res.json();
+    // let body = res.json();
 
     // Sort alphabetically by surname, if possible
-    body.groups.sort((g1, g2) => {
-      var s1 = g1.groupname.split(" ")[g1.groupname.split(" ").length - 1];
-      var s2 = g2.groupname.split(" ")[g1.groupname.split(" ").length - 1];
-      if (s1 > s2) {
-        return 1;
-      }
-      if (s1 < s2) {
-        return -1;
-      }
-      return 0;
-    });
+    // res.groups.sort((g1, g2) => {
+    //   var s1 = g1.groupname.split(" ")[g1.groupname.split(" ").length - 1];
+    //   var s2 = g2.groupname.split(" ")[g1.groupname.split(" ").length - 1];
+    //   if (s1 > s2) {
+    //     return 1;
+    //   }
+    //   if (s1 < s2) {
+    //     return -1;
+    //   }
+    //   return 0;
+    // });
 
-    return body.groups || [];
+    return res.groups || [];
   }
 
   // Submit a group to be saved in the database
@@ -509,8 +509,8 @@ export class RestService {
   public getUsers(): Observable<User[]> {
     console.log("getUsers");
 
-    let header = new HttpHeaders();
-    header.append("Content-Type", "application/json");
+    // let header = new HttpHeaders();
+    // header.append("Content-Type", "application/json");
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/users")
@@ -518,9 +518,8 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
-  private extractUsers(res: Response, error) {
-    let body = res.json();
-    return body.users || [];
+  private extractUsers(res, error) {
+    return res.users || [];
   }
 
   // Submit a user to be saved in the database
@@ -554,7 +553,6 @@ export class RestService {
   }
 
   public getGroups(): Observable<Group[]> {
-    console.log("getGroups");
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/groups")
