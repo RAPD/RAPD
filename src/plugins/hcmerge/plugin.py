@@ -32,7 +32,7 @@ PLUGIN_TYPE = "HCMERGE"
 PLUGIN_SUBTYPE = "EXPERIMENTAL"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-ID = "4cba470534f911e7bd89985aeb8c1e24"
+ID = "4cba"
 VERSION = "1.0.0"
 
 # Standard imports

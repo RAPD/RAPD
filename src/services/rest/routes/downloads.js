@@ -1,7 +1,7 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var mongoose = require('../models/mongoose');
-var Grid = require('gridfs-stream');
+var mongoose = require("../models/mongoose");
+var Grid = require("gridfs-stream");
 
 Grid.mongo = mongoose.mongo;
 
@@ -12,28 +12,58 @@ Grid.mongo = mongoose.mongo;
 
 // on routes that end in /results
 // ----------------------------------------------------
-router.route('/download_by_id/:id')
+router
+  .route("/download_by_id/:id")
 
-    // get the session with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
-    .get(function(req, res) {
-        console.log('download_by_id', req.params.id);
+  // Get a file for download
+  .get(function(req, res) {
+    console.log("download_by_id", req.params.id);
 
-        // console.log(mongoose.connection);
-        var gridfs = Grid(mongoose.ctrl_conn.connection.db);
+    // console.log(mongoose.ctrl_conn.db);
+    var gridfs = Grid(mongoose.ctrl_conn.db);
 
-        var readstream = gridfs.createReadStream({
-          _id: req.params.id
-        });
-        req.on('error', function(err) {
-          console.error(err);
-          res.send(500, err);
-        });
-        readstream.on('error', function (err) {
-          console.error(err);
-          res.send(500, err);
-        });
-        console.log('Success');
-        readstream.pipe(res);
+    var readstream = gridfs.createReadStream({
+      _id: req.params.id
     });
+    req.on("error", function(err) {
+      console.error(err);
+      res.send(500, err);
+    });
+    readstream.on("error", function(err) {
+      console.error(err);
+      res.send(500, err);
+    });
+    console.log("Success");
+    readstream.pipe(res);
+  });
+
+router
+  .route("/download_by_hash/:hash")
+
+  // Get a file for download
+  .get(function(req, res) {
+    console.log("download_by_hash", req.params.hash);
+
+    var gridfs = Grid(mongoose.ctrl_conn.db);
+
+    gridfs.files.findOne({ 'metadata.hash': req.params.hash}, function (err, file) {
+      console.log(file);
+      var readstream = gridfs.createReadStream({
+        _id: file._id
+      });
+      req.on("error", function(err) {
+        console.error(err);
+        res.send(500, err);
+      });
+      readstream.on("error", function(err) {
+        console.error(err);
+        res.send(500, err);
+      });
+      console.log("Success");
+      readstream.pipe(res);
+    });
+
+    
+  });
 
 module.exports = router;

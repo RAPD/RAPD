@@ -7,7 +7,7 @@
             Indexing Initiated for
             <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
             <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1)">info_outline</mat-icon></span>
-            <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
+            <span *ngIf="full_result.image2"> & {{full_result.image2.fullname.split('/').reverse()[0]}}</span>
             <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2)">info_outline</mat-icon></span>
           </h3>
         </div>
@@ -27,17 +27,19 @@
             Indexing Results for
             <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
             <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1)">info_outline</mat-icon></span>
-            <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
+            <span *ngIf="full_result.image2"> & {{full_result.image2.fullname.split('/').reverse()[0]}}</span>
             <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2)">info_outline</mat-icon></span>
           </h3>
         </div>
         <div class="rapd-select-panel">
           <mat-select
+            class="rapd-matselect-panel"
             placeholder="View mode"
             floatPlaceholder="auto"
             [(ngModel)]="view_mode"
             name="view_mode"
-            value="summary">
+            value="summary"
+            style="display:initial;">
             <mat-option value="summary">Summary</mat-option>
             <mat-option value="image">Image</mat-option>
             <mat-option value="details">Details</mat-option>
@@ -202,17 +204,19 @@
           </div>
           <div *ngIf="full_result.results.plots" fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
             <div fxFlex="none" class="rapd-plot-header">
-              <div class="rapd-chart-title-panel">
-                <h3>{{selected_plot_label}}</h3>
+              
+              <div class="rapd-titleselect-panel">
+                <mat-select
+                class="rapd-matselect-panel"
+                placeholder="Select plot"
+                (selectionChange)="setPlot(selected_plot)"
+                [(ngModel)]="selected_plot"
+                name="plot">
+                <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                </mat-select>
               </div>
               <div class="rapd-chart-select-panel">
-                <mat-select
-                  placeholder="Select plot"
-                  (change)="setPlot(selected_plot)"
-                  [(ngModel)]="selected_plot"
-                  name="plot">
-                  <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
-                </mat-select>
+                <!-- <h3>{{selected_plot}}</h3> -->
               </div>
             </div>
             <div fxFlex="grow">

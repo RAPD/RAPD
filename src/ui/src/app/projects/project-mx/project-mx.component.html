@@ -277,6 +277,10 @@
     </div>
   </mat-card-content>
   <mat-toolbar class="result-panel-action-bar">
-      <button mat-button color="primary" (click)="activateUpload()"> <mat-icon>cloud_upload</mat-icon>Upload Data</button>
+      <!-- <button mat-button color="primary" (click)="activateUpload()"> <mat-icon>cloud_upload</mat-icon> Upload Data</button> -->
+      <button mat-button color="primary" (click)="fileInput.click()"> <mat-icon>cloud_upload</mat-icon> Upload Data</button>
+      <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
+          <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
+      </span>
   </mat-toolbar>
 </mat-card>

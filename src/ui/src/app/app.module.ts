@@ -3,12 +3,13 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule,
          ReactiveFormsModule } from '@angular/forms';
-// import { HttpClientModule } from '@angular/common/http';
-import { Http,
-         HttpModule,
-         RequestOptions } from '@angular/http';
+import { HttpClientModule,
+         HTTP_INTERCEPTORS } from '@angular/common/http';
+// import { Http,
+//          HttpModule,
+//          RequestOptions } from '@angular/http';
 import { AppComponent } from './app.component';
-import { Router } from '@angular/router';
+// import { Router } from '@angular/router';
 
 import { FlexLayoutModule } from '@angular/flex-layout';
 
@@ -29,7 +30,11 @@ import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
 import { Site } from './site';
-import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
+
+import { JwtModule } from '@auth0/angular-jwt';
+import { JwtHttpInterceptor } from './shared/interceptors/auth.interceptor';
+
+import { FileUploadModule } from 'ng2-file-upload';
 
 import { ProjectsModule } from './projects/projects.module';
 
@@ -64,7 +69,9 @@ import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
-import { Pdbquery9a2e100Component } from './plugin_components/mx/pdbquery9a2e100/pdbquery9a2e100.component';
+import { Pdbquery9a2e200Component } from './plugin_components/mx/pdbquery9a2e200/pdbquery9a2e200.component';
+import { Hcmerge4cba100Component } from './plugin_components/mx/hcmerge4cba100/hcmerge4cba100.component';
+// INSERT POINT FOR PLUGIN COMPONENTS IMPORT
 
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
@@ -76,8 +83,8 @@ import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog
 import { ConfirmDialogComponent } from './shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { UploadDialogComponent } from './shared/dialogs/upload-dialog/upload-dialog.component';
 
-export function authHttpServiceFactory(http: Http, options: RequestOptions) {
-  return new AuthHttp( new AuthConfig({}), http, options);
+export function tokenGetter() {
+  return localStorage.getItem('access_token');
 }
 
 @NgModule({
@@ -113,7 +120,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     Index3b34200Component,
     IntegrateBd11200Component,
     AnalysisF068200Component,
-    Pdbquery9a2e100Component,
+    Pdbquery9a2e200Component,
+    Hcmerge4cba100Component,
+    // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
     //
     HeaderDialogComponent,
     MxImageComponent,
@@ -127,20 +136,29 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ErrorDialogComponent,
     ConfirmDialogComponent,
     UploadDialogComponent,
+    Hcmerge4cba100Component,
   ],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpModule,
+    HttpClientModule,
+    // JwtModule.forRoot({
+    //   config: {
+    //     tokenGetter: tokenGetter,
+    //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')), 
+    //     // blacklistedRoutes: ['localhost:3001/auth/']
+    //   }
+    // }),
     BrowserAnimationsModule,
     RapdMaterialModule,
     FlexLayoutModule,
     NgxDatatableModule,
     ChartsModule,
     ProjectsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    FileUploadModule
   ],
   providers: [ appRoutingProviders,
                LoginGuard,
@@ -152,15 +170,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
                GlobalsService,
                Site,
                // Replacement for AUTH_PROVIDERS
-               {
-                 provide: AuthHttp,
-                 useFactory: authHttpServiceFactory,
-                 deps: [ Http, RequestOptions ]
-               } ],
-              //  provideAuth({
-              //   tokenName: 'token'
-              //  }),
-              // HTTP_PROVIDERS ],
+               { provide: HTTP_INTERCEPTORS, useClass: JwtHttpInterceptor, multi: true }
+             ],
   entryComponents: [
     AppComponent,
     // General components
@@ -178,7 +189,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AnalysisF068200Component,
     Index3b34200Component,
     IntegrateBd11200Component,
-    Pdbquery9a2e100Component,
+    Pdbquery9a2e200Component,
+    Hcmerge4cba100Component,
+    // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS
     // Plugin helpers
     HeaderDialogComponent,
     ReindexDialogComponent,
