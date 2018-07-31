@@ -2694,6 +2694,7 @@ class RapdPlugin(Process):
 
             # Compress the directory
             archive_result = archive.create_archive(self.archive_dir)
+            archive_result["description"] = "archive"
 
             if archive_result:
                 self.results["results"]["archive_files"].append(archive_result)

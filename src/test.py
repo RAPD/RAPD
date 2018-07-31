@@ -99,194 +99,47 @@ def clear_cluster():
     myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in myoutput.stdout:
         split = line.split()
-        if len(split) == 9:
-            print split[2]
-            if split[2] in ['INDEX', 'INTEGRATE_', 'shelxd']:
+        if len(split) == 8:
+            if split[2].split('_')[0] in ['INDEX', 'INTEGRATE_', 'shelxd']:
               l.append(split[0])
-              #if split[4] == 'qw':
-              #    l.append(split[0])
+            #if split[4] == 'qw':
+                #l.append(split[0])
             
     for pid in l:
+        print pid
         os.system('qdel %s'%pid)
 
-command = {'command': 'INTEGRATE',
- 'data': {'image_data': {'_id': '5ad7a8c6f46833272f750566',
-                         'axis': 'omega',
-                         'beam_x': 2054.53,
-                         'beam_y': 2157.33,
-                         'collect_mode': 'run',
-                         'count_cutoff': 502255,
-                         'data_root_dir': '/gpfs2/users/wustl/yuan_E_3516',
-                         'date': '2018-04-06T10:54:28.189030',
-                         'detector': 'Eiger-16M',
-                         'detector_sn': 'E-32-0108',
-                         'directory': '/gpfs2/users/wustl/yuan_E_3516/images/feifei/runs/py3255',
-                         'distance': 650.0,
-                         'excluded_pixels': None,
-                         'flat_field': '(nil)',
-                         'flux': 260000000000,
-                         'fullname': '/gpfs2/users/wustl/yuan_E_3516/images/feifei/runs/py3255/py3255_1_000001.cbf',
-                         'gain': None,
-                         'image_number': 1,
-                         'image_prefix': 'py3255',
-                         'image_template': 'py3255_1_??????.cbf',
-                         'md2_aperture': 0.05,
-                         'n_excluded_pixels': 1198784,
-                         'osc_range': 0.3,
-                         'osc_start': 130.0,
-                         'period': 0.0013333,
-                         'pixel_size': 0.075,
-                         'place_in_run': 1,
-                         'rapd_detector_id': 'necat_dectris_eiger16m',
-                         'ring_current': 102.1,
-                         'run_id': '5ac79833f468333e41bdf10a',
-                         'run_number': 1,
-                         'run_number_in_template': True,
-                         'sample_mounter_position': 'G6',
-                         'sensor_thickness': 0.45,
-                         'site_tag': 'NECAT_E',
-                         'size1': 4150,
-                         'size2': 4371,
-                         'tau': None,
-                         'threshold': 6331.0,
-                         'time': 0.3,
-                         'transmission': 5.2,
-                         'trim_file': None,
-                         'twotheta': 0.0,
-                         'wavelength': 0.97918,
-                         'x_beam': 161.79975,
-                         'x_beam_size': 0.05,
-                         'y_beam': 154.08975,
-                         'y_beam_size': 0.02},
-          'run_data': {u'_id': '5ac79833f468333e41bdf10a',
-                       u'anomalous': None,
-                       u'beamline': u'NECAT_E',
-                       u'directory': '/gpfs2/users/wustl/yuan_E_3516/images/feifei/runs/py3255',
-                       u'distance': 650.0,
-                       u'energy': 12662.0,
-                       u'image_prefix': u'py3255',
-                       'image_template': 'py3255_1_??????.cbf',
-                       u'kappa': None,
-                       u'number_images': 1200,
-                       u'omega': None,
-                       u'osc_axis': u'phi',
-                       u'osc_start': 130.0,
-                       u'osc_width': 0.3,
-                       u'phi': 0.0,
-                       u'run_number': 1,
-                       u'site_tag': u'NECAT_E',
-                       u'start_image_number': 1,
-                       u'time': 0.3,
-                       u'timestamp': datetime.datetime(2018, 4, 6, 15, 54, 27, 495000),
-                       u'transmission': 5.0,
-                       u'twotheta': None}},
- 'directories': {'data_root_dir': '/gpfs2/users/wustl/yuan_E_3516',
-                 'plugin_directories': ('sites.plugins', 'plugins'),
-                 'work': 'integrate/2018-04-18/py3255'},
- 'preferences': {'analysis': True,
-                 'cleanup': False,
-                 'exchange_dir': '/gpfs6/users/necat/rapd2/exchange_dir',
-                 'json': False,
-                 'run_mode': 'server',
-                 'xdsinp': [('CLUSTER_RADIUS', '2'),
-                            ('DETECTOR', 'EIGER'),
-                            ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0'),
-                            ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0'),
-                            ('FRACTION_OF_POLARIZATION', '0.99'),
-                            ('INCIDENT_BEAM_DIRECTION', '0 0 1'),
-                            ('INCLUDE_RESOLUTION_RANGE', '200.0 0.0'),
-                            ('MAX_CELL_ANGLE_ERROR', '2.0'),
-                            ('MAX_CELL_AXIS_ERROR', '0.03'),
-                            ('MAX_FAC_Rmeas', '2.0'),
-                            ('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4'),
-                            ('MINIMUM_VALID_PIXEL_VALUE', '0'),
-                            ('MIN_RFL_Rmeas', ' 50'),
-                            ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA',
-                             '13'),
-                            ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA',
-                             '9'),
-                            ('NX', '4150'),
-                            ('NY', '4371'),
-                            ('OVERLOAD', '3000000'),
-                            ('POLARIZATION_PLANE_NORMAL', '0 1 0'),
-                            ('QX', '0.075'),
-                            ('QY', '0.075'),
-                            ('REFINE(CORRECT)',
-                             'POSITION DISTANCE BEAM ORIENTATION CELL AXIS'),
-                            ('REFINE(IDXREF)', 'BEAM AXIS ORIENTATION CELL'),
-                            ('REFINE(INTEGRATE)',
-                             'POSITION DISTANCE BEAM ORIENTATION CELL'),
-                            ('ROTATION_AXIS', '1 0 0'),
-                            ('SENSOR_THICKNESS', '0.32'),
-                            ('SEPMIN', '4'),
-                            ('TEST_RESOLUTION_RANGE', '8.0 4.5'),
-                            ('TRUSTED_REGION', '0.00 1.2'),
-                            ('UNTRUSTED_RECTANGLE1',
-                             ' 1030 1041      0 4372'),
-                            ('UNTRUSTED_RECTANGLE10',
-                             '    0 4151   3820 3858'),
-                            ('UNTRUSTED_RECTANGLE2',
-                             ' 2070 2081      0 4372'),
-                            ('UNTRUSTED_RECTANGLE3',
-                             ' 3110 3121      0 4372'),
-                            ('UNTRUSTED_RECTANGLE4',
-                             '    0 4151    514  552'),
-                            ('UNTRUSTED_RECTANGLE5',
-                             '    0 4151   1065 1103'),
-                            ('UNTRUSTED_RECTANGLE6',
-                             '    0 4151   1616 1654'),
-                            ('UNTRUSTED_RECTANGLE7',
-                             '    0 4151   2167 2205'),
-                            ('UNTRUSTED_RECTANGLE8',
-                             '    0 4151   2718 2756'),
-                            ('UNTRUSTED_RECTANGLE9',
-                             '    0 4151   3269 3307'),
-                            ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS',
-                             '8000. 30000.'),
-                            ('UNTRUSTED_RECTANGLE11',
-                             '    0 4151    225  260'),
-                            ('UNTRUSTED_RECTANGLE12',
-                             '    0 4151    806  811'),
-                            ('UNTRUSTED_RECTANGLE13',
-                             '    0 4151   1357 1362'),
-                            ('UNTRUSTED_RECTANGLE14',
-                             '    0 4151   1908 1913'),
-                            ('UNTRUSTED_RECTANGLE15',
-                             '    0 4151   2459 2464'),
-                            ('UNTRUSTED_RECTANGLE16',
-                             '    0 4151   3010 3015'),
-                            ('UNTRUSTED_RECTANGLE17',
-                             '    0 4151   3561 3566'),
-                            ('UNTRUSTED_RECTANGLE18',
-                             '    0 4151   4112 4117'),
-                            ('CLUSTER_NODES', 'NECAT_E')]},
- 'process': {'image_id': '5ad7a8c6f46833272f750566',
-             'parent_id': False,
-             'result_id': '5ad7a8c6f46833272f750567',
-             'run_id': '5ac79833f468333e41bdf10a',
-             'session_id': '5ac28d310820941688fccea4',
-             'status': 0,
-             'type': 'plugin'},
- 'site_parameters': {'BEAM_APERTURE_SHAPE': 'circle',
-                     'BEAM_CENTER_DATE': '2017-3-02',
-                     'BEAM_CENTER_X': (163.2757684023,
-                                       0.0003178917,
-                                       -5.0236657815e-06,
-                                       5.8164218288e-09),
-                     'BEAM_CENTER_Y': (155.1904879862,
-                                       -0.0014631216,
-                                       8.60559283424e-07,
-                                       -2.5709929645e-10),
-                     'BEAM_FLUX': 5000000000000.0,
-                     'BEAM_SHAPE': 'ellipse',
-                     'BEAM_SIZE_X': 0.05,
-                     'BEAM_SIZE_Y': 0.02,
-                     'DETECTOR_DISTANCE_MAX': 1000.0,
-                     'DETECTOR_DISTANCE_MIN': 150.0,
-                     'DETECTOR_TIME_MIN': 0.05,
-                     'DIFFRACTOMETER_OSC_MIN': 0.05}}
+
+#clear_cluster()
+
+dat_dirs =  ['/gpfs5/users/necat/phii_dfa_1/in',
+                                           '/gpfs5/users/necat/phii_dfa_2/in',
+                                           '/gpfs5/users/necat/phii_raster_snap/in',
+                                           '/gpfs5/users/necat/phii_rastersnap_scan_data',
+                                           '/gpfs5/users/necat/phii_dfa_scan_data',
+                                           '/gpfs5/users/necat/phii_ova_scan_data',
+                                           '/gpfs5/users/necat/rapd/uranium/trunk/test_data']
+
+
+#image = '/ramdisk/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011/G11_10-JUL-18_21-03-32_1_000011.cbf'
+#dir = os.path.dirname(image)
+#image = '/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011.cbf'
+#_E_RAMDISK_PREFIX = '/ramdisk'
+
+#print os.path.join('%s%s'%(_E_RAMDISK_PREFIX, image[:image.rfind('.')]), os.path.basename(image))
 
 """
+for line in dat_dirs:
+    #print line
+    if dir.count(line):
+        print line
+
+dat_dirs_check = [1 for line in dat_dirs if dir.count(line)]
+check = bool(len(dat_dirs_check))
+print check
+print bool(len([1 for line in dat_dirs if dir.count(line)]))
+print bool(len([1 for line in dat_dirs if os.path.dirname(image).count(line)]))
+
 output_dict = {}
 search = []
 pdb_list = ['0thw', '1thw', '2thw','3thw','4thw','5thw','6thw','7thw']
@@ -313,8 +166,10 @@ run_data = command.get("data", {}).get("run_data")
 
 image_data["start"] = run_data.get("start_image_number")
 print image_data["start"]
-
+"""
 #clear_cluster()
+
+"""
 input = ['DATA_RANGE = 1 1200\n']
 #tmp = ['DATA_RANGE', '1 1200\n']
 #tmp = input[-1].split('=')
@@ -785,6 +640,8 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/cwru/kiser_E_3619/images/philip/runs/PDK014_1/PDK014_1_2_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/kahne_E_3623/images/tristan/runs/KAHN012_14/KAHN012_14_1_000001.cbf')
 #time.sleep(1)
 """
 red = connect_ft_redis()
@@ -808,8 +665,11 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/upenn/christianson_E_3591/images/nicholas/runs/0004_12/0004_12_1_000001.cbf'),
 
-red.lpush('images_collected:NECAT_E', '/gpfs2/users/upenn/christianson_E_3591/images/jeremy/runs/JDO_PUCK2_A14_Run4/JDO_PUCK2_A14_Run4_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/upenn/christianson_E_3591/images/jeremy/runs/JDO_PUCK2_A14_Run4/JDO_PUCK2_A14_Run4_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/cornell/heninglin_E_3589/images/ian/runs/P113_11/P113_11_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/yale/konigsberg_C_3608/images/aristidis/runs/CPS4580_C1r1/0_0/CPS4580_C1r1_1_0001.cbf'),
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/necat_C_3303/images/Igor/runs/thaum5_05s_05d/0_0/thaum5_05s-05d_1_0001.cbf'),
+#red.lpush('images_collected:NECAT_C', ''),
 
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
@@ -850,13 +710,16 @@ print red.llen('run_info_E')
 print red.llen('run_info_C')
 #red.delete('run_info_C')
 print red.llen('runs_data:NECAT_E')
-print red.lrange('runs_data:NECAT_E', 0, 1)
+#print red.lrange('runs_data:NECAT_E', 0, 1)
 #red.delete("runs_data:NECAT_E")
 print red.llen('runs_data:NECAT_C')
+#red.delete("runs_data:NECAT_C")
 print red.lrange('runs_data:NECAT_C', 0, -1)
 #red.delete("runs_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
-#red.delete('RAPD_JOBS_WAITING')
+red.delete('RAPD_JOBS_WAITING')
+print red.llen('RAPD_QSUB_JOBS_2')
+#red.delete('RAPD_QSUB_JOBS_2')
 
 
 

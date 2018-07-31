@@ -343,12 +343,13 @@ class Database(object):
 
         self.logger.debug("save_plugin_result %s:%s", plugin_result["plugin"]["type"], plugin_result["process"])
 
-        if plugin_result["plugin"]["type"] in ("PDBQUERY", "ANALYSIS"):
+        if plugin_result["plugin"]["type"] in ("PDBQUERY",):
             self.logger.debug(plugin_result)
 
         # Connect to the database
         db = self.get_db_connection()
-        fs = gridfs.GridFSBucket(db)
+        grid_fs = gridfs.GridFS(db)
+        grid_bucket = gridfs.GridFSBucket(db)
 
         # Clear _id from plugin_result
         if plugin_result.get("_id"):
@@ -369,36 +370,99 @@ class Database(object):
         #
         # Handle any file storage
         #
-        def remove_files_from_db(result_id, file_type):
+        def remove_files_from_db(files, result_id, file_type):
             """Remove old files from the db"""
 
-            self.logger.debug("Trying to remove files that match results_id:%s file_type:%s", result_id, file_type)
+            self.logger.debug("remove_files_from_db files:%s results_id:%s file_type:%s", files, result_id, file_type)
 
-            # Find files to remove
-            files_to_remove = fs.find({"metadata.result_id":result_id,
-                                       "metadata.type":file_type})
-            # Remove them
-            for file_to_remove in files_to_remove:
-                self.logger.debug("Removing file with _id:%s", file_to_remove["_id"])
-                fs.delete(file_to_remove["_id"])
+            # Cycle through file list
+            for file_to_remove in files:
 
-        def add_raw_file_to_db(path, metadata=None):
+                # Find files to remove
+                files_in_database = db.fs.files.find({"metadata.result_id":result_id,
+                                                  "metadata.file_type":file_type,
+                                                  "metadata.description":file_to_remove.get("description")})
+                # self.logger.debug("Looking for %s", {"metadata.result_id":result_id,
+                #                                      "metadata.file_type":file_type,
+                #                                      "metadata.description":file_to_remove.get("description")})
+                
+                # Remove them
+                for file_in_database in files_in_database:
+
+                    # self.logger.debug("file_in_database: %s", file_in_database)
+                    # self.logger.debug(">>> %s %s", file_in_database["metadata"]["hash"], file_to_remove["hash"])
+
+                    # Remove if hashes don't match
+                    if file_in_database["metadata"]["hash"] != file_to_remove["hash"]:
+                        self.logger.debug("Removing file with _id:%s", file_to_remove["_id"])
+                        grid_bucket.delete(file_in_database["_id"])
+
+        def add_raw_file_to_db(path, metadata=None, replace=False):
             """Add files to MongoDB"""
-            # Open the path
-            with open(path, "r") as input_object:
-                file_id = fs.upload_from_stream(filename=os.path.basename(path),
-                                                source=input_object,
-                                                metadata=metadata)
+
+            self.logger.debug("add_raw_file_to_db path:%s metadata:%s", path, metadata)
+
+            # See if we already have this file
+            file_in_database = db.fs.files.find_one({"metadata.hash":metadata["hash"]})
+
+            # File already saved
+            if file_in_database:
+                # Overwrite
+                if replace:
+                    self.logger.debug("Overwriting file")
+                    # Open the path
+                    with open(path, "r") as input_object:
+                        file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
+                                                                 source=input_object,
+                                                                 metadata=metadata)
+                # Do not overwrite
+                else:
+                    self.logger.debug("Not overwriting file")
+                    file_id = file_in_database["_id"]
+            # New file
+            else:
+                self.logger.debug("Writing new file")
+                # Open the path
+                with open(path, "r") as input_object:
+                    file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
+                                                    source=input_object,
+                                                    metadata=metadata)
+            
             return file_id
 
-        def add_archive_file_to_db(path, metadata=None):
+        def add_archive_file_to_db(path, metadata=None, replace=False):
             """Add archive files to MongoDB - for use with client download"""
-            # Encode file in base64
-            b64_encoded = base64.b64encode(open(path, "r").read())
-            # Save to MongoDB
-            file_id = fs.upload_from_stream(filename=os.path.basename(path),
-                                            source=b64_encoded,
-                                            metadata=metadata)
+            
+            self.logger.debug("add_archive_file_to_db path:%s metadata:%s", path, metadata)
+            
+            # See if we already have this file
+            file_in_database = db.fs.files.find_one({"metadata.hash":metadata["hash"]})
+
+            # File already saved
+            if file_in_database:
+                # Overwrite
+                if replace:
+                    self.logger.debug("Overwriting file")
+                    # Encode file in base64
+                    b64_encoded = base64.b64encode(open(path, "r").read())
+                    # Save to MongoDB
+                    file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
+                                                             source=b64_encoded,
+                                                             metadata=metadata)
+                # Do not overwrite
+                else:
+                    self.logger.debug("Not overwriting file")
+                    file_id = file_in_database["_id"]
+            # New file
+            else:
+                self.logger.debug("Writing new file")
+                # Encode file in base64
+                b64_encoded = base64.b64encode(open(path, "r").read())
+                # Save to MongoDB
+                file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
+                                                         source=b64_encoded,
+                                                         metadata=metadata)
+
             return file_id
 
         add_funcs = {
@@ -407,28 +471,41 @@ class Database(object):
         }
 
         for file_type in ("archive_files", "data_produced"):
-            self.logger.debug('Looking for %s', file_type)
+            self.logger.debug("Looking for %s", file_type)
             if plugin_result["results"].get(file_type, False):
 
-                self.logger.debug('Have %s', file_type)
+                self.logger.debug("Have %s", file_type)
+                self.logger.debug(plugin_result["results"].get(file_type))
 
                 # Erase old files
-                remove_files_from_db(result_id=_result_id, file_type=file_type)
+                remove_files_from_db(files=plugin_result["results"].get(file_type),
+                                     result_id=_result_id,
+                                     file_type=file_type)
 
                 # Save the new
                 for index in range(len(plugin_result["results"].get(file_type, []))):
+                    
+                    self.logger.debug("Saving the %d file", index)
+
+                    # The file to save
                     data = plugin_result["results"].get(file_type, [])[index]
+                    self.logger.debug(data)
 
                     # File exists - save it
                     if os.path.exists(data["path"]):
 
                         _file = data["path"]
 
+                        self.logger.debug("Saving %s", _file)
+
                         # Upload the file to MongoDB
                         grid_id = add_funcs[file_type](path=_file,
-                                                       metadata={"hash":data["hash"],
+                                                       metadata={"description":data.get("description", "archive"),
+                                                                 "hash":data.get("hash"),
                                                                  "result_id":_result_id,
                                                                  "file_type":file_type})
+
+                        self.logger.debug("Saved %s", grid_id)
 
                         # This _id is important
                         plugin_result["results"][file_type][index]["_id"] = grid_id

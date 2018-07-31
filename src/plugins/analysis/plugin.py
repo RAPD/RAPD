@@ -449,7 +449,7 @@ calculation",
                 
                 pids = [self.jobs[job].get('pid') for job in self.jobs]
                 for pid in pids:
-                    xutils.killChildren(pid)
+                    xutils.kill_children(pid, self.logger)
                 """
                 for pid in self.pids.values():
                     #jobs are not sent to cluster

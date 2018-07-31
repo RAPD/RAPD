@@ -704,16 +704,18 @@ class RapdPlugin(Thread):
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
-        # Copy tar & pdbfile to working dir
-        if results.get('tar', False):
-            orig = results.get('tar')
-            new = os.path.join(self.working_dir, os.path.basename(orig))
-            # If old file in working dir, remove it and recopy.
-            if os.path.exists(new):
-                os.unlink(new)
-            shutil.copy(orig, new)
-            results['tar'] = new
-
+        # Copy tar to working dir
+        if results.get("tar", False):
+            orig = results.get("tar", {"path":False}).get("path")
+            if orig:
+                new = os.path.join(self.working_dir, os.path.basename(orig))
+                # If old file in working dir, remove it and recopy.
+                if os.path.exists(new):
+                    os.unlink(new)
+                shutil.copy(orig, new)
+                results["tar"]["path"] = new
+        
+        # Copy pdbfile to working dir
         if results.get("pdb_file", False):
             orig = results.get("pdb_file")
             new = os.path.join(self.working_dir, os.path.basename(orig))
@@ -758,8 +760,8 @@ class RapdPlugin(Thread):
 
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            self.logger.debug("transfer_files",
-                             self.command["directories"].get("exchange_dir" ))
+            #self.logger.debug("transfer_files",
+            #                 self.command["directories"].get("exchange_dir" ))
 
             # Determine and validate the place to put the data
             target_dir = os.path.join(
@@ -790,28 +792,29 @@ class RapdPlugin(Thread):
                     new_data_produced)
 
             # If there is an archive
-            archive_file = result.get("tar", False)
+            self.logger.debug("result", result)
+            archive_dict = result.get("tar", {})
+            self.logger.debug("archive_dict %s", archive_dict)
+            archive_file = archive_dict.get("path", False)
+            self.logger.debug("archive_file %s", archive_file)
             if archive_file:
                 # Move the file
                 target = os.path.join(
                     target_dir, os.path.basename(archive_file))
+                self.logger.debug("target %s", target)
                 shutil.move(archive_file, target)
                 # Store information
-                new_archive_file = {
-                    "path": target,
-                    "hash": "spoof",
-                    "description": result.get("ID")
-                }
+                archive_dict["path"] = target
                 # Add to the results.archive_files array
                 self.results["results"]["archive_files"].append(
-                    new_archive_file)
+                    archive_dict)
         
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""
         
         results = {"solution": False,
                    "message": "invalid PDB code",
-                   'description': self.cell_output[job_name].get('description')}
+                   "description": self.cell_output[job_name].get("description")}
 
          # Three result types to run through
         types = (
@@ -846,11 +849,12 @@ class RapdPlugin(Thread):
                 results = json.loads(results_json)
                 self.postprocess_phaser(info['name'], results)
                 self.redis.delete(info['output_id'])
-            except:
-                print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
-                print results_json
-                self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
-                self.logger.debug(results_json)
+            except Exception as e:
+                self.logger.error('Error'+ str(e))
+                # print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
+                # print results_json
+                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
+                # self.logger.debug(results_json)
             
             #results = json.loads(results_json)
             #print results

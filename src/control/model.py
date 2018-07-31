@@ -488,7 +488,7 @@ class Model(object):
                         return False
 
                     # Put data about run in the header object
-                    header["collect_mode"] = "run"
+                    header["collect_mode"] = "RUN"
                     header["run_id"] = str(run_id)
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1

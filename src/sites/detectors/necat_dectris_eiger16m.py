@@ -105,10 +105,10 @@ class FileLocation():
     def __init__(self, logger=False, verbose=False):
         #threading.Thread.__init__ (self)
         #self.logger = logger
-        #self.ip = '164.54.212.218'
-        #self.ram_prefix = '/epu/rdma'
-        self.ip = '164.54.212.219'
-        self.ram_prefix = '/epu2/rdma'
+        self.ip = '164.54.212.218'
+        self.ram_prefix = '/epu/rdma'
+        #self.ip = '164.54.212.219'
+        #self.ram_prefix = '/epu2/rdma'
         self.nvme_prefix = '/epu/nvme'
         self.ft_redis = self.redis_ft_connect()
 
@@ -378,7 +378,7 @@ def base_read_header(image,
         # "run_number": int(base.split("_")[-2]),
         "image_number": int(base.split("_")[-1]),
         "axis": "omega",
-        # "collect_mode": mode,
+        "collect_mode": False,
         # "run_id": run_id,
         # "place_in_run": place_in_run,
         # "size1": 2463,
@@ -427,13 +427,19 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
     # Calculate flux, new beam size and add them to header
     if beam_settings:
         flux, x_size, y_size = calculate_flux(header, beam_settings)
-        header['flux'] = flux
+        header["flux"] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
 
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+
+    # Set collect_mode
+    if header["run_number"] == 0:
+        header["collect_mode"] = "SNAP"
+    else:
+        header["collect_mode"] = "RUN"
 
     # Add tag for module to header
     header["rapd_detector_id"] = "necat_dectris_eiger16m"

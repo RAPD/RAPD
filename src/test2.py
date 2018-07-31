@@ -21,19 +21,21 @@ logger.debug("__init__")
 
 # Setup cluster
 import sites.necat as site
-"""
+
 from utils.modules import load_module
 cluster_launcher = load_module(site.CLUSTER_ADAPTER)
 launcher = cluster_launcher.process_cluster
 # Setup local_subprocess
 #launcher = local_subprocess
-"""
+
 
 # Setup redis
 redis_database = importlib.import_module('database.redis_adapter')
 #redis_database = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
 redis = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
 #redis = redis_database.connect_to_redis()
+
+
 """
 cif = '/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif'
 l = ['2FGE_E', '2FGE']
@@ -47,21 +49,43 @@ for i in l:
 
 
 from plugins.subcontractors.rapd_cctbx import get_pdb_info
-pdb_info = get_pdb_info('/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif',
+pdb_info = get_pdb_info(#cif_file='/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif',
+                        #cif_file='/gpfs6/users/necat/Jon/RAPD_test/Output/2yep.cif',
+                        cif_file='/gpfs6/users/necat/Jon/RAPD_test/Pdb/thau.pdb',
                        dres=6.0,
                        matthews=True,
-                       cell_analysis=False,
-                       data_file='/gpfs6/users/necat/rapd2/integrate/2018-06-05/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1_free.mtz')
-print pdb_info
-
+                       chains=False,
+                       #data_file='/gpfs6/users/necat/rapd2/integrate/2018-06-05/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1/JDO_PUCK2_A14_Run4_1_free.mtz',
+                       #data_file='/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz',
+                       data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+                       )
+pprint(pdb_info)
+"""
+"""
+from plugins.subcontractors.rapd_phaser import run_phaser_module
+tncs = run_phaser_module(data_file='/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
+                         tncs=True)
+print tncs
+"""
+"""
 # Cleanup Redis
 l = redis.keys('Phaser_*')
 for k in l:
     redis.delete(k)
 print redis.keys('Phaser_*')
 print redis.get('Phaser_8858')
+
+#os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/rapd_pdbquery_P113_11_1_free')
+#pprint(json.loads(open('result.json', 'r').read()))
+
+
+
+from plugins.subcontractors.rapd_cctbx import get_pdb_info, get_mtz_info
+mtz = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
+input_spacegroup, cell, volume = get_mtz_info(mtz)
+input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
+print xutils.get_sub_groups(input_spacegroup_num, "simple")
 """
-print redis.get('Phaser_6511')
 """
 import plugins.analysis.plugin
 import plugins.analysis.commandline
@@ -100,35 +124,35 @@ plugin_instance.start()
 #analysis_result = plugin_queue.get()
 #print analysis_result
 """
-"""
+
 import plugins.pdbquery.plugin
 import plugins.pdbquery.commandline
 
-os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
+os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
 #launcher = local_subprocess
 
 # Construct the pdbquery plugin command
 class PdbqueryArgs(object):
     #Object for command construction
     clean = True
-    #datafile = '/gpfs6/users/necat/Jon/process/rapd/integrate/ehdbr1_7rna_1/ehdbr1_7rna_free.mtz'
+    #datafile = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
     datafile = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
     dir_up = False
     json = False
     nproc = 2
     progress = False
     run_mode = 'server'
-    computer_cluster = True
-    #pdbs = False
-    pdbs = ['1111', '2qk9']
+    pdbs = False
+    #pdbs = ['1111', '2qk9']
     contaminants = True
     ##run_mode = None
     search = True
     test = True
-    verbose = True
+    #verbose = True
     #no_color = False
     db_settings = site.CONTROL_DATABASE_SETTINGS
     #output_id = False
+    exchange_dir = '/gpfs6/users/necat/rapd2/exchange_dir'
 
 pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
 
@@ -137,11 +161,11 @@ plugin = plugins.pdbquery.plugin
 
 # Run the plugin
 plugin_instance = plugin.RapdPlugin(command=pdbquery_command,
-                                    launcher=launcher,
+                                    computer_cluster=cluster_launcher,
                                     logger=logger)
 plugin_instance.start()
 
-"""
+
 """
 from plugins.subcontractors.rapd_phaser import run_phaser
 

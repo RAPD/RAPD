@@ -62,7 +62,7 @@ PDBQ_SERVER = ["https://rapd2.nec.aps.anl.gov/pdbq",
                #"https://www.ebi.ac.uk/pdbe",
 
 # Timeout for phaser MR process
-PHASER_TIMEOUT = 5000
+PHASER_TIMEOUT = 2000
 #PHASER_TIMEOUT = 10
 
 # Time outs for Autointdex+strategies.

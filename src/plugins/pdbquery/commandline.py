@@ -221,6 +221,10 @@ def get_commandline():
 
     args = my_parser.parse_args()
 
+    # Fixes a problem from plugin-called code
+    args.exchange_dir = False
+    args.db_settings = False
+
     # Insert logic to check or modify args here
 
     # Running in interactive mode if this code is being called

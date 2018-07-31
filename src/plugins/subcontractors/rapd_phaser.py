@@ -36,6 +36,7 @@ import subprocess
 import stat
 import json
 import random
+import shutil
 import importlib
 from functools import wraps
 import tarfile
@@ -498,19 +499,35 @@ def run_phaser(datafile,
                          "adf": None,
                          "peak": None,
                          }
+        
         # make tar.bz2 of result files
-        l = ['pdb', 'mtz', 'adf', 'peak']
-        archive = "%s.tar.bz2" % name
-        with tarfile.open(archive, "w:bz2") as tar:
-            for f in l:
-                fo = phaser_result.get(f, False)
-                if fo:
-                    if os.path.exists(fo):
-                        tar.add(fo)
-            tar.close()
-        # 
-
-        phaser_result['tar'] = os.path.join(work_dir, archive)
+        # l = ['pdb', 'mtz', 'adf', 'peak']
+        # archive = "%s.tar.bz2" % name
+        # with tarfile.open(archive, "w:bz2") as tar:
+        #     for f in l:
+        #         fo = phaser_result.get(f, False)
+        #         if fo:
+        #             if os.path.exists(fo):
+        #                 tar.add(fo)
+        #     tar.close()
+        # phaser_result['tar'] = os.path.join(work_dir, archive)
+        
+        # New procedure for making tar of results
+        # Create directory
+        os.mkdir(name)
+        # Go through and copy files to archive directory
+        file_types = ("pdb", "mtz", "adf", "peak")
+        for file_type in file_types:
+            target_file = phaser_result.get(file_type, False)
+            if target_file:
+                if os.path.exists(target_file):
+                    # Copy the file to the directory to be archived
+                    shutil.copy(target_file, name+"/.")
+        # Create the archive
+        archive_result = archive.create_archive(name)
+        archive_result["description"] = name
+        phaser_result["tar"] = archive_result
+        
         phaser_result["pdb_file"] = os.path.join(work_dir, r.getTopPdbFile())
     else:
         phaser_result = {"ID": name,

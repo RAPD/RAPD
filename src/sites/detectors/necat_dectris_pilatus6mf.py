@@ -314,7 +314,7 @@ def base_read_header_OLD(image,
         # "run_number": int(base.split("_")[-2]),
         "image_number": int(base.split("_")[-1]),
         "axis": "omega",
-        # "collect_mode": mode,
+        "collect_mode": False,
         # "run_id": run_id,
         # "place_in_run": place_in_run,
         # "size1": 2463,
@@ -366,6 +366,12 @@ def read_header(fullname, beam_settings=False, extra_header=False):
     basename = os.path.basename(fullname)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+
+    # Set collect_mode
+    if header["run_number"] == 0:
+        header["collect_mode"] = "SNAP"
+    else:
+        header["collect_mode"] = "RUN"
 
     # Add tag for module to header
     header["rapd_detector_id"] = "necat_dectris_pilatus6mf"

@@ -73,10 +73,11 @@ def check_queue(inp):
          "INDEX"          : 'index.q',
          #"INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
-         "XDS"            : 'all.q',
+         #"XDS"            : 'all.q',
+         "XDS"            : 'fibre.q',
          #"INTEGRATE"      : 'integrate.q',
-         "INTEGRATE"      : 'all.q',
-         "PDBQUERY"       : 'general.q,all.q',
+         "INTEGRATE"      : 'fibre.q', # because phase 3 nodes are having problems allocating memory
+         "PDBQUERY"       : 'all.q,general.q',
          }
     if d.get(inp, False):
         return(d[inp])
