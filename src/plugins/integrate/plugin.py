@@ -2169,7 +2169,7 @@ class RapdPlugin(Process):
         self.logger.debug("Returning results!")
         #self.logger.debug(results)
 
-         # Set up the results for return
+        # Set up the results for return
         self.results["process"]["status"] = 50
         self.results["results"].update(results)
         #self.logger.debug(self.results)

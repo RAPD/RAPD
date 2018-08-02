@@ -434,6 +434,7 @@ if [ $INSTALL_PYTHON == 1 ]; then
   fi
   rapd.pip install pycrypto
   rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
+  rapd.pip install mysolr
   rapd.pip install pyasn1
   rapd.pip install redis
   rapd.pip install pymysql
