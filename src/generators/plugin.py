@@ -520,7 +520,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    preferences = None\n",
             "    # Holders for results",
             "    results = {}\n",
-            "    def __init__(self, command, tprint=False, logger=False):",
+            "    def __init__(self, site, command, tprint=False, logger=False):",
             "        \"\"\"Initialize the plugin\"\"\"\n",
             "        # If the logging instance is passed in...",
             "        if logger:",
