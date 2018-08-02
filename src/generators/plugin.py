@@ -433,8 +433,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    else:",
             "        commandline_args.dir_up = False\n",
             "    # Construct the command",
-            "    command = construct_command(commandline_args=commandline_args,",
-            "                                logger=logger)\n",
+            "    command = construct_command(commandline_args=commandline_args)\n",
             "    # Load the plugin",
             "    plugin = modules.load_module(seek_module=\"plugin\",",
             "                                 directories=[\"plugins.%s\"]," % \
