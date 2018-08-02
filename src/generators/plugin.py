@@ -463,7 +463,7 @@ class FileGenerator(CommandlineFileGenerator):
             "# This is an active RAPD plugin",
             "RAPD_PLUGIN = True\n",
             "# This plugin's types",
-            "DATA_TYPE = \"MX\"  # MX, ?"
+            "DATA_TYPE = \"MX\"",
             "PLUGIN_TYPE = \"%s\"" % self.args.plugin_name.upper(),
             "PLUGIN_SUBTYPE = \"EXPERIMENTAL\"\n",
             "# A unique ID for this handler (uuid.uuid1().hex[:4])",
