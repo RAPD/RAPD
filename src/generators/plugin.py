@@ -355,6 +355,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        my_parser.print_help()",
             "        my_parser.exit()\n",
             "    args = my_parser.parse_args()\n",
+            "    # Coming off the commandline",
+            "    args.run_mode = \"interactive\"\n",
             "    # Insert logic to check or modify args here\n",
             "    return args\n",
         ]
