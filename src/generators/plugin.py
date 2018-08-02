@@ -244,6 +244,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"source\": \"commandline\",",
             "        \"status\": 0,",
             "        }\n",
+            "    # The repr of this run",
+            "    run_repr = \"rapd_%s_\" + os.path.basename(commandline_args.datafile)\n" % self.args.plugin_name.lower(),
             "    # Working directory",
             "    work_dir = commandline_utils.check_work_dir(",
             "        os.path.join(os.path.abspath(os.path.curdir), run_repr),",
