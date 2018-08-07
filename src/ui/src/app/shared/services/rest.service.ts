@@ -174,7 +174,7 @@ export class RestService {
   //
   // GROUP METHODS
   //
-  private extractGroups(res, error) {
+  public extractGroups(res, error) {
     // console.log('error', error);
     // let body = res.json();
 
@@ -351,9 +351,9 @@ export class RestService {
     // TODO :Observable<Project[]> {
     console.log("getProjects");
 
-    // return this.authHttp
-    //   .get(this.globals_service.site.restApiUrl + "/projects")
-    //   .catch(error => this.handleError(error));
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/projects")
+      .catch(error => this.handleError(error));
   }
 
   public getProject(id: string): Observable<any> {
@@ -553,7 +553,6 @@ export class RestService {
   }
 
   public getGroups(): Observable<Group[]> {
-
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/groups")
       .map(this.extractGroups)

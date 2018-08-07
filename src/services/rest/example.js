@@ -6,6 +6,7 @@ var Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 var conn = mongoose.connect('mongodb://127.0.0.1:27017/example', {
   useMongoClient: true,
+  useNewUrlParser: true
 }, function(error) {
   console.error(error);
 });
