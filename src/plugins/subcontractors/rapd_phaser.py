@@ -460,6 +460,9 @@ def run_phaser(datafile,
             log.write(r.summary())
             log.close()
 
+    for i in  dir(r):
+        print i
+
     if r.foundSolutions():
         rfz = None
         tfz = None
@@ -660,8 +663,6 @@ def run_phaser_module(data_file,
         if r1.Success():
             print 'SUCCESS'
             return(r1)
-
-    print phaser
 
     # MAIN
     # Setup which modules are run

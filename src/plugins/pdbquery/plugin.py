@@ -142,6 +142,8 @@ class RapdPlugin(Thread):
         """Initialize the plugin"""
         Thread.__init__ (self)
 
+        pprint(command)
+
         # If the logging instance is passed in...
         if logger:
             self.logger = logger
