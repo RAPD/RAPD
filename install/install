@@ -289,8 +289,9 @@ if [ $INSTALL_CCTBX == 1 ]; then
     # Install CCTBX
     printf "  Installing CCTBX"
     # python bootstrap.py --builder=cctbx --enable-shared
-    python bootstrap.py --builder=phaser --nproc=4 --enable-shared
-    # python bootstrap.py --builder=cctbx --nproc=4 --enable-shared
+    python bootstrap.py --builder=cctbx --nproc=4 --enable-shared
+    python bootstrap.py --builder=phaser --nproc=4 
+
 
     if [ ! $? -eq 0 ]
     then
