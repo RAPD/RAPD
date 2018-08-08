@@ -661,6 +661,8 @@ def run_phaser_module(data_file,
             print 'SUCCESS'
             return(r1)
 
+    print phaser
+
     # MAIN
     # Setup which modules are run
     # Read input MTZ file

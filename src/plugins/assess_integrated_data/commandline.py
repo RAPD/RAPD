@@ -98,6 +98,7 @@ def construct_command(commandline_args):
         "json": commandline_args.json,
         "no_color": commandline_args.no_color,
         "nproc": commandline_args.nproc,
+        "pdbquery": commandline_args.pdbquery,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "test": commandline_args.test,
@@ -194,6 +195,12 @@ def get_commandline():
                            dest="analysis",
                            default=True,
                            help="Do not run analysis")
+
+    # Don't run pdbquery
+    my_parser.add_argument("--nopdbquery",
+                           action="store_false",
+                           dest="pdbquery",
+                           help="Don't run pdbquery as part of analysis")
 
     # Positional argument
     my_parser.add_argument(action="store",

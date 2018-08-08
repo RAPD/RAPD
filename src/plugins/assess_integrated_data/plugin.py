@@ -192,6 +192,7 @@ class RapdPlugin(multiprocessing.Process):
         self.run_analysis_plugin()
 
         # Run pdbquery
+        self.run_pdbquery_plugin()
 
 
     def postprocess(self):
@@ -382,7 +383,6 @@ class RapdPlugin(multiprocessing.Process):
             self.db_settings = False
             if self.site:
                 self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
-            print self.db_settings
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -423,7 +423,85 @@ class RapdPlugin(multiprocessing.Process):
 
         # Do not run analysis
         else:
-            self.results["results"]["analysis"] = False
+            self.results["analysis"] = False
+
+    def run_pdbquery_plugin(self):
+        """Set up and run the pdbquery plugin"""
+
+        self.logger.debug("run_pdbquery_plugin")
+
+        # Run analysis
+        if self.preferences.get("pdbquery", False):
+
+            # Now Launch PDBQuery
+            self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
+            self.tprint("  This can take a while...", level=30, color="white")
+            
+            # Make sure we are in the work directory
+            start_dir = os.getcwd()
+            os.chdir(self.command["directories"]["work"])
+
+            # Handle site-based var
+            self.db_settings = False
+            if self.site:
+                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+
+            # Construct the pdbquery plugin command
+            class PdbqueryArgs(object):
+                """Object for command construction"""
+                clean = self.preferences.get("clean_up", False)
+                datafile = self.command["input_data"]["datafile"]
+                dir_up = self.preferences.get("dir_up", False)
+                json = self.preferences.get("json", True)
+                nproc = self.preferences.get("nproc", 1)
+                progress = self.preferences.get("progress", False)
+                run_mode = self.preferences.get("run_mode", False)
+                db_settings = self.db_settings
+                exchange_dir = self.preferences.get("exchange_dir", False)
+                pdbs = False
+                contaminants = True
+                search = True
+                test = False
+    
+            pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
+    
+            # The pdbquery plugin
+            plugin = plugins.pdbquery.plugin
+    
+            # Print out plugin info
+            self.tprint(arg="\nPlugin information", level=10, color="blue")
+            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+    
+            # Run the plugin
+            self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
+                                                  processed_results = self.results,
+                                                  computer_cluster=self.preferences.get("computer_cluster", False),
+                                                  tprint=self.tprint,
+                                                  logger=self.logger)
+
+            self.pdbq_process.start()
+            
+            """
+            # Allow multiple returns for each part of analysis.
+            while True:
+                analysis_result = plugin_queue.get()
+                self.results["results"]["analysis"] = analysis_result
+                self.send_results(self.results)
+                if analysis_result['process']["status"] in (-1, 100):
+                    break
+            """
+            #analysis_result = plugin_queue.get()
+            #self.results["results"]["analysis"] = analysis_result
+
+            # Back to where we were, in case it matters
+            os.chdir(start_dir)
+
+        # Do not run analysis
+        else:
+            self.results["pdbquery"] = False
 
 def get_commandline():
     """Grabs the commandline"""

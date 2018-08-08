@@ -477,9 +477,11 @@ calculation",
             self.logger.debug("run_xtriage")
         self.tprint("  Running xtriage", level=30, color="white")
 
-        command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-                  SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
-                  self.data_file
+        # command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
+        #           SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
+        #           self.data_file
+
+        command = "phenix.xtriage %s scaling.input.parameters.reporting.loggraphs=True" % self.data_file
 
         if self.verbose and self.logger:
             self.logger.debug(command)

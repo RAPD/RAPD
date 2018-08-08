@@ -706,7 +706,7 @@ class RapdPlugin(Process):
             self.results["results"]["analysis"] = False
             
     def run_pdbquery_plugin(self):
-        """Set up and run the analysis plugin"""
+        """Set up and run the pdbquery plugin"""
 
         self.logger.debug("run_pdbquery_plugin")
 
