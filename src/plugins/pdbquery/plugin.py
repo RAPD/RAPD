@@ -259,7 +259,8 @@ class RapdPlugin(Thread):
         self.check_dependencies()
         
         # Connect to Redis
-        self.connect_to_redis()
+        if self.command["preferences"].get("run_mode") == "server":
+            self.connect_to_redis()
 
     def update_status(self):
         """Update the status of the run."""

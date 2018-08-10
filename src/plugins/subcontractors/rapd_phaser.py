@@ -43,16 +43,19 @@ import tarfile
 import time
 
 # Phaser import
-import phaser
+try:
+    import phaser
+except ImportError:
+    phaser = False
 
 # RAPD imports
 from utils import archive
 from utils.xutils import convert_unicode
+import utils.xray_importer as xray_importer 
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
-
 
 def run_phaser_pdbquery_script_OLD(command):
     """
@@ -359,6 +362,13 @@ def run_phaser(datafile,
     large_cell - optimizes parameters to speed up MR with large unit cell.
     run_before - signal to run more comprehensive MR
     """
+
+    if phaser:
+        print "Have phaser module"
+    else:
+        print "Missing phaser module"
+        return False
+
     # Change to work_dir
     if not work_dir:
         work_dir = os.getcwd()
@@ -864,3 +874,81 @@ def run_phaser_module_OLD(datafile, inp=False):
     else:
       return(0.0)
 """
+
+def get_target_resolution_shell(data_file, pdb_file):
+    """
+    Returns the phaser target resolution using the shell to call phaser
+    """
+
+    print "get_target_resolution_shell", data_file, pdb_file
+
+    # Handle multiple reflection file types
+    column_labels = {
+        "rfree_mtz": "F=F SIGF=SIGF"
+        }
+    file_type = xray_importer.get_rapd_file_type(data_file)
+
+    # Assemble the command file
+    commands = [
+        "phaser << EOF",
+        "MODE MR_ELLG",
+        "HKLIn %s" % data_file,
+        "LABIn %s" % column_labels[file_type],
+        "ENSEMBLE test PDB %s ID 70" % pdb_file,
+        "EOF"
+    ]
+
+    # Write the file
+    with open("phaser.sh", "w") as outfile:
+        for line in commands:
+            outfile.write(line+"\n")
+    os.chmod("phaser.sh", stat.S_IRWXU)
+
+    # Run
+    p = subprocess.Popen(["./phaser.sh"], stdout=subprocess.PIPE, shell=True)
+    # p.wait()
+    stdout, _ = p.communicate()
+
+    # Parse for the target resolution
+    resolution = False
+    interested = False
+    for line in stdout.split("\n"):
+        # print line
+        if "Resolution for eLLG target" in line:
+            interested = True
+        if interested:
+            # print line
+            if "test" in line:
+                resolution = float(line.strip().split(" ")[0])
+                break
+    
+    return resolution
+
+def get_target_resolution_module(data_file, pdb_file):
+    """
+    Returns the phaser target resolution using the shell to call phaser
+    """
+
+    print "get_target_resolution_module", data_file, pdb_file
+
+
+def get_target_resolution(data_file, pdb_file):
+    """
+    Returns the phaser target resolution
+    """
+
+    print "get_target_resolution"
+
+    if phaser:
+        print "Will get target resolution using module"
+        target_resolution = get_target_resolution_module(data_file, pdb_file)
+    else:
+        print "will get target resolution using shell"
+        target_resolution = get_target_resolution_shell(data_file, pdb_file)
+    print target_resolution
+
+
+if __name__ == "__main__":
+
+
+    get_target_resolution("thaum1_01s-01d_1_free.mtz", "6fj6.pdb")
