@@ -2287,10 +2287,10 @@ def get_pdb_info_OLD(cif_file, dres, matthews=True, cell_analysis=False, data_fi
                     temp.write_pdb_file(file_name=n)
                     if matthews:
                         # Run Matthews Calc. on chain
-                        #phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
+                        #phaser_return = run_phaser_module_ORIG((np1, na1, dres, n, data_file))
+                        phaser_return = run_phaser_module_ORIG(data_file, (np1, na1, dres, n))
                     else:
-                        res1 = run_phaser_module(n)
+                        res1 = run_phaser_module_ORIG(n)
 
                     d[chain.id] = {'file': n,
                                    'NRes': np1+na1,
@@ -2305,8 +2305,8 @@ def get_pdb_info_OLD(cif_file, dres, matthews=True, cell_analysis=False, data_fi
 
     # Run on entire PDB
     if matthews:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module_ORIG((np, na, dres, cif_file, data_file))
+        phaser_return = run_phaser_module_ORIG(data_file, (np, na, dres, cif_file))
         """
         d['all'] = {'file': cif_file,
                     'NRes': np+na,
@@ -2318,8 +2318,8 @@ def get_pdb_info_OLD(cif_file, dres, matthews=True, cell_analysis=False, data_fi
                     'res': phaser_return["target_resolution"]}
         """
     else:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module_ORIG((np, na, dres, cif_file, data_file))
+        phaser_return = run_phaser_module_ORIG(data_file, (np, na, dres, cif_file))
     d['all'] = {'file': cif_file,
                 'NRes': np+na,
                 'MWna': na*330,

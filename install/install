@@ -124,11 +124,14 @@ if [[ $PLATFORM == "Linux" ]]; then
     exit 1
   fi
 
+  NPROC=$(nproc --all)
+
   # Cent OS
   if [ -f /etc/centos-release ]; then
 
     LINUX_FLAVOR="CentOS"
     CENTOS_VERSION_MAJOR=`cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1`
+    
 
     if [ $CENTOS_VERSION_MAJOR == "6" ]; then
       MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
@@ -212,6 +215,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
 elif [[ $PLATFORM == "Darwin" ]]; then
   printf "\033[94mPerforming installation on Mac OS \033[0m\n"
+  NPROC=$(sysctl -n hw.ncpu)
 fi
 
 if [[ $BATCH == 0 ]] # interactive mode
@@ -288,7 +292,7 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # Install CCTBX
     printf "  Installing CCTBX"
-    python bootstrap.py --builder=cctbx --nproc=4 --enable-shared
+    python bootstrap.py --builder=cctbx --nproc=$NPROC --enable-shared
 
     if [ ! $? -eq 0 ]
     then
@@ -322,7 +326,7 @@ if [ $INSTALL_INIT == 1 ]; then
   echo "#" >> rapd.shrc
   echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
   echo "" >> rapd.shrc
-  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
+  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." >> rapd.shrc
   echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
   echo "" >> rapd.shrc
   echo "# Setup paths for cctbx" >> rapd.shrc

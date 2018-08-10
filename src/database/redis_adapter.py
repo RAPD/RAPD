@@ -396,32 +396,6 @@ class Database:
         # Wrap in dict if requested
         return ({key: value} if return_dict else value)
 
-    # def get(self, key, return_dict=False):
-    #     """
-    #     Return the value of `key`.
-
-    #     `return_dict` indicates whether to return values in a dict. If True,
-    #     the keys in the returned dict match the specified key(s).
-    #     """
-
-    #     # self.logger.debug("get key:{} return_dict:{}".format(key, return_dict))
-
-    #     # Retrieve value
-    #     attempts = 0
-    #     while attempts < ATTEMPT_LIMIT:
-    #         try:
-    #             attempts += 1
-    #             value = self.redis.get(key)
-    #             break
-    #         except redis.exceptions.ConnectionError as e:
-    #             # Pause for specified time
-    #             print "try %d" % attempts
-    #             time.sleep(ATTEMPT_PAUSE)
-    #     else:
-    #         self._raise_ConnectionError(e)
-
-    #     return ({key: value} if return_dict else value)
-
     @connectionErrorWrapper
     def mget(self, keys, return_dict=False):
         """

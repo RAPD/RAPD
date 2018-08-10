@@ -59,7 +59,7 @@ import plugins.subcontractors.parse as parse
 # import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
 #from plugins.subcontractors.rapd_cctbx import get_pdb_info
-from plugins.subcontractors.rapd_phaser import run_phaser_module
+from plugins.subcontractors.rapd_phaser import run_phaser_module_ORIG
 
 import utils.credits as rcredits
 import utils.exceptions as exceptions
@@ -631,9 +631,9 @@ calculation",
                         color="white")
 
             self.phaser_queue = Queue()
-            job = Process(target=run_phaser_module, kwargs={'data_file': self.data_file,
-                                                            'result_queue': self.phaser_queue,
-                                                            'tncs': True})
+            job = Process(target=run_phaser_module_ORIG, kwargs={'data_file': self.data_file,
+                                                                 'result_queue': self.phaser_queue,
+                                                                 'tncs': True})
             job.start()
             self.jobs[job] = {'name': 'NCS',
                               'pid': job.pid}
