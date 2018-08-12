@@ -695,7 +695,9 @@ class RapdPlugin(Thread):
                                                                             self.large_cell,
                                                                             self.dres),
                                            large_cell=self.large_cell,
-                                           run_before=False)
+                                           run_before=False,
+                                           test=True,
+                                           script=True)
 
                 # if not l:
                 #     launch_job(job_description)

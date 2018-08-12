@@ -859,6 +859,7 @@ def run_phaser_module(data_file,
     # Do a little sleep to make sure results are in Redis for postprocess_phaser
     time.sleep(0.1)
 
+@mp_job
 def run_phaser_shell(data_file,
                      spacegroup,
                      output_id,
