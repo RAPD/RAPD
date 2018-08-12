@@ -68,7 +68,7 @@ def construct_command(commandline_args, logger):
 
     # Information on input
     command["input_data"] = {
-        # "datafile": os.path.abspath(commandline_args.datafile)
+        # "data_file": os.path.abspath(commandline_args.data_file)
         "pdb_codes": commandline_args.pdb_codes
     }
 

@@ -384,16 +384,16 @@ def main():
 
     args = get_commandline()
 
-    datafiles = args.datafiles
+    data_files = args.data_files
 
-    for input_file_name in datafiles:
+    for input_file_name in data_files:
 
         print "\nInput file name: %s" % input_file_name
 
-        datafile = reflection_file_reader.any_reflection_file(file_name=input_file_name)
+        data_file = reflection_file_reader.any_reflection_file(file_name=input_file_name)
 
-        print "  CCTBX file type", datafile.file_type()
-        print "  columns:", get_columns(datafile)
+        print "  CCTBX file type", data_file.file_type()
+        print "  columns:", get_columns(data_file)
 
         # Get the RAPD file type
         rapd_file_type = get_rapd_file_type(input_file_name)
@@ -682,44 +682,44 @@ def print_file_conversions(source_file_type=False, columns=False):
 #
 # Low-level functions
 #
-def get_columns(datafile):
+def get_columns(data_file):
     """
-    Return a list of columns for a datafile
+    Return a list of columns for a data_file
 
-    datafile is a phenix any_reflection_file
+    data_file is a phenix any_reflection_file
     """
 
     # Determine file type
-    file_type = datafile.file_type()
+    file_type = data_file.file_type()
 
     # MTZ
     if file_type == "ccp4_mtz":
-        columns = datafile.file_content().column_labels()
+        columns = data_file.file_content().column_labels()
     # XDS
     elif file_type == "xds_ascii":
-        columns = get_xds_ascii_columns(datafile)
+        columns = get_xds_ascii_columns(data_file)
     elif file_type == "xds_integrate_hkl":
-        columns = get_xds_integrate_hkl_columns(datafile)
+        columns = get_xds_integrate_hkl_columns(data_file)
     elif file_type == "scalepack_merge":
-        columns = get_scalepack_merge_columns(datafile)
+        columns = get_scalepack_merge_columns(data_file)
     elif file_type == "scalepack_no_merge_original_index":
         columns = get_scalepack_no_merge_original_index_columns()
     else:
-        # for d in dir(datafile.file_content()):
+        # for d in dir(data_file.file_content()):
         #     print d
         columns = False
 
     return columns
 
-def get_scalepack_merge_columns(datafile):
+def get_scalepack_merge_columns(data_file):
     """
     Look at an scalepack_merge file and return an array of columns
 
-    datafile should be iotbx.reflection_file_reader.any_reflection_file
+    data_file should be iotbx.reflection_file_reader.any_reflection_file
     """
 
     hi_len = 0
-    inlines = open(datafile.file_name(), "r").read(6144)
+    inlines = open(data_file.file_name(), "r").read(6144)
     for line in inlines.split("\n")[3:]:
         # print line
         my_len = len(line.split())
@@ -746,16 +746,16 @@ def get_scalepack_no_merge_original_index_columns():
 
     return columns
 
-def get_xds_ascii_columns(datafile):
+def get_xds_ascii_columns(data_file):
     """
     Look at an xds_ascii file and return an array of columns
 
-    datafile should be iotbx.reflection_file_reader.any_reflection_file
+    data_file should be iotbx.reflection_file_reader.any_reflection_file
     """
 
     columns = []
 
-    inlines = open(datafile.file_name(), "r").read(6144)
+    inlines = open(data_file.file_name(), "r").read(6144)
     for line in inlines.split("\n"):
         if line.startswith("!ITEM_"):
             columns.append(line.replace("!ITEM_", "").split("=")[0])
@@ -764,16 +764,16 @@ def get_xds_ascii_columns(datafile):
 
     return columns
 
-def get_xds_integrate_hkl_columns(datafile):
+def get_xds_integrate_hkl_columns(data_file):
     """
     Look at an xds_integrate_hkl file and return an array of columns
 
-    datafile should be iotbx.reflection_file_reader.any_reflection_file
+    data_file should be iotbx.reflection_file_reader.any_reflection_file
     """
 
     columns = []
     next_line = False
-    inlines = open(datafile.file_name(), "r").read(2048)
+    inlines = open(data_file.file_name(), "r").read(2048)
     for line in inlines.split("\n"):
         if line.startswith("!H,K,L") or next_line:
             columns += line[1:].strip().rstrip(",").split(",")
@@ -2396,10 +2396,10 @@ def get_commandline():
 
     # File name to be generated
     my_parser.add_argument(action="store",
-                           dest="datafiles",
+                           dest="data_files",
                            nargs="+",
                            default=False,
-                           help="Datafile(s) to be imported")
+                           help="data_file(s) to be imported")
 
     # Print help message is no arguments
     if len(sys.argv[1:])==0:

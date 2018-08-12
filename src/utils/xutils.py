@@ -250,11 +250,11 @@ def calcADF(self, inp):
     pdb  = self.phaser_results[inp].get("AutoMR results").get("AutoMR pdb")
     map1 = self.phaser_results[inp].get("AutoMR results").get("AutoMR adf")
     peak = self.phaser_results[inp].get("AutoMR results").get("AutoMR peak")
-    file_type = self.datafile[-3:]
+    file_type = self.data_file[-3:]
     if file_type == "mtz":
-        command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(mtz, self.datafile)
+        command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(mtz, self.data_file)
     else:
-        command  = "scalepack2mtz hklin %s hklout junk.mtz<<eof1\n"%self.datafile
+        command  = "scalepack2mtz hklin %s hklout junk.mtz<<eof1\n"%self.data_file
         command += "symm %s\nanomalous yes\nend\neof1\n" % self.phaser_results[inp].get("AutoMR results").get("AutoMR sg")
         command += "truncate hklin junk.mtz hklout junk2.mtz<<eof2\n"
         command += "truncate yes\nanomalous yes\nend\neof2\n"
@@ -540,8 +540,8 @@ def checkAnom(self):
     if float(slope) > 1:
       if float(cc_anom) > 0.1:
         #copy sca file to local directory so path isn't too long for SHELX
-        sca = os.path.basename(self.datafile)
-        shutil.copy(self.datafile,sca)
+        sca = os.path.basename(self.data_file)
+        shutil.copy(self.data_file,sca)
         command  = 'shelxc junk <<EOF\nCELL %s\nSPAG %s\nSAD %s\nFIND 1\nSFAC Se\nEOF\n'%(self.cell,self.input_sg,sca)
         output = subprocess.Popen(command,
                                   shell=True,
@@ -1049,7 +1049,7 @@ def convertUnicode(self,inp=False):
   if self.verbose:
     self.logger.debug('Utilities::convertUnicode')
   if inp == False:
-    inp0 = self.datafile
+    inp0 = self.data_file
   else:
     inp0 = inp
   if type(inp0) == unicode:
@@ -1698,7 +1698,7 @@ def fixSCA(self,inp=False):
   if inp:
     sca = inp
   else:
-    sca = self.datafile
+    sca = self.data_file
   temp = []
   lines_fixed = 0
   old_sca = sca.replace('.sca','_orig.sca')
@@ -2057,7 +2057,7 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
   vol = False
   try:
     if inp == False:
-      inp = self.datafile
+      inp = self.data_file
     if type(inp) == unicode:
       inp = convertUnicode(self,inp)
     if os.path.basename(inp).upper()[-3:] == 'SCA':
@@ -2065,10 +2065,10 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
       inp = sca2mtz(self)
       if convert:
         #For rapd_agent_phaser.py
-        self.datafile = inp
+        self.data_file = inp
       else:
         #For rapd_agent_anom.py so original SCA file used in SHELX.
-        self.autosol_datafile = inp
+        self.autosol_data_file = inp
     data = mtz.object(inp)
     sg = fix_R3_sg(self,data.space_group_name().replace(' ',''))
     cell2 = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
@@ -2095,7 +2095,7 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
   else:
       return(sg, cell, cell2, 0)
 
-def get_mtz_info(datafile):
+def get_mtz_info(data_file):
     """
     Get unit cell and SG from input mtz
     """
@@ -2105,12 +2105,12 @@ def get_mtz_info(datafile):
     vol = False
 
     # Convert from unicode
-    datafile = convert_unicode(datafile)
+    data_file = convert_unicode(data_file)
 
-    # Read datafile
-    data = iotbx_mtz.object(datafile)
+    # Read data_file
+    data = iotbx_mtz.object(data_file)
 
-    # Derive space group from datafile
+    # Derive space group from data_file
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
 
     # Wrangle the cell parameters
@@ -2557,7 +2557,7 @@ def getRes_OLD(self,inp=False):
   from iotbx import mtz
   try:
     if inp == False:
-      inp = self.datafile
+      inp = self.data_file
     if type(inp) == unicode:
       inp = convertUnicode(self,inp)
     data = mtz.object(inp)
@@ -2566,11 +2566,11 @@ def getRes_OLD(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
-def get_res_OLD(datafile):
+def get_res_OLD(data_file):
     """Return resolution limit of dataset"""
 
-    datafile = convert_unicode(datafile)
-    data = iotbx_mtz.object(datafile)
+    data_file = convert_unicode(data_file)
+    data = iotbx_mtz.object(data_file)
 
     return float(data.max_min_resolution()[-1])
 
@@ -2620,7 +2620,7 @@ def getWavelength(self,inp=False):
   wave = 0.979
   try:
     if inp == False:
-      inp = self.datafile
+      inp = self.data_file
     if type(inp) == unicode:
       inp = convertUnicode(self,inp)
     data = mtz.object(inp)
@@ -2772,7 +2772,7 @@ def mtz2sca(self,inp=False,output=False):
       command = 'mtz2sca %s'%inp
       out = os.path.join(os.getcwd(),os.path.basename(inp.replace('.mtz','.sca')))
   else:
-    command  = 'mtz2sca %s temp.sca'%self.datafile
+    command  = 'mtz2sca %s temp.sca'%self.data_file
     out = os.path.join(os.getcwd(),'temp.sca')
   if self.test == False:
     processLocal(command,self.logger)
@@ -2780,7 +2780,7 @@ def mtz2sca(self,inp=False,output=False):
   if output:
     output.put(out)
   else:
-    self.datafile = out
+    self.data_file = out
 
   #except:
   #  self.logger.exception('**ERROR in Utils.mtz2sca2**')
@@ -2817,7 +2817,7 @@ def mtz2scaUM(self,inp,output=False):
   if output:
     output.put(os.path.join(os.getcwd(),file2))
   else:
-    self.datafile = os.path.join(os.getcwd(),file2)
+    self.data_file = os.path.join(os.getcwd(),file2)
   #except:
   #  self.logger.exception('**ERROR in Utils.mtz2scaUM**')
 
@@ -3058,7 +3058,7 @@ def runPhaserModule_OLD(self, inp=False):
 
     #Read the dataset
     i = phaser.InputMR_DAT()
-    i.setHKLI(self.datafile)
+    i.setHKLI(self.data_file)
     #f = 'F'
     #sigf = 'SIGF'
     i.setLABI_F_SIGF('F','SIGF')
@@ -3223,7 +3223,7 @@ def run_phaser_module_OLD(inp=False): # Now in plugins.subcontractors.phaser
     #
     #   #Read the dataset
     #   i = phaser.InputMR_DAT()
-    #   i.setHKLI(self.datafile)
+    #   i.setHKLI(self.data_file)
     #   #f = 'F'
     #   #sigf = 'SIGF'
     #   i.setLABI_F_SIGF('F','SIGF')
@@ -3263,7 +3263,7 @@ def sca2mtz(self,res=False,run_before=False):
   failed = False
   os.chdir(self.working_dir)
   path = os.path.join(self.working_dir,'temp.mtz')
-  command  = 'scalepack2mtz hklin %s hklout junk.mtz<<eof1\n'%self.datafile
+  command  = 'scalepack2mtz hklin %s hklout junk.mtz<<eof1\n'%self.data_file
   if res:
     command += 'resolution 50 %s\n'%res
   command += 'end\neof1\n'
@@ -3288,7 +3288,7 @@ def sca2mtz(self,res=False,run_before=False):
   else:
     if self.test == False:
       os.system('rm -f junk.mtz')
-    #self.datafile = path
+    #self.data_file = path
     return(path)
   """
   except:
@@ -3863,7 +3863,7 @@ def XDS2Shelx(self,inp,output=False):
   if output:
     output.put(os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca')))
   else:
-    self.datafile = os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca'))
+    self.data_file = os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca'))
 
   #except:
   #  self.logger.exception('**ERROR in Utils.XDS2Shelx**')

@@ -44,7 +44,7 @@ from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
 import iotbx.pdb.mmcif as iotbx_mmcif
 
-def get_mtz_info(datafile):
+def get_mtz_info(data_file):
     """
     Get unit cell and SG from input mtz
     """
@@ -54,12 +54,12 @@ def get_mtz_info(datafile):
     vol = False
 
     # Convert from unicode
-    datafile = convert_unicode(datafile)
+    data_file = convert_unicode(data_file)
 
-    # Read datafile
-    data = iotbx_mtz.object(datafile)
+    # Read data_file
+    data = iotbx_mtz.object(data_file)
 
-    # Derive space group from datafile
+    # Derive space group from data_file
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
 
     # Wrangle the cell parameters
@@ -70,11 +70,11 @@ def get_mtz_info(datafile):
 
     return (sg, cell, vol)
 
-def get_res(datafile):
+def get_res(data_file):
     """Return resolution limit of dataset"""
 
-    datafile = convert_unicode(datafile)
-    data = iotbx_mtz.object(datafile)
+    data_file = convert_unicode(data_file)
+    data = iotbx_mtz.object(data_file)
 
     return float(data.max_min_resolution()[-1])
 

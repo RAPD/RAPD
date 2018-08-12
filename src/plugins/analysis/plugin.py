@@ -208,13 +208,13 @@ class RapdPlugin(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
-        self.data_file = self.command["input_data"]["datafile"]
+        self.data_file = self.command["input_data"]["data_file"]
 
         # Get information from the data file
         self.input_sg, self.cell, self.volume = \
-            xutils.get_mtz_info(datafile=self.data_file)
+            xutils.get_mtz_info(data_file=self.data_file)
 
-        self.tprint("\nReading in datafile", level=30, color="blue")
+        self.tprint("\nReading in data_file", level=30, color="blue")
         self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
         self.tprint("  Cell: %s" % str(self.cell), level=20, color="white")
         self.tprint("  Volume: %f" % self.volume, level=20, color="white")

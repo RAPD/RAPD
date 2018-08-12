@@ -668,7 +668,7 @@ class RapdPlugin(Process):
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs
@@ -725,7 +725,7 @@ class RapdPlugin(Process):
             class PdbqueryArgs(object):
                 """Object for command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs

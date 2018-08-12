@@ -127,7 +127,7 @@ class PDBQuery(Process):
         self.gui = self.input["preferences"].get("gui", True)
         # self.controller_address = self.input[0].get("control", False)
         self.verbose = self.input["preferences"].get("verbose", False)
-        self.datafile = xutils.convert_unicode(self.input["input_data"].get("datafile"))
+        self.data_file = xutils.convert_unicode(self.input["input_data"].get("data_file"))
 
         Process.__init__(self, name="PDBQuery")
         self.start()
@@ -154,8 +154,8 @@ class PDBQuery(Process):
         if not os.path.exists(self.cif_cache):
             os.makedirs(self.cif_cache)
 
-        self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
-        self.dres = xutils.get_res(self.datafile)
+        self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.data_file)
+        self.dres = xutils.get_res(self.data_file)
         self.input_sg_num = int(xutils.convert_spacegroup(self.input_sg))
         self.laue = xutils.get_sub_groups(self.input_sg_num, "simple")
 
@@ -495,7 +495,7 @@ class PDBQuery(Process):
                                                dres=self.dres,
                                                matthews=True,
                                                cell_analysis=False,
-                                               data_file=self.datafile)
+                                               data_file=self.data_file)
                 #Prune if only one chain present, b/c "all" and "A" will be the same.
                 if len(pdb_info.keys()) == 2:
                     for key in pdb_info.keys():
@@ -515,7 +515,7 @@ class PDBQuery(Process):
                                                dres=self.dres,
                                                matthews=True,
                                                cell_analysis=True,
-                                               data_file=self.datafile)
+                                               data_file=self.data_file)
                 copy = pdb_info["all"]["NMol"]
 
             # Same number of mols in AU.
@@ -524,11 +524,11 @@ class PDBQuery(Process):
                                                dres=self.dres,
                                                matthews=False,
                                                cell_analysis=True,
-                                               data_file=self.datafile)
+                                               data_file=self.data_file)
 
             job_description = {
                 "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % code)),
-                "data": self.datafile,
+                "data": self.data_file,
                 "pdb": cif_file,
                 "name": code,
                 "verbose": self.verbose,
@@ -586,7 +586,7 @@ class PDBQuery(Process):
         try:
             pdb = "%s.1.pdb" % inp
             info = xutils.getPDBInfo(self, pdb, False)
-            command = "phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN " % (pdb, self.datafile)
+            command = "phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN " % (pdb, self.data_file)
             command += "refinement.main.number_of_macro_cycles=1 nproc=2"
             chains = [chain for chain in info.keys() if chain != "all"]
             for chain in chains:

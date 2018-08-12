@@ -45,7 +45,7 @@ class AutoStats(Process):
     self.input = input
     self.logger = logger
     self.working_dir = self.input[0].get('dir', os.getcwd())
-    self.datafile = self.input[0].get('data', False)
+    self.data_file = self.input[0].get('data', False)
     self.gui = self.input[0].get('gui', True)
     self.clean = self.input[0].get('clean', True)
     self.test = self.input[0].get('test', False)
@@ -129,7 +129,7 @@ class AutoStats(Process):
     #print out recognition of the program being used
     self.PrintInfo()
     #Check if input file is sca and convert to mtz.
-    if self.datafile:
+    if self.data_file:
       self.input_sg,self.cell,self.cell2,vol = Utils.getMTZInfo(self,False,True,True)
       #Change timer to allow more time for Ribosome structures.
       if Utils.calcResNumber(self,self.input_sg,False,vol) > 5000:
@@ -158,10 +158,10 @@ class AutoStats(Process):
       self.logger.debug('AutoStats::processXtriage')
     try:
       command  = '/share/apps/necat/programs/phenix-dev-1702/build/intel-linux-2.6-x86_64/bin/phenix.xtriage '
-      command += '%s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" '%self.datafile
+      command += '%s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" '%self.data_file
       #command += 'scaling.input.parameters.reporting.loggraphs=True'
-      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)"'%self.datafile
-      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" loggraphs=True'%self.datafile
+      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)"'%self.data_file
+      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" loggraphs=True'%self.data_file
       if self.test:
         self.jobs_output[11111] = 'xtriage'
       else:
@@ -195,7 +195,7 @@ class AutoStats(Process):
       self.logger.debug('AutoStats::processNCS')
     try:
       command  = 'phenix.phaser << eof\nMODE NCS\n'
-      command += 'HKLIn %s\nLABIn F=F SIGF=SIGF\neof\n'%self.datafile
+      command += 'HKLIn %s\nLABIn F=F SIGF=SIGF\neof\n'%self.data_file
       if self.test:
         self.jobs_output[11110] = 'NCS'
       else:
@@ -215,7 +215,7 @@ class AutoStats(Process):
     if self.verbose:
       self.logger.debug('AutoStats::processMolrep')
     try:
-      command  = 'molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop\n'%self.datafile
+      command  = 'molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop\n'%self.data_file
       if self.test:
         self.jobs_output[121212] = 'molrep'
       else:

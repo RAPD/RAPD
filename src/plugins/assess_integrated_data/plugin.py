@@ -326,14 +326,14 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug("aimless")
         self.tprint(arg="  Running Aimless", level=10, color="white")
 
-        datafile = self.command["input_data"]["datafile"]
-        logfile = "aimless_" + os.path.basename(datafile)[:-3] + "log"
+        data_file = self.command["input_data"]["data_file"]
+        logfile = "aimless_" + os.path.basename(data_file)[:-3] + "log"
         comfile = logfile.replace("log", "com")
 
         print "opening", comfile
         with open(comfile, "w") as aimless_file:
             aimless_file.write("#!/bin/csh\n")
-            aimless_file.write('aimless hklin  %s << eof > %s\n' % (datafile, logfile))
+            aimless_file.write('aimless hklin  %s << eof > %s\n' % (data_file, logfile))
             aimless_file.write("anomalous on\n")
             aimless_file.write("scales constant\n")
             aimless_file.write("sdcorrection norefine full 1 0 0 partial 1 0 0\n")
@@ -388,7 +388,7 @@ class RapdPlugin(multiprocessing.Process):
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.command["input_data"]["datafile"]
+                data_file = self.command["input_data"]["data_file"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.preferences.get("nproc", 1)
@@ -450,7 +450,7 @@ class RapdPlugin(multiprocessing.Process):
             class PdbqueryArgs(object):
                 """Object for command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.command["input_data"]["datafile"]
+                data_file = self.command["input_data"]["data_file"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.preferences.get("nproc", 1)

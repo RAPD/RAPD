@@ -183,7 +183,7 @@ class RapdPlugin(Thread):
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
         # self.verbose = self.command["preferences"].get("verbose", False)
-        self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
+        self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Used for setting up Redis connection
         self.db_settings = self.command["input_data"].get("db_settings")
         self.nproc = self.preferences.get("nproc", 1)
@@ -225,16 +225,16 @@ class RapdPlugin(Thread):
         self.tprint(arg=0, level="progress")
 
         # Glean some information on the input file
-        input_spacegroup, self.cell, volume = get_mtz_info(self.datafile)
+        input_spacegroup, self.cell, volume = get_mtz_info(self.data_file)
         # Get high resolution limt from MTZ
-        self.dres = get_res(self.datafile)
+        self.dres = get_res(self.data_file)
         # Determine the Laue group from the MTZ
         input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
         self.laue = xutils.get_sub_groups(input_spacegroup_num, "laue")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
-        self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
+        self.tprint("  Data file: %s" % self.data_file, level=10, color="white")
         self.tprint("  Spacegroup: %s  (%s)" % (input_spacegroup, input_spacegroup_num),
                     level=10,
                     color="white")
@@ -572,15 +572,16 @@ class RapdPlugin(Thread):
 
         self.logger.debug("process_phaser")
         self.tprint("\nStarting molecular replacement", level=30, color="blue")
-
         self.tprint("  Assembling Phaser runs", level=10, color="white")
 
         def launch_job(inp):
             """Launch the Phaser job"""
+            print "launch_job"
             #self.logger.debug("process_phaser Launching %s"%inp['name'])
             if self.pool:
                 inp['pool'] = self.pool
             job, pid, output_id = run_phaser(**inp)
+            print job, pid, output_id
             self.jobs[job] = {'name': inp['name'],
                               'pid' : pid,
                               'output_id' : output_id}
@@ -627,7 +628,7 @@ class RapdPlugin(Thread):
                 if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=True)
@@ -647,7 +648,7 @@ class RapdPlugin(Thread):
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=False)
@@ -656,14 +657,14 @@ class RapdPlugin(Thread):
                 # Same number of mols in AU.
                 else:
                     pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=False,
                                             chains=False)
     
                 job_description = {
                     "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                    "datafile": self.datafile,
+                    "data_file": self.data_file,
                     "cif": cif_path,
                     #"pdb": cif_path,
                     "name": pdb_code,
@@ -680,23 +681,39 @@ class RapdPlugin(Thread):
                     "output_id": False,
                     "batch_queue": self.batch_queue}
     
-                if not l:
-                    launch_job(job_description)
-                else:
-                    for chain in l:
-                        new_code = "%s_%s" % (pdb_code, chain)
-                        xutils.folders(self, "Phaser_%s" % new_code)
-                        job_description.update({
-                            "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
-                                new_code)),
-                            "cif":pdb_info[chain]["file"],
-                            #"pdb":pdb_info[chain]["file"],
-                            "name":new_code,
-                            "ncopy":pdb_info[chain]["NMol"],
-                            "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
-                                                        self.large_cell,
-                                                        self.dres)})
-                        launch_job(job_description)
+                run_phaser(data_file=self.data_file,
+                           spacegroup=data_spacegroup,
+                           output_id=False,
+                           db_settings=self.db_settings,
+                           work_dir=os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                           cif=cif_path,
+                           pdb=False,
+                           name=False,
+                           ncopy=copy,
+                           cell_analysis=True,
+                           resolution=xutils.set_phaser_res(pdb_info["all"]["res"],
+                                                            self.large_cell,
+                                                            self.dres),
+                           large_cell=self.large_cell,
+                           run_before=False)
+
+                # if not l:
+                #     launch_job(job_description)
+                # else:
+                #     for chain in l:
+                #         new_code = "%s_%s" % (pdb_code, chain)
+                #         xutils.folders(self, "Phaser_%s" % new_code)
+                #         job_description.update({
+                #             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
+                #                 new_code)),
+                #             "cif":pdb_info[chain]["file"],
+                #             #"pdb":pdb_info[chain]["file"],
+                #             "name":new_code,
+                #             "ncopy":pdb_info[chain]["NMol"],
+                #             "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
+                #                                         self.large_cell,
+                #                                         self.dres)})
+                #         launch_job(job_description)
 
     def postprocess_phaser(self, job_name, results):
         """fix Phaser results and pass back"""
@@ -846,7 +863,8 @@ class RapdPlugin(Thread):
             info = self.jobs.pop(job)
             print 'Finished Phaser on %s with id: %s'%(info['name'], info['output_id'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
-            results_json = self.redis.get(info['output_id'])
+            # TODO
+            # results_json = self.redis.get(info['output_id'])
             # This try/except is for when results aren't in Redis in time.
             try:
                 results = json.loads(results_json)

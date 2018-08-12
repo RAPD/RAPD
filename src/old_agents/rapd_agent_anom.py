@@ -71,8 +71,8 @@ class AutoSolve(Process, Communicate):
     self.autosol_results                    = False
     self.autosol_failed                     = False
     self.autosol_summary                    = False
-    self.autosol_datafile                   = False
-    self.autosol_datafiles                  = False
+    self.autosol_data_file                   = False
+    self.autosol_data_files                  = False
     self.autobuild_timer                    = False
     self.autobuild_log                      = []
     self.autobuild_output                   = False
@@ -105,17 +105,17 @@ class AutoSolve(Process, Communicate):
     self.input_sg                           = False
     self.cubic                              = False
     self.many_sites                         = False
-    self.no_datafile                        = False
-    self.no_datafile2                       = False
-    self.datafiles                          = False
+    self.no_data_file                        = False
+    self.no_data_file2                       = False
+    self.data_files                          = False
     self.njobs                              = 1
     self.iteration                          = 0
     self.sc                                 = {}
     
-    self.datafile = self.data.get('original').get('mtz_file',None)
-    if self.datafile == None:
-      self.datafile = self.preferences.get('request').get('input_sca',None)
-    if self.datafile == None:
+    self.data_file = self.data.get('original').get('mtz_file',None)
+    if self.data_file == None:
+      self.data_file = self.preferences.get('request').get('input_sca',None)
+    if self.data_file == None:
       self.multi_input = True
     else:
       self.multi_input = False
@@ -220,20 +220,20 @@ class AutoSolve(Process, Communicate):
     if self.multi_input:
       self.preprocessMulti()
     else:
-      #Check if integration completed and datafile exists.
-      file_type = self.datafile[-3:].upper()
+      #Check if integration completed and data_file exists.
+      file_type = self.data_file[-3:].upper()
       f = False
       if file_type == 'MTZ':
-        self.autosol_datafile = self.datafile
+        self.autosol_data_file = self.data_file
         #Run Scala on unmerged data to create SCA file.
         self.unmerged_queue['SAD'] = Queue()
         if self.unmerged:
-          if os.path.basename(self.datafile).startswith('smerge'):
-            if os.path.exists(self.datafile.replace('_freer','_sortedMergable')):
-              f = self.datafile.replace('_freer','_sortedMergable')
+          if os.path.basename(self.data_file).startswith('smerge'):
+            if os.path.exists(self.data_file.replace('_freer','_sortedMergable')):
+              f = self.data_file.replace('_freer','_sortedMergable')
           #Need to separate out the path because users create folders with '_free' in them.
-          elif os.path.exists(os.path.join(os.path.dirname(self.datafile),os.path.basename(self.datafile).replace('_free','_mergable'))):
-            f = os.path.join(os.path.dirname(self.datafile),os.path.basename(self.datafile).replace('_free','_mergable'))
+          elif os.path.exists(os.path.join(os.path.dirname(self.data_file),os.path.basename(self.data_file).replace('_free','_mergable'))):
+            f = os.path.join(os.path.dirname(self.data_file),os.path.basename(self.data_file).replace('_free','_mergable'))
           if f:
             #David cuts res in Aimless and mergable file comes from XDS ASCII out of Pointless.
             #Have to check resolution of two files and set high res limit to the merged limit if it is too high.
@@ -244,14 +244,14 @@ class AutoSolve(Process, Communicate):
             Process(target=Utils.mtz2scaUM,args=(self,f,self.unmerged_queue['SAD'])).start()
           else:
             self.unmerged = False
-            Process(target=Utils.mtz2sca,args=(self,self.datafile,self.unmerged_queue['SAD'])).start()
+            Process(target=Utils.mtz2sca,args=(self,self.data_file,self.unmerged_queue['SAD'])).start()
           """
           #There is no res cutoff in XDS file!
-          elif os.path.exists(os.path.join(os.path.dirname(self.datafile),os.path.basename(self.datafile).replace('_free.mtz','_XDS.HKL'))):
-            self.unmerged_queue['SAD'].put(os.path.join(os.path.dirname(self.datafile),os.path.basename(self.datafile).replace('_free.mtz','_XDS.HKL')))
+          elif os.path.exists(os.path.join(os.path.dirname(self.data_file),os.path.basename(self.data_file).replace('_free.mtz','_XDS.HKL'))):
+            self.unmerged_queue['SAD'].put(os.path.join(os.path.dirname(self.data_file),os.path.basename(self.data_file).replace('_free.mtz','_XDS.HKL')))
           """
         else:
-          Process(target=Utils.mtz2sca,args=(self,self.datafile,self.unmerged_queue['SAD'])).start()
+          Process(target=Utils.mtz2sca,args=(self,self.data_file,self.unmerged_queue['SAD'])).start()
         
       else:
         self.unmerged = False
@@ -275,16 +275,16 @@ class AutoSolve(Process, Communicate):
       first = True
       #List of possible MAD and SIR datasets in order of hierarchy for cell and SG.
       datasets = ['mtz_NAT','mtz_PEAK','mtz_INFL','mtz_HREM','mtz_LREM','mtz_SIRA']
-      self.autosol_datafiles = {}
+      self.autosol_data_files = {}
       for data in datasets:
         f = self.preferences.get('request').get(data)
         if f != None:
           self.unmerged_queue[data] = Queue()
-          self.autosol_datafiles[data] = f
+          self.autosol_data_files[data] = f
           #inp = []
           #Save the hierarchy of which files exist to calc cell and SG.
           if first:
-            self.datafile = f
+            self.data_file = f
             first = False
           if f[-3:].upper() == 'MTZ':
             #Convert mtz to sca file for SHELX
@@ -306,10 +306,10 @@ class AutoSolve(Process, Communicate):
             shutil.copy(f,out)
             self.unmerged_queue[data].put(out)
       if len(self.unmerged_queue.keys()) == 0:
-        self.no_datafile = True
+        self.no_data_file = True
         self.postprocess(True)
       elif len(self.unmerged_queue.keys()) == 1:
-        self.no_datafile2 = True
+        self.no_data_file2 = True
         self.postprocess(True)
 
     except:
@@ -365,14 +365,14 @@ class AutoSolve(Process, Communicate):
           self.njobs = 1
         if self.unmerged:
           if self.multi_input:
-            self.datafiles = {}
+            self.data_files = {}
             for data in self.unmerged_queue.keys():
-              self.datafiles[data] = self.unmerged_queue[data].get()
+              self.data_files[data] = self.unmerged_queue[data].get()
           else:
-            self.datafile = self.unmerged_queue['SAD'].get()
-        elif self.datafile[-3:].upper() == 'MTZ':
-          shutil.copy(self.datafile,os.getcwd())
-          self.datafile = self.unmerged_queue['SAD'].get()
+            self.data_file = self.unmerged_queue['SAD'].get()
+        elif self.data_file[-3:].upper() == 'MTZ':
+          shutil.copy(self.data_file,os.getcwd())
+          self.data_file = self.unmerged_queue['SAD'].get()
       else:
         self.shelx_failed = True
         self.shelx_nosol = True
@@ -400,14 +400,14 @@ class AutoSolve(Process, Communicate):
       if self.multi_input:
         f = open('junk.eff','w')
         f.write('autosol {\n')
-        if self.autosol_datafiles.keys().count('mtz_SIRA') == 1:
-          f.write('native { data = "%s"}\n'%self.autosol_datafiles['mtz_NAT'])
-          f.write('deriv { data = "%s"\n'%self.autosol_datafiles['mtz_SIRA'])
-          f.write('        lambda = %s}\n'%Utils.getWavelength(self,self.autosol_datafiles['mtz_SIRA']))
+        if self.autosol_data_files.keys().count('mtz_SIRA') == 1:
+          f.write('native { data = "%s"}\n'%self.autosol_data_files['mtz_NAT'])
+          f.write('deriv { data = "%s"\n'%self.autosol_data_files['mtz_SIRA'])
+          f.write('        lambda = %s}\n'%Utils.getWavelength(self,self.autosol_data_files['mtz_SIRA']))
         else:
           d = {'mtz_PEAK': 'peak','mtz_INFL': 'inf','mtz_HREM':'high','mtz_LREM':'low'}
-          for data in self.autosol_datafiles.keys():
-            filename = self.autosol_datafiles[data]
+          for data in self.autosol_data_files.keys():
+            filename = self.autosol_data_files[data]
             f.write('wavelength { data = "%s"\n'%filename)
             f.write('             lambda = %s\n'%Utils.getWavelength(self,filename))
             f.write('             wavelength_name = %s}\n'%d[data])
@@ -415,10 +415,10 @@ class AutoSolve(Process, Communicate):
         f.close()
         mad = True
       else:
-        if self.autosol_datafile:
-          command += ' data=%s'%self.autosol_datafile
+        if self.autosol_data_file:
+          command += ' data=%s'%self.autosol_data_file
         else:
-          command += ' data=%s'%self.datafile.replace('.sca','.mtz')
+          command += ' data=%s'%self.data_file.replace('.sca','.mtz')
       if self.sample_type == 'Ribosome':
         command += ' chain_type=RNA'
       else:
@@ -479,10 +479,10 @@ class AutoSolve(Process, Communicate):
       command = 'phenix.autobuild map_file=%s solvent_fraction=%s chain_type=%s sequence="%s" '+\
                 'number_of_parallel_models=1 n_cycle_build_max=1 n_cycle_rebuild_max=0 ncycle_refine=1 nproc=4'%(
                   seq,m,self.solvent_content,self.sample_type)
-      if self.autosol_datafile:
-        command += ' data=%s'%self.autosol_datafile
+      if self.autosol_data_file:
+        command += ' data=%s'%self.autosol_data_file
       else:
-        command += ' data=%s'%self.datafile
+        command += ' data=%s'%self.data_file
       self.autobuild_log.append(command)
       if self.verbose:
         self.logger.debug(command)
@@ -620,17 +620,17 @@ class AutoSolve(Process, Communicate):
         command += 'SHEL 999 %s\n'%self.resolution
       command += 'SPAG %s\n'%sg
       if self.multi_input:
-        for data in self.datafiles.keys():
+        for data in self.data_files.keys():
           #symlink sca file to local directory so path isn't too long for SHELX
-          sca = os.path.basename(self.datafiles[data])
+          sca = os.path.basename(self.data_files[data])
           if os.path.exists(sca) == False:
-            os.symlink(self.datafiles[data],sca)
+            os.symlink(self.data_files[data],sca)
           command += '%s %s\n'%(data[data.find('_')+1:],sca)
       else:
         #symlink sca file to local directory so path isn't too long for SHELX
-        sca = os.path.basename(self.datafile)
+        sca = os.path.basename(self.data_file)
         if os.path.exists(sca) == False:
-          os.symlink(self.datafile,sca)
+          os.symlink(self.data_file,sca)
         command += 'SAD %s\n'%sca
       command += 'FIND %s\nSFAC %s\nEOF\n'%(self.ha_num,self.ha)
       #self.shelx_log0[sg].append(command+'\n')
@@ -1244,7 +1244,7 @@ class AutoSolve(Process, Communicate):
     failed = False
     if final:
       self.pp = True
-      if self.no_datafile or self.no_datafile2:
+      if self.no_data_file or self.no_data_file2:
         self.shelx_results = {}
         self.shelx_results['Shelx results'] = Parse.setShelxResults(self,'user input error')
         self.anom_signal = False
@@ -1643,7 +1643,7 @@ class AutoSolve(Process, Communicate):
     """
     If Shelx failed runs this to generate html plot summary.
     """
-    if self.no_datafile:
+    if self.no_data_file:
       error = 'The SAD pipeline was initiated before the data finished processing. Please wait and resubmit.'
     elif self.anom_signal:
       error ='Shelx Failed. Could not calculate plots.'
@@ -1686,9 +1686,9 @@ class AutoSolve(Process, Communicate):
       if self.tooltips:
         jon_summary.writelines(self.tooltips)
       jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))
-      if self.no_datafile or self.no_datafile2:
+      if self.no_data_file or self.no_data_file2:
         jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-        if self.no_datafile:
+        if self.no_data_file:
           jon_summary.write('%7s<h3 class="results">The SAD pipeline was initiated before the data finished processing. Please wait and resubmit.</h3>\n'%'')
         else:
           jon_summary.write('%7s<h3 class="results">Not enough datasets were selected for the pipeline to run.</h3>\n'%'')
@@ -1750,9 +1750,9 @@ class AutoSolve(Process, Communicate):
         jon_summary.write("%8s$('#autobuild').dataTable({\n"%'')
         jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bSort": false,\n%11s"bAutoWidth": false });\n'%(5*('',)))
       jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))
-      if self.no_datafile or self.no_datafile2:
+      if self.no_data_file or self.no_data_file2:
         jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-        if self.no_datafile:
+        if self.no_data_file:
           jon_summary.write('%7s<h3 class="results">The SAD pipeline was initiated before the data finished processing. '\
                             'Please wait and resubmit.</h3>\n'%'')
         else:

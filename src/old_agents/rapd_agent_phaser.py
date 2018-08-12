@@ -79,9 +79,9 @@ class AutoMolRep(Process):
     self.large_cell                         = False
 
     self.sample_type = self.preferences.get('sample_type','Protein')
-    self.datafile = Utils.convertUnicode(self,self.data.get('original').get('mtz_file',None))
-    if self.datafile == None:
-      self.datafile = Utils.convertUnicode(self,self.preferences.get('request').get('input_sca'))
+    self.data_file = Utils.convertUnicode(self,self.data.get('original').get('mtz_file',None))
+    if self.data_file == None:
+      self.data_file = Utils.convertUnicode(self,self.preferences.get('request').get('input_sca'))
     self.nmol = self.preferences.get('request').get('nmol',False)
     #Used for printing summary html
     self.pdb_name = self.preferences.get('request').get('pdb_name',False)
@@ -233,7 +233,7 @@ class AutoMolRep(Process):
       self.output.setdefault('jobs',None)
       self.output.setdefault('pids',None)
 
-      d = {'data':self.datafile,'pdb':self.pdb_info[chain]['file'],'verbose':self.verbose,
+      d = {'data':self.data_file,'pdb':self.pdb_info[chain]['file'],'verbose':self.verbose,
            'copy':self.pdb_info[chain]['NMol'],'test':self.test,'cluster':self.cluster_use,
            'res':Utils.setPhaserRes(self,self.pdb_info[chain]['res']),'large':self.large_cell,
            #'mwaa':self.pdb_info[chain]['MWaa'],'mwna':self.pdb_info[chain]['MWna'],
@@ -590,7 +590,7 @@ class RunPhaser(Process):
     def __init__(self, inp, output=False, logger=None):
         """
         #The minimum input
-        {"input":{"data":self.datafile,"pdb":self.input_pdb,"sg":self.sg,}
+        {"input":{"data":self.data_file,"pdb":self.input_pdb,"sg":self.sg,}
          "output","logger}
         """
         logger.info("RunPhaser.__init__")
@@ -604,7 +604,7 @@ class RunPhaser(Process):
         self.res = self.input.get("res", False)
         self.test = self.input.get("test", False)
         self.cluster_use = self.input.get("cluster", True)
-        self.datafile = self.input.get("data")
+        self.data_file = self.input.get("data")
         self.input_pdb = self.input.get("pdb")
         self.sg = self.input.get("sg")
         self.ca = self.input.get("cell analysis", False)
@@ -635,7 +635,7 @@ class RunPhaser(Process):
         try:
             ft = "PDB"
             command  = "phaser << eof\nMODE MR_AUTO\n"
-            command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % self.datafile
+            command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % self.data_file
             if self.input_pdb[-3:].lower() == "cif":
                 ft = "CIF"
             if os.path.exists(self.input_pdb):
@@ -745,7 +745,7 @@ class RunPhaser2(Process):
     ***TESTING for splitting up jobs further on the compute cluster***
     ***NOT ACTIVE***
     #The minimum input
-    {'input':{'data':self.datafile,'pdb':self.input_pdb,'sg':self.sg,}
+    {'input':{'data':self.data_file,'pdb':self.input_pdb,'sg':self.sg,}
      'output','logger}
     """
     logger.info('RunPhaser.__init__')
@@ -759,7 +759,7 @@ class RunPhaser2(Process):
     self.res                                = self.input.get('res',False)
     self.test                               = self.input.get('test',False)
     self.cluster_use                        = self.input.get('cluster',True)
-    self.datafile                           = self.input.get('data')
+    self.data_file                           = self.input.get('data')
     self.input_pdb                          = self.input.get('pdb')
     self.sg                                 = self.input.get('sg')
     self.ca                                 = self.input.get('cell analysis',False)
@@ -787,7 +787,7 @@ class RunPhaser2(Process):
     #try:
      #Read the dataset
     i = phaser.InputMR_DAT()
-    i.setHKLI(self.datafile)
+    i.setHKLI(self.data_file)
     #f = 'F'
     #sigf = 'SIGF'
     i.setLABI_F_SIGF('F','SIGF')
@@ -826,7 +826,7 @@ class RunPhaser2(Process):
       self.logger.debug('RunPhaser::preprocess')
     try:
       command  = 'phaser << eof\nMODE MR_AUTO\n'
-      command += 'HKLIn %s\nLABIn F=F SIGF=SIGF\n'%self.datafile
+      command += 'HKLIn %s\nLABIn F=F SIGF=SIGF\n'%self.data_file
       if os.path.exists(self.input_pdb):
         command += 'ENSEmble junk PDB %s IDENtity 70\n'%self.input_pdb
       else:

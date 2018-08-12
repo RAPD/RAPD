@@ -83,7 +83,7 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile)
+        "data_file": os.path.abspath(commandline_args.data_file)
     }
 
     # Plugin settings
@@ -177,7 +177,7 @@ def get_commandline():
 
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="datafile",
+                           dest="data_file",
                            nargs="?",
                            default=False,
                            help="Name of file to be analyzed")
