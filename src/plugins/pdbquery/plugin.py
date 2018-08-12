@@ -681,21 +681,21 @@ class RapdPlugin(Thread):
                     "output_id": False,
                     "batch_queue": self.batch_queue}
     
-                run_phaser(data_file=self.data_file,
-                           spacegroup=data_spacegroup,
-                           output_id=False,
-                           db_settings=self.db_settings,
-                           work_dir=os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                           cif=cif_path,
-                           pdb=False,
-                           name=False,
-                           ncopy=copy,
-                           cell_analysis=True,
-                           resolution=xutils.set_phaser_res(pdb_info["all"]["res"],
-                                                            self.large_cell,
-                                                            self.dres),
-                           large_cell=self.large_cell,
-                           run_before=False)
+                phaser_result = run_phaser(data_file=self.data_file,
+                                           spacegroup=data_spacegroup,
+                                           output_id=False,
+                                           db_settings=self.db_settings,
+                                           work_dir=os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                                           cif=cif_path,
+                                           pdb=False,
+                                           name=False,
+                                           ncopy=copy,
+                                           cell_analysis=True,
+                                           resolution=xutils.set_phaser_res(pdb_info["all"]["res"],
+                                                                            self.large_cell,
+                                                                            self.dres),
+                                           large_cell=self.large_cell,
+                                           run_before=False)
 
                 # if not l:
                 #     launch_job(job_description)
@@ -883,7 +883,7 @@ class RapdPlugin(Thread):
             #self.redis.delete(info['output_id'])
             jobs.remove(job)
 
-        # Signal to the pool that no more processes will be added
+        # Signal to the `pool` that no more processes will be added
         if self.pool:
             self.pool.close()
 
