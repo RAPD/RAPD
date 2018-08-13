@@ -892,7 +892,7 @@ def run_phaser_shell(data_file,
     run_before - signal to run more comprehensive MR
     """
 
-    print "run_phaser_shell"
+    # print "run_phaser_shell"
 
     # Record the starting spot
     start_dir = os.getcwd()

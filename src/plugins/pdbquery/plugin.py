@@ -662,60 +662,84 @@ class RapdPlugin(Thread):
                                             matthews=False,
                                             chains=False)
     
-                job_description = {
-                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                    "data_file": self.data_file,
-                    "cif": cif_path,
-                    #"pdb": cif_path,
-                    "name": pdb_code,
-                    "spacegroup": data_spacegroup,
-                    "ncopy": copy,
-                    "test": self.test,
-                    "cell_analysis": True,
-                    "large_cell": self.large_cell,
-                    "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
-                                                 self.large_cell,
-                                                 self.dres),
-                    "launcher": self.launcher,
-                    "db_settings": self.db_settings,
-                    "output_id": False,
-                    "batch_queue": self.batch_queue}
-    
-                phaser_result = run_phaser(data_file=self.data_file,
-                                           spacegroup=data_spacegroup,
-                                           output_id=False,
-                                           db_settings=self.db_settings,
-                                           work_dir=os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                                           cif=cif_path,
-                                           pdb=False,
-                                           name=False,
-                                           ncopy=copy,
-                                           cell_analysis=True,
-                                           resolution=xutils.set_phaser_res(pdb_info["all"]["res"],
-                                                                            self.large_cell,
-                                                                            self.dres),
-                                           large_cell=self.large_cell,
-                                           run_before=False,
-                                           test=True,
-                                           script=True)
+                if self.command["preferences"].get("run_mode") in ("interactive", "json"):
+                    # The base 
+                    job_description = {
+                        "data_file":self.data_file,
+                        "spacegroup":data_spacegroup,
+                        "output_id":False,
+                        "db_settings":self.db_settings,
+                        "work_dir":os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                        "cif":cif_path,
+                        "pdb":False,
+                        "name":False,
+                        "ncopy":copy,
+                        "cell_analysis":True,
+                        "resolution":xutils.set_phaser_res(pdb_info["all"]["res"],
+                                                            self.large_cell,
+                                                            self.dres),
+                        "large_cell":self.large_cell,
+                        "run_before":False,
+                        "test":True,
+                        "script":True
+                    }
 
-                # if not l:
-                #     launch_job(job_description)
-                # else:
-                #     for chain in l:
-                #         new_code = "%s_%s" % (pdb_code, chain)
-                #         xutils.folders(self, "Phaser_%s" % new_code)
-                #         job_description.update({
-                #             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
-                #                 new_code)),
-                #             "cif":pdb_info[chain]["file"],
-                #             #"pdb":pdb_info[chain]["file"],
-                #             "name":new_code,
-                #             "ncopy":pdb_info[chain]["NMol"],
-                #             "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
-                #                                         self.large_cell,
-                #                                         self.dres)})
-                #         launch_job(job_description)
+                    # Multiple chains
+                    if l:
+                        for chain in l:
+                            new_code = "%s_%s" % (pdb_code, chain)
+                            xutils.folders(self, "Phaser_%s" % new_code)
+                            job_description.update({
+                                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
+                                    new_code)),
+                                "cif":pdb_info[chain]["file"],
+                                "name":new_code,
+                                "ncopy":pdb_info[chain]["NMol"],
+                                "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
+                                                            self.large_cell,
+                                                            self.dres)})
+                            phaser_result = run_phaser(**job_description)
+                    # Single chain
+                    else:
+                        phaser_result = run_phaser(**job_description)
+
+                else:
+                    job_description = {
+                        "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                        "data_file": self.data_file,
+                        "cif": cif_path,
+                        #"pdb": cif_path,
+                        "name": pdb_code,
+                        "spacegroup": data_spacegroup,
+                        "ncopy": copy,
+                        "test": self.test,
+                        "cell_analysis": True,
+                        "large_cell": self.large_cell,
+                        "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
+                                                    self.large_cell,
+                                                    self.dres),
+                        "launcher": self.launcher,
+                        "db_settings": self.db_settings,
+                        "output_id": False,
+                        "batch_queue": self.batch_queue}
+
+                    if not l:
+                        launch_job(job_description)
+                    else:
+                        for chain in l:
+                            new_code = "%s_%s" % (pdb_code, chain)
+                            xutils.folders(self, "Phaser_%s" % new_code)
+                            job_description.update({
+                                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
+                                    new_code)),
+                                "cif":pdb_info[chain]["file"],
+                                #"pdb":pdb_info[chain]["file"],
+                                "name":new_code,
+                                "ncopy":pdb_info[chain]["NMol"],
+                                "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
+                                                            self.large_cell,
+                                                            self.dres)})
+                            launch_job(job_description)
 
     def postprocess_phaser(self, job_name, results):
         """fix Phaser results and pass back"""
