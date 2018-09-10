@@ -22,7 +22,7 @@
     "find-remove": "^1.2.0",
     "gridfs-stream": "^1.1.1",
     "hbs": "~4.0.1",
-    "ioredis": "~3.2.2",
+    "ioredis": "~4.0.0",
     "jsonwebtoken": "^8.3.0",
     "ldapjs": "^1.0.2",
     "mkdirp": "^0.5.1",
