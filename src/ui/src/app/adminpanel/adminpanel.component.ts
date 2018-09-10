@@ -1,30 +1,30 @@
-import { ChangeDetectorRef,
-         Component,
-         OnInit,
-         ViewContainerRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  ViewContainerRef
+} from "@angular/core";
 
-import { MatDialog,
-         MatDialogRef,
-         MatDialogConfig } from '@angular/material';
+import { MatDialog, MatDialogRef, MatDialogConfig } from "@angular/material";
 
-import { UserDialogComponent } from './user-dialog/user-dialog.component';
-import { GroupDialogComponent } from './group-dialog/group-dialog.component';
-import { SessionDialogComponent } from './session-dialog/session-dialog.component';
-import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
+import { ChangepassDialogComponent } from "../shared/dialogs/changepass-dialog/changepass-dialog.component";
+import { GroupDialogComponent } from "./group-dialog/group-dialog.component";
+import { SessionDialogComponent } from "./session-dialog/session-dialog.component";
+import { UserDialogComponent } from "./user-dialog/user-dialog.component";
 
-import { GlobalsService } from '../shared/services/globals.service';
-import { RestService } from '../shared/services/rest.service';
-import { User } from '../shared/classes/user';
-import { Group } from '../shared/classes/group';
-import { Session } from '../shared/classes/session';
+import { GlobalsService } from "../shared/services/globals.service";
+import { RestService } from "../shared/services/rest.service";
+
+import { Group } from "../shared/classes/group";
+import { Session } from "../shared/classes/session";
+import { User } from "../shared/classes/user";
 
 @Component({
-  selector: 'app-adminpanel',
-  templateUrl: './adminpanel.component.html',
-  styleUrls: ['./adminpanel.component.css']
+  selector: "app-adminpanel",
+  templateUrl: "./adminpanel.component.html",
+  styleUrls: ["./adminpanel.component.css"]
 })
 export class AdminpanelComponent implements OnInit {
-
   userDialogRef: MatDialogRef<UserDialogComponent>;
   changepassDialogRef: MatDialogRef<ChangepassDialogComponent>;
   groupDialogRef: MatDialogRef<GroupDialogComponent>;
@@ -40,14 +40,15 @@ export class AdminpanelComponent implements OnInit {
   filtered_sessions: Session[] = [];
   errorMessage: string;
 
-  constructor(private globals_service: GlobalsService,
-              private rest_service: RestService,
-              public dialog: MatDialog,
-              public viewContainerRef: ViewContainerRef,
-              private changeDetectorRef: ChangeDetectorRef) { }
+  constructor(
+    private globals_service: GlobalsService,
+    private rest_service: RestService,
+    public dialog: MatDialog,
+    public viewContainerRef: ViewContainerRef,
+    private changeDetectorRef: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
-
     var self = this;
 
     this.getUsers();
@@ -55,32 +56,38 @@ export class AdminpanelComponent implements OnInit {
     this.getSessions();
 
     // Get the user profile
-    this.user = JSON.parse(localStorage.getItem('profile'));
+    this.user = JSON.parse(localStorage.getItem("profile"));
   }
 
   //
   // USERS
   //
   getUsers() {
-    this.rest_service.getUsers()
-      .subscribe(
-       users => {
-         this.filtered_users = [...users];
-         this.users = users;
-       },
-       error => this.errorMessage = <any>error);
+    this.rest_service.getUsers().subscribe(users => {
+      this.filtered_users = [...users];
+      this.users = users;
+    }, error => (this.errorMessage = error));
   }
 
   // The filter is changed
   updateUserFilter(event) {
     const val = event.target.value.toLowerCase();
 
+    // console.log(this.filtered_users);
+
     // filter our data
     const temp = this.filtered_users.filter(function(d) {
-      return d.username.toLowerCase().indexOf(val) !== -1 ||
-             d.email.toLowerCase().indexOf(val) !== -1 ||
-             d.role.toLowerCase().indexOf(val) !== -1 ||
-             !val;
+      try {
+        return (
+          d.name.toLowerCase().indexOf(val) !== -1 ||
+          d.email.toLowerCase().indexOf(val) !== -1 ||
+          d.role.toLowerCase().indexOf(val) !== -1 ||
+          !val
+        );
+      } catch (error) {
+        // console.log(d);
+        return false;
+      }
     });
 
     // update the rows
@@ -89,19 +96,18 @@ export class AdminpanelComponent implements OnInit {
 
   // New user button is clicked
   newUser() {
-
     let user = new User();
 
     user._id = undefined;
     user.email = undefined;
-    user.username = undefined;
+    user.name = undefined;
     user.groups = [];
     user.loginAttempts = 0;
-    user.role = 'user';
-    user.status = 'active';
+    user.role = "user";
+    user.status = "active";
 
     let pseudo_event = {
-      type: 'click',
+      type: "click",
       row: user
     };
 
@@ -110,26 +116,26 @@ export class AdminpanelComponent implements OnInit {
 
   // A user entry is clicked on
   editUser(event) {
-    if (event.type === 'click') {
+    if (event.type === "click") {
       let user = event.row;
       let config = new MatDialogConfig();
       config.viewContainerRef = this.viewContainerRef;
       this.userDialogRef = this.dialog.open(UserDialogComponent, config);
       this.userDialogRef.componentInstance.user = user;
-      if (this.user.role === 'site_admin') {
+      if (this.user.role === "site_admin") {
         this.userDialogRef.componentInstance.groups = this.groups;
-      } else if (this.user.role === 'group_admin') {
+      } else if (this.user.role === "group_admin") {
         this.userDialogRef.componentInstance.groups = this.user.groups;
       }
 
       this.userDialogRef.afterClosed().subscribe(result => {
         this.userDialogRef = null;
         if (result !== undefined) {
-          if (result.operation === 'delete') {
+          if (result.operation === "delete") {
             this.deleteUser(result._id);
-          } else if (result.operation === 'add') {
+          } else if (result.operation === "add") {
             this.addUser(result.user);
-          } else if (result.operation === 'edit') {
+          } else if (result.operation === "edit") {
             this.addUser(result.user);
           }
         }
@@ -140,7 +146,10 @@ export class AdminpanelComponent implements OnInit {
   changePass() {
     let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
-    this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, config);
+    this.changepassDialogRef = this.dialog.open(
+      ChangepassDialogComponent,
+      config
+    );
   }
 
   addUser(new_user: User) {
@@ -178,25 +187,23 @@ export class AdminpanelComponent implements OnInit {
   // GROUPS
   //
   getGroups() {
-
     var self = this;
 
-    this.rest_service.getGroups()
-      .subscribe(
-       groups => {
-         this.filtered_groups = [...groups];
-         this.groups = groups;
-       },
-       error => this.errorMessage = <any>error,
-       function() {
-         // Assemble the user's groups into a list
-         for (let group_id of self.user.groups) {
+    this.rest_service.getGroups().subscribe(
+      groups => {
+        this.filtered_groups = [...groups];
+        this.groups = groups;
+      },
+      error => (this.errorMessage = error),
+      function() {
+        // Assemble the user's groups into a list
+        for (let group_id of self.user.groups) {
           //  console.log('group_id', group_id);
-           let index = self.groups.findIndex(group => group._id === group_id);
-           self.user_groups.push(self.groups[index]);
-         }
-       }
-     );
+          let index = self.groups.findIndex(group => group._id === group_id);
+          self.user_groups.push(self.groups[index]);
+        }
+      }
+    );
   }
 
   // The filter is changed
@@ -205,10 +212,12 @@ export class AdminpanelComponent implements OnInit {
 
     // filter our data
     const temp = this.filtered_groups.filter(function(d) {
-      return d.groupname.toLowerCase().indexOf(val) !== -1 ||
-             d.institution.toLowerCase().indexOf(val) !== -1 ||
-             d.status.toLowerCase().indexOf(val) !== -1 ||
-             !val;
+      return (
+        d.groupname.toLowerCase().indexOf(val) !== -1 ||
+        d.institution.toLowerCase().indexOf(val) !== -1 ||
+        d.status.toLowerCase().indexOf(val) !== -1 ||
+        !val
+      );
     });
 
     // update the rows
@@ -217,23 +226,23 @@ export class AdminpanelComponent implements OnInit {
 
   // Read in groups from LDAP login system
   populateGroups() {
-
-    console.log('populateGroups:');
+    console.log("populateGroups:");
 
     this.rest_service.populateGroups().subscribe(
-     result => {
-       console.log(result);
-     },
-     error => {
-       console.error(error);
-     });
+      result => {
+        console.log(result);
+      },
+      error => {
+        console.error(error);
+      }
+    );
   }
 
   // Create a new group
   createGroup() {
     let pseudo_event = {
       selected: [undefined],
-      type: 'click'
+      type: "click"
     };
 
     this.editGroup(pseudo_event);
@@ -241,8 +250,7 @@ export class AdminpanelComponent implements OnInit {
 
   // A group entry is clicked on
   editGroup(event) {
-    if (event.type === 'click') {
-
+    if (event.type === "click") {
       let group = event.row;
 
       if (group === undefined) {
@@ -252,7 +260,7 @@ export class AdminpanelComponent implements OnInit {
         group.institution = undefined;
         group.uid = undefined;
         group.gid = undefined;
-        group.status = 'active';
+        group.status = "active";
       }
 
       let config = new MatDialogConfig();
@@ -265,11 +273,13 @@ export class AdminpanelComponent implements OnInit {
         // console.log('closed', result);
         this.groupDialogRef = null;
         if (result !== undefined) {
-          if (result.operation === 'delete') {
+          if (result.operation === "delete") {
             this.deleteGroup(result._id);
-          } if (result.operation === 'add') {
+          }
+          if (result.operation === "add") {
             this.addGroup(result.group);
-          } if (result.operation === 'edit') {
+          }
+          if (result.operation === "edit") {
             this.addGroup(result.group);
           }
         }
@@ -287,7 +297,9 @@ export class AdminpanelComponent implements OnInit {
       this.groups.unshift(new_group);
     }
 
-    index = this.filtered_groups.findIndex(group => group._id === new_group._id);
+    index = this.filtered_groups.findIndex(
+      group => group._id === new_group._id
+    );
     if (index !== -1) {
       this.filtered_groups.splice(index, 1, new_group);
     } else {
@@ -306,20 +318,16 @@ export class AdminpanelComponent implements OnInit {
     if (index !== -1) {
       this.filtered_groups.splice(index, 1);
     }
-
   }
 
   //
   // SESSIONS
   //
   getSessions() {
-    this.rest_service.getSessions()
-      .subscribe(
-       sessions => {
-         this.filtered_sessions = [...sessions];
-         this.sessions = sessions;
-       },
-       error => this.errorMessage = <any>error);
+    this.rest_service.getSessions().subscribe(sessions => {
+      this.filtered_sessions = [...sessions];
+      this.sessions = sessions;
+    }, error => (this.errorMessage = <any>error));
   }
 
   // The filter is changed
@@ -330,11 +338,13 @@ export class AdminpanelComponent implements OnInit {
     // filter our data
     const temp = this.filtered_sessions.filter(function(d) {
       console.log(d);
-      return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
-             d.site.toLowerCase().indexOf(val) !== -1 ||
-             d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
-             //d.last_process.indexOf(val) !== -1 ||
-             !val;
+      return (
+        d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
+        d.site.toLowerCase().indexOf(val) !== -1 ||
+        d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
+        //d.last_process.indexOf(val) !== -1 ||
+        !val
+      );
     });
 
     // update the rows
@@ -343,11 +353,10 @@ export class AdminpanelComponent implements OnInit {
 
   // Ctreate a new session
   createSession() {
-
     // Create a pseudo-event for the editSession method
     let pseudo_event = {
       selected: [undefined],
-      type: 'click'
+      type: "click"
     };
 
     // Call the editSession method
@@ -356,8 +365,7 @@ export class AdminpanelComponent implements OnInit {
 
   // A session entry is clicked on
   editSession(event) {
-
-    if (event.type === 'click') {
+    if (event.type === "click") {
       let session = event.row;
 
       if (session === undefined) {
@@ -368,7 +376,7 @@ export class AdminpanelComponent implements OnInit {
           groupname: undefined
         };
         session.site = undefined;
-        session.session_type = 'mx';
+        session.session_type = "mx";
       }
 
       let config = new MatDialogConfig();
@@ -379,14 +387,16 @@ export class AdminpanelComponent implements OnInit {
       this.sessionDialogRef.componentInstance.groups = this.groups;
 
       this.sessionDialogRef.afterClosed().subscribe(result => {
-        console.log('closed', result);
+        console.log("closed", result);
         this.sessionDialogRef = null;
         if (result !== undefined) {
-          if (result.operation === 'delete') {
+          if (result.operation === "delete") {
             this.deleteSession(result._id);
-          } if (result.operation === 'add') {
+          }
+          if (result.operation === "add") {
             this.addSession(result.session);
-          } if (result.operation === 'edit') {
+          }
+          if (result.operation === "edit") {
             this.addSession(result.session);
           }
         }
@@ -395,16 +405,20 @@ export class AdminpanelComponent implements OnInit {
   }
 
   addSession(new_session: Session) {
-    console.log('addSession:', new_session);
+    console.log("addSession:", new_session);
     // If the session already exists, replace it
-    let index = this.sessions.findIndex(session => session._id === new_session._id);
+    let index = this.sessions.findIndex(
+      session => session._id === new_session._id
+    );
     if (index !== -1) {
       this.sessions.splice(index, 1, new_session);
     } else {
       this.sessions.unshift(new_session);
     }
 
-    index = this.filtered_sessions.findIndex(session => session._id === new_session._id);
+    index = this.filtered_sessions.findIndex(
+      session => session._id === new_session._id
+    );
     if (index !== -1) {
       this.filtered_sessions.splice(index, 1, new_session);
     } else {
@@ -413,7 +427,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   deleteSession(_id: string) {
-    console.log('deleteSession', _id);
+    console.log("deleteSession", _id);
     // If the session already exists, replace it
     let index = this.sessions.findIndex(session => session._id === _id);
     if (index !== -1) {

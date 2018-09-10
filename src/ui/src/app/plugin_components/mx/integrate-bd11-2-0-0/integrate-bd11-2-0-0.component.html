@@ -276,25 +276,25 @@
       <button *ngIf="(full_result.results.archive_files)?.length > 0" mat-button color="primary" (click)="initDownload(full_result.results.archive_files[0])">
         <mat-icon>file_download</mat-icon>Download
       </button>
-      <button mat-button color="primary" (click)="openReintegrateDialog()">
+      <button mat-raised-button color="primary" (click)="openReintegrateDialog()">
         <mat-icon>refresh</mat-icon>Reintegrate</button>
-      <button mat-button color="primary" (click)="openMergeDialog()">
+      <button mat-raised-button color="primary" (click)="openMergeDialog()">
         <mat-icon>call_merge</mat-icon>Merge</button>
-      <button mat-button color="primary" (click)="openMrDialog()">
+      <button mat-raised-button color="primary" (click)="openMrDialog()">
         <mat-icon>search</mat-icon>MR</button>
-      <button mat-button color="primary" (click)="openSadDialog()">
+      <button mat-raised-button color="primary" (click)="openSadDialog()">
         <mat-icon>search</mat-icon>SAD</button>
-      <button mat-button color="primary" (click)="openMadDialog()">
+      <button mat-raised-button color="primary" (click)="openMadDialog()">
         <mat-icon>search</mat-icon>MAD</button>
-      <button mat-button color="primary" (click)="openProjectDialog()">
+      <button mat-raised-button color="primary" (click)="openProjectDialog()">
         <mat-icon>add</mat-icon>Project</button>
-      <button mat-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)">
+      <button mat-raised-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)">
         <mat-icon>arrow_upward</mat-icon>Pin</button>
-      <button mat-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)">
+      <button mat-raised-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)">
         <mat-icon>undo</mat-icon>UnPin</button>
-      <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)">
+      <button mat-raised-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)">
         <mat-icon>delete</mat-icon>Junk</button>
-      <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)">
+      <button mat-raised-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)">
         <mat-icon>undo</mat-icon>UnJunk</button>
     </mat-toolbar>
   </mat-card>
