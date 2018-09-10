@@ -238,10 +238,10 @@ class Gatherer(object):
         watch_manager = pyinotify.WatchManager()
 
         # Set up the notifier for files being made
-        notifier = pyinotify.ThreadedNotifier(watch_manager, EventHandler(redis_rapd=self.redis_rapd,
+        self.notifier = pyinotify.ThreadedNotifier(watch_manager, EventHandler(redis_rapd=self.redis_rapd,
                                                                           redis_remote=self.redis_remote,
                                                                           logger=self.logger))
-        notifier.start()
+        self.notifier.start()
 
         # Try exiting the pyinotify gracefully
         # def exit_gracefully():
@@ -261,7 +261,7 @@ class Gatherer(object):
         time.sleep(0.5)
         counter = 0
         try:
-            while True:
+            while self.go:
                 print counter
                 newdir = self.redis_beamline.get(DATA_DIR)
                 if (newdir != current_dir):
@@ -289,7 +289,11 @@ class Gatherer(object):
         """
         self.logger.debug("Gatherer.stop")
 
+        # Stop the querying of redis for a new directory to watch
         self.go = False
+
+        # Stop the notifier
+        self.notifier.stop()
 
     def set_host(self):
         """
