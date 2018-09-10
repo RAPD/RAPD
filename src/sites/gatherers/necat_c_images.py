@@ -30,10 +30,12 @@ __status__ = "Production"
 import argparse
 import atexit
 import importlib
-import logging, logging.handlers
+import logging
+import logging.handlers
 import os
 import pyinotify
 import socket
+import sys
 import threading
 import time
 
@@ -44,16 +46,19 @@ import utils.lock as ulock
 import utils.log as ulog
 from utils.overwatch import Registrar
 import utils.site as usite
+import utils.text as text
 
 MASK = pyinotify.ALL_EVENTS
 NUMBER_WATCHED = 20
 
 # Pyinotify eventhandler
+
+
 class EventHandler(pyinotify.ProcessEvent):
     """
     Process pyinotify events
     """
-    
+
     def __init__(self, redis_rapd=None, redis_remote=None, logger=None):
         """
         Initialize the event handler with connections
@@ -68,7 +73,7 @@ class EventHandler(pyinotify.ProcessEvent):
         This is the final step for a file being created
         """
         self.logger.debug("%s has been moved" % event.pathname)
-        
+
         if event.pathname.endswith('.cbf'):
             # RAPD1
             self.redis_rapd.lpush("images_collected_C", event.pathname)
@@ -78,7 +83,7 @@ class EventHandler(pyinotify.ProcessEvent):
             self.redis_rapd.publish("image_collected:NECAT_C", event.pathname)
             # REMOTE
             self.redis_remote.publish("filecreate:C", event.pathname)
-    
+
     def process_IN_DELETE_SELF(self, event):
         """
         A watched directory is deleted
@@ -98,6 +103,7 @@ class DirectoryHandler(threading.Thread):
     """
     Handles a new directory to add
     """
+
     def __init__(self, current_dir, watch_manager, logger):
 
         logger.debug("DirectoryHandler.__init__ %s" % current_dir)
@@ -152,8 +158,10 @@ class DirectoryHandler(threading.Thread):
         while (count < 5):
             if (checkForDir(self.current_dir)):
                 try:
-                    wdd = self.watch_manager.add_watch(self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
-                    self.logger.debug("DirectoryHandler.run %s watch added" % self.current_dir)
+                    wdd = self.watch_manager.add_watch(
+                        self.current_dir, MASK, rec=True, auto_add=True, quiet=False)
+                    self.logger.debug(
+                        "DirectoryHandler.run %s watch added" % self.current_dir)
                     # Minimize the number of dirs being watched
                     # trim_dirs(wdd=wdd)
                     # Break out of the loop
@@ -164,7 +172,8 @@ class DirectoryHandler(threading.Thread):
                     time.sleep(1)
             else:
                 count += 1
-                self.logger.debug("ERROR!! %s will not be watched" % start_dir)
+                self.logger.debug("ERROR!! %s will not be watched" % self.current_dir)
+
 
 class Gatherer(object):
     """
@@ -213,15 +222,17 @@ class Gatherer(object):
         self.ow_registrar = Registrar(site=self.site,
                                       ow_type="gatherer",
                                       ow_id=self.overwatch_id)
-        self.ow_registrar.register({"site_id":self.site.ID})
+        self.ow_registrar.register({"site_id": self.site.ID})
 
         # A RUN & IMAGES EXAMPLE
         # Some logging
         self.logger.debug("  Will publish new images on filecreate:C")
         self.logger.debug("  Will publish new images on image_collected:C")
         self.logger.debug("  Will push new images onto images_collected:C")
-        self.logger.debug("  Will publish new images on image_collected:%s" % self.tag)
-        self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
+        self.logger.debug(
+            "  Will publish new images on image_collected:%s" % self.tag)
+        self.logger.debug(
+            "  Will push new images onto images_collected:%s" % self.tag)
 
         # Set up the WatchManager
         watch_manager = pyinotify.WatchManager()
@@ -233,17 +244,17 @@ class Gatherer(object):
         notifier.start()
 
         # Try exiting the pyinotify gracefully
-        def exit_gracefully():
-            """
-            Exit pyinotify properly when program exits
-            """
-            self.logger.debug("Attempting to gracefully shut down")
-            watch_manager.rm_watch(wdd.values())
-            notifier.stop()
-        atexit.register(exit_gracefully)
+        # def exit_gracefully():
+        #     """
+        #     Exit pyinotify properly when program exits
+        #     """
+        #     self.logger.debug("Attempting to gracefully shut down")
+        #     watch_manager.rm_watch(wdd.values())
+        #     notifier.stop()
+        # atexit.register(exit_gracefully)
 
         # Start by adding the current dir in the beamline redis db
-        DATA_DIR = "ADX_SUBDIR_SV" # "datadir_%s" % self.tag
+        DATA_DIR = "ADX_SUBDIR_SV"  # "datadir_%s" % self.tag
 
         # Listen for new directory
         current_dir = ""
@@ -254,16 +265,16 @@ class Gatherer(object):
                 print counter
                 newdir = self.redis_beamline.get(DATA_DIR)
                 if (newdir != current_dir):
-                    have = False
+                    # have = False
                     current_dir = newdir
                     self.logger.debug("New directory to watch %s'" % newdir)
-                    DirectoryHandler(current_dir=newdir, 
+                    DirectoryHandler(current_dir=newdir,
                                      watch_manager=watch_manager,
                                      logger=self.logger)
                 time.sleep(1)
                 # Update overwatcher every 5 seconds
                 if counter % 5 == 0:
-                    self.ow_registrar.update({"site_id":self.site.ID})
+                    self.ow_registrar.update({"site_id": self.site.ID})
                     counter = 0
                 else:
                     counter += 1
@@ -279,7 +290,6 @@ class Gatherer(object):
         self.logger.debug("Gatherer.stop")
 
         self.go = False
-
 
     def set_host(self):
         """
@@ -308,15 +318,19 @@ class Gatherer(object):
         self.logger.debug("Gatherer.connect")
 
         # Connect to RAPD Redis
-        self.redis_rapd = Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis_rapd = Database(
+            settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # NECAT uses Redis to communicate with the beamline
         # Connect to beamline Redis to monitor if run is launched
-        self.redis_beamline = Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        self.redis_beamline = Database(
+            settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
 
         # NECAT uses Redis to communicate with the remote system
         # Connect to remote system Redis to monitor if run is launched
-        self.redis_remote = Database(settings=self.site.REMOTE_ADAPTER_SETTINGS)
+        self.redis_remote = Database(
+            settings=self.site.REMOTE_ADAPTER_SETTINGS)
+
 
 def get_commandline():
     """
@@ -326,57 +340,59 @@ def get_commandline():
     # Parse the commandline arguments
     commandline_description = "Data gatherer"
     parser = argparse.ArgumentParser(parents=[ucommandline.base_parser],
-                                     description=commandline_description) 
+                                     description=commandline_description)
 
     return parser.parse_args()
 
-def main(): 
+
+def main():
     """ 
     The main process 
     Setup logging and instantiate the gatherer 
     """
- 
-    # Get the commandline args 
-    commandline_args = get_commandline() 
 
-    # Get the environmental variables 
-    environmental_vars = usite.get_environmental_variables() 
-    site = commandline_args.site 
+    # Get the commandline args
+    commandline_args = get_commandline()
 
-    # If no commandline site, look to environmental args 
-    if site == None: 
-        site = environmental_vars["RAPD_SITE"] 
+    # Get the environmental variables
+    environmental_vars = usite.get_environmental_variables()
+    site = commandline_args.site
 
-    # Determine the site 
-    site_file = usite.determine_site(site_arg=site) 
+    # If no commandline site, look to environmental args
+    if site == None:
+        site = environmental_vars["RAPD_SITE"]
 
-    # Handle no site file 
-    if site_file == False: 
+    # Determine the site
+    site_file = usite.determine_site(site_arg=site)
+
+    # Handle no site file
+    if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
-        sys.exit(9) 
+        sys.exit(9)
 
-    # Import the site settings 
-    SITE = importlib.import_module(site_file) 
+    # Import the site settings
+    SITE = importlib.import_module(site_file)
 
-    # Single process lock? 
-    ulock.file_lock(SITE.GATHERER_LOCK_FILE) 
+    # Single process lock?
+    ulock.file_lock(SITE.GATHERER_LOCK_FILE)
 
-    # Set up logging 
-    if commandline_args.verbose: 
-        log_level = 10 
-    else: 
-        log_level = SITE.LOG_LEVEL 
-    logger = ulog.get_logger(logfile_dir="/tmp", 
-                             logfile_id="rapd_gatherer", 
-                             level=log_level 
-                            ) 
-    logger.debug("Commandline arguments:") 
-    for pair in commandline_args._get_kwargs(): 
-        logger.debug("  arg:%s  val:%s" % pair) 
+    # Set up logging
+    if commandline_args.verbose:
+        log_level = 10
+    else:
+        log_level = SITE.LOG_LEVEL
+    logger = ulog.get_logger(logfile_dir="/tmp",
+                             logfile_id="rapd_gatherer",
+                             level=log_level
+                             )
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s" % pair)
 
-    # Instantiate the Gatherer 
-    GATHERER = Gatherer(site=SITE, 
-                        overwatch_id=commandline_args.overwatch_id) 
+    # Instantiate the Gatherer
+    GATHERER = Gatherer(site=SITE,
+                        overwatch_id=commandline_args.overwatch_id)
+
 
 if __name__ == "__main__":
 
