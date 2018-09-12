@@ -89,7 +89,7 @@ VERSIONS = {
     "aimless": (
         "version 0.5",
         "version 0.6"
-        ),
+    ),
     "freerflag": (
         "version 2.2",
     ),
@@ -103,17 +103,18 @@ VERSIONS = {
     "pointless": (
         "version 1.10",
         "version 1.11",
-        ),
+    ),
     "truncate": (
         "version 7.0",
     ),
     "xds": (
         "VERSION Jan 26, 2018",
-        ),
+    ),
     "xds_par": (
         "VERSION Jan 26, 2018",
-        ),
+    ),
 }
+
 
 class RapdPlugin(Process):
     """
@@ -145,13 +146,13 @@ class RapdPlugin(Process):
 
     # Store archive directory for internal use
     archive_dir = False
-    
+
     # Setup default for using compute_cluster
     computer_cluster = False
-    
+
     # analysis process
     analysis_process = False
-    
+
     # pdbquery process
     pdbq_process = False
 
@@ -210,11 +211,11 @@ class RapdPlugin(Process):
         if self.preferences.get("end_frame", False):
             self.image_data["end"] = self.preferences.get("end_frame")
             self.image_data["total"] = self.preferences.get("end_frame") - \
-                                       self.image_data["start"] + 1
+                self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("number_images")
             self.image_data["end"] = self.image_data["start"] + \
-                                     self.image_data["total"] - 1
+                self.image_data["total"] - 1
 
         self.image_data['image_template'] = self.run_data["image_template"]
 
@@ -225,13 +226,13 @@ class RapdPlugin(Process):
             # self.image_data['total'] = str( int(self.preferences['request']['frame_start'])
             #                         + int(self.preferences['request']['frame_finish']) - 1)
         self.spacegroup = self.preferences.get('spacegroup', False)
-        #if self.preferences.get('spacegroup', False):
+        # if self.preferences.get('spacegroup', False):
         #    self.spacegroup = self.preferences['spacegroup']
         self.hi_res = self.preferences.get("hi_res", False)
-        #if self.preferences.get("hi_res", False):
+        # if self.preferences.get("hi_res", False):
         #    self.hi_res = self.preferences.get("hi_res")
         self.low_res = self.preferences.get("low_res", False)
-        #if self.preferences.get("low_res", False):
+        # if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
 
         # Are ram_nodes needed anymore with RDMA??
@@ -255,7 +256,8 @@ class RapdPlugin(Process):
             if computer_cluster:
                 self.launcher = computer_cluster.process_cluster
                 # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-                self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
+                self.batch_queue = {
+                    'batch_queue': computer_cluster.check_queue(self.command["command"])}
                 self.computer_cluster = computer_cluster
                 if self.ram_use == True:
                     self.jobs = len(self.ram_nodes[0])
@@ -267,8 +269,8 @@ class RapdPlugin(Process):
                     #self.procs = 8
             else:
                 if self.logger:
-                    self.logger.debug('The cluster_adapter could not be loaded, defaulting to shell launching!!!')
-
+                    self.logger.debug(
+                        'The cluster_adapter could not be loaded, defaulting to shell launching!!!')
 
         self.standalone = self.preferences.get('standalone', False)
 
@@ -278,7 +280,6 @@ class RapdPlugin(Process):
         if self.preferences.get('beam_center_override', False):
             self.image_data['x_beam'] = self.preferences['x_beam']
             self.image_data['y_beam'] = self.preferences['y_beam']
-
 
         # Some detectors need flipped for XDS
         if self.preferences.get('flip_beam', False):
@@ -333,12 +334,12 @@ class RapdPlugin(Process):
 
         # Container for actual results
         self.results["results"] = {
-            "analysis":False,
+            "analysis": False,
             # Archives that will live in filesystem
-            "archive_files":[],
+            "archive_files": [],
             # Data produced by plugin that will be stored in database
-            "data_produced":[]
-            }
+            "data_produced": []
+        }
 
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
@@ -350,21 +351,20 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 1
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
-       
-        # The repr
-        self.results["process"]["repr"] = self.run_data["image_template"].replace(\
-            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.image_data["start"], \
-            self.image_data["start"] + self.image_data["total"] - 1))
-        # The run _id
 
+        # The repr
+        self.results["process"]["repr"] = self.run_data["image_template"].replace(
+            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.image_data["start"],
+                                                                         self.image_data["start"] + self.image_data["total"] - 1))
+        # The run _id
 
         # Describe plugin
         self.results["plugin"] = {
-            "data_type":DATA_TYPE,
-            "type":PLUGIN_TYPE,
-            "subtype":PLUGIN_SUBTYPE,
-            "id":ID,
-            "version":VERSION
+            "data_type": DATA_TYPE,
+            "type": PLUGIN_TYPE,
+            "subtype": PLUGIN_SUBTYPE,
+            "id": ID,
+            "version": VERSION
         }
 
     def check_dependencies(self):
@@ -415,53 +415,63 @@ class RapdPlugin(Process):
         if self.preferences.get("end_frame", False):
             final_image = self.preferences["end_frame"]
         else:
-            final_image = self.run_data["number_images"] - self.run_data["start_image_number"] + 1
+            final_image = self.run_data["number_images"] - \
+                self.run_data["start_image_number"] + 1
 
         if last >= final_image:
-            self.tprint("  Images to %d present" % final_image, level=10, color="white")
-            full_integration_results = self.xds_total(xds_input, last=final_image)
+            self.tprint("  Images to %d present" %
+                        final_image, level=10, color="white")
+            full_integration_results = self.xds_total(
+                xds_input, last=final_image)
 
         # Not all images are present
         else:
             self.tprint("  Not all images present", level=10, color="white")
 
             # If current last > 10 deg wedge, run it
-            current_sweep = (last - first) *  self.image_data["osc_range"]
+            current_sweep = (last - first) * self.image_data["osc_range"]
             if current_sweep > 10:
                 last = int(10.0/self.image_data["osc_range"])
-                self.tprint("  Have more than threshold degrees of data, running prliminary integration for frames to %d" % last, level=10, color="white")
+                self.tprint("  Have more than threshold degrees of data, running prliminary integration for frames to %d" %
+                            last, level=10, color="white")
                 partial_integration_results = self.xds_partial(xdsinput=xds_input,
                                                                end=last)
 
             # Have less than threshold degrees, but expect more than threshold
             elif final_image * self.image_data["osc_range"] > 10:
-                self.tprint("  Less than threshold degrees of data, waiting...")
+                self.tprint(
+                    "  Less than threshold degrees of data, waiting...")
                 last = int(10.0/self.image_data["osc_range"])
                 result = self.wait_for_image(last)
                 # Image now exists
                 if result:
-                    self.tprint("\n  Launching integration for frames to %d" % last, level=10, color="white")
+                    self.tprint("\n  Launching integration for frames to %d" %
+                                last, level=10, color="white")
                     partial_integration_results = self.xds_partial(xdsinput=xds_input,
                                                                    end=last)
                 # Timeout
                 else:
-                    self.tprint("\n  Seems that data collection has stalled. Integrating what data there is", level=10, color="white")
+                    self.tprint(
+                        "\n  Seems that data collection has stalled. Integrating what data there is", level=10, color="white")
                     first, last = self.get_current_images()
-                    full_integration_results = self.xds_total(xds_input, last=last)
+                    full_integration_results = self.xds_total(
+                        xds_input, last=last)
 
             # Have less than threshold, but expecting less than threshold
             else:
-                self.tprint("  Waiting for data collection to complete", level=10, color="white")
+                self.tprint("  Waiting for data collection to complete",
+                            level=10, color="white")
                 result = self.wait_for_image(final_image)
                 # Image now exists
                 if result:
                     partial_integration_results = self.xds_total(xds_input)
                 # Timeout
                 else:
-                    self.tprint("\n  Seems that data collection has stalled. Integrating what data there is", level=10, color="white")
+                    self.tprint(
+                        "\n  Seems that data collection has stalled. Integrating what data there is", level=10, color="white")
                     first, last = self.get_current_images()
-                    full_integration_results = self.xds_total(xds_input, last=last)
-
+                    full_integration_results = self.xds_total(
+                        xds_input, last=last)
 
         # Have a partial result
         if partial_integration_results:
@@ -471,10 +481,11 @@ class RapdPlugin(Process):
             # Update interested parties
             self.send_results(self.results)
             # Print to local parties
-            self.tprint("\nPartial dataset summary %d-%d" % (first, last), 99, "blue")
+            self.tprint("\nPartial dataset summary %d-%d" %
+                        (first, last), 99, "blue")
             self.print_results(partial_integration_results)
             self.tprint(20, "progress")
-        
+
         # if no full results, then wait for full dataset
         if not full_integration_results:
             # Run XDS for the whole wedge of data
@@ -486,7 +497,8 @@ class RapdPlugin(Process):
             # Timeout
             else:
                 first, last = self.get_current_images()
-                self.tprint("\n  Seems that data collection has stalled. Integrating data to frame %d" % last, level=10, color="white")
+                self.tprint("\n  Seems that data collection has stalled. Integrating data to frame %d" %
+                            last, level=10, color="white")
                 full_integration_results = self.xds_total(xds_input, last=last)
 
         # Finish up with the data
@@ -496,7 +508,7 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 99
         self.results["results"].update(final_results)
 
-        #self.send_results(self.results)
+        # self.send_results(self.results)
         os.chdir(self.dirs['work'])
 
     def get_current_images(self):
@@ -505,12 +517,14 @@ class RapdPlugin(Process):
         """
         # self.tprint('get_current_images')
 
-        glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
+        glob_pattern = os.path.join(
+            self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
         # self.tprint(glob_pattern)
         files = glob.glob(glob_pattern)
         files.sort()
         # self.tprint(files)
-        pattern = ".*"+re.sub(r"\?+", "([0-9]+)", self.run_data["image_template"])
+        pattern = ".*"+re.sub(r"\?+", "([0-9]+)",
+                              self.run_data["image_template"])
         # self.tprint(pattern)
 
         # Find first & last frame numbers
@@ -535,7 +549,8 @@ class RapdPlugin(Process):
         self.logger.debug("wait_for_image  image_number:%d", image_number)
 
         # Determine image to look for
-        target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+        target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % (
+            "%", self.run_data["image_template"].count("?")) % image_number
 
         # Get a bead on where we are now
         first, last = self.get_current_images()
@@ -549,10 +564,11 @@ class RapdPlugin(Process):
 
         # Look for images in cycle
         start_time = time.time()
-        self.tprint("  Watching for %s " % target_image, level=10, color="white", newline=False)
+        self.tprint("  Watching for %s " % target_image,
+                    level=10, color="white", newline=False)
         while (time.time() - start_time) < max_time:
             self.tprint(".", level=10, color="white", newline=False)
-            #if os.path.exists(target_image):
+            # if os.path.exists(target_image):
             if os.path.isfile(target_image):
                 self.tprint(".", level=10, color="white")
                 return True
@@ -568,7 +584,7 @@ class RapdPlugin(Process):
         #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         #self.redis = redis_database.connect_to_redis()
         #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS,
                                              logger=self.logger)
 
     def send_results(self, results):
@@ -580,7 +596,7 @@ class RapdPlugin(Process):
 
             self.logger.debug("Sending back on redis")
 
-            #if results.get('results', False):
+            # if results.get('results', False):
             #    if results['results'].get('data_produced', False):
             #        pprint(results['results'].get('data_produced'))
 
@@ -604,7 +620,7 @@ class RapdPlugin(Process):
         # self.finish_data()
 
         # Create an archive
-        #self.create_archive()
+        # self.create_archive()
 
         # Transfer files to Control
         self.transfer_files()
@@ -617,12 +633,12 @@ class RapdPlugin(Process):
 
         # Run analysis
         self.run_analysis_plugin()
-        
+
         # Run pdbquery
         self.run_pdbquery_plugin()
 
         # Send back results - the final time
-        #self.send_results(self.results)
+        # self.send_results(self.results)
 
         # Save output
         self.write_json(self.results)
@@ -679,32 +695,37 @@ class RapdPlugin(Process):
                 db_settings = self.site.CONTROL_DATABASE_SETTINGS
                 test = False
 
-            analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
+            analysis_command = plugins.analysis.commandline.construct_command(
+                AnalysisArgs)
 
             # The pdbquery plugin
             plugin = plugins.analysis.plugin
 
             # Print out plugin info
             self.tprint(arg="\nPlugin information", level=10, color="blue")
-            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
-            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+            self.tprint(arg="  Plugin type:    %s" %
+                        plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" %
+                        plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" %
+                        plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" %
+                        plugin.ID, level=10, color="white")
 
             # Run the plugin
             self.analysis_process = plugin.RapdPlugin(command=analysis_command,
-                                                processed_results = self.results,
-                                                tprint=self.tprint,
-                                                logger=self.logger)
+                                                      processed_results=self.results,
+                                                      tprint=self.tprint,
+                                                      logger=self.logger)
             self.analysis_process.start()
-            
+
             # Back to where we were, in case it matters
             os.chdir(start_dir)
 
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
-            
+
     def run_pdbquery_plugin(self):
         """Set up and run the pdbquery plugin"""
 
@@ -716,7 +737,7 @@ class RapdPlugin(Process):
             # Now Launch PDBQuery
             self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
             self.tprint("  This can take a while...", level=30, color="white")
-            
+
             # Make sure we are in the work directory
             start_dir = os.getcwd()
             os.chdir(self.dirs["work"])
@@ -737,28 +758,33 @@ class RapdPlugin(Process):
                 contaminants = True
                 search = True
                 test = False
-    
-            pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
-    
+
+            pdbquery_command = plugins.pdbquery.commandline.construct_command(
+                PdbqueryArgs)
+
             # The pdbquery plugin
             plugin = plugins.pdbquery.plugin
-    
+
             # Print out plugin info
             self.tprint(arg="\nPlugin information", level=10, color="blue")
-            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
-            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
-    
+            self.tprint(arg="  Plugin type:    %s" %
+                        plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" %
+                        plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" %
+                        plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" %
+                        plugin.ID, level=10, color="white")
+
             # Run the plugin
             self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
-                                                  processed_results = self.results,
+                                                  processed_results=self.results,
                                                   computer_cluster=self.computer_cluster,
                                                   tprint=self.tprint,
                                                   logger=self.logger)
 
             self.pdbq_process.start()
-            
+
             """
             # Allow multiple returns for each part of analysis.
             while True:
@@ -785,9 +811,10 @@ class RapdPlugin(Process):
         """
         self.logger.debug('Fastintegration::ram_total')
         first = int(self.image_data['start'])
-        last = int(self.image_data['start']) + int(self.image_data['total']) -1
-        data_range = '%s %s' %(first, last)
-        directory = 'wedge_%s_%s' %(first, last)
+        last = int(self.image_data['start']) + \
+            int(self.image_data['total']) - 1
+        data_range = '%s %s' % (first, last)
+        directory = 'wedge_%s_%s' % (first, last)
         xdsdir = os.path.join(self.dirs['work'], directory)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
@@ -804,14 +831,17 @@ class RapdPlugin(Process):
         spot_range = self.ram_nodes[1][0] + self.procs - 1
 
         xdsinp = xdsinput[:]
-        xdsinp.append('JOB=XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        xdsinp.append(
+            'JOB=XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         # Add the spot ranges.
-        xdsinp.append('SPOT_RANGE=%s %s\n' %(self.ram_nodes[1][0], spot_range))
+        xdsinp.append('SPOT_RANGE=%s %s\n' %
+                      (self.ram_nodes[1][0], spot_range))
         # Make sure the last ram node has an adequate number of images available.
         spot_range = self.ram_nodes[1][-1] + self.procs - 1
         if self.ram_nodes[2][-1] < spot_range:
             spot_range = self.ram_nodes[2][-1]
-        xdsinp.append('SPOT_RANGE=%s %s\n' %(self.ram_nodes[1][-1], spot_range))
+        xdsinp.append('SPOT_RANGE=%s %s\n' %
+                      (self.ram_nodes[1][-1], spot_range))
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         self.write_file('XDS.INP', xdsinp)
         self.write_forkscripts(self.ram_nodes, self.image_data['osc_range'])
@@ -820,7 +850,8 @@ class RapdPlugin(Process):
 
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
-            self.logger.debug('  Unknown xds error occurred. Please check for cause!')
+            self.logger.debug(
+                '  Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="Unknown xds error occurred. Please check for cause!",
                         level=10,
                         color="red")
@@ -832,8 +863,10 @@ class RapdPlugin(Process):
             new_rescut = self.find_correct_res(xdsdir, 1.0)
             # sys.exit()
             if new_rescut != False:
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
+                os.rename('%s/CORRECT.LP' %
+                          xdsdir, '%s/CORRECT.LP.nocutoff' % xdsdir)
+                os.rename('%s/XDS.LOG' %
+                          xdsdir, '%s/XDS.LOG.nocutoff' % xdsdir)
                 newinp[-2] = 'JOB=CORRECT\n\n'
                 newinp[-3] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
                 self.write_file('XDS.INP', newinp)
@@ -846,9 +879,10 @@ class RapdPlugin(Process):
             #
             # Don't polish if low resolution, as this tend to blow up.
             if new_rescut <= 4.5:
-                os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
+                os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
+                os.rename('%s/CORRECT.LP' %
+                          xdsdir, '%s/CORRECT.LP.old' % xdsdir)
+                os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
                 newinp[-2] = 'JOB=INTEGRATE CORRECT\n\n'
                 newinp[-3] = '\n'
                 self.write_file('XDS.INP', newinp)
@@ -857,7 +891,6 @@ class RapdPlugin(Process):
 
             final_results['status'] = 'SUCCESS'
             return final_results
-
 
     def change_xds_inp(self, xds_input, new_line):
         """Modify the XDS.INP lines with the input line"""
@@ -891,7 +924,7 @@ class RapdPlugin(Process):
         #first = int(self.image_data['start'])
         #last = int(self.image_data['start']) + int(self.image_data['total']) -1
         #data_range = '%s %s' %(self.image_data['start'], self.image_data['end'])
-        #self.logger.debug('start = %s, total = %s',
+        # self.logger.debug('start = %s, total = %s',
         #                  self.image_data['start'],
         #                  self.image_data['total'])
         #self.logger.debug('first - %s, last = %s', first, last)
@@ -925,8 +958,14 @@ class RapdPlugin(Process):
             xdsinp,
             "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
         xdsinp = self.change_xds_inp(xdsinp, "JOB=XYCORR INIT COLSPOT \n\n")
-        xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s %s\n" %(self.image_data['start'],
-                                                                    last) )
+        xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s %s\n" % (self.image_data['start'],
+                                                                     last))
+        # Spots range selected in the input?
+        start_spots = self.preferences.get("start_spots") or self.image_data['start']
+        end_spots = self.preferences.get("end_spots") or last
+        xdsinp = self.change_xds_inp(xdsinp, "SPOT_RANGE=%s %s\n" % (start_spots, end_spots))
+
+        print xdsinp
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Searching for peaks",
@@ -949,20 +988,21 @@ class RapdPlugin(Process):
 
         # If known indexing error occurs, catch them and take corrective action
         if not os.path.exists("XPARM.XDS"):
-            self.logger.exception("Initial indexing has failed - retrying with first half of images")
+            self.logger.exception(
+                "Initial indexing has failed - retrying with first half of images")
             self.tprint(arg="\n  Initial indexing has failed - retrying with first half of images",
                         level=30,
                         color="red")
             # Try indexing with first half of images
             number_images = last - self.image_data["start"] + 1
-            xdsinp = self.change_xds_inp(xdsinp, "SPOT_RANGE=%s %s\n" %(self.image_data["start"],
-                                                                        self.image_data["start"]+int(number_images/2)))
+            xdsinp = self.change_xds_inp(xdsinp, "SPOT_RANGE=%s %s\n" % (self.image_data["start"],
+                                                                         self.image_data["start"]+int(number_images/2)))
             self.write_file(xdsfile, xdsinp)
             self.tprint(arg="  Indexing again",
-                    level=99,
-                    color="white",
-                    newline=False)
-            self.xds_run(xdsdir)
+                        level=99,
+                        color="white",
+                        newline=False)
+            self.xds_run(xdsdir, clear_before=True)
 
         # Integrate
         # Override spacegroup?
@@ -984,7 +1024,8 @@ class RapdPlugin(Process):
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
-            self.logger.exception('Unknown xds error occurred. Please check for cause!')
+            self.logger.exception(
+                'Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
                         level=30,
                         color="red")
@@ -1018,9 +1059,11 @@ class RapdPlugin(Process):
                         99,
                         "red")
             if self.preferences["spacegroup_decider"] in ("auto", "pointless"):
-                self.tprint(" Using the pointless spacegroup %s" % sg_let_pointless, 99, "red")
+                self.tprint(" Using the pointless spacegroup %s" %
+                            sg_let_pointless, 99, "red")
             else:
-                self.tprint(" Using the XDS spacegroup %s" % sg_let_xds, 99, "red")
+                self.tprint(" Using the XDS spacegroup %s" %
+                            sg_let_xds, 99, "red")
             spacegoup_agree = False
 
         if self.preferences["spacegroup_decider"] in ("auto", "pointless"):
@@ -1048,8 +1091,10 @@ class RapdPlugin(Process):
             newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
             # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
             if new_rescut != False:
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
+                os.rename('%s/CORRECT.LP' %
+                          xdsdir, '%s/CORRECT.LP.nocutoff' % xdsdir)
+                os.rename('%s/XDS.LOG' %
+                          xdsdir, '%s/XDS.LOG.nocutoff' % xdsdir)
                 newinp = self.change_xds_inp(
                     newinp,
                     "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], low_res, new_rescut))
@@ -1091,11 +1136,15 @@ class RapdPlugin(Process):
             # Check to see if a new resolution cutoff should be applied
             new_rescut = self.find_correct_res(xdsdir, 1.0)
             if new_rescut != False:
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                os.rename('%s/CORRECT.LP' %
+                          xdsdir, '%s/CORRECT.LP.oldcutoff' % xdsdir)
+                os.rename('%s/XDS.LOG' %
+                          xdsdir, '%s/XDS.LOG.oldcutoff' % xdsdir)
+                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (
+                    newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
-                self.tprint(arg="  New resolution cutoff", level=99, color="white", newline=False)
+                self.tprint(arg="  New resolution cutoff",
+                            level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
         polishing_rounds += 1
         final_results = self.run_results(xdsdir)
@@ -1128,10 +1177,12 @@ class RapdPlugin(Process):
 
         first_frame = int(self.image_data['start'])
         half_set = (int(self.image_data['total']) / 2) + first_frame - 1
-        last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
+        last_frame = int(self.image_data['start']) + \
+            int(self.image_data['total']) - 1
         frame_count = first_frame + 1
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(
+            self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1144,7 +1195,7 @@ class RapdPlugin(Process):
             replace_string += '?'
 
         look_for_file = file_template.replace(replace_string,
-                                              '%0*d' %(pad, frame_count))
+                                              '%0*d' % (pad, frame_count))
 
         # Maximum wait time for next image is exposure time + 30 seconds.
         wait_time = int(math.ceil(float(self.image_data['time']))) + 30
@@ -1165,13 +1216,15 @@ class RapdPlugin(Process):
                     xds_job.start()
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
-                                                      '%0*d' %(pad, frame_count))
+                                                      '%0*d' % (pad, frame_count))
             elif timer.is_alive() == False:
                 self.logger.debug('     Image %s not found after waiting %s seconds.',
                                   look_for_file,
                                   wait_time)
-                self.logger.debug('     RAPD assumes the data collection has been aborted.')
-                self.logger.debug('         Launching a final xds job with last image detected.')
+                self.logger.debug(
+                    '     RAPD assumes the data collection has been aborted.')
+                self.logger.debug(
+                    '         Launching a final xds job with last image detected.')
                 self.image_data['last'] = frame_count - 1
                 results = self.xds_total(xdsinput)
                 return results
@@ -1218,7 +1271,8 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::xds_processing')
         first_frame = int(self.image_data['start'])
-        last_frame = + int(self.image_data['total']) - int(self.image_data['start']) + 1
+        last_frame = + int(self.image_data['total']) - \
+            int(self.image_data['start']) + 1
 
         frame_count = first_frame
         # Maximum wait time for next image is exposure time + 15 seconds.
@@ -1231,11 +1285,13 @@ class RapdPlugin(Process):
         try:
             wedge_size = int(10 // float(self.image_data['osc_range']))
         except:
-            self.logger.debug('xds_processing:: dynamic wedge size allocation failed!')
+            self.logger.debug(
+                'xds_processing:: dynamic wedge size allocation failed!')
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(
+            self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1277,7 +1333,7 @@ class RapdPlugin(Process):
                     self.logger.debug('		xds_job.is_alive = True')
                 if (((frame_count + 1) - first_frame) % wedge_size == 0 and
                         xds_job.is_alive() == False):
-                    proc_dir = 'wedge_%s_%s' %(first_frame, frame_count)
+                    proc_dir = 'wedge_%s_%s' % (first_frame, frame_count)
                     xds_job = Process(target=self.xds_wedge,
                                       args=(proc_dir, frame_count, xdsinput))
                     xds_job.start()
@@ -1295,17 +1351,20 @@ class RapdPlugin(Process):
                 # Furka file transfer has failed to copy an image to disk.
                 # So check for the next two files before assuming there has
                 # been an abort.
-                self.logger.debug('     RAPD assumes the data collection has been aborted.')
-                self.logger.debug('     RAPD checking for next two subsequent images to be sure.')
+                self.logger.debug(
+                    '     RAPD assumes the data collection has been aborted.')
+                self.logger.debug(
+                    '     RAPD checking for next two subsequent images to be sure.')
                 frame_count += 1
-                look_for_file = file_template.replace(replace_string, '%0*d' % (pad, frame_count))
+                look_for_file = file_template.replace(
+                    replace_string, '%0*d' % (pad, frame_count))
                 if os.path.isfile(look_for_file) == True:
                     timer = Process(target=time.sleep, args=(wait_time,))
                     timer.start()
                     # Increment the frame count to look for next image
                     frame_count += 1
                     look_for_file = file_template.replace(replace_string,
-                                                          '%0*d' %(pad, frame_count))
+                                                          '%0*d' % (pad, frame_count))
                 else:
                     self.logger.debug(
                         '    RAPD did not fine the next image, checking for one more.')
@@ -1320,10 +1379,12 @@ class RapdPlugin(Process):
                             replace_string,
                             '%0*d' % (pad, frame_count))
                     else:
-                        self.logger.debug('         RAPD did not find the next image either.')
+                        self.logger.debug(
+                            '         RAPD did not find the next image either.')
                         self.logger.debug(
                             '         Launching a final xds job with last image detected.')
-                        self.image_data['total'] = frame_count - 2 - first_frame
+                        self.image_data['total'] = frame_count - \
+                            2 - first_frame
                         results = self.xds_total(xdsinput)
                         return results
 
@@ -1364,19 +1425,23 @@ class RapdPlugin(Process):
         #xdsinp = self.find_spot_range(first, last, self.image_data['osc_range'], xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
         xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
-        #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
-        xdsinp.append('JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        # xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
+        xdsinp.append(
+            'JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Searching for peaks wedge", level=99, color="white", newline=False)
+        self.tprint(arg="  Searching for peaks wedge",
+                    level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
         #xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
-        xdsinp = self.change_xds_inp(xdsinp,'JOB=IDXREF DEFPIX INTEGRATE CORRECT\n')
+        xdsinp = self.change_xds_inp(
+            xdsinp, 'JOB=IDXREF DEFPIX INTEGRATE CORRECT\n')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Integrating", level=99, color="white", newline=False)
+        self.tprint(arg="  Integrating", level=99,
+                    color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
@@ -1384,7 +1449,8 @@ class RapdPlugin(Process):
         while newinp == 'check_again':
             newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
-            self.logger.debug('  Unknown xds error occurred for %s.', directory)
+            self.logger.debug(
+                '  Unknown xds error occurred for %s.', directory)
             self.logger.debug('  Please check for cause!')
             return
         else:
@@ -1394,24 +1460,28 @@ class RapdPlugin(Process):
             new_rescut = self.find_correct_res(xdsdir, 1.0)
             # sys.exit()
             if new_rescut != False:
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
+                os.rename('%s/CORRECT.LP' %
+                          xdsdir, '%s/CORRECT.LP.nocutoff' % xdsdir)
+                os.rename('%s/XDS.LOG' %
+                          xdsdir, '%s/XDS.LOG.nocutoff' % xdsdir)
                 #newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
                 #newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 newinp = self.change_xds_inp(newinp, 'JOB=INTEGRATE CORRECT\n')
-                newinp = self.change_xds_inp(newinp, 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut)
+                newinp = self.change_xds_inp(
+                    newinp, 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut)
                 self.write_file(xdsfile, newinp)
-                self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
+                self.tprint(arg="  Reintegrating", level=99,
+                            color="white", newline=False)
                 self.xds_run(xdsdir)
             results = self.run_results(xdsdir)
         return results
 
     def create_xds_input(self, inp):
         """
-    	This function takes the dict holding XDS keywords and values
-    	and converts them into a list of strings that serves as the
-    	basis for writing out an XDS.INP file.
-    	"""
+        This function takes the dict holding XDS keywords and values
+        and converts them into a list of strings that serves as the
+        basis for writing out an XDS.INP file.
+        """
 
         self.logger.debug("FastIntegration::create_xds_input")
 
@@ -1426,11 +1496,13 @@ class RapdPlugin(Process):
         background_range = '%s %s' % (self.image_data["start"],
                                       self.image_data["start"] + 4)
 
-        x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
-        y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
-        #if x_beam < 0 or x_beam > int(xds_dict['NX']):
+        x_beam = float(self.image_data['x_beam']) / \
+            float(self.image_data['pixel_size'])
+        y_beam = float(self.image_data['y_beam']) / \
+            float(self.image_data['pixel_size'])
+        # if x_beam < 0 or x_beam > int(xds_dict['NX']):
         #    raise RuntimeError, 'x beam coordinate outside detector'
-        #if y_beam < 0 or y_beam > int(xds_dict['NY']):
+        # if y_beam < 0 or y_beam > int(xds_dict['NY']):
         #    raise RuntimeError, 'y beam coordinate outside detector'
 
         if 'image_template' in self.image_data:
@@ -1438,22 +1510,25 @@ class RapdPlugin(Process):
         else:
             raise RuntimeError, '"image_template" not defined in input data.'
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
-    	# Count the number of '?' that need to be padded in a image filename.
+        file_template = os.path.join(
+            self.image_data['directory'], self.image_template)
+        # Count the number of '?' that need to be padded in a image filename.
         pad = file_template.count('?')
-    	# Replace the first instance of '?' with the padded out image number
-    	# of the last frame
+        # Replace the first instance of '?' with the padded out image number
+        # of the last frame
         #self.last_image = file_template.replace('?', '%d'.zfill(pad) % last_frame, 1)
-        self.last_image = file_template.replace('?', '%d'.zfill(pad) % self.image_data['end'], 1)
-    	# Remove the remaining '?'
+        self.last_image = file_template.replace(
+            '?', '%d'.zfill(pad) % self.image_data['end'], 1)
+        # Remove the remaining '?'
         self.last_image = self.last_image.replace('?', '')
-    	# Repeat the last two steps for the first image's filename.
+        # Repeat the last two steps for the first image's filename.
         #self.first_image = file_template.replace('?', str(self.image_data["start"]).zfill(pad), 1)
         #self.first_image = self.first_image.replace('?', '')
 
-    	# Begin constructing the list that will represent the XDS.INP file.
+        # Begin constructing the list that will represent the XDS.INP file.
         xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
-                     'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
+                     'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (
+                         x_beam, y_beam),
                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' %
                      (float(self.image_data['distance'])),
                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' %
@@ -1475,7 +1550,7 @@ class RapdPlugin(Process):
                 if line[0].count(l0):
                     line = (l0, line[1])
                     break
-            xds_input.append("%s%s"%('='.join(line), '\n'))
+            xds_input.append("%s%s" % ('='.join(line), '\n'))
 
         """
         for key, value in xds_dict.iteritems():
@@ -1498,30 +1573,33 @@ class RapdPlugin(Process):
             xds_input.append(line)
         """
 
-    	# If the detector is tilted in 2theta, adjust the value of
-    	# DIRECTION_OF_DETECTOR_Y-AXIS.
-    	# **** IMPORTANT ****
-    	# This adjustment assumes that the 2theta tilt affects only
-    	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
-    	# DIRECTION_OF_DETECTOR_X-AXIS.
-    	#
-    	# If 2theta is not inclined, self.image_data should not have the key
-    	# 'twotheta', or have that key set to a value of None.
-    	#
-    	# If 2theta is inclined, it should be give in self.image_data
-    	# with the key 'twotheta' and a value in degrees.
-    	#
+        # If the detector is tilted in 2theta, adjust the value of
+        # DIRECTION_OF_DETECTOR_Y-AXIS.
+        # **** IMPORTANT ****
+        # This adjustment assumes that the 2theta tilt affects only
+        # the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
+        # DIRECTION_OF_DETECTOR_X-AXIS.
+        #
+        # If 2theta is not inclined, self.image_data should not have the key
+        # 'twotheta', or have that key set to a value of None.
+        #
+        # If 2theta is inclined, it should be give in self.image_data
+        # with the key 'twotheta' and a value in degrees.
+        #
         if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
             twotheta = math.radians(float(self.image_data['twotheta']))
             tilty = math.cos(twotheta)
             tiltz = math.sin(twotheta)
             xds_input.append('!***** Detector is tilted in 2theta *****\n')
-            xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
-            xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
-            xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
+            xds_input.append('! 2THETA = %s degrees\n' %
+                             self.image_data['twotheta'])
+            xds_input.append(
+                '!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
+            xds_input.append(
+                'DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' % (tilty, tiltz))
             xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
-        #pprint(xds_input)
+        # pprint(xds_input)
 
         return xds_input
 
@@ -1532,7 +1610,7 @@ class RapdPlugin(Process):
         of the file to be written.
         """
         self.logger.debug('FastIntegration::write_file')
-        self.logger.debug('    Filename = %s', filename )
+        self.logger.debug('    Filename = %s', filename)
         with open(filename, 'w') as file:
             file.writelines(file_input)
         return
@@ -1569,7 +1647,7 @@ class RapdPlugin(Process):
     #         input.append('SPOT_RANGE=%s %s\n\n' %(spot2_start, spot2_end))
     #     return input
 
-    def xds_run(self, directory):
+    def xds_run(self, directory, clear_before=False):
         """
         Launches the running of xds.
         """
@@ -1579,7 +1657,11 @@ class RapdPlugin(Process):
         xds_command = "xds_par"
 
         os.chdir(directory)
-        # TODO skip processing for now
+        
+        # Clear out the *.XDS files before processing
+        if clear_before:
+            for xds_file in glob.glob("*.XDS"):
+                os.remove(xds_file)
 
         xds_proc = Process(target=self.launcher,
                            kwargs={"command": xds_command,
@@ -1659,7 +1741,7 @@ class RapdPlugin(Process):
                     break
                 line = correct_log[i].split()
                 if line[0][0].isdigit():
-                    #if line[8] == '-99.00':
+                    # if line[8] == '-99.00':
                     #    self.logger.debug('    IsigI = -99.00')
                     #    return False
                     prev_hires = hires
@@ -1677,19 +1759,22 @@ class RapdPlugin(Process):
                             break
                         else:
                             new_hi_res = '%0.2f' % numpy.interp([isigi],
-                                                                [prev_IsigI, IsigI],
+                                                                [prev_IsigI,
+                                                                    IsigI],
                                                                 [prev_hires, hires])
                             # print [isigi]
                             # print [prev_IsigI, IsigI]
                             # print [prev_hires, hires]
                             # print numpy.interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
                             break
-                else: # If first character in line is not a digit, you;ve
+                else:  # If first character in line is not a digit, you;ve
                     # read through the entire table, so break.
                     new_hi_res = hires
                     break
-        self.logger.debug('     prev_hires = %s     prev_IsigI = %s' % (prev_hires, prev_IsigI))
-        self.logger.debug('     hires = %s          IsigI = %s' %(hires, IsigI))
+        self.logger.debug('     prev_hires = %s     prev_IsigI = %s' %
+                          (prev_hires, prev_IsigI))
+        self.logger.debug('     hires = %s          IsigI = %s' %
+                          (hires, IsigI))
         self.logger.debug('	New cutoff = %s' % new_hi_res)
         hi_res = float(new_hi_res)
 
@@ -1721,14 +1806,14 @@ class RapdPlugin(Process):
             if '! ERROR !' in line:
                 # An error was found in XDS.LOG, now figure out what it was.
                 if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line or \
-                'DIMENSION OF DIFFERENCE VECTOR SET' in line or \
-                'CANNOT READ XPARM.XDS' in line:
+                    'DIMENSION OF DIFFERENCE VECTOR SET' in line or \
+                        'CANNOT READ XPARM.XDS' in line:
                     if not fixed:
                         self.logger.debug('    Found an indexing error')
                         self.tprint(arg="\n  Found an indexing error",
                                     level=10,
                                     color="red")
-    
+
                         # Try to fix by extending the data range
                         #tmp = input[-1].split('=')
                         #first, last = tmp[-1].split()
@@ -1737,13 +1822,13 @@ class RapdPlugin(Process):
                                          + int(self.image_data['total']) - 1):
                             self.logger.debug(
                                 '         FAILURE: Already using the full data range available.')
-                            #return False
+                            # return False
                             warning = True
                         else:
                             #input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
                             input = self.change_xds_inp(
-                                    input,
-                                    'SPOT_RANGE=%s %s' % (first, (int(last) + 1)))
+                                input,
+                                'SPOT_RANGE=%s %s' % (first, (int(last) + 1)))
                             fixed = True
                             #self.write_file('XDS.INP', input)
                             #os.system('mv XDS.LOG initialXDS.LOG')
@@ -1751,39 +1836,42 @@ class RapdPlugin(Process):
                                         level=10,
                                         color="white",
                                         newline=False)
-                            #self.xds_run(dir)
-                            #return input
+                            # self.xds_run(dir)
+                            # return input
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     if not fixed:
-                        self.logger.debug('    Found inaccurate indexing solution error')
+                        self.logger.debug(
+                            '    Found inaccurate indexing solution error')
                         self.logger.debug('    Will try to continue anyway')
                         self.tprint(
                             arg="  Found inaccurate indexing solution error - try to continue anyway",
                             level=30,
                             color="red")
-    
+
                         # Inaccurate indexing solution, can try to continue with DEFPIX,
                         # INTEGRATE, and CORRECT anyway
-                        self.logger.debug(' The length of input is %s' % len(input))
-                        #if 'JOB=DEFPIX' in input[-2]:
-                        check_for_line = [1 for p in input if p.count('JOB=DEFPIX')]
+                        self.logger.debug(
+                            ' The length of input is %s' % len(input))
+                        # if 'JOB=DEFPIX' in input[-2]:
+                        check_for_line = [
+                            1 for p in input if p.count('JOB=DEFPIX')]
                         if bool(len(check_for_line)):
-                            self.logger.debug('Error = %s' %line)
+                            self.logger.debug('Error = %s' % line)
                             self.logger.debug(
                                 'XDS failed to run with inaccurate indexing solution error.')
                             self.tprint(
                                 arg="\n  XDS failed to run with inaccurate indexing solution error.",
                                 level=30,
                                 color="red")
-                            #return False
+                            # return False
                             warning = True
                         else:
-                            #input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
+                            # input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
                             #             + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                             input = self.change_xds_inp(
-                                    input,
-                                    'JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT' \
-                                          ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+                                input,
+                                'JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
+                                ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                             fixed = True
                             #self.write_file('XDS.INP', input)
                             #os.system('mv XDS.LOG initialXDS.LOG')
@@ -1791,22 +1879,23 @@ class RapdPlugin(Process):
                                         level=99,
                                         color="white",
                                         newline=False)
-                            #self.xds_run(dir)
-                            #return input
-                        
+                            # self.xds_run(dir)
+                            # return input
+
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     if not fixed:
-                        self.logger.debug('	Found failure in determining spot size parameters.')
+                        self.logger.debug(
+                            '	Found failure in determining spot size parameters.')
                         self.logger.debug(
                             '	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
                         self.tprint(arg="\n  Found failure in determining spot size parameters.",
                                     level=99,
                                     color="red")
-    
+
                         l = ['REFLECTING_RANGE=1.0\n', 'REFLECTING_RANGE_E.S.D.=0.10\n',
                              'BEAM_DIVERGENCE=0.9\n', 'BEAM_DIVERGENCE_E.S.D.=0.09\n']
                         for p in l:
-                            input = self.change_xds_inp(input,p)
+                            input = self.change_xds_inp(input, p)
                         #input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
                         #input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                         fixed = True
@@ -1817,34 +1906,35 @@ class RapdPlugin(Process):
                             level=99,
                             color="white",
                             newline=False)
-                        #self.xds_run(dir)
-                        #return input
+                        # self.xds_run(dir)
+                        # return input
                 elif 'CANNOT READ SPOT.XDS' in line:
                     if not fixed:
-                        self.logger.debug('Could not index. Wait for more frames...')
+                        self.logger.debug(
+                            'Could not index. Wait for more frames...')
                         warning = True
                 else:
                     if not fixed:
                         # Unanticipated Error, fail the error check by returning False.
-                        self.logger.debug('Error = %s' %line)
+                        self.logger.debug('Error = %s' % line)
                         warning = True
 
-                    #return False
+                    # return False
             if 'forrtl: severe (24): end-of-file during read,' in line:
                 if not fixed:
-                    self.logger.debug('Error = %s' %line)
+                    self.logger.debug('Error = %s' % line)
                     self.logger.debug(
-                                'XDS failed to integrate dataset. Crystal may have gone out of beam.')
+                        'XDS failed to integrate dataset. Crystal may have gone out of beam.')
                     self.tprint(
                         arg="\n  XDS failed to integrate dataset. Crystal may have gone out of beam.",
                         level=30,
                         color="red")
-                    #return False
+                    # return False
                     warning = True
             # Did it finish???
             if 'a        b          ISa' in line:
                 finished = True
-        
+
         # If processing completed...
         if finished:
             return input
@@ -1857,13 +1947,13 @@ class RapdPlugin(Process):
         # If it failed to complete and had warning message
         elif warning:
             return False
-        
-        #return input
+
+        # return input
 
     # def check_for_xds_errors_OLD(self, dir, input):
     #     """
     #     Examines results of an XDS run and searches for known problems.
-    #     Original RAPD would overwrite XDS.LOG with each step, so this 
+    #     Original RAPD would overwrite XDS.LOG with each step, so this
     #     would only have the last step, but RAPD2 appends all results!!
     #     """
     #     self.logger.debug('FastIntegration::check_for_xds_errors')
@@ -1972,11 +2062,11 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::write_forkscripts')
 
-        niba0 = 5 // float(osc) # minimum number of images per batch
-        ntask = len(node_list[0]) # Total number of jobs
-        nodes = node_list[0] # list of nodes where data is distributed
-        fframes = node_list[1] # list of first image on each node
-        lframes = node_list[2] # list of last image on each node
+        niba0 = 5 // float(osc)  # minimum number of images per batch
+        ntask = len(node_list[0])  # Total number of jobs
+        nodes = node_list[0]  # list of nodes where data is distributed
+        fframes = node_list[1]  # list of first image on each node
+        lframes = node_list[2]  # list of last image on each node
 
         forkc = ['#!/bin/bash\n']
         forkc.append('echo "1" | ssh -x %s "cd $PWD && mcolspot_par" &\n'
@@ -2020,12 +2110,15 @@ class RapdPlugin(Process):
 
             if line_counter == 2:
                 results["starting_frame"] = int(sline[0])
-                results["starting_angle"], results["osc_range"] = [float(x) for x in sline[1:3]]
-                results["rotation_axis_direction"] = [float(x) for x in sline[3:]]
+                results["starting_angle"], results["osc_range"] = [
+                    float(x) for x in sline[1:3]]
+                results["rotation_axis_direction"] = [
+                    float(x) for x in sline[3:]]
 
             elif line_counter == 3:
                 results["wavelength"] = float(sline[0])
-                results["incident_beam_direction"] = [float(x) for x in sline[1:]]
+                results["incident_beam_direction"] = [
+                    float(x) for x in sline[1:]]
 
             elif line_counter == 4:
                 sg_num = int(sline[0])
@@ -2056,7 +2149,8 @@ class RapdPlugin(Process):
                 results["pixel_size_slow"] = float(sline[4])
 
             elif line_counter == 9:
-                results["orgx"], results["orgx"], results["f"] = [float(x) for x in sline]
+                results["orgx"], results["orgx"], results["f"] = [
+                    float(x) for x in sline]
 
             elif line_counter == 10:
                 results["detector_x_axis"] = [float(x) for x in sline]
@@ -2100,7 +2194,8 @@ class RapdPlugin(Process):
             aimless_log = self.aimless(mtzfile)
         else:
             self.logger.debug('    Pointless did not run properly!')
-            self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
+            self.logger.debug(
+                '    Please check logs and files in %s', self.dirs['work'])
             return 'Failed'
 
         # Parse the aimless logfile to look for resolution cutoff.
@@ -2144,7 +2239,7 @@ class RapdPlugin(Process):
         summary['ISa'] = get_isa_from_correctlp()
 
         # Parse CORRECT.LP and pull out per wedge statistics
-        #self.parse_correct()
+        # self.parse_correct()
 
         #scalamtz = mtzfile.replace('pointless','scala')
         #scalalog = scalamtz.replace('mtz','log')
@@ -2161,18 +2256,18 @@ class RapdPlugin(Process):
                 "xds_idxref": xds_idxref_log,
                 "xds_integrate": xds_integrate_log,
                 "xds_correct": xds_correct_log
-                },
+            },
             "mtzfile": scalamtz,
             "xparm": xparm,
             "dir": directory,
-            }
+        }
         self.logger.debug("Returning results!")
-        #self.logger.debug(results)
+        # self.logger.debug(results)
 
         # Set up the results for return
         self.results["process"]["status"] = 50
         self.results["results"].update(results)
-        #self.logger.debug(self.results)
+        # self.logger.debug(self.results)
 
         return results
 
@@ -2190,12 +2285,13 @@ class RapdPlugin(Process):
         comfile = mtzout.replace('mtz', 'com')
 
         aimless_file = ['#!/bin/tcsh\n',
-                        'aimless hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout, logfile),
+                        'aimless hklin %s hklout %s << eof > %s\n' % (
+                            mtzin, mtzout, logfile),
                         'anomalous on\n',
                         'scales constant\n',
                         'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
-                        'cycles 0\n']#, Change made on Feb. 20, 2015 to exclude bins resolution
-                        #'bins resolution 10\n']
+                        'cycles 0\n']  # , Change made on Feb. 20, 2015 to exclude bins resolution
+        # 'bins resolution 10\n']
         if resolution != False:
             aimless_file.append('resolution %s\n' % resolution)
         aimless_file.append('eof')
@@ -2203,7 +2299,8 @@ class RapdPlugin(Process):
         os.chmod(comfile, stat.S_IRWXU)
         cmd = './%s' % comfile
         # os.system(cmd)
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         return logfile
 
@@ -2225,7 +2322,8 @@ class RapdPlugin(Process):
             cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
                    % (hklfile, mtzfile, logfile))
         self.logger.debug("cmd = %s", cmd)
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         # sts = os.waitpid(p.pid, 0)[1]
         log = open(logfile, "r").readlines()
@@ -2265,10 +2363,9 @@ class RapdPlugin(Process):
         # Archive directory name
         if self.image_data.get("run_number"):
             archive_dirname = '_'.join([self.image_data['image_prefix'],
-                                       str(self.image_data['run_number'])])
+                                        str(self.image_data['run_number'])])
         else:
             archive_dirname = self.image_data['image_prefix']
-
 
         # Full path location of the archive
         archive_dir = os.path.join(self.dirs['work'], archive_dirname)
@@ -2279,7 +2376,8 @@ class RapdPlugin(Process):
         # Full path prefix for archive files
         if self.image_data.get("run_number", False):
             archive_files_prefix = "%s/%s_%d" % (archive_dir,
-                                                 self.image_data.get("image_prefix"),
+                                                 self.image_data.get(
+                                                     "image_prefix"),
                                                  self.image_data.get("run_number"))
         else:
             archive_files_prefix = "%s/%s" % (archive_dir,
@@ -2291,7 +2389,8 @@ class RapdPlugin(Process):
         # Create the free-R-flagged data
         # The source file
         in_file = os.path.join(results['dir'], results["mtzfile"])
-        self.logger.debug('FastIntegration::finish_data - in_file = %s', in_file)
+        self.logger.debug(
+            'FastIntegration::finish_data - in_file = %s', in_file)
         # Truncate the data.
         comfile = ["#!/bin/csh\n",
                    "truncate hklin %s hklout truncated.mtz << eof > truncate.log\n"
@@ -2319,7 +2418,8 @@ class RapdPlugin(Process):
         p.wait()
 
         # Rename the so-called unmerged file
-        src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
+        src_file = os.path.abspath(
+            results["mtzfile"].replace("_aimless", "_pointless"))
         #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
         #print "Copy %s to %s" % (src_file, tgt_file)
@@ -2330,11 +2430,11 @@ class RapdPlugin(Process):
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
-            "path":arch_prod_file,
-            "hash":arch_prod_hash,
-            "description":"unmerged"
+            "path": arch_prod_file,
+            "hash": arch_prod_hash,
+            "description": "unmerged"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Move to archive
         src_file = os.path.abspath("freer.mtz")
@@ -2349,11 +2449,11 @@ class RapdPlugin(Process):
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
-            "path":arch_prod_file,
-            "hash":arch_prod_hash,
-            "description":"rfree"
+            "path": arch_prod_file,
+            "hash": arch_prod_hash,
+            "description": "rfree"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         if scalepack:
             # Create the merged scalepack format file.
@@ -2497,7 +2597,8 @@ class RapdPlugin(Process):
         # Change to directory
         os.chdir(xdsdir)
 
-        new_inp = self.modify_xdsinput_for_symm(xdsinp, self.spacegroup, "IDXREF.LP")
+        new_inp = self.modify_xdsinput_for_symm(
+            xdsinp, self.spacegroup, "IDXREF.LP")
 
         # Make sure we end in the right place
         os.chdir(self.dirs['work'])
@@ -2563,12 +2664,15 @@ class RapdPlugin(Process):
             # Print summary
             summary = results["summary"]
             # pprint(summary)
-            self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
+            self.tprint("  Spacegroup: %s" %
+                        summary["scaling_spacegroup"], 99, "white")
             self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" %
                         tuple(summary["scaling_unit_cell"]), 99, "white")
-            self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
+            self.tprint("  Mosaicity: %5.3f" %
+                        summary["mosaicity"], 99, "white")
             self.tprint("  ISa: %5.2f" % summary["ISa"], 99, "white")
-            self.tprint("                        overall   inner shell   outer shell", 99, "white")
+            self.tprint(
+                "                        overall   inner shell   outer shell", 99, "white")
             self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
                         tuple(summary["bins_high"]), 99, "white")
             self.tprint("  Low res limit         %6.2f      %6.2f        %6.2f" %
@@ -2580,7 +2684,7 @@ class RapdPlugin(Process):
             self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" %
                         tuple(summary["isigi"]), 99, "white")
             self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["cc-half"]), 99, "white")
+                        tuple(summary["cc-`half`"]), 99, "white")
             self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" %
                         tuple(summary["rmerge_norm"]), 99, "white")
             self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" %
@@ -2599,7 +2703,8 @@ class RapdPlugin(Process):
                         tuple(summary["anom_multiplicity"]), 99, "white")
             self.tprint("  Anom Correlation      %6.3f      %6.3f        %6.3f" %
                         tuple(summary["anom_correlation"]), 99, "white")
-            self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
+            self.tprint("  Anom Slope             %5.3f" %
+                        summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" %
                         tuple(summary["total_obs"]), 99, "white")
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
@@ -2651,7 +2756,7 @@ class RapdPlugin(Process):
                 # Determine plot extent
                 y_array = numpy.array(raw["series"][0]["ys"])
                 y_max = y_array.max() * 1.1
-                y_min = 0 # max(0, (y_array.min() - 10))
+                y_min = 0  # max(0, (y_array.min() - 10))
                 x_array = numpy.array(raw["series"][0]["xs"])
                 x_max = x_array.max()
                 x_min = x_array.min()
@@ -2666,13 +2771,14 @@ class RapdPlugin(Process):
                                     (int(term_size[1])-20, 30))
 
                 # Create the plot string
-                plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
+                plot_string = "plot [%d:%d] [%f:%f] " % (
+                    x_min, x_max, y_min, y_max)
                 plot_string += "'-' using 1:2 title 'Rmerge' with lines\n"
                 # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
                 gnuplot.stdin.write(plot_string)
 
                 # Run through the data and add to gnuplot
-                for plot in (raw, ): #smoothed):
+                for plot in (raw, ):  # smoothed):
                     # plot = plot_data["data"][i]
                     xs = plot["series"][0]["xs"]
                     ys = plot["series"][0]["ys"]
@@ -2710,14 +2816,16 @@ class RapdPlugin(Process):
             # print "transfer_files", self.preferences["exchange_dir"]
 
             # Determine and validate the place to put the data
-            target_dir = os.path.join(self.preferences["exchange_dir"], os.path.split(self.dirs["work"])[1])
+            target_dir = os.path.join(
+                self.preferences["exchange_dir"], os.path.split(self.dirs["work"])[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
 
             new_data_produced = []
             for file_to_move in self.results["results"]["data_produced"]:
                 # Move data
-                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                target = os.path.join(
+                    target_dir, os.path.basename(file_to_move["path"]))
                 #print "Moving %s to %s" % (file_to_move["path"], target)
                 shutil.move(file_to_move["path"], target)
                 # Change entry
@@ -2725,13 +2833,14 @@ class RapdPlugin(Process):
                 new_data_produced.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["data_produced"] = new_data_produced
-            #pprint(self.results["results"]["data_produced"])
+            # pprint(self.results["results"]["data_produced"])
 
             self.create_archive()
             new_archive_files = []
             for file_to_move in self.results["results"]["archive_files"]:
                 # Move data
-                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                target = os.path.join(
+                    target_dir, os.path.basename(file_to_move["path"]))
                 # print "Moving %s to %s" % (file_to_move["path"], target)
                 shutil.move(file_to_move["path"], target)
                 # Change entry
@@ -2739,8 +2848,7 @@ class RapdPlugin(Process):
                 new_archive_files.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["archive_files"] = new_archive_files
-            #pprint(self.results["results"]["archive_files"])
-
+            # pprint(self.results["results"]["archive_files"])
 
     def clean_up(self):
         """Clean up after self"""
@@ -2755,7 +2863,7 @@ class RapdPlugin(Process):
             if self.pdbq_process:
                 while self.pdbq_process.is_alive():
                     time.sleep(1)
-            
+
             # Make sure we are in the work directory
             os.chdir(self.dirs["work"])
 
@@ -2791,7 +2899,7 @@ class RapdPlugin(Process):
             print json_string
 
         # Write a file
-        with open(os.path.join(self.dirs["work"],"result.json"), "w") as outfile:
+        with open(os.path.join(self.dirs["work"], "result.json"), "w") as outfile:
             outfile.writelines(json_string)
 
 
@@ -2804,6 +2912,7 @@ class DataHandler(threading.Thread):
     instantiation.  That class will then send back results on the pipe
     which it is passed and Handler will send that up the clientsocket.
     """
+
     def __init__(self, input, tprint=False, logger=False, verbose=True):
 
         threading.Thread.__init__(self)

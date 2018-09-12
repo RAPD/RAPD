@@ -264,6 +264,8 @@ class NECATRepository():
 
     def check_conn(self):
         """Check if it is up"""
+        print self.server
+
         try:
             # Query pdbq server
             response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \

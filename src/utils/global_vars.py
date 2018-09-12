@@ -56,7 +56,7 @@ TEST_CACHE = "/tmp/rapd_cache/test_data"
 # NE-CAT PDBQ Server
 # tries in order
 #PDBQ_SERVER = "https://rapd.nec.aps.anl.gov/pdbq"
-PDBQ_SERVER = ["https://rapd2.nec.aps.anl.gov/pdbq",
+PDBQ_SERVER = ["https://rapd.nec.aps.anl.gov/pdbq",
                "https://wwwdev.ebi.ac.uk/pdbe/search/pdb",
                "http://www.rcsb.org/pdb/rest"]
                #"https://www.ebi.ac.uk/pdbe",

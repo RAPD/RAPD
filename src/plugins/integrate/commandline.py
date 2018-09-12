@@ -68,6 +68,22 @@ def get_commandline():
                         type=int,
                         help="Last image")
 
+    # Start of spots range
+    parser.add_argument("--start_spots",
+                        action="store",
+                        dest="start_spots",
+                        default=False,
+                        type=int,
+                        help="Start of spots range")
+
+    # End frame
+    parser.add_argument("--end_spots",
+                        action="store",
+                        dest="end_spots",
+                        default=False,
+                        type=int,
+                        help="End of spots range")
+
     # Number of rounds of polishing
     parser.add_argument("--rounds",
                         action="store",
@@ -105,7 +121,7 @@ def get_commandline():
                         help="Template for image files")
 
     # No args? print help
-    if len(sys.argv[1:]) == 0:
+    if not sys.argv[1:]:
         parser.print_help()
         parser.exit()
 
@@ -224,13 +240,15 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
 
     command["preferences"] = {
         "analysis": commandline_args.analysis,
-        "pdbquery": commandline_args.pdbquery,
+        # "pdbquery": commandline_args.pdbquery,
         "clean_up": commandline_args.clean_up,
-        "computer_cluster": commandline_args.computer_cluster,
+        # "computer_cluster": commandline_args.computer_cluster,
         "dir_up": commandline_args.dir_up,
         "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
+        "start_spots": commandline_args.start_spots,
+        "end_spots": commandline_args.end_spots,
         "flip_beam": detector_module.XDS_FLIP_BEAM,
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
