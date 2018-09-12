@@ -495,7 +495,15 @@ calculation",
             "rfree_mtz": "I(+),SIGI(+),I(-),SIGI(-)"
         }
 
-        # command = "phenix.xtriage %s scaling.input.parameters.reporting.loggraphs=True" % self.data_file
+        if not rapd_file_type in labels:
+            self.logger.error(
+                "%s has rapd_file_type %s that analysis is not capable of handling", self.data_file, rapd_file_type)
+            # Have a file type, just not usable by this tool
+            if rapd_file_type:
+                raise exceptions.ImproperFileTypeException(self.data_file)
+            # File type is not recognized
+            else:
+                raise exceptions.UnrecognizedFileTypeException(self.data_file)
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"%s\" scaling.input.parameters.reporting.loggraphs=True" % (
             self.data_file, labels[rapd_file_type])

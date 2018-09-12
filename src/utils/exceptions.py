@@ -52,3 +52,13 @@ class MissingExecutableException(Exception):
     """Throw when missing an executable"""
     def __init__(self, dErrorArguments):
         Exception.__init__(self, "Executable not found for {}".format(dErrorArguments))
+
+class ImproperFileTypeException(Exception):
+    """Throw when the type of file is not usable by the software"""
+    def __init__(self, dErrorArguments):
+        Exception.__init__(self, "{} is not a file usable by this action".format(dErrorArguments))
+
+class UnrecognizedFileTypeException(Exception):
+    """Throw when the type of file is not recognized"""
+    def __init__(self, dErrorArguments):
+        Exception.__init__(self, "File {} is not recognizable by RAPD".format(dErrorArguments))
