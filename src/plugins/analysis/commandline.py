@@ -223,6 +223,9 @@ def get_commandline():
     else:
         args.run_mode = "interactive"
 
+    # No db_settings if running from CLI
+    args.db_settings = None
+
     return args
 
 def print_welcome_message(printer):
@@ -299,7 +302,9 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin_instance = plugin.RapdPlugin(command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(command=command,
+                                        tprint=tprint,
+                                        logger=logger)
     plugin_instance.start()
 
 if __name__ == "__main__":

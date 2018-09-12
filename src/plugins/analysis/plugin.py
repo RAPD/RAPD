@@ -158,6 +158,7 @@ class RapdPlugin(Process):
         # Store tprint for use throughout
         if tprint:
             self.tprint = tprint
+            tprint("hello")
         # Dead end if no tprint passed
         else:
             def func(arg=False, level=False, verbosity=False, color=False):
