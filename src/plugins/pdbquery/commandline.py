@@ -114,6 +114,7 @@ def construct_command(commandline_args):
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
+        "searchonly": commandline_args.searchonly,
         "test": commandline_args.test,
         #"computer_cluster": commandline_args.computer_cluster,
         #"results_queue": commandline_args.results_queue,
@@ -195,6 +196,12 @@ def get_commandline():
                            action="store_true",
                            help="Search for structures with similar unit cells")
 
+    # Run similarity search
+    my_parser.add_argument("--searchonly",
+                           dest="searchonly",
+                           action="store_true",
+                           help="Search for structures with similar unit cells but just list")
+
     # Run contaminant screen
     my_parser.add_argument("--contaminants",
                            action="store_true",
@@ -232,6 +239,10 @@ def get_commandline():
         args.run_mode = "json"
     else:
         args.run_mode = "interactive"
+
+    # If searchonly is True, search must be True too
+    if args.searchonly:
+        args.search = True
 
     # Capitalize pdb codes
     if args.pdbs:

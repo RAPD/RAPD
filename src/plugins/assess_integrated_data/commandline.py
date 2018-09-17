@@ -96,6 +96,7 @@ def construct_command(commandline_args):
         "analysis": commandline_args.analysis,
         "clean": commandline_args.clean,
         "json": commandline_args.json,
+        "show_plots": commandline_args.show_plots,
         "no_color": commandline_args.no_color,
         "nproc": commandline_args.nproc,
         "pdbquery": commandline_args.pdbquery,
@@ -170,6 +171,12 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
+    # Hide plots?
+    my_parser.add_argument("--noplot",
+                           action="store_false",
+                           dest="show_plots",
+                           help="No plotting")
+
     # Output progress
     my_parser.add_argument("--progress",
                            action="store_true",
@@ -197,10 +204,10 @@ def get_commandline():
                            help="Do not run analysis")
 
     # Don't run pdbquery
-    my_parser.add_argument("--nopdbquery",
-                           action="store_false",
+    my_parser.add_argument("--pdbquery",
+                           action="store_true",
                            dest="pdbquery",
-                           help="Don't run pdbquery as part of analysis")
+                           help="Run pdbquery as part of analysis")
 
     # Positional argument
     my_parser.add_argument(action="store",
