@@ -177,7 +177,7 @@ def parse_raw_output(raw_output, logger=False):
     stop = 1000000
     for index, line in enumerate(raw_output):
 
-        print index, line
+        # print index, line
 
         if stop == index:
             break

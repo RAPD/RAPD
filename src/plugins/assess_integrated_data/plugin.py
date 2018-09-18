@@ -69,7 +69,7 @@ import plugins.analysis.plugin
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
 from plugins.subcontractors.aimless import parse_aimless
-import plugins.phenix_reflection_statistics as phenix_reflection_statistics
+import plugins.subcontractors.phenix_reflection_statistics as phenix_reflection_statistics
 # import utils
 import utils.credits as rcredits
 import info
@@ -182,14 +182,17 @@ class RapdPlugin(multiprocessing.Process):
         aimless_results = self.aimless()
 
         # If no aimless results, try calculating a what we can
-        if not aimless_results:
+        if not aimless_results.get("log"):
+            reflection_statistics = self.calculate_reflection_statistics()
+            # pprint(reflection_statistics)
+            self.results["reflection_statistics"] = reflection_statistics
             self.results["summary"] = False
             self.results["plots"] = False
             self.results["log"] = False
-        
+
         # Put results into self.results looking roughly like the core integrate plugin
         else:
-            reflection_statistics = self.calculate_reflection_statistics()
+            self.results["reflection_statistics"] = False
             self.results["summary"] = aimless_results["summary"]
             self.results["plots"] = aimless_results["plots"]
             self.results["log"] = aimless_results["log"]
@@ -280,6 +283,28 @@ class RapdPlugin(multiprocessing.Process):
         summary = results["summary"]
 
         if summary:
+            """
+            Makes
+                                  overall   inner shell   outer shell
+            High res limit          1.18        6.44          1.18
+            Low res limit          54.02       54.02          1.20
+            Completeness            92.9        89.5          51.5
+            Multiplicity             2.6         2.9           1.4
+            I/sigma(I)              15.0        53.9           2.7
+            CC(1/2)                0.999       0.999         0.961
+            Rmerge                 0.035       0.020         0.185
+            Anom Rmerge            0.031       0.018         0.169
+            Rmeas                  0.043       0.024         0.233
+            Anom Rmeas             0.041       0.024         0.219
+            Rpim                   0.024       0.014         0.137
+            Anom Rpim              0.028       0.016         0.139
+            Anom Completeness       70.3        89.1          11.9
+            Anom Multiplicity        1.1         1.7           1.4
+            Anom Correlation       0.033       0.126        -0.033
+            Anom Slope             1.022
+            Observations          204065        1549          3056
+            Unique Observations    79280         538          2133
+            """
 
             self.tprint("\nAnalysis Summary", 99, "blue")
             # self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
@@ -326,6 +351,15 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
                         tuple(summary["unique_obs"]), 99, "white")
 
+        elif results["reflection_statistics"]:
+            summary = results["reflection_statistics"]
+            self.tprint("\nReflection Statistics Summary", 99, "blue")
+            cell = summary["unit_cell"][1]
+            self.tprint("  Unit cell             %.1f %.1f %.1f  %.1f %.1f %.1f " % tuple(summary["unit_cell"][1]), 99, "white")
+            self.tprint("  Overall Completeness  %.2f" % summary["completeness"][1], 99, "white")
+            pprint(summary)
+            sys.exit()
+
     def print_plots(self, results):
         """Print results in the terminal"""
 
@@ -364,8 +398,8 @@ class RapdPlugin(multiprocessing.Process):
                     x_min = x_array.min()
 
                     gnuplot = subprocess.Popen(["gnuplot"],
-                                            stdin=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
+                                               stdin=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
                     gnuplot.stdin.write("""set term dumb %d,%d
                                         set title 'Rmerge vs. Batch'
                                         set xlabel 'Image #'
@@ -425,7 +459,8 @@ class RapdPlugin(multiprocessing.Process):
 
         # Some file types cannot be run through aimless
         if rapd_file_type in ("minimal_refl_mtz", "minimal_rfree_mtz", "rfree_mtz",):
-            self.tprint(arg="  Unable to calculate these data statistics on merged data", level=10, color="red")
+            self.tprint(
+                arg="  Unable to calculate these data statistics on merged data", level=10, color="red")
             return {
                 "log": False,
                 "plots": False,
@@ -474,13 +509,17 @@ class RapdPlugin(multiprocessing.Process):
         Calculate reflection statistics using phenix.reflection_statistics
         """
 
+        self.tprint(
+            arg="  Attempting to calculate statistics on merged reflections", level=10, color="white")
+
         # Pull out the data_file
         data_file = self.command["input_data"]["data_file"]
 
         # Run the tool
-        log = phenix_reflection_statistics(data_file=data_file)
-
-        pass
+        log = phenix_reflection_statistics.run(data_file=data_file)
+        phenix_reflection_statistics_results = phenix_reflection_statistics.parse_raw_output(
+            log)
+        return phenix_reflection_statistics_results
 
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
