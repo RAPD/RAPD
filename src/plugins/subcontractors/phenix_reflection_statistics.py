@@ -50,13 +50,15 @@ import sys
 # import utils
 from utils.r_numbers import try_int, try_float
 
+
 def run(data_file):
     """
     Run phenix.reflection_statistics and capture the output
     """
     cmd = ["phenix.reflection_statistics %s" % data_file]
     # print cmd
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
     # print stdout
     # print stderr
@@ -78,7 +80,8 @@ def parse_raw_output(raw_output, logger=False):
                 raw_output = open(raw_output, "r").readlines()
             else:
                 print "Sorry, I think you are inputing a file name, but I cannot find the file"
-                raise ValueError("Sorry, I think you are inputing a file name, but I cannot find the file")
+                raise ValueError(
+                    "Sorry, I think you are inputing a file name, but I cannot find the file")
 
     output_lines = []
     anom_lines = []
@@ -97,70 +100,83 @@ def parse_raw_output(raw_output, logger=False):
     pat_info = {}
     coset = []
     verdict_text = []
-    
+
     # Can be multiple summaries
     summary_number = None
+    centric_reflections = {}
+    completeness = {}
+    completeness_infinity = {}
+    completeness_table = {}
     miller_array_labels = {}
     observation_type = {}
-    unit_cell = {}
+    patterson_peak_table = {}
+    perfect_mero_twin_table = {}
+    resolution_range = {}
     space_group = {}
+    space_group_intensities = {}
+    space_group_metric = {}
     space_group_number = {}
     systematic_absences = {}
-    centric_reflections = {}
-    resolution_range = {}
+    unit_cell = {}
+    wavelength = {}
 
+    # Flags used in parsing tables
+    in_completeness_table = False
+    in_patterson_peak_table = False
+    in_perfect_mero_twin_table = False
 
-    # Tables with an embedded label
-    tables = {}
-    table_labels = (
-        "Completeness and data strength",
-        "Mean intensity by shell (outliers)",
-        # "NZ test",
-        "L test, acentric data",
-    )
+    # # Tables with an embedded label
+    # tables = {}
+    # table_labels = (
+    #     "Completeness and data strength",
+    #     "Mean intensity by shell (outliers)",
+    #     # "NZ test",
+    #     "L test, acentric data",
+    # )
 
-    # Tables that lack an embedded label
-    unlabeled_tables = {}
-    unlabeled_table_labels = (
-        "Low resolution completeness analyses",
-        "Completeness (log-binning)",
-        "Measurability of anomalous signal",
-        "Ice ring related problems",
-        "Table of systematic absence rules",
-        "Space group identification",
-    )
+    # # Tables that lack an embedded label
+    # unlabeled_tables = {}
+    # unlabeled_table_labels = (
+    #     "Low resolution completeness analyses",
+    #     "Completeness (log-binning)",
+    #     "Measurability of anomalous signal",
+    #     "Ice ring related problems",
+    #     "Table of systematic absence rules",
+    #     "Space group identification",
+    # )
 
-    # Tables only in the loggraph sections
-    loggraph_tables = {}
-    loggraph_table_labels = (
-        "Intensity plots",
-        "Measurability of Anomalous signal",
-        "NZ test",
-        "L test, acentric data"
-    )
+    # # Tables only in the loggraph sections
+    # loggraph_tables = {}
+    # loggraph_table_labels = (
+    #     "Intensity plots",
+    #     "Measurability of Anomalous signal",
+    #     "NZ test",
+    #     "L test, acentric data"
+    # )
 
-    # Table coilumns that need special handling
-    table_special_columns = (
-        "Completeness",
-        "Res. range",
-        "Resolution range",
-        "Resolution",
-        "N(obs)/N(possible)",
-        "Reflections",
-        "Operator",  # str
-        "# expected systematic absences",  # int
-        "<I/sigI> (violations)",  # complicated
-        "# expected non absences",  # int
-        "# other reflections",  # int
-        "space group",
-        "# absent",
-        "+++",
-        "---",
-        "Expected rel. I",
-    )
+    # # Table coilumns that need special handling
+    # table_special_columns = (
+    #     "Completeness",
+    #     "Res. range",
+    #     "Resolution range",
+    #     "Resolution",
+    #     "N(obs)/N(possible)",
+    #     "Reflections",
+    #     "Operator",  # str
+    #     "# expected systematic absences",  # int
+    #     "<I/sigI> (violations)",  # complicated
+    #     "# expected non absences",  # int
+    #     "# other reflections",  # int
+    #     "space group",
+    #     "# absent",
+    #     "+++",
+    #     "---",
+    #     "Expected rel. I",
+    # )
 
     stop = 1000000
     for index, line in enumerate(raw_output):
+
         print index, line
 
         if stop == index:
@@ -185,13 +201,16 @@ def parse_raw_output(raw_output, logger=False):
 
         # Unit cell for this summary
         elif line.startswith("Unit cell: ("):
-            unit_cell[summary_number] = [float(i) for i in line.replace("Unit cell: (", "").replace(")", "").split(",")]
+            unit_cell[summary_number] = [float(i) for i in line.replace(
+                "Unit cell: (", "").replace(")", "").split(",")]
             print "    unit_cell", unit_cell
 
         # Space group for this summary
         elif line.startswith("Space group:"):
-            space_group[summary_number] = line.replace("Space group: ", "").split("(")[0].strip()
-            space_group_number[summary_number] = int(line.replace("Space group: ", "").split("(")[1].strip()[4:-1])
+            space_group[summary_number] = line.replace(
+                "Space group: ", "").split("(")[0].strip()
+            space_group_number[summary_number] = int(line.replace(
+                "Space group: ", "").split("(")[1].strip()[4:-1])
             print "    space_goup", space_group
             print "    space_goup_number", space_group_number
 
@@ -207,10 +226,203 @@ def parse_raw_output(raw_output, logger=False):
 
         # Resolution range:
         elif line.startswith("Resolution range:"):
-            resolution_range[summary_number] = [float(i) for i in line.replace("Resolution range:", "").split()]
+            resolution_range[summary_number] = [
+                float(i) for i in line.replace("Resolution range:", "").split()]
             print "    resolution_range", resolution_range
 
-            stop = index + 10
+        # Completeness in resolution range:
+        elif line.startswith("Completeness in resolution range:"):
+            completeness[summary_number] = float(line.split(":")[1])
+            print "    completeness", completeness
+
+        # Completeness with d_max=infinity:
+        elif line.startswith("Completeness with d_max=infinity:"):
+            completeness_infinity[summary_number] = float(line.split(":")[1])
+            print "    completeness_infinity", completeness_infinity
+
+        # Wavelength:
+        elif line.startswith("Wavelength:"):
+            wavelength[summary_number] = float(line.split(":")[1])
+            print "    wavelength", wavelength
+
+        # Space group of the intensities:
+        elif line.startswith("Space group of the intensities:"):
+            space_group_intensities[summary_number] = line.split(":")[
+                1].strip()
+            print "    space_group_intensities", space_group_intensities
+
+        # Space group of the metric:
+        elif line.startswith("Space group of the metric:"):
+            space_group_metric[summary_number] = line.split(":")[1].strip()
+            print "    space_group_metric", space_group_metric
+
+        # Completeness table
+        elif line.startswith("Completeness of "):
+            in_completeness_table = True
+            first_unused = False
+            completeness_table = {summary_number: {"label": [], "lo_res": [
+            ], "hi_res": [],  "observed": [], "possible": [], "fraction": []}}
+
+        # Patterson peaks for
+        elif line.startswith("Patterson peaks for "):
+            in_patterson_peak_table = True
+            patterson_peak_table = {summary_number: []}
+
+        # Perfect merohedral twinning test for
+        elif line.startswith("Perfect merohedral twinning test for "):
+            in_perfect_mero_twin_table = True
+            first_unused = False
+            perfect_mero_twin_table = {summary_number: {"label": [], "lo_res": [], "hi_res": [
+            ],  "observed": [], "possible": [], "<I^2>/(<I>)^2": [], "(<F>)^2/<F^2>": []}}
+
+        # Parsing Patterson peak table
+        if in_patterson_peak_table:
+            sline = line.split()
+            if len(sline) == 5:
+                peak = {
+                    "x": float(sline[0]),
+                    "y": float(sline[1]),
+                    "z": float(sline[2]),
+                    "height": float(sline[3]),
+                    "distance": float(sline[4])
+                }
+                patterson_peak_table[summary_number].append(peak)
+
+            # Table done
+            if not line.strip():
+                in_patterson_peak_table = False
+                pprint(patterson_peak_table)
+
+        # Parsing a perfect merohedral twinning table
+        if in_perfect_mero_twin_table:
+            record = False
+            sline = line.split()
+
+            # Unused reflection range
+            if line.startswith("unused"):
+                record = True
+                label = "unused"
+
+                # Variance between low res unused an hi res
+                # Low res
+                if not first_unused:
+                    first_unused = True
+                    lo_res = None
+                    hi_res = float(sline[2])
+                    observed = int(sline[4].split("/")[0])
+                    possible = int(sline[4].split("/")[1])
+                    i_stat = None
+                    f_stat = None
+                # Hi res
+                else:
+                    first_unused = False
+                    lo_res = float(sline[1])
+                    hi_res = None
+                    observed = int(sline[4].split("/")[0])
+                    possible = int(sline[4].split("/")[1])
+                    fraction = None
+                    i_stat = None
+                    f_stat = None
+
+            # Regular bin lines
+            # bin 24:  1.2838 -  1.2658 [2465/2603]  2.2938  0.7327
+            elif line.startswith("bin "):
+                record = True
+                label = ("bin "+sline[1]).replace(":", "")
+                lo_res = float(sline[2])
+                hi_res = float(sline[4])
+                observed = int(sline[5].replace(
+                    "[", "").replace("]", "").split("/")[0])
+                possible = int(sline[5].replace(
+                    "[", "").replace("]", "").split("/")[1])
+                i_stat = float(sline[6])
+                f_stat = float(sline[7])
+
+            # The average line
+            elif line.strip().startswith("average: "):
+                print sline
+                record = False
+                perfect_mero_twin_table[summary_number]["average_<I^2>/(<I>)^2"] = float(
+                    sline[1])
+                perfect_mero_twin_table[summary_number]["average_(<F>)^2/<F^2>"] = float(
+                    sline[2])
+
+            # The table is over
+            elif not line.strip():
+                in_perfect_mero_twin_table = False
+                stop = index + 10
+                pprint(perfect_mero_twin_table)
+
+            if record:
+                perfect_mero_twin_table[summary_number]["label"].append(
+                    label)
+                perfect_mero_twin_table[summary_number]["lo_res"].append(
+                    lo_res)
+                perfect_mero_twin_table[summary_number]["hi_res"].append(
+                    hi_res)
+                perfect_mero_twin_table[summary_number]["observed"].append(
+                    observed)
+                perfect_mero_twin_table[summary_number]["possible"].append(
+                    possible)
+                perfect_mero_twin_table[summary_number]["<I^2>/(<I>)^2"].append(
+                    i_stat)
+                perfect_mero_twin_table[summary_number]["(<F>)^2/<F^2>"].append(
+                    f_stat)
+
+            # Parsing a completeness table
+        if in_completeness_table:
+
+            record = False
+
+            # Unused reflection range
+            if line.startswith("unused"):
+                record = True
+                label = "unused"
+                sline = line.split()
+
+                # Variance between low res unused an hi res
+                # Low res
+                if not first_unused:
+                    first_unused = True
+                    lo_res = None
+                    hi_res = float(sline[2])
+                    observed = int(sline[4].split("/")[0])
+                    possible = int(sline[4].split("/")[1])
+                    fraction = None
+                # Hi res
+                else:
+                    first_unused = False
+                    lo_res = float(sline[1])
+                    hi_res = None
+                    observed = int(sline[4].split("/")[0])
+                    possible = int(sline[4].split("/")[1])
+                    fraction = None
+
+            # Regular bin lines
+            elif line.startswith("bin "):
+                record = True
+                sline = line.split()
+                label = ("bin "+sline[1]).replace(":", "")
+                lo_res = float(sline[2])
+                hi_res = float(sline[4])
+                observed = int(sline[5].replace(
+                    "[", "").replace("]", "").split("/")[0])
+                possible = int(sline[5].replace(
+                    "[", "").replace("]", "").split("/")[1])
+                fraction = float(sline[6])
+
+            # The table is over
+            elif not line.strip():
+                in_completeness_table = False
+                pprint(completeness_table)
+
+            if record:
+                completeness_table[summary_number]["label"].append(label)
+                completeness_table[summary_number]["lo_res"].append(lo_res)
+                completeness_table[summary_number]["hi_res"].append(hi_res)
+                completeness_table[summary_number]["observed"].append(observed)
+                completeness_table[summary_number]["possible"].append(possible)
+                completeness_table[summary_number]["fraction"].append(fraction)
 
     #     # Spacegroup information
     #     if line.startswith("Space group:"):
@@ -413,7 +625,6 @@ def parse_raw_output(raw_output, logger=False):
     #         for key in twin_info.keys():
     #             twin_info[key].update(crap)
 
-
     # for line in anom_lines[10:20]:
     #     if len(line.split()) == 7:
     #         anom[line.split()[4]] = line.split()[6]
@@ -612,7 +823,6 @@ def parse_raw_output(raw_output, logger=False):
     #     # pprint(column_data)
     #     tables[table_label] = column_data
 
-
     # # Loggraph tables
     # loggraph_label_mods = {
     #     "Acentric_observed": "Acentric observed",
@@ -802,7 +1012,23 @@ def parse_raw_output(raw_output, logger=False):
     # # pprint(plots["NZ test"])
 
     # Assemble for return
-    results = {}
+    results = {
+        "completeness": completeness,
+        "completeness_infinity": completeness_infinity,
+        "completeness_table": completeness_table,
+        "miller_array_labels": miller_array_labels,
+        "observation_type": observation_type,
+        "patterson_peak_table": patterson_peak_table,
+        "perfect_mero_twin_table": perfect_mero_twin_table,
+        "resolution_range": resolution_range,
+        "space_group": space_group,
+        "space_group_intensities": space_group_intensities,
+        "space_group_metric": space_group_metric,
+        "space_group_number": space_group_number,
+        "systematic_absences": systematic_absences,
+        "unit_cell": unit_cell,
+        "wavelength": wavelength
+    }
     #     "anom": anom,
     #     "anomalous_present": anomalous_present,
     #     "Patterson peaks": pat,
@@ -830,13 +1056,16 @@ def parse_raw_output(raw_output, logger=False):
     #     "z-score": z_score,
     # }
 
+    pprint(results)
+
     if logger:
         logger.debug("parse_raw_output Done")
 
     return results
 
+
 if __name__ == "__main__":
-    
+
     print sys.argv
     raw_output = run(data_file=sys.argv[1])
     parse_raw_output(raw_output=raw_output)
