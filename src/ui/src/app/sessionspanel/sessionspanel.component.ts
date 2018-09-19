@@ -46,16 +46,33 @@ export class SessionspanelComponent implements OnInit {
   // The filter is changed
   updateSessionFilter(event) {
     const val = event.target.value.toLowerCase();
-    console.log(val);
-    console.log(this.filtered_sessions);
+    // console.log(val);
+    // console.log(this.filtered_sessions);
     // filter our data
     const temp = this.filtered_sessions.filter(function(d) {
-      console.log(d);
-      return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
-             d.site.toLowerCase().indexOf(val) !== -1 ||
-             d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
-            //  d.last_process.indexOf(val) !== -1 ||
-             !val;
+      // console.log(d);
+
+      if (d.group) {
+        if (d.group.groupname) {
+          if (d.group.groupname.toLowerCase().indexOf(val) !== -1) {
+            return true;
+          }
+        }
+      }
+
+      if (d.site) {
+        if (d.site.toLowerCase().indexOf(val) !== -1) {
+          return true;
+        }
+      }
+
+      if (d.data_root_directory) {
+        if (d.data_root_directory.toLowerCase().indexOf(val) !== -1) {
+          return true;
+        }
+      }
+
+      return false;
     });
 
     // update the rows
