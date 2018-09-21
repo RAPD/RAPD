@@ -2,7 +2,7 @@ const config = require('../config');
 var mongoose = require('mongoose');
 
 // Fix the promise issue in Mongoose
-mongoose.Promise = require('q').Promise;
+// mongoose.Promise = require('q').Promise;
 
 // CONTROL CONNECTION
 mongoose.ctrl_conn = mongoose.createConnection(config.control_conn, {

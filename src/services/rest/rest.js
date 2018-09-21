@@ -152,7 +152,6 @@ var apiRoutes = express.Router(); // get an instance of the express Router
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
   console.log(req.method);
-  console.log(">>1<<");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
