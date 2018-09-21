@@ -78,18 +78,7 @@ export class ProjectspanelComponent implements OnInit {
       // Go ahead and "delete" the project
       if (result) {
         project.status = "hidden";
-        this.rest_service.submitProject(project).subscribe(params => {
-          console.log(params);
-          // A problem connecting to REST server
-          // Submitted is over
-          // this.submitted = false;
-          // this.submit_error = params.error;
-          // if (params.success) {
-          //   this.dialogRef.close(params);
-          // } else {
-          //   this.submit_error = params.message;
-          // }
-        });
+        this.rest_service.submitProject(project).subscribe(params => {});
       }
     });
   }
