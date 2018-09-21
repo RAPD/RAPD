@@ -27,9 +27,12 @@ router
   .get(function(req, res) {
     console.log(req.decoded);
 
-    let query_params = { group: { $in: req.decoded.groups } };
+    let query_params = {
+      group: { $in: req.decoded.groups },
+      status: { $ne: "hidden" }
+    };
     if (req.decoded.role == "site_admin") {
-      query_params = {};
+      query_params = { status: { $ne: "hidden" } };
     }
 
     Project.find(query_params)
@@ -83,7 +86,6 @@ router
 
     // Updating
     if (project._id) {
-
       Project.findByIdAndUpdate(project._id, project, { new: true })
         .populate({ path: "source_data", model: "Result" })
         .populate({ path: "results", model: "Result" })
@@ -104,7 +106,7 @@ router
           }
         });
 
-    // Creating
+      // Creating
     } else {
       project.creator = req.decoded._id;
 
