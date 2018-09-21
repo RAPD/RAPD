@@ -10,6 +10,7 @@ import {
 import { RestService } from "../shared/services/rest.service";
 import { Project } from "../shared/classes/project";
 import { DialogNewProjectComponent } from "../shared/components/dialog-new-project/dialog-new-project.component";
+import { ConfirmDialogComponent } from "../shared/dialogs/confirm-dialog/confirm-dialog.component";
 // import { FileUploadModule } from 'ng2-file-upload';
 
 @Component({
@@ -47,6 +48,7 @@ export class ProjectspanelComponent implements OnInit {
     let project = new Project();
 
     project._id = undefined;
+    project.actions = [];
     project.creator = undefined;
     project.created = undefined;
     project.description = undefined;
@@ -58,6 +60,38 @@ export class ProjectspanelComponent implements OnInit {
     project.title = undefined;
 
     this.editProject(project, "Create Project");
+  }
+
+  // Deleting a project
+  deleteProject(project: Project) {
+    // Open the confirmation dialog
+    let config = new MatDialogConfig();
+    config.viewContainerRef = this.viewContainerRef;
+
+    this.dialogRef = this.dialog.open(ConfirmDialogComponent, config);
+    this.dialogRef.componentInstance.data = {
+      message: "Are you sure? Deleting a project is permenant.",
+      title: "Confirm Deletion"
+    };
+
+    this.dialogRef.afterClosed().subscribe(result => {
+      // Go ahead and "delete" the project
+      if (result) {
+        project.status = "hidden";
+        this.rest_service.submitProject(project).subscribe(params => {
+          console.log(params);
+          // A problem connecting to REST server
+          // Submitted is over
+          // this.submitted = false;
+          // this.submit_error = params.error;
+          // if (params.success) {
+          //   this.dialogRef.close(params);
+          // } else {
+          //   this.submit_error = params.message;
+          // }
+        });
+      }
+    });
   }
 
   editProject(project, dialog_title: string) {
@@ -85,6 +119,9 @@ export class ProjectspanelComponent implements OnInit {
     });
   }
 
+  //
+  // Methods for manipulating the this.projects array
+  //
   addProject(new_project: Project) {
     // If the user already exists, replace it
     let index = this.projects.findIndex(

@@ -53,6 +53,10 @@ var ProjectSchema = new Schema(
       ref: "Result",
       default: []
     },
+    status: {
+      type: String,
+      default: "shown"
+    },
     title: {
       type: String,
       required: true,

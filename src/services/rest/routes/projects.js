@@ -104,7 +104,7 @@ router
           }
         });
 
-      // Creating
+    // Creating
     } else {
       project.creator = req.decoded._id;
 
