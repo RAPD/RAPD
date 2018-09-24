@@ -13,7 +13,7 @@
 
       <div fxLayout="column">
         <table>
-          
+
 
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
@@ -86,17 +86,14 @@
                   <div class="rapd-corral-heading">
                     Results
                   </div>
-                  <!-- <mat-list *ngIf="actions.INTEGRATE[0].length === 0" dense class="rapd-corral-content">
-                      <ng-container>
-                        <mat-list-item >
-                          <button mat-button color="primary">
-                            <mat-icon>{{action_icons[action]}}</mat-icon>
-                            {{action}}
-                          </button> 
-                        </mat-list-item>
-                      </ng-container>
-                    </mat-list>
-                  <mat-list *ngIf="actions.INTEGRATE[0].length > 0" dense class="rapd-corral-content">
+                  <mat-list *ngIf="project.results.length === 0" dense class="rapd-corral-content">
+                    <ng-container>
+                      <mat-list-item>
+                        No results
+                      </mat-list-item>
+                    </ng-container>
+                  </mat-list>
+                  <!-- <mat-list *ngIf="actions.INTEGRATE[0].length > 0" dense class="rapd-corral-content">
                     <ng-container *ngFor="let action of actions.INTEGRATE[0]">
                       <mat-list-item >
                         <button mat-button color="primary"

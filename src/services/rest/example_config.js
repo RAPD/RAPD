@@ -36,5 +36,7 @@ module.exports = {
   // ADXV executable
   adxv: '/usr/local/bin/adxv',
   // Directory for temporary image storage
-  image_directory: '/dev/shm/images'
+  image_directory: '/dev/shm/images',
+  // Where to store uploaded files temporarily
+  upload_directory: '/tmp'
 };
