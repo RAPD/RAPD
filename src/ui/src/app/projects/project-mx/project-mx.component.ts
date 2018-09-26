@@ -84,7 +84,7 @@ export class ProjectMxComponent implements OnInit {
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      url: this.globals_service.site.restApiUrl + '/upload_mx_raw',
+      url: this.globals_service.site.restApiUrl + '/upload_mx_raw/' + this.id,
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
     });

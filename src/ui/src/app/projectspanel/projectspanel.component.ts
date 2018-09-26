@@ -21,6 +21,7 @@ import { ConfirmDialogComponent } from "../shared/dialogs/confirm-dialog/confirm
 export class ProjectspanelComponent implements OnInit {
   projects: Project[] = [];
   dialogRef: MatDialogRef<DialogNewProjectComponent>;
+  confirmDialogRef: MatDialogRef<ConfirmDialogComponent>;
 
   // File uploader
   // public uploader:FileUploader = new FileUploader({url: 'https://evening-anchorage-3159.herokuapp.com/api/'});
@@ -68,13 +69,13 @@ export class ProjectspanelComponent implements OnInit {
     let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
-    this.dialogRef = this.dialog.open(ConfirmDialogComponent, config);
-    this.dialogRef.componentInstance.data = {
+    this.confirmDialogRef = this.dialog.open(ConfirmDialogComponent, config);
+    this.confirmDialogRef.componentInstance.data = {
       message: "Are you sure? Deleting a project is permenant.",
       title: "Confirm Deletion"
     };
 
-    this.dialogRef.afterClosed().subscribe(result => {
+    this.confirmDialogRef.afterClosed().subscribe(result => {
       // Go ahead and "delete" the project
       if (result) {
         project.status = "hidden";

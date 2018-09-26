@@ -1,5 +1,6 @@
 export class Project {
   _id: string;
+  actions:any[];
   creator: any;
   created: any;
   description: string;
@@ -9,5 +10,6 @@ export class Project {
   project_type: string;
   results: any[];
   source_data: any[];
+  status:string;
   title: string;
 }

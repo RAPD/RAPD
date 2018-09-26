@@ -58,7 +58,7 @@ export class DialogNewProjectComponent implements OnInit {
     // Add edit action
     this.model.actions.unshift({
       action_type: "edited",
-      timestamp: Date.now()
+      timestamp: Date.now(),
       user: this.user._id
     });
 
