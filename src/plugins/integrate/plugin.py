@@ -344,6 +344,8 @@ class RapdPlugin(Process):
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
         self.results["preferences"] = self.command.get("preferences", {})
+        self.results["run_data"] = self.run_data
+        self.results["image_data"] = self.image_data
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})

@@ -61,6 +61,11 @@ var ProjectSchema = new Schema(
       type: String,
       required: true,
       default: "None"
+    },
+    upload_data: {
+      type: [Schema.Types.ObjectId],
+      ref: "Upload",
+      default: []
     }
   },
   { strict: false }
