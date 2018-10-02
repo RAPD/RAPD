@@ -15,10 +15,8 @@ import { MatDialog,
          MatToolbarModule } from '@angular/material';
 
 import 'rxjs/add/operator/switchMap';
-// import { Observable } from 'rxjs/Observable';
 
 import { FileUploader } from 'ng2-file-upload';
-
 import { GlobalsService } from "../../shared/services/globals.service";
 import { Project } from '../../shared/classes/project';
 import { RestService } from '../../shared/services/rest.service';
@@ -26,7 +24,6 @@ import { WebsocketService } from '../../shared/services/websocket.service';
 import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { ErrorDialogComponent } from '../../shared/dialogs/error-dialog/error-dialog.component';
 import { ReintegrateDialogComponent } from '../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
-// import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
 
 // Import agent components here
 import * as mx from '../../plugin_components/mx';
@@ -87,7 +84,7 @@ export class ProjectMxComponent implements OnInit {
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      url: this.globals_service.site.restApiUrl + '/upload_mx_raw',
+      url: this.globals_service.site.restApiUrl + '/upload_mx_raw/' + this.id,
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
     });
@@ -96,7 +93,8 @@ export class ProjectMxComponent implements OnInit {
     // overide the onCompleteItem property of the uploader so we are 
     // able to deal with the server response.
     this.uploader.onCompleteItem = (item:any, response:any, status:any, headers:any) => {
-         console.log("ImageUpload:uploaded:", item, status, response);
+         console.log("ImageUpload:uploaded:"); //, item, status, response);
+         console.log(JSON.parse(response));
      };
   }
 
@@ -292,16 +290,6 @@ export class ProjectMxComponent implements OnInit {
       }
     });
   }
-
-  // activateUpload() {
-
-  //   console.log('activateUpload');
-
-  //   // Open the dialog
-  //   let uploadDialogRef = this.upload_dialog.open(UploadDialogComponent, {
-  //     data: { upload_data_type: 'mx_data' }
-  //   });
-  // }
 
   handleFiles(files:any) { 
     console.log(files);

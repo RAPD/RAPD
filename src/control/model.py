@@ -385,7 +385,7 @@ class Model(object):
     def send_command(self, command, channel="RAPD_JOBS"):
         """Send a command over redis for processing"""
 
-        print "send_command"
+        # print "send_command"
         pprint(command)
 
         self.redis.lpush(channel, json.dumps(command))

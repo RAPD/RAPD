@@ -55,6 +55,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/get_cif\/commandline.py --pdb \"\$@\"" >>$RAPD_HOME/bin/rapd.get_pdb
   chmod +x $RAPD_HOME/bin/rapd.get_pdb
 
+  # Assess integrated data set (for imported data)
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.assess
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/assess_integrated_data\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.assess
+  chmod +x $RAPD_HOME/bin/rapd.assess
+
   # Fetch a CIF from PDBQ
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.get_cif
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/get_cif\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.get_cif

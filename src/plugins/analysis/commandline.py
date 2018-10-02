@@ -53,7 +53,7 @@ def construct_command(commandline_args):
         os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_analysis_%s" % ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                os.path.basename(commandline_args.data_file).split(".")[:-1])),
         active=False,
         up=commandline_args.dir_up)
     else:
@@ -61,7 +61,7 @@ def construct_command(commandline_args):
             os.path.join(
                 os.path.abspath(os.path.curdir),
                 "rapd_analysis_%s" % ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                    os.path.basename(commandline_args.data_file).split(".")[:-1])),
             active=True,
             up=commandline_args.dir_up)
 
@@ -71,7 +71,7 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile),
+        "data_file": os.path.abspath(commandline_args.data_file),
         "db_settings": commandline_args.db_settings,
     }
 
@@ -182,7 +182,7 @@ def get_commandline():
 
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="datafile",
+                           dest="data_file",
                            nargs="?",
                            default=False,
                            help="Name of file to be analyzed")
@@ -222,6 +222,9 @@ def get_commandline():
         args.run_mode = "json"
     else:
         args.run_mode = "interactive"
+
+    # No db_settings if running from CLI
+    args.db_settings = None
 
     return args
 
@@ -299,7 +302,9 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin_instance = plugin.RapdPlugin(command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(command=command,
+                                        tprint=tprint,
+                                        logger=logger)
     plugin_instance.start()
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ class PDBQuery(Process):
     self.gui                                = self.input[0].get('gui',True)
     self.controller_address                 = self.input[0].get('control',False)
     self.verbose                            = self.input[0].get('verbose',False)
-    self.datafile                           = Utils.convertUnicode(self,self.input[0].get('data'))
+    self.data_file                           = Utils.convertUnicode(self,self.input[0].get('data'))
     self.cell_output                        = False
     self.cell_summary                       = False
     self.tooltips                           = False
@@ -380,7 +380,7 @@ class PDBQuery(Process):
         else:
           pdb_info = Utils.getPDBInfo(self,f,False,True)
 
-        d = {'data':self.datafile,'pdb':f,'name':code,'verbose':self.verbose,'sg':sg,
+        d = {'data':self.data_file,'pdb':f,'name':code,'verbose':self.verbose,'sg':sg,
              'copy':copy,'test':self.test,'cluster':self.cluster_use,'cell analysis':True,
              'large':self.large_cell,'res':Utils.setPhaserRes(self,pdb_info['all']['res']),
             }
@@ -409,7 +409,7 @@ class PDBQuery(Process):
     try:
       pdb = '%s.1.pdb'%inp
       info = Utils.getPDBInfo(self,pdb,False)
-      command  = 'phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN '%(pdb,self.datafile)
+      command  = 'phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN '%(pdb,self.data_file)
       command += 'refinement.main.number_of_macro_cycles=1 nproc=2'
       chains = [chain for chain in info.keys() if chain != 'all']
       for chain in chains:

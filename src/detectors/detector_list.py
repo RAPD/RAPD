@@ -30,6 +30,9 @@ DETECTORS = {
     ("ADSC", "413"): "",                                # ESRF ID14-2
     ("ADSC", "430"): "",                                #
     ("ADSC", "446"): "adsc_q315",                       # NSLS X25 > X26C
+    ("ADSC", "900"): {
+        "detector": "holton_adsc_q315"                  # J Holton simmulated images
+    },
     ("ADSC", "905"): {
         "detector": "als821_adsc_q315"                  # ALS 8.2.1
     },

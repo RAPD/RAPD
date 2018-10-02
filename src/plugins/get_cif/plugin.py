@@ -228,7 +228,7 @@ class RapdPlugin(multiprocessing.Process):
 
             # Get the gzipped cif file from the PDBQ server
             self.tprint("      Fetching %s" % cif_file, level=10, color="white")
-            download_cif(pdb_code, cif_file, self.tprint)
+            self.download_cif(pdb_code, cif_file, self.tprint)
 
             # Convert from cif to pdb
             if self.command["preferences"]["pdb"]:
@@ -264,6 +264,8 @@ class NECATRepository():
 
     def check_conn(self):
         """Check if it is up"""
+        print self.server
+
         try:
             # Query pdbq server
             response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \

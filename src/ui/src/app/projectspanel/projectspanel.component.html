@@ -12,18 +12,23 @@
       </thead>
       <tbody>
         <ng-container *ngFor="let project of projects">
-          <tr (click)="selectProject(project);">
+          <tr *ngIf="project.status !== 'hidden'" (click)="selectProject(project);">
             <td>{{project.title}}</td>
             <td>{{project.project_type}}</td>
             <td>{{project.description}}</td>
-            <td>{{project.last_action}}</td>
+            <td>{{project.actions[0].action_type}}</td>
             <td>
               <button
-                mat-button
+                mat-icon-button
                 color="primary"
                 (click)="editProject(project); $event.stopPropagation();">
                 <mat-icon>settings</mat-icon>
-                Edit
+              </button>
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="deleteProject(project); $event.stopPropagation();">
+                <mat-icon>delete</mat-icon>
               </button>
             </td>
           </tr>

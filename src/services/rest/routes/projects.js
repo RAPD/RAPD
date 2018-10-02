@@ -1,27 +1,43 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var mongoose = require('../models/mongoose');
+var mongoose = require("../models/mongoose");
 
 // MongoDB Models
-const Project = mongoose.ctrl_conn.model('Project', require('../models/project').ProjectSchema);
-const Result  = mongoose.ctrl_conn.model('Result', require('../models/result').ResultSchema);
-const Session = mongoose.ctrl_conn.model('Session', require('../models/session').SessionSchema);
-
+const Project = mongoose.ctrl_conn.model(
+  "Project",
+  require("../models/project").ProjectSchema
+);
+const Result = mongoose.ctrl_conn.model(
+  "Result",
+  require("../models/result").ResultSchema
+);
+const Session = mongoose.ctrl_conn.model(
+  "Session",
+  require("../models/session").SessionSchema
+);
+const ProjectAction = mongoose.ctrl_conn.model(
+  "ProjectAction",
+  require("../models/project_action").ProjectActionSchema
+);
 // Routes that end with projects
 // ----------------------------------------------------
-router.route('/projects')
+router
+  .route("/projects")
   // route to return all projects
   .get(function(req, res) {
+    console.log(req.decoded);
 
-    let query_params = {group:{$in:req.decoded._doc.groups}};
-    if (req.decoded._doc.role == 'site_admin') {
-      query_params = {};
+    let query_params = {
+      group: { $in: req.decoded.groups },
+      status: { $ne: "hidden" }
+    };
+    if (req.decoded.role == "site_admin") {
+      query_params = { status: { $ne: "hidden" } };
     }
 
-    Project.
-      find(query_params).
-      populate('group', 'groupname').
-      exec(function(err, projects) {
+    Project.find(query_params)
+      .populate("group", "groupname")
+      .exec(function(err, projects) {
         if (err) {
           console.error(err);
           res.status(500).json({
@@ -29,7 +45,7 @@ router.route('/projects')
             message: err
           });
         } else {
-          console.log('Returning', projects.length, 'projects');
+          console.log("Returning", projects.length, "projects");
           console.log(projects);
           res.status(200).json({
             success: true,
@@ -39,42 +55,15 @@ router.route('/projects')
       });
   });
 
-router.route('/projects/:project_id')
+router
+  .route("/projects/:project_id")
   // Get project data
   .get(function(req, res) {
-    console.log(req.params.project_id)
-    Project.findOne({_id:req.params.project_id}).
-            populate({path:'source_data', model:'Result'}).
-            populate({path:'results', model:'Result'}).
-            exec(function(err, project) {
-              if (err) {
-                console.error(err);
-                res.status(500).json({
-                  success: false,
-                  message: err
-                });
-              } else {
-
-                console.log('Returning project', project);
-                res.status(200).json({
-                  success: true,
-                  project: project
-                });
-              }
-            });
-  })
-
-  // route to add or modify project
-  .put(function(req, res) {
-
-    let project = req.body.project;
-
-    // Updating
-    if (project._id) {
-      Project.findByIdAndUpdate(project._id, project, {new:true})
-      .populate({path:'source_data', model:"Result"})
-      .populate({path:'results', model:'Result'})
-      .exec(function(err, return_project) {
+    console.log(req.params.project_id);
+    Project.findOne({ _id: req.params.project_id })
+      .populate({ path: "source_data", model: "Result" })
+      .populate({ path: "results", model: "Result" })
+      .exec(function(err, project) {
         if (err) {
           console.error(err);
           res.status(500).json({
@@ -82,39 +71,74 @@ router.route('/projects/:project_id')
             message: err
           });
         } else {
-          console.log('Project edited successfully', return_project);
+          console.log("Returning project", project);
           res.status(200).json({
             success: true,
-            operation: 'edit',
-            project: return_project
+            project: project
           });
         }
       });
+  })
 
-    // Creating
+  // route to add or modify project
+  .put(function(req, res) {
+    let project = req.body.project;
+
+    // Updating
+    if (project._id) {
+      Project.findByIdAndUpdate(project._id, project, { new: true })
+        .populate({ path: "source_data", model: "Result" })
+        .populate({ path: "results", model: "Result" })
+        .exec(function(err, return_project) {
+          if (err) {
+            console.error(err);
+            res.status(500).json({
+              success: false,
+              message: err
+            });
+          } else {
+            console.log("Project edited successfully", return_project);
+            res.status(200).json({
+              success: true,
+              operation: "edit",
+              project: return_project
+            });
+          }
+        });
+
+      // Creating
     } else {
+      project.creator = req.decoded._id;
 
-      project.creator = req.decoded._doc._id;
+      // Add create action
+      project.actions = [
+        {
+          action_type: "created",
+          timestamp: Date.now(),
+          user: req.decoded._id
+        }
+      ];
 
       // Save the project
-      Project.findOneAndUpdate(
-        {_id:mongoose.Types.ObjectId()},
+      var promise = Project.findOneAndUpdate(
+        { _id: mongoose.Types.ObjectId() },
         project,
-        {new:true, upsert:true}
-      )
-      .exec(function(err, return_project) {
+        { new: true, upsert: true }
+      ).exec(function(err, newProject) {
+        // Error
         if (err) {
           console.error(err);
           res.status(500).json({
-            success:false,
-            error:err
+            success: false,
+            error: err
           });
+          // Success
         } else {
-          console.log('Project created successfully', return_project);
+          console.log("Project created successfully", newProject);
           res.status(200).json({
             success: true,
-            operation: 'create',
-            project: return_project
+            operation: "create",
+            project: newProject
           });
         }
       });
@@ -123,7 +147,7 @@ router.route('/projects/:project_id')
 
   // Delete the user with _id (DELETE api/projects/:project_id)
   .delete(function(req, res) {
-    Project.remove({_id:req.params.project_id}, function(err) {
+    Project.remove({ _id: req.params.project_id }, function(err) {
       if (err) {
         console.error(err);
         res.status(500).json({
@@ -131,9 +155,9 @@ router.route('/projects/:project_id')
           message: err
         });
       } else {
-        console.log('Project deleted successfully', req.params.project_id);
+        console.log("Project deleted successfully", req.params.project_id);
         res.status(200).json({
-          operation: 'delete',
+          operation: "delete",
           success: true,
           _id: req.params.project_id
         });
@@ -143,11 +167,10 @@ router.route('/projects/:project_id')
 
 // Add a result to a project
 add_result = function(req, res) {
-
-  console.log('add_result');
+  console.log("add_result");
 
   let project_id = req.body.project_id,
-      result = req.body.result;
+    result = req.body.result;
 
   console.log(project_id);
   console.log(result);
@@ -156,104 +179,117 @@ add_result = function(req, res) {
 
   // Add result to project
   // MX data
-  if (result.data_type === 'MX') {
+  if (result.data_type === "MX") {
     // source_data
-    if (result.plugin_type in {INDEX:1, INTEGRATE:1}) {
-      Project.findOneAndUpdate({_id:project_id}, {$addToSet:{source_data:result._id}}, {new:true})
-      .exec(function(err, project2) {
+    if (result.plugin_type in { INDEX: 1, INTEGRATE: 1 }) {
+      Project.findOneAndUpdate(
+        { _id: project_id },
+        { $addToSet: { source_data: result._id } },
+        { new: true }
+      ).exec(function(err, project2) {
         console.log(err, project2);
         if (err) {
           console.error(err);
           res.status(200).json({
-            success:false,
-            message:err
+            success: false,
+            message: err
           });
         } else {
           console.log("Add source_data successful");
           res.status(200).json({
-            success:true,
-            message:'Successful'
+            success: true,
+            message: "Successful"
           });
           // Add project to result
-          Result.findOneAndUpdate({_id:result._id}, {$addToSet:{projects:project_id}});
+          Result.findOneAndUpdate(
+            { _id: result._id },
+            { $addToSet: { projects: project_id } }
+          );
         }
-      })
-    // results
+      });
+      // results
     } else {
-      Project.findOneAndUpdate({_id:project_id}, {$addToSet:{results:result._id}}, {new:true})
-      .exec(function(err, project2) {
+      Project.findOneAndUpdate(
+        { _id: project_id },
+        { $addToSet: { results: result._id } },
+        { new: true }
+      ).exec(function(err, project2) {
         console.log(err, project2);
         if (err) {
           console.error(err);
           res.status(200).json({
-            success:false,
-            message:err
+            success: false,
+            message: err
           });
         } else {
           console.log("Add result successful");
           res.status(200).json({
-            success:true,
-            message:'Successful'
+            success: true,
+            message: "Successful"
           });
           // Add project to result
-          Result.findOneAndUpdate({_id:result._id}, {$addToSet:{projects:project_id}});
+          Result.findOneAndUpdate(
+            { _id: result._id },
+            { $addToSet: { projects: project_id } }
+          );
         }
-      })
+      });
     }
   }
-}
+};
 
 // /projects/add_result
-router.route('/projects_add_result')
+router
+  .route("/projects_add_result")
   // route to add or modify project
   .put(function(req, res) {
-
     let project_id = req.body.project_id,
-        result = req.body.result;
+      result = req.body.result;
 
     console.log(project_id);
     console.log(result);
-    console.log(req.decoded._doc);
-    
+    console.log(req.decoded);
+
     // For testing
-    // req.decoded._doc.role = 'foo';
+    // req.decoded.role = 'foo';
 
     // Allowed to add to project?
-    if (req.decoded._doc.role !== 'site_admin') {
+    if (req.decoded.role !== "site_admin") {
       // User must have Session group_id
       let data_session_id = result.session_id;
-      Session.findOne({_id:mongoose.Types.ObjectId(data_session_id)})
-      .exec(function(err, session) {
-        // console.log(err);
-        // console.log(session);
-        if (err) {
-          console.error(err);
-          res.status(200).json({
-            success:false,
-            message:err
-          });
-        // Have group_id
-        } else {
-          let group = req.decoded._doc.groups.find(o => o._id === session.group);
-          // console.log(req.decoded._doc.groups);
-          // console.log(session.group);
-          // console.log(group);
-          // No match - rejected
-          if (group === undefined) {
-            let error_message = 'User is not authorized to access this data';
-            console.error(error_message);
+      Session.findOne({ _id: mongoose.Types.ObjectId(data_session_id) }).exec(
+        function(err, session) {
+          // console.log(err);
+          // console.log(session);
+          if (err) {
+            console.error(err);
             res.status(200).json({
-              success:false,
-              message:error_message
+              success: false,
+              message: err
             });
-            return false;
-          // All is good
+            // Have group_id
           } else {
-            add_result(req, res);
+            let group = req.decoded.groups.find(o => o._id === session.group);
+            // console.log(req.decoded.groups);
+            // console.log(session.group);
+            // console.log(group);
+            // No match - rejected
+            if (group === undefined) {
+              let error_message = "User is not authorized to access this data";
+              console.error(error_message);
+              res.status(200).json({
+                success: false,
+                message: error_message
+              });
+              return false;
+              // All is good
+            } else {
+              add_result(req, res);
+            }
           }
         }
-      });
-    // site_admin can do it!
+      );
+      // site_admin can do it!
     } else {
       add_result(req, res);
     }

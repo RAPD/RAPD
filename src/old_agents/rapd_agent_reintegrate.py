@@ -1551,7 +1551,7 @@ if(allow_user() != "yes")
         os.system('mv %sXDS_ASCII.HKL %s_xds.hkl' % (integrate_dir, label) )
         os.system('mv %sXDS.INP %s_xds.inp' % (integrate_dir, label) )
         # Remove nonessential directories and files.
-        os.system('rm -rf %s DataFiles Harvest' % prefix)
+        os.system('rm -rf %s data_files Harvest' % prefix)
         os.system('rm -f *.log *.sh, truncated.mtz XIA2.o*')
         # Compress files for download.
         os.system('tar -cjf %s.tar.bz2 *.sca *.mtz *.inp xia* LogFiles' % label)

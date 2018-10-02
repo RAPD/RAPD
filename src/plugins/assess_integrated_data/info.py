@@ -1,9 +1,9 @@
-"""Custom exceptions for RAPD project"""
+"""This is a docstring for this container file"""
 
 """
 This file is part of RAPD
 
-Copyright (C) 2017-2018, Cornell University
+Copyright (C) 2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-05-18"
-__maintainer__ = "Your name"
-__email__ = "Your email"
+__created__ = "2018-08-02"
+__maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
@@ -48,17 +48,3 @@ __status__ = "Development"
 # import detectors.detector_utils as detector_utils
 # import utils
 
-class MissingExecutableException(Exception):
-    """Throw when missing an executable"""
-    def __init__(self, dErrorArguments):
-        Exception.__init__(self, "Executable not found for {}".format(dErrorArguments))
-
-class ImproperFileTypeException(Exception):
-    """Throw when the type of file is not usable by the software"""
-    def __init__(self, dErrorArguments):
-        Exception.__init__(self, "{} is not a file usable by this action".format(dErrorArguments))
-
-class UnrecognizedFileTypeException(Exception):
-    """Throw when the type of file is not recognized"""
-    def __init__(self, dErrorArguments):
-        Exception.__init__(self, "File {} is not recognizable by RAPD".format(dErrorArguments))

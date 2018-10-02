@@ -46,7 +46,7 @@ def construct_command(commandline_args):
     class commandline_args(object):
         clean = True | False
         contaminants = True | False
-        datafile = ""
+        data_file = ""
         json = True | False
         no_color = True | False
         nproc = int
@@ -73,7 +73,7 @@ def construct_command(commandline_args):
             os.path.join(
                 os.path.abspath(os.path.curdir),
                 "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                    os.path.basename(commandline_args.data_file).split(".")[:-1])),
             active=False,
             up=commandline_args.dir_up)
     else:
@@ -81,7 +81,7 @@ def construct_command(commandline_args):
             os.path.join(
                 os.path.abspath(os.path.curdir),
                 "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                    os.path.basename(commandline_args.data_file).split(".")[:-1])),
             active=True,
             up=commandline_args.dir_up)
     """
@@ -89,7 +89,7 @@ def construct_command(commandline_args):
         os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_pdbquery_%s" %  ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                os.path.basename(commandline_args.data_file).split(".")[:-1])),
         active=True,
         up=commandline_args.dir_up)
 
@@ -100,7 +100,7 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile),
+        "data_file": os.path.abspath(commandline_args.data_file),
         "pdbs": commandline_args.pdbs,
         "db_settings": commandline_args.db_settings
     }
@@ -114,6 +114,7 @@ def construct_command(commandline_args):
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
+        "searchonly": commandline_args.searchonly,
         "test": commandline_args.test,
         #"computer_cluster": commandline_args.computer_cluster,
         #"results_queue": commandline_args.results_queue,
@@ -195,6 +196,12 @@ def get_commandline():
                            action="store_true",
                            help="Search for structures with similar unit cells")
 
+    # Run similarity search
+    my_parser.add_argument("--searchonly",
+                           dest="searchonly",
+                           action="store_true",
+                           help="Search for structures with similar unit cells but just list")
+
     # Run contaminant screen
     my_parser.add_argument("--contaminants",
                            action="store_true",
@@ -209,8 +216,8 @@ def get_commandline():
                            help="PDB codes to test")
 
     # Positional argument
-    my_parser.add_argument("--datafile",
-                           dest="datafile",
+    my_parser.add_argument("--data_file",
+                           dest="data_file",
                            required=True,
                            help="Name of data file to be analyzed")
 
@@ -232,6 +239,10 @@ def get_commandline():
         args.run_mode = "json"
     else:
         args.run_mode = "interactive"
+
+    # If searchonly is True, search must be True too
+    if args.searchonly:
+        args.search = True
 
     # Capitalize pdb codes
     if args.pdbs:
@@ -321,7 +332,8 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Run the plugin
-    plugin.RapdPlugin(command, tprint, logger)
+    p = plugin.RapdPlugin(command=command, tprint=tprint, logger=logger)
+    p.run()
 
 if __name__ == "__main__":
 

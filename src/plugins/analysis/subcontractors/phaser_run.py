@@ -59,7 +59,7 @@ class RunPhaser(Process):
     def __init__(self, inp, output=False, logger=None):
         """
         #The minimum input
-        {"input":{"data":self.datafile,"pdb":self.input_pdb,"sg":self.sg,}
+        {"input":{"data":self.data_file,"pdb":self.input_pdb,"sg":self.sg,}
          "output",
          "logger}
         """
@@ -75,7 +75,7 @@ class RunPhaser(Process):
         self.res = self.input.get("res", False)
         self.test = self.input.get("test", False)
         self.cluster_use = self.input.get("cluster", True)
-        self.datafile = self.input.get("data")
+        self.data_file = self.input.get("data")
         self.input_pdb = self.input.get("pdb")
         self.sg = self.input.get("sg")
         self.ca = self.input.get("cell analysis", False)
@@ -104,7 +104,7 @@ class RunPhaser(Process):
         # try:
         ft = "PDB"
         command  = "phaser << eof\nMODE MR_AUTO\n"
-        command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % self.datafile
+        command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % self.data_file
         if self.input_pdb[-3:].lower() == "cif":
             ft = "CIF"
         if os.path.exists(self.input_pdb):
@@ -223,7 +223,7 @@ class RunPhaser(Process):
 def phaser_func(inp):
     """
     #The minimum input
-    {"input":{"data":self.datafile,"pdb":self.input_pdb,"sg":self.sg,}
+    {"input":{"data":self.data_file,"pdb":self.input_pdb,"sg":self.sg,}
      "output",
      "logger}
     """
@@ -245,7 +245,7 @@ def phaser_func(inp):
     res = inp.get("res", False)
     # test = inp.get("test", False)
     # cluster_use = inp.get("cluster", True)
-    datafile = inp.get("data")
+    data_file = inp.get("data")
     input_pdb = inp.get("pdb")
     sg = inp.get("sg")
     ca = inp.get("cell analysis", False)
@@ -257,7 +257,7 @@ def phaser_func(inp):
     # try:
     ft = "PDB"
     command = "phaser << eof\nMODE MR_AUTO\n"
-    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
+    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % data_file
     if input_pdb[-3:].lower() == "cif":
         ft = "CIF"
     if os.path.exists(input_pdb):

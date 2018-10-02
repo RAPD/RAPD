@@ -347,13 +347,19 @@ export class RestService {
   //
   // PROJECT methods
   //
-  public getProjects() {
-    // TODO :Observable<Project[]> {
+  public getProjects(): Observable<any> {
     console.log("getProjects");
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/projects")
+      .map(this.extractProjects)
+      .catch(error => this.handleError(error));
+  }
 
-    // return this.authHttp
-    //   .get(this.globals_service.site.restApiUrl + "/projects")
-    //   .catch(error => this.handleError(error));
+  // Extract projects
+  // Simple code for future flexibility
+  private extractProjects(res, error) {
+    // console.error(res);
+    return res.projects || [];
   }
 
   public getProject(id: string): Observable<any> {

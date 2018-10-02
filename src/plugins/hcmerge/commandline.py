@@ -68,7 +68,7 @@ def construct_command(commandline_args, logger):
 
     class commandline_args(object):
         clean = True | False
-        datafile = ""
+        data_file = ""
         json = True | False
         no_color = True | False
         nproc = int

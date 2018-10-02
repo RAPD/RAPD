@@ -59,14 +59,15 @@ import plugins.subcontractors.parse as parse
 # import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
 #from plugins.subcontractors.rapd_cctbx import get_pdb_info
-from plugins.subcontractors.rapd_phaser import run_phaser_module
+from plugins.subcontractors.rapd_phaser import run_phaser_module_ORIG
 
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 from utils.text import json
 from bson.objectid import ObjectId
-import utils.xutils as xutils
 from utils.processes import local_subprocess
+from utils.xray_importer import get_rapd_file_type
+import utils.xutils as xutils
 import info
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
@@ -83,6 +84,7 @@ VERSIONS = {
 }
 # Setup multiprocessing.Pool to launch jobs
 #POOL = process.mp_pool(4)
+
 
 class RapdPlugin(Process):
     """
@@ -123,11 +125,10 @@ class RapdPlugin(Process):
     #xtriage_output_raw = None
     #molrep_output_raw = None
     #phaser_results = None
-    
+
     redis = False
 
     jobs = {}
-
 
     results = {
         "command": None,
@@ -149,7 +150,7 @@ class RapdPlugin(Process):
             # Otherwise get the logger Instance
             self.logger = logging.getLogger("RAPDLogger")
             self.logger.debug("__init__")
-        
+
         self.verbose = verbosity
 
         # Used for sending results back to DB
@@ -184,7 +185,7 @@ class RapdPlugin(Process):
 
     def run(self):
         """Execution path of the plugin"""
-        #self.finish_phaser_ncs()
+        # self.finish_phaser_ncs()
         self.preprocess()
         self.process()
         self.postprocess()
@@ -208,28 +209,31 @@ class RapdPlugin(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
-        self.data_file = self.command["input_data"]["datafile"]
+        self.data_file = self.command["input_data"]["data_file"]
 
         # Get information from the data file
         self.input_sg, self.cell, self.volume = \
-            xutils.get_mtz_info(datafile=self.data_file)
+            xutils.get_mtz_info(data_file=self.data_file)
 
-        self.tprint("\nReading in datafile", level=30, color="blue")
-        self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
+        self.tprint("\nReading in data_file", level=30, color="blue")
+        self.tprint("  Spacegroup: %s" %
+                    self.input_sg, level=20, color="white")
         self.tprint("  Cell: %s" % str(self.cell), level=20, color="white")
         self.tprint("  Volume: %f" % self.volume, level=20, color="white")
 
         # Handle ribosome sample types
         # FIX THIS SINCE IT WILL ALWAYS BE default!!
-        if (self.preferences["sample_type"] != "default" and \
-            self.volume > 25000000.0) or \
-            self.preferences["sample_type"] == "ribosome": #For 30S
+        if (self.preferences["sample_type"] != "default" and
+                self.volume > 25000000.0) or \
+                self.preferences["sample_type"] == "ribosome":  # For 30S
             self.sample_type = "ribosome"
             self.solvent_content = 0.64
             self.stats_timer = 300
 
-        self.tprint("  Sample type: %s" % self.sample_type, level=20, color="white")
-        self.tprint("  Solvent content: %s" % self.solvent_content, level=20, color="white")
+        self.tprint("  Sample type: %s" %
+                    self.sample_type, level=20, color="white")
+        self.tprint("  Solvent content: %s" %
+                    self.solvent_content, level=20, color="white")
 
         # Get some data back into the command
         self.preferences["sample_type"] = self.sample_type
@@ -286,7 +290,7 @@ calculation",
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
         self.results["preferences"] = self.preferences
-        self.results["results"] = {"raw":{}, "parsed":{}}
+        self.results["results"] = {"raw": {}, "parsed": {}}
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})
@@ -296,28 +300,32 @@ calculation",
         self.results["process"]["type"] = "plugin"
         # Give it a result_id
         self.results["process"]["result_id"] = str(ObjectId())
-        
+
         # Add link to processed dataset
         if self.processed_results:
             #self.results["process"]["result_id"] = self.processed_results["process"]["result_id"]
             # This links to MongoDB results._id
-            self.results["process"]["parent_id"] = self.processed_results.get("process", {}).get("result_id", False)
+            self.results["process"]["parent_id"] = self.processed_results.get(
+                "process", {}).get("result_id", False)
             # This links to a session
-            self.results["process"]["session_id"] = self.processed_results.get("process", {}).get("session_id", False)
+            self.results["process"]["session_id"] = self.processed_results.get(
+                "process", {}).get("session_id", False)
             # Identify parent type
-            self.results["process"]["parent"] = self.processed_results.get("plugin", {})
+            self.results["process"]["parent"] = self.processed_results.get(
+                "plugin", {})
             # The repr
-            self.results["process"]["repr"] = self.processed_results.get("process", {}).get("repr", "Unknown")
+            self.results["process"]["repr"] = self.processed_results.get(
+                "process", {}).get("repr", "Unknown")
 
         # Describe plugin
         self.results["plugin"] = {
-            "data_type":DATA_TYPE,
-            "type":PLUGIN_TYPE,
-            "subtype":PLUGIN_SUBTYPE,
-            "id":ID,
-            "version":VERSION
+            "data_type": DATA_TYPE,
+            "type": PLUGIN_TYPE,
+            "subtype": PLUGIN_SUBTYPE,
+            "id": ID,
+            "version": VERSION
         }
-    
+
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -338,7 +346,7 @@ calculation",
 
             self.logger.debug(self.results)
 
-            #if results.get('results', False):
+            # if results.get('results', False):
             #    if results['results'].get('data_produced', False):
             #        pprint(results['results'].get('data_produced'))
 
@@ -353,7 +361,6 @@ calculation",
             self.redis.lpush("RAPD_RESULTS", json_results)
             self.redis.publish("RAPD_RESULTS", json_results)
 
-    
     def update_status(self):
         """Update the status and send back results."""
         if self.status == 1:
@@ -370,7 +377,7 @@ calculation",
             self.logger.debug("preprocess")
 
         self.tprint("\nAnalyzing the data file", level=30, color="blue")
-        
+
         self.run_xtriage()
         self.tprint(arg=10, level="progress")
         self.run_molrep()
@@ -403,12 +410,12 @@ calculation",
         self.write_json()
 
         # Notify inerested party
-        #self.handle_return()
+        # self.handle_return()
         self.send_results()
 
         # Write credits to screen
         self.print_credits()
-        
+
         # Message in logger
         self.logger.debug('Analysis finished')
 
@@ -446,7 +453,7 @@ calculation",
                 if self.verbose:
                     self.logger.debug('AutoStat timed out.')
                     print 'AutoStat timed out.'
-                
+
                 pids = [self.jobs[job].get('pid') for job in self.jobs]
                 for pid in pids:
                     xutils.kill_children(pid, self.logger)
@@ -465,7 +472,6 @@ calculation",
             if self.verbose:
                 self.logger.debug('AutoStats Queue finished.')
 
-
     def run_xtriage(self):
         """
         Run Xtriage and the parse the output
@@ -477,16 +483,36 @@ calculation",
             self.logger.debug("run_xtriage")
         self.tprint("  Running xtriage", level=30, color="white")
 
-        command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-                  SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
-                  self.data_file
+        # Need to figure out which obs_labels to use
+        rapd_file_type = get_rapd_file_type(self.data_file)
+        labels = {
+            "mergable_mtz": "I,SIGI",
+            "minimal_mergable_mtz": "I,SIGI",
+            "minimal_refl_anom_mtz": "I(+),SIGI(+),I(-),SIGI(-)",
+            "minimal_refl_mtz": "IMEAN,SIGIMEAN",
+            "minimal_rfree_mtz": "IMEAN,SIGIMEAN",
+            "rfree_mtz": "I(+),SIGI(+),I(-),SIGI(-)"
+        }
+
+        if not rapd_file_type in labels:
+            self.logger.error(
+                "%s has rapd_file_type %s that analysis is not capable of handling", self.data_file, rapd_file_type)
+            # Have a file type, just not usable by this tool
+            if rapd_file_type:
+                raise exceptions.ImproperFileTypeException(self.data_file)
+            # File type is not recognized
+            else:
+                raise exceptions.UnrecognizedFileTypeException(self.data_file)
+
+        command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"%s\" scaling.input.parameters.reporting.loggraphs=True" % (
+            self.data_file, labels[rapd_file_type])
 
         if self.verbose and self.logger:
             self.logger.debug(command)
 
         pid_queue = Queue()
         job = Process(target=local_subprocess, kwargs={'command': command,
-                                                        'pid_queue':pid_queue})
+                                                       'pid_queue': pid_queue})
         job.start()
         self.jobs[job] = {'name': 'xtriage',
                           'pid': pid_queue.get()}
@@ -496,14 +522,15 @@ calculation",
             self.logger.debug('finish_xtriage')
         # Read raw output
         if os.path.exists("logfile.log"):
-            self.results["results"]["raw"]["xtriage"] = open("logfile.log", "r").readlines()
+            self.results["results"]["raw"]["xtriage"] = open(
+                "logfile.log", "r").readlines()
 
             # Move logfile.log
             shutil.move("logfile.log", "xtriage.log")
 
             self.results["results"]["parsed"]["xtriage"] = \
                 xtriage.parse_raw_output(raw_output=self.results["results"]["raw"]["xtriage"],
-                                        logger=self.logger)
+                                         logger=self.logger)
         # No log file
         else:
             self.results["results"]["raw"]["xtriage"] = False
@@ -530,9 +557,9 @@ calculation",
 
             molrep_queue = Queue()
             job = Process(target=local_subprocess, kwargs={'command': command,
-                                                           #'result_queue': self.molrep_queue,
-                                                           #'logfile' : "molrep_selfrf.log",
-                                                           'pid_queue':molrep_queue,
+                                                           # 'result_queue': self.molrep_queue,
+                                                           # 'logfile' : "molrep_selfrf.log",
+                                                           'pid_queue': molrep_queue,
                                                            'shell': True})
             job.start()
             self.jobs[job] = {'name': 'molrep',
@@ -545,7 +572,7 @@ calculation",
 
         jobs = {}
         # Store raw output
-        log = open('molrep.doc','r').readlines()
+        log = open('molrep.doc', 'r').readlines()
         self.results["results"]["raw"]["molrep"] = log
 
         # Parse the Molrep log
@@ -575,8 +602,8 @@ calculation",
 
                     results_queue[label] = tqueue()
                     job = Thread(target=local_subprocess, kwargs={'command': command,
-                                                                 'result_queue': results_queue[label],
-                                                                 'pid_queue':results_queue[label]})
+                                                                  'result_queue': results_queue[label],
+                                                                  'pid_queue': results_queue[label]})
                     job.start()
                     jobs[job] = {'name': label,
                                  'pid': results_queue[label].get()}
@@ -595,11 +622,14 @@ calculation",
                                 break
                             else:
                                 parsed_molrep_results["self_rotation_images"] = True
-                                parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath("molrep_rf_%s.jpg" % label)
+                                parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath(
+                                    "molrep_rf_%s.jpg" % label)
                                 # read in the image and encode
                                 with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
-                                    encoded_string = base64.b64encode(image_file.read())
-                                    parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+                                    encoded_string = base64.b64encode(
+                                        image_file.read())
+                                    parsed_molrep_results["self_rotation_image_%s" %
+                                                          label] = "data:image/jpeg;base64,"+encoded_string
                 # Break out of the loop trying multiple convert executables
                 if parsed_molrep_results["self_rotation_images"]:
                     break
@@ -615,7 +645,8 @@ calculation",
         # return results
         self.send_results()
 
-    def run_phaser_ncs_NEW(self): # USe module in plugins.subcontractors.python_phaser
+    # USe module in plugins.subcontractors.python_phaser
+    def run_phaser_ncs_NEW(self):
         """Run Phaser tNCS and anisotropy correction
            This Python version is having problems generating a readable loggraph
         """
@@ -629,14 +660,14 @@ calculation",
                         color="white")
 
             self.phaser_queue = Queue()
-            job = Process(target=run_phaser_module, kwargs={'data_file': self.data_file,
-                                                            'result_queue': self.phaser_queue,
-                                                            'tncs': True})
+            job = Process(target=run_phaser_module_ORIG, kwargs={'data_file': self.data_file,
+                                                                 'result_queue': self.phaser_queue,
+                                                                 'tncs': True})
             job.start()
             self.jobs[job] = {'name': 'NCS',
                               'pid': job.pid}
 
-    def run_phaser_ncs(self): # USe module in plugins.subcontractors.python_phaser
+    def run_phaser_ncs(self):  # USe module in plugins.subcontractors.python_phaser
         """Run Phaser tNCS and anisotropy correction"""
         if self.verbose and self.logger:
             self.logger.debug("run_phaser_ncs")
@@ -649,12 +680,12 @@ calculation",
 
             command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
                       self.data_file
-            
+
             self.phaser_queue = Queue()
             job = Process(target=local_subprocess, kwargs={'command': command,
                                                            'result_queue': self.phaser_queue,
-                                                           'logfile' : "phaser_ncs.log",
-                                                           'pid_queue':self.phaser_queue,
+                                                           'logfile': "phaser_ncs.log",
+                                                           'pid_queue': self.phaser_queue,
                                                            'shell': True})
             job.start()
             self.jobs[job] = {'name': 'NCS',
@@ -668,7 +699,8 @@ calculation",
         output = self.phaser_queue.get()
         self.results["results"]["raw"]["phaser"] = output['stdout'].split("\n")
 
-        self.results["results"]["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
+        self.results["results"]["parsed"]["phaser"] = parse.parse_phaser_ncs_output(
+            output['stdout'])
 
         # Update the status number and return results
         self.update_status()
@@ -686,18 +718,17 @@ calculation",
     def clean_up(self):
         """Clean up the working directory"""
 
-        self.logger.debug("clean_up")
         # self.tprint("  Cleaning up", level=30, color="white")
 
         if self.preferences.get("clean", False):
 
             self.logger.debug("Cleaning up Analysis files and folders")
-            #TODO
+            # TODO
             # Change to work dir
             os.chdir(self.command["directories"]["work"])
 
             # # Gather targets and remove
-            #TODO
+            # TODO
             # files_to_clean = glob.glob("Phaser_*")
             # for target in files_to_clean:
             #     shutil.rmtree(target)
@@ -757,23 +788,24 @@ calculation",
             self.tprint("  Input spacegroup: %s (%d)" % (
                 xtriage_results["spacegroup"]["text"],
                 xtriage_results["spacegroup"]["number"]),
-                        level=99,
-                        color="white")
+                level=99,
+                color="white")
 
             self.tprint("\n  Input unit cell: a= %.2f      b= %.2f     c= %.2f" % (
                 xtriage_results["unit_cell"]["a"],
                 xtriage_results["unit_cell"]["b"],
                 xtriage_results["unit_cell"]["c"]),
-                        level=99,
-                        color="white")
+                level=99,
+                color="white")
             self.tprint("                   alpha= %.2f  beta= %.2f  gamma= %.2f" % (
                 xtriage_results["unit_cell"]["alpha"],
                 xtriage_results["unit_cell"]["beta"],
                 xtriage_results["unit_cell"]["gamma"]),
-                        level=99,
-                        color="white")
+                level=99,
+                color="white")
 
-            self.tprint("\n  Patterson analysis (off-origin peaks)", level=99, color="white")
+            self.tprint("\n  Patterson analysis (off-origin peaks)",
+                        level=99, color="white")
             self.tprint("                height % of   dist from    fractional coords",
                         level=99,
                         color="white")
@@ -781,14 +813,14 @@ calculation",
                         level=99,
                         color="white")
             for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
-                self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"\
-                    .format(peak_id,
-                            peak_data["p-val"],
-                            peak_data["peak"]*100.0,
-                            peak_data["dist"],
-                            peak_data["frac x"],
-                            peak_data["frac y"],
-                            peak_data["frac z"]),
+                self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"
+                            .format(peak_id,
+                                    peak_data["p-val"],
+                                    peak_data["peak"]*100.0,
+                                    peak_data["dist"],
+                                    peak_data["frac x"],
+                                    peak_data["frac y"],
+                                    peak_data["frac z"]),
                             level=99,
                             color="white")
 
@@ -850,7 +882,8 @@ calculation",
                             y_axis_label = "Measurability"
                             line_label = "Measured"
                             # Line for what is meaningful signal
-                            y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
+                            y2s = [0.05, ] * \
+                                len(plot_data[0]["series"][0]["ys"])
                             line_label_2 = "Meaningful"
                             reverse = True
                             plot_data = (plot_data[0],)
@@ -890,10 +923,10 @@ calculation",
                         # Create the plot string
                         if reverse:
                             plot_string = "plot [%f:%f] [%f:%f] " \
-                                              % (x_max, x_min, y_min, y_max)
+                                % (x_max, x_min, y_min, y_max)
                         else:
                             plot_string = "plot [%f:%f] [%f:%f] " \
-                                              % (x_min, x_max, y_min, y_max)
+                                % (x_min, x_max, y_min, y_max)
                         # Mark the minimum measurability
                         if plot_label == "Measurability of Anomalous signal":
                             plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
@@ -913,7 +946,6 @@ calculation",
 
                         gnuplot.stdin.write(plot_string)
 
-
                         # Mark the minimum measurability
                         if plot_label == "Measurability of Anomalous signal":
                             # Run through the data and add to gnuplot
@@ -922,12 +954,14 @@ calculation",
                                 ys = plot["series"][0]["ys"]
                                 # Minimal impact line
                                 for x_val, y_val in zip(xs, y2s):
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                    gnuplot.stdin.write(
+                                        "%f %f\n" % (x_val, y_val))
                                 gnuplot.stdin.write("e\n")
                                 # Experimental line
                                 for x_val, y_val in zip(xs, ys):
                                     # print x_val, y_val, y2_val
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                    gnuplot.stdin.write(
+                                        "%f %f\n" % (x_val, y_val))
                                 gnuplot.stdin.write("e\n")
                         else:
                             # Run through the data and add to gnuplot
@@ -935,7 +969,8 @@ calculation",
                                 xs = plot["series"][0]["xs"]
                                 ys = plot["series"][0]["ys"]
                                 for x_val, y_val in zip(xs, ys):
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                    gnuplot.stdin.write(
+                                        "%f %f\n" % (x_val, y_val))
                                 gnuplot.stdin.write("e\n")
 
                         # Now plot!
@@ -957,6 +992,7 @@ calculation",
 
         self.tprint(info_string, level=99, color="white")
 
+
 def get_commandline():
     """Grabs the commandline"""
 
@@ -977,6 +1013,7 @@ def get_commandline():
     # Insert logic to check or modify args here
 
     return args
+
 
 def main(args):
     """

@@ -6014,12 +6014,12 @@ class Database(object):
             pass
         self.close_connection(connection, cursor)
 
-    def updateIntegrateDatafiles(self,result_id,files):
+    def updateIntegratedata_files(self,result_id,files):
         """
         Update the integrate_results table for a given id.
         the files are unmerged_scale_file,sca_file,mtz_file
         """
-        self.logger.debug('Database::updateIntegrateDatafiles %s %s %s' % (files[0],files[1],files[2]))
+        self.logger.debug('Database::updateIntegratedata_files %s %s %s' % (files[0],files[1],files[2]))
 
         #connect to the database
         connection,cursor = self.get_db_connection()

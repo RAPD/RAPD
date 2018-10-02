@@ -38,7 +38,7 @@ const results_routes = require("./routes/results");
 const result_details_routes = require("./routes/result_details");
 const runs_routes = require("./routes/runs");
 const sessions_routes = require("./routes/sessions");
-const upload_routes = require('./routes/upload');
+const upload_routes = require('./routes/uploads');
 const users_routes = require("./routes/users");
 
 // Redis
@@ -94,18 +94,18 @@ let app_session = session({
 app.use(app_session);
 
 // Middleware for uploads
-var upload = multer({
-  dest: config.upload_directory,
-  rename: function(fieldname, filename) {
-    return filename + Date.now();
-  },
-  onFileUploadStart: function(file) {
-    console.log(file.originalname + " is starting ...");
-  },
-  onFileUploadComplete: function(file) {
-    console.log(file.fieldname + " uploaded to  " + file.path);
-  }
-});
+// var upload = multer({
+//   dest: config.upload_directory,
+//   rename: function(fieldname, filename) {
+//     return filename + Date.now();
+//   },
+//   onFileUploadStart: function(file) {
+//     console.log(file.originalname + " is starting ...");
+//   },
+//   onFileUploadComplete: function(file) {
+//     console.log(file.fieldname + " uploaded to  " + file.path);
+//   }
+// });
 
 // Add useragent to make some stuff simpler
 app.use(useragent.express());
@@ -152,7 +152,6 @@ var apiRoutes = express.Router(); // get an instance of the express Router
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
   console.log(req.method);
-  console.log(">>1<<");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(

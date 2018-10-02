@@ -36,7 +36,7 @@ import os
 #from bson.objectid import ObjectId
 from utils.xutils import convert_unicode, fix_R3_sg
 
-from plugins.subcontractors.rapd_phaser import run_phaser_module
+from plugins.subcontractors.rapd_phaser import run_phaser_module_ORIG, get_target_resolution
 #import plugins.subcontractors.rapd_phaser as rapd_phaser
 
 
@@ -44,7 +44,7 @@ from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
 import iotbx.pdb.mmcif as iotbx_mmcif
 
-def get_mtz_info(datafile):
+def get_mtz_info(data_file):
     """
     Get unit cell and SG from input mtz
     """
@@ -54,12 +54,12 @@ def get_mtz_info(datafile):
     vol = False
 
     # Convert from unicode
-    datafile = convert_unicode(datafile)
+    data_file = convert_unicode(data_file)
 
-    # Read datafile
-    data = iotbx_mtz.object(datafile)
+    # Read data_file
+    data = iotbx_mtz.object(data_file)
 
-    # Derive space group from datafile
+    # Derive space group from data_file
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
 
     # Wrangle the cell parameters
@@ -70,11 +70,11 @@ def get_mtz_info(datafile):
 
     return (sg, cell, vol)
 
-def get_res(datafile):
+def get_res(data_file):
     """Return resolution limit of dataset"""
 
-    datafile = convert_unicode(datafile)
-    data = iotbx_mtz.object(datafile)
+    data_file = convert_unicode(data_file)
+    data = iotbx_mtz.object(data_file)
 
     return float(data.max_min_resolution()[-1])
 
@@ -178,9 +178,9 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                                    'MW': na1*330+np1*110}
                     if matthews:
                         # Run Matthews Calc. on chain
-                        #phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        #phaser_return = run_phaser_module(data_file, (np1, na1, dres, n))
-                        phaser_return = run_phaser_module(data_file=data_file,
+                        #phaser_return = run_phaser_module_ORIG((np1, na1, dres, n, data_file))
+                        #phaser_return = run_phaser_module_ORIG(data_file, (np1, na1, dres, n))
+                        phaser_return = run_phaser_module_ORIG(data_file=data_file,
                                                           ellg=True,
                                                           cca=True,
                                                           mmcif=n,
@@ -191,8 +191,8 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                                             'SC': phaser_return.get("solvent_content", sc),
                                             'res': phaser_return.get("target_resolution", res1)})
                     else:
-                        #res1 = run_phaser_module(n)
-                        phaser_return = run_phaser_module(data_file=data_file,
+                        #res1 = run_phaser_module_ORIG(n)
+                        phaser_return = run_phaser_module_ORIG(data_file=data_file,
                                                            ellg=True, 
                                                            mmcif=n)
                         d[chain.id].update({'res': phaser_return.get("target_resolution", res1)})
@@ -217,9 +217,9 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                 'MW': na*330+np*110}
     # Run on entire PDB
     if matthews:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
-        phaser_return = run_phaser_module(data_file=data_file,
+        #phaser_return = run_phaser_module_ORIG((np, na, dres, cif_file, data_file))
+        #phaser_return = run_phaser_module_ORIG(data_file, (np, na, dres, cif_file))
+        phaser_return = run_phaser_module_ORIG(data_file=data_file,
                                           ellg=True,
                                           cca=True,
                                           mmcif=cif_file,
@@ -230,12 +230,16 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                          'SC': phaser_return.get("solvent_content", sc),
                          'res': phaser_return.get("target_resolution", res1)})
     else:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
-        phaser_return = run_phaser_module(data_file=data_file,
-                                           ellg=True, 
-                                           mmcif=cif_file)
-        d['all'].update({'res': phaser_return.get("target_resolution", res1)})
+        #phaser_return = run_phaser_module_ORIG((np, na, dres, cif_file, data_file))
+        #phaser_return = run_phaser_module_ORIG(data_file, (np, na, dres, cif_file))
+        # phaser_return = run_phaser_module_ORIG(data_file=data_file,
+        #                                    ellg=True, 
+        #                                    mmcif=cif_file)
+        # d['all'].update({'res': phaser_return.get("target_resolution", res1)})
+
+        # New way of getting target resolution
+        target_resolution = get_target_resolution(data_file=data_file, structure_file=cif_file)
+        d['all'].update({'res': target_resolution})
     """
     d['all'] = {'file': cif_file,
                 'NRes': np+na,

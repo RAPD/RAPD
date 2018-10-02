@@ -93,8 +93,8 @@ import plugins.analysis.commandline
 class AnalysisArgs(object):
     #Object containing settings for plugin command construction
     clean = True
-    #datafile = '/gpfs6/users/necat/Jon/process/rapd/integrate/ehdbr1_7rna_1/ehdbr1_7rna_free.mtz'
-    datafile = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    #data_file = '/gpfs6/users/necat/Jon/process/rapd/integrate/ehdbr1_7rna_1/ehdbr1_7rna_free.mtz'
+    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
     dir_up = False
     json = False
     nproc = 8
@@ -135,8 +135,8 @@ os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
 class PdbqueryArgs(object):
     #Object for command construction
     clean = True
-    #datafile = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
-    datafile = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    #data_file = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
+    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
     dir_up = False
     json = False
     nproc = 2
@@ -177,7 +177,7 @@ os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
 
 job_description = {
                     "work_dir": '/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test',
-                    "datafile": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
+                    "data_file": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
                     #"cif": "/gpfs5/users/necat/rapd/pdbq/pdb/th/1thw.cif",
                     "pdb": "/gpfs6/users/necat/Jon/RAPD_test/Pdb/thau.pdb",
                     "name": 'junk',
@@ -226,7 +226,7 @@ multiprocessing.log_to_stderr()
 POOL = multiprocessing.Pool(processes=2)
 LAUNCHER = local_subprocess
 INPUT = {'output_id': 'Phaser_6864', 
-         'datafile': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 
+         'data_file': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 
          'name': u'5FGX', 
          #'work_dir': u'/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_pdbquery_thau_free/Phaser_5FGX', 
          'work_dir': '/gpfs6/users/necat/Jon/RAPD_test/Output/test',
@@ -260,7 +260,7 @@ class MainClass(Thread):
         self.jobs = {}
         
         self.db_settings = self.command["input_data"].get("db_settings")
-        self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
+        self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         self.working_dir = self.command["directories"].get("work", os.getcwd())
         #Process.__init__(self, name="pdbquery")
         
@@ -277,8 +277,8 @@ class MainClass(Thread):
         job_description = {
                     #"work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
                     'work_dir': '/gpfs6/users/necat/Jon/RAPD_test/Output/test',
-                    "datafile": self.datafile,
-                    #'datafile': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 
+                    "data_file": self.data_file,
+                    #'data_file': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 
                     #"cif": cif_path,
                     'cif': '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_pdbquery_thau_free/Phaser_5FGX/5fgx.cif',
                     #"pdb": cif_path,
@@ -364,8 +364,8 @@ import plugins.pdbquery.commandline
 class PdbqueryArgs(object):
     #Object for command construction
     clean = True
-    #datafile = '/gpfs6/users/necat/Jon/process/rapd/integrate/ehdbr1_7rna_1/ehdbr1_7rna_free.mtz'
-    datafile = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    #data_file = '/gpfs6/users/necat/Jon/process/rapd/integrate/ehdbr1_7rna_1/ehdbr1_7rna_free.mtz'
+    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
     dir_up = False
     json = False
     nproc = 4
@@ -388,7 +388,7 @@ class PdbqueryArgs(object):
 pdbquery_command = {'status': 0, 'preferences': {'search': True, 'computer_cluster': False, 'progress': False, 'clean': True, 'nproc': 2, 'test': True, 
                                                  'contaminants': True, 'run_mode': 'server'}, 
                                                  'directories': {'work': '/gpfs6/users/necat/Jon/RAPD_test/Output/test'}, 
-                                                 'input_data': {'datafile': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 'pdbs': False, 
+                                                 'input_data': {'data_file': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz', 'pdbs': False, 
                                                                 'db_settings': {'DATABASE_STRING': 'mongodb://rapd:shallowkillerbeg@remote.nec.aps.anl.gov:27017,remote-c.nec.aps.anl.gov:27017,rapd.nec.aps.anl.gov:27017/rapd?replicaSet=rs0', 
                                                                                 'REDIS_SENTINEL_HOSTS': (('164.54.212.172', 26379), ('164.54.212.170', 26379), ('164.54.212.169', 26379), 
                                                                                                          ('164.54.212.165', 26379), ('164.54.212.166', 26379)), 
