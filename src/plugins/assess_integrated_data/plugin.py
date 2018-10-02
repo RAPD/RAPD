@@ -159,13 +159,13 @@ class RapdPlugin(multiprocessing.Process):
         self.preprocess()
         self.process()
         self.postprocess()
-        self.print_credits()
+        # self.print_credits()
 
     def preprocess(self):
         """Set up for plugin action"""
 
         self.tprint(arg=0, level="progress")
-        self.tprint("preprocess")
+        # self.tprint("preprocess")
 
         # Check for dependency problems
         self.check_dependencies()
@@ -203,6 +203,9 @@ class RapdPlugin(multiprocessing.Process):
         # Send back results
         self.handle_return()
 
+        # Print credits before launching sub-processes
+        self.print_credits()
+
         # Run analysis
         self.run_analysis_plugin()
 
@@ -215,6 +218,7 @@ class RapdPlugin(multiprocessing.Process):
         # self.tprint("postprocess")
 
         self.tprint(arg=99, level="progress")
+        
         # Clean up mess
         self.clean_up()
 
@@ -234,12 +238,14 @@ class RapdPlugin(multiprocessing.Process):
     def clean_up(self):
         """Clean up after plugin action"""
 
-        self.tprint("clean_up")
+        pass
+
+        # self.tprint("clean_up")
 
     def handle_return(self):
         """Output data to consumer - still under construction"""
 
-        self.tprint("handle_return")
+        # self.tprint("handle_return")
 
         run_mode = self.command["preferences"]["run_mode"]
 
@@ -430,10 +436,13 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint("print_credits")
+        # Make the credits specific for this plugin
+        rcredits.HEADER.replace("RAPD", "RAPD assess integrated data")
 
+        # Print the boilerplate
         self.tprint(rcredits.HEADER, level=99, color="blue")
-
+        
+        # Print programs
         programs = ["CCTBX", "AIMLESS"]
         info_string = rcredits.get_credits_text(programs, "    ")
         self.tprint(info_string, level=99, color="white")
@@ -447,7 +456,7 @@ class RapdPlugin(multiprocessing.Process):
         # Handle different types of input files
         rapd_file_type = get_rapd_file_type(
             self.command["input_data"]["data_file"])
-        print "rapd_file_type", rapd_file_type
+
         labels = {
             "mergable_mtz": "I,SIGI",
             "minimal_mergable_mtz": "I,SIGI",

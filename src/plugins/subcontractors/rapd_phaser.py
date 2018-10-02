@@ -57,7 +57,7 @@ def moduleOrShellWrapper(func):
     """
     Wrap functions to make sure cifs are converted to pdbs for use
     """
-    print "moduleOrShellWrapper"
+    # print "moduleOrShellWrapper"
 
     def wrapper(*args, **kwargs):
         """
@@ -351,8 +351,6 @@ def mp_job(func):
        'pool' - The multiprocessing.Pool if launched on local machine
        'test' - run in test mode (used for debugging)
     """
-
-    print "mp_job"
 
     def write_script(inp):
         # write Phaser command script.

@@ -159,7 +159,6 @@ class RapdPlugin(Process):
         # Store tprint for use throughout
         if tprint:
             self.tprint = tprint
-            tprint("hello")
         # Dead end if no tprint passed
         else:
             def func(arg=False, level=False, verbosity=False, color=False):
@@ -719,7 +718,6 @@ calculation",
     def clean_up(self):
         """Clean up the working directory"""
 
-        self.logger.debug("clean_up")
         # self.tprint("  Cleaning up", level=30, color="white")
 
         if self.preferences.get("clean", False):
