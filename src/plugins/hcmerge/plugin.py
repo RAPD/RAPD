@@ -97,6 +97,144 @@ VERSIONS = {
     )
 }
 
+def combine_wrapper(args):
+    print "wrapper"
+    return combine(*args)
+def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
+        """
+        Combine XDS_ASCII.HKL files using POINTLESS
+        in_files = list of files
+
+        cmd_prefix
+        strict
+        user_spacegroup
+        """
+        print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
+        # logger.debug(
+        #     'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
+        command = []
+        command.append('pointless hklout '+out_file +
+                       '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
+
+        for hklin in in_files:
+            command.append('hklin '+hklin+' \n')
+            # Add ability to do batches
+        # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
+        if strict != False:
+            command.append('tolerance 1000.0 \n')
+        # Add LAUEGROUP if user has chosen a spacegroup
+        if user_spacegroup:
+            command.append('lauegroup %s \n' % space_group_symbols(
+                user_spacegroup).universal_hermann_mauguin())
+            command.append('choose spacegroup %s \n' % space_group_symbols(
+                user_spacegroup).universal_hermann_mauguin())
+        command.append('eof\n')
+        # print command
+        comfile = open(out_file+'_pointless.sh', 'w')
+        comfile.writelines(command)
+        comfile.close()
+        os.chmod('./'+out_file+'_pointless.sh', 0755)
+#            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
+        p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).communicate()
+        if user_spacegroup == 0:
+            # Sub-routine for different point groups
+            if (p[0] == '' and p[1] == '') == False:
+                pass
+                # logger.debug(
+                #     'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
+            if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
+                # logger.debug(
+                #     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
+                for hklin in in_files:
+                    cmd = []
+                    cmd.append('pointless hklin '+hklin +
+                               ' hklout '+hklin+'> '+hklin+'_p.log \n')
+                    subprocess.Popen(
+                        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+                p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE).communicate()
+                if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
+                    # logger.debug(
+                    #     'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
+                    for hklin in in_files:
+                        cmd = []
+                        hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+                        cmd.append('pointless hklin '+hklin+' hklout ' +
+                                   hklout+'> '+hklin+'_p1.log <<eof \n')
+                        cmd.append('lauegroup P1 \n')
+                        cmd.append('choose spacegroup P1 \n')
+                        cmd.append('eof\n')
+                        cmdfile = open('p1_pointless.sh', 'w')
+                        cmdfile.writelines(cmd)
+                        cmdfile.close()
+                        os.chmod('./p1_pointless.sh', 0755)
+                        p1 = subprocess.Popen('p1_pointless.sh',
+                                              shell=True,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE).communicate()
+                    command = [x.replace('.mtz', 'p1.mtz')
+                               for x in command if any('hklin')]
+                    comfile = open(out_file+'_pointless.sh', 'w')
+                    comfile.writelines(command)
+                    comfile.close()
+                    p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                         shell=True,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE).communicate()
+
+        # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
+        plog = open(out_file+'_pointless.log', 'r').readlines()
+        for num, line in enumerate(plog):
+            if line.startswith('FATAL ERROR'):
+                # Go to the next line for error message
+                if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
+                    # logger.debug(
+                    #     'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
+                    for num, itm in enumerate(command):
+                        if itm == 'eof\n':
+                            command.insert(num, 'choose solution 1\n')
+                            break
+                comfile = open(out_file+'_pointless.sh', 'w')
+                comfile.writelines(command)
+                comfile.close()
+                # Run pointless again with new keyword
+                p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE).wait()
+                if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
+                    # logger.debug(
+                    #     'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
+                    for hklin in in_files:
+                        cmd = []
+                        hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+                        cmd.append('pointless hklin '+hklin+' hklout ' +
+                                   hklout+'> '+hklin+'_p1.log <<eof \n')
+                        cmd.append('lauegroup P1 \n')
+                        cmd.append('choose spacegroup P1 \n')
+                        cmd.append('eof\n')
+                        cmdfile = open('p1_pointless.sh', 'w')
+                        cmdfile.writelines(cmd)
+                        cmdfile.close()
+                        os.chmod('./p1_pointless.sh', 0755)
+                        p1 = subprocess.Popen('p1_pointless.sh',
+                                              shell=True,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE).communicate()
+                    command = [x.replace('.mtz', 'p1.mtz')
+                               for x in command if any('hklin')]
+                    comfile = open(out_file+'_pointless.sh', 'w')
+                    comfile.writelines(command)
+                    comfile.close()
+                    p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                         shell=True,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE).communicate()
 
 class RapdPlugin(multiprocessing.Process):
     """
@@ -427,27 +565,36 @@ class RapdPlugin(multiprocessing.Process):
         # lists for running the multiprocessing
         jobs = []
 
+        pool = multiprocessing.Pool(11)
+
         # combine the files with POINTLESS
+        pool_arguments = []
         for pair in combos:
+            # print pair
             outfile_prefix = str(pair[0].split('_')[0]) + \
                 'x'+str(pair[1].split('_')[0])
             self.id_list[outfile_prefix] = pair
+            #in_files, out_file, logger, cmd_prefix, strict, user_spacegroup
+            pool_arguments.append((pair, outfile_prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
 #            combine = pool.map(self.merge,id_list)
-            combine = Process(target=self.combine, args=(pair, outfile_prefix))
-            jobs.append(combine)
+            # combine = Process(target=self.combine, args=(pair, outfile_prefix))
+            # jobs.append(combine)
 #            combine.start()
 #                combine = self.combine(pair,outfile_prefix)
 
+        r = pool.map(combine_wrapper, pool_arguments)
+        print r
+
         # Wait for all worker processes to finish
-        numjobs = len(jobs)
-        jobNum = 0
-        while jobNum < numjobs:
-            endjobNum = min(jobNum+self.nproc, numjobs)
-            for job in jobs[jobNum:endjobNum]:
-                job.start()
-            for job in jobs[jobNum:endjobNum]:
-                job.join()
-            jobNum = endjobNum
+        # numjobs = len(jobs)
+        # jobNum = 0
+        # while jobNum < numjobs:
+        #     endjobNum = min(jobNum+self.nproc, numjobs)
+        #     for job in jobs[jobNum:endjobNum]:
+        #         job.start()
+        #     for job in jobs[jobNum:endjobNum]:
+        #         job.join()
+        #     jobNum = endjobNum
 
         # When POINTLESS is complete, calculate correlation coefficient
         for pair in self.id_list.keys():
@@ -539,18 +686,18 @@ class RapdPlugin(multiprocessing.Process):
 
         run_mode = self.command["preferences"]["run_mode"]
 
-        # Print results to the terminal
+        # Print results to the terminal?
         if run_mode == "interactive":
             self.print_results(self.merged_files)
-        # Prints JSON of results to the terminal
-        elif run_mode == "json":
-            dendrogram = self.json_dendrogram(self.matrix, self.data_files)
-            self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
-                             'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
-                             'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+        
+        # Take care of JSON
+        dendrogram = self.json_dendrogram(self.matrix, self.data_files)
+        self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
+                            'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
+                            'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
 
         # Traditional mode as at the beamline
-        elif run_mode == "server":
+        if run_mode == "server":
             pass
         # Run and return results to launcher
         elif run_mode == "subprocess":
@@ -597,6 +744,7 @@ class RapdPlugin(multiprocessing.Process):
             command.append('choose spacegroup %s \n' % space_group_symbols(
                 self.user_spacegroup).universal_hermann_mauguin())
         command.append('eof\n')
+        # print command
         comfile = open(out_file+'_pointless.sh', 'w')
         comfile.writelines(command)
         comfile.close()
