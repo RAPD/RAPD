@@ -98,7 +98,9 @@ VERSIONS = {
 }
 
 def combine_wrapper(args):
-    print "wrapper"
+    """
+    Wrapper for mutiple arguments passing into combine
+    """
     return combine(*args)
 def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         """
@@ -563,9 +565,9 @@ class RapdPlugin(multiprocessing.Process):
         combos = self.make_combinations(self.data_files, 2)
 
         # lists for running the multiprocessing
-        jobs = []
+        # jobs = []
 
-        pool = multiprocessing.Pool(11)
+        pool = multiprocessing.Pool(self.nproc)
 
         # combine the files with POINTLESS
         pool_arguments = []
@@ -583,7 +585,7 @@ class RapdPlugin(multiprocessing.Process):
 #                combine = self.combine(pair,outfile_prefix)
 
         r = pool.map(combine_wrapper, pool_arguments)
-        print r
+        # print r
 
         # Wait for all worker processes to finish
         # numjobs = len(jobs)
