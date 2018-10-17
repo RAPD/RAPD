@@ -66,25 +66,6 @@ def construct_command(commandline_args):
         }
 
     # Work directory
-    """
-    if commandline_args.test:
-        # Don't make a new directory
-        work_dir = commandline_utils.check_work_dir(
-            os.path.join(
-                os.path.abspath(os.path.curdir),
-                "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
-            active=False,
-            up=commandline_args.dir_up)
-    else:
-        work_dir = commandline_utils.check_work_dir(
-            os.path.join(
-                os.path.abspath(os.path.curdir),
-                "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
-            active=True,
-            up=commandline_args.dir_up)
-    """
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),

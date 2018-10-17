@@ -328,7 +328,6 @@ class RapdPlugin(Process):
         self.time = self.image1.get("time", 0.2)
         self.wavelength = self.image1.get("wavelength")
         self.transmission = self.image1.get("transmission", 10.0)
-        #self.transmission = self.image1.get("transmission", 0.1)
         # self.aperture = str(self.image1.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
         #self.flux = str(self.image1.get("flux", '3E10'))
@@ -2503,7 +2502,7 @@ rerunning.\n" % new_res)
         if overrides.get("min_spots"):
             spot_count = labelit.decrease_spot_requirements(overrides.get("min_spots"))
             #self.log[iteration].extend("\nDecreasing spot requirments to %d and \
-            self.log[iteration].append("\nDecreasing spot requirments to %d and \
+            self.log[iteration].append("\nDecreasing spot requirements to %d and \
 rerunning.\n" % spot_count)
 
         # Get rid of bumpiness

@@ -360,7 +360,6 @@ class Overwatcher(Registrar):
 
         # Run the input command
         self.managed_process = Popen(command, env=path)
-        #self.managed_process = Popen(command)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)

@@ -176,7 +176,10 @@ class RapdPlugin(Thread):
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
-        self.test = self.preferences.get("test", False)
+        
+        #self.test = self.preferences.get("test", False)
+        self.test = self.preferences.get("test", True) # Limit number of runs on cluster
+        
         self.sample_type = self.preferences.get("type", "protein")
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
@@ -666,7 +669,7 @@ class RapdPlugin(Thread):
                     "name": pdb_code,
                     "spacegroup": data_spacegroup,
                     "ncopy": copy,
-                    "test": self.test,
+                    #"test": self.test,
                     "cell_analysis": True,
                     "large_cell": self.large_cell,
                     "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
