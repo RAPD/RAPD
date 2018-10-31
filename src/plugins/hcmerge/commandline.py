@@ -221,7 +221,7 @@ def get_commandline():
     # Clean
     parser.add_argument("--clean",
                         action="store_true",
-                        default="store_true",
+                        default=True,
                         dest="clean",
                         help="Clean up intermediate files")
 
