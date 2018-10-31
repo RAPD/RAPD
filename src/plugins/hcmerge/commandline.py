@@ -134,7 +134,7 @@ def get_commandline():
     parser.add_argument("-m", "--method",
                         dest="method",
                         default="complete",
-                        help="set alternative clustering method: single, complete, average, or weighted")
+                        help="set alternative clustering method: single, complete (default), average, or weighted")
 # Number of processors to use
     parser.add_argument("--nproc",
                        action="store",
