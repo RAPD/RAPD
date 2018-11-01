@@ -1004,11 +1004,11 @@ class RapdPlugin(multiprocessing.Process):
         # Create miller arrays for each dataset and merge equivalent reflections
         my_millerset1 = miller.set(crystal_symmetry, indices=indices1)
         my_miller1 = miller.array(my_millerset1, data=data1)
-        merged1 = my_miller1.merge_equivalents().array()
+        merged1 = my_miller1.array()
 
         my_millerset2 = miller.set(crystal_symmetry, indices=indices2)
         my_miller2 = miller.array(my_millerset2, data=data2)
-        merged2 = my_miller2.merge_equivalents().array()
+        merged2 = my_miller2.array()
 
         # Obtain common set of reflections
         common1 = merged1.common_set(merged2)
@@ -1022,32 +1022,6 @@ class RapdPlugin(multiprocessing.Process):
             self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (
                 str(in_file), str(cc.coefficient())))
             return(cc.coefficient())
-
-    def get_cc(self, in_files):
-        """
-        Calculate correlation coefficient (CC) between two datasets.  Uses cctbx.
-        """
-
-        # Read in reflection files
-        file1 = reflection_file_reader.any_reflection_file(
-            file_name=in_files[0])
-        file2 = reflection_file_reader.any_reflection_file(
-            file_name=in_files[1])
-
-        # Convert to miller arrays
-        # ma[2] has I and SIGI
-        my_miller1 = file1.as_miller_arrays(merge_equivalents=False)
-        my_miller2 = file2.as_miller_arrays(merge_equivalents=False)
-
-        # Create miller arrays for each dataset and merge equivalent reflections
-
-        # Obtain common set of reflections
-        common1 = my_miller1[0].common_set(my_miller2[0])
-        common2 = my_miller2[0].common_set(my_miller1[0])
-
-        # Calculate correlation between the two datasets.
-        cc = flex.linear_correlation(common1.data(), common2.data())
-        return(cc.coefficient())
 
     def scale(self, in_file, out_file, VERBOSE=False):
         """
