@@ -213,10 +213,10 @@ def get_commandline():
     # Recommend defaulting to messy during development and to
     # clean during production
     # Messy
-    # parser.add_argument("--messy",
-    #                       action="store_false",
-    #                       dest="clean",
-    #                       help="Keep intermediate files")
+    parser.add_argument("--messy",
+                          action="store_false",
+                          dest="clean",
+                          help="Keep intermediate files")
 
     # Clean
     parser.add_argument("--clean",
