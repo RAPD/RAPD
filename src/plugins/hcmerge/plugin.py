@@ -1001,18 +1001,19 @@ class RapdPlugin(multiprocessing.Process):
 
         crystal_symmetry = ma[1].crystal_symmetry()
 
-        # Create miller arrays for each dataset and merge equivalent reflections
+        # Create miller arrays for each dataset and merge symmetry-related reflections
         my_millerset1 = miller.set(crystal_symmetry, indices=indices1)
         my_miller1 = miller.array(my_millerset1, data=data1)
-        merged1 = my_miller1.array()
+        merged1 = my_miller1.merge_equivalents().array()
 
         my_millerset2 = miller.set(crystal_symmetry, indices=indices2)
         my_miller2 = miller.array(my_millerset2, data=data2)
-        merged2 = my_miller2.array()
+        merged2 = my_miller2.merge_equivalents().array()
 
         # Obtain common set of reflections
         common1 = merged1.common_set(merged2)
         common2 = merged2.common_set(merged1)
+#        common1, common2 = my_miller1.common_sets(my_miller2)
         # Deal with only 1 or 2 common reflections in small wedges
         if (len(common1.indices()) == 1 or len(common1.indices()) == 2):
             return(0)
