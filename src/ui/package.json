@@ -14,14 +14,14 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^5.0.0",
-    "@angular/cdk": "5.2.4",
+    "@angular/cdk": "7.0.2",
     "@angular/common": "^5.0.0",
     "@angular/compiler": "^5.0.0",
     "@angular/core": "^5.0.0",
     "@angular/flex-layout": "5.0.0-beta.13",
     "@angular/forms": "^5.0.0",
     "@angular/http": "^5.0.0",
-    "@angular/material": "5.2.4",
+    "@angular/material": "7.0.2",
     "@angular/platform-browser": "^5.0.0",
     "@angular/platform-browser-dynamic": "^5.0.0",
     "@angular/platform-server": "^5.0.0",
@@ -43,7 +43,7 @@
     "zone.js": "^0.8.17"
   },
   "devDependencies": {
-    "@angular/cli": "^1.7.3",
+    "@angular/cli": "^7.0.3",
     "@angular/compiler-cli": "^5.0.0",
     "@types/hammerjs": "^2.0.35",
     "@types/jasmine": "2.5.54",
