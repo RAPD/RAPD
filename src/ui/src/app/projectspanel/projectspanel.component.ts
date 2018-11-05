@@ -40,7 +40,8 @@ export class ProjectspanelComponent implements OnInit {
       .subscribe(
         parameters => {
           console.log(parameters);
-          this.projects = parameters.projects;
+          //TODO
+          // this.projects = parameters.projects;
         }
       )
   }
