@@ -50,6 +50,7 @@ from pprint import pprint
 # import re
 # import redis
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -98,6 +99,8 @@ VERSIONS = {
     )
 }
 
+# Threshold for CC - below will be highlighted in the table
+HIGHLIGHT_THRESHOLD = 0.8
 
 def combine_wrapper(args):
     """
@@ -115,7 +118,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
     strict
     user_spacegroup
     """
-    print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
+    # print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
     # logger.debug(
     #     'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
     command = []
@@ -241,6 +244,47 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                                      shell=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE).communicate()
+
+def get_cc_aimless(in_file):
+    """
+    Calculate correlation coefficient (CC) between two datasets which have been combined
+    by pointless.  Uses aimless.  Reads in an mtz file.
+    """
+
+    # print 'HCMerge::get_cc_aimless::Obtain correlation coefficient from %s' % in_file
+
+    # Read in mtz file
+    # mtz_file = reflection_file_reader.any_reflection_file(
+    #     file_name=in_file+'_pointless.mtz')
+    mtz_file = in_file+'_pointless.mtz'
+    log_file = in_file+"_aimless.log"
+    com_file = in_file+"_aimless.sh"
+    # Create aimless command file
+    aimless_lines = ['#!/bin/tcsh\n',
+                        'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
+                        'anomalous on\n',
+                        'scales constant\n',
+                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
+                        'cycles 0\n']
+    with open(com_file, "w") as command_file:
+        for line in aimless_lines:
+            command_file.write(line)
+    os.chmod(com_file, stat.S_IRWXU)
+
+    # Run aimless
+    cmd = './%s' % com_file
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    stdout, stderr = p.communicate()
+
+    # Parse the file
+    # graphs, summary = aimless.parse_aimless(log_file)
+    cc_results = aimless.get_cc(log_file)
+    # print graphs
+    # print cc_results
+
+    # Return CC
+    return (in_file, cc_results.get("cc", {}).get((1, 2), 0))
 
 
 class RapdPlugin(multiprocessing.Process):
@@ -593,18 +637,9 @@ class RapdPlugin(multiprocessing.Process):
         r = pool.map(combine_wrapper, pool_arguments)
         # print r
 
-        # Wait for all worker processes to finish
-        # numjobs = len(jobs)
-        # jobNum = 0
-        # while jobNum < numjobs:
-        #     endjobNum = min(jobNum+self.nproc, numjobs)
-        #     for job in jobs[jobNum:endjobNum]:
-        #         job.start()
-        #     for job in jobs[jobNum:endjobNum]:
-        #         job.join()
-        #     jobNum = endjobNum
-
         # When POINTLESS is complete, calculate correlation coefficient
+        self.tprint("Process: Calculating CCs.")
+        pairs_to_calculate_cc = []
         for pair in self.id_list.keys():
             self.results[pair] = {}
             if os.path.isfile(pair+'_pointless.mtz'):
@@ -613,8 +648,13 @@ class RapdPlugin(multiprocessing.Process):
                 # Second, check if both datasets made it into the final mtz
                 if len(batches) >= 2:
                     # Third, calculate the linear correlation coefficient if there are two datasets
-                    self.results[pair]['CC'] = self.get_cc_pointless(
-                        pair, batches)  # results are a dict with pair as key
+                    if self.settings.get("cc_mode", "cctbx") == "cctbx":
+                        self.results[pair]['CC'] = self.get_cc_pointless(
+                            pair, batches)  # results are a dict with pair as key
+                    else:
+                        # self.results[pair]['CC'] = self.get_cc_aimless(
+                        #     pair, batches)  # results are a dict with pair as key
+                        pairs_to_calculate_cc.append(pair)
                 else:
                     # If only one dataset in mtz, default to no correlation.
                     self.logger.error(
@@ -623,10 +663,19 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 self.results[pair]['CC'] = 0
 
+        # aimless for CC calculation
+        if self.settings.get("cc_mode", "cctbx") == "aimless":
+            r = pool.map(get_cc_aimless, pairs_to_calculate_cc)
+            # print ">>>>"
+            # pprint(r)
+            for key, val in r:
+                self.results[key]['CC'] = val
+            # print "<<<<"
+
         #TODO
-        pprint(self.data_files)
-        pprint(self.results)
-        pprint(self.id_list)
+        # pprint(self.data_files)
+        # pprint(self.results)
+        # pprint(self.id_list)
         
         # Create a dict of wedge names keyed by the index used by the plugin
         wedges = {}
@@ -638,7 +687,7 @@ class RapdPlugin(multiprocessing.Process):
         # Create an array of keys to put file strings in proper numerical order
         wedge_keys =  wedges.keys()
         wedge_keys.sort(key=lambda x: int(x))
-        print wedge_keys
+        # print wedge_keys
 
         # Figure out the longest wedge name
         longest = 0
@@ -669,7 +718,7 @@ class RapdPlugin(multiprocessing.Process):
         counter1 = 0
         for key1 in wedge_keys[:-1]:
             value = wedges[key1]
-            line = " "+value+" |"
+            line = " "+value+(" "*(longest-len(value)))+" |"
             counter2 = 1
             colorations = 0
             for key2 in wedge_keys[1:]:
@@ -680,7 +729,7 @@ class RapdPlugin(multiprocessing.Process):
                         cc = self.results["x".join([key2, key1])]["CC"]
                     else:
                         cc = -1
-                    if cc < 0.9:
+                    if cc < HIGHLIGHT_THRESHOLD:
                         line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
                         colorations += 1
                     else:
@@ -691,7 +740,38 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint("-"*(len(line)-(9*colorations)), 50)
             self.tprint(line, 50)
             counter1 += 1
-        self.tprint("-"*len(line)+"\n", 50)
+        self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
+
+        #TODO make a CSV
+        csv_lines = []
+        # Header
+        csv_line = ""
+        for key in wedge_keys[1:]:
+            csv_line += ("," + wedges[key])
+        csv_lines.append(csv_line)
+        # Body
+        counter1 = 0
+        for key1 in wedge_keys[:-1]:
+            value = wedges[key1]
+            csv_line = value
+            counter2 = 1
+            colorations = 0
+            for key2 in wedge_keys[1:]:
+                if counter2 > counter1:
+                    if "x".join([key1, key2]) in self.results:
+                        cc = self.results["x".join([key1, key2])]["CC"]
+                        csv_line += (",%f" % cc)
+                    elif "x".join([key2, key1]) in self.results:
+                        cc = self.results["x".join([key2, key1])]["CC"]
+                        csv_line += (",%f" % cc)
+                    else:
+                        csv_line += (",")
+                else:
+                    csv_line += (",")
+            # print csv_line
+            csv_lines.append(csv_line)
+        for csv_line in csv_lines:
+            print csv_line
 
         # Make relationship matrix
         self.matrix = self.make_matrix(self.method)
@@ -961,6 +1041,48 @@ class RapdPlugin(multiprocessing.Process):
         #         self.logger.debug('%s has batches %d to %d' % (in_file,batch_start,batch_end))
         #
         return(batches)
+
+    def get_cc_aimless(self, in_file):
+        """
+        Calculate correlation coefficient (CC) between two datasets which have been combined
+        by pointless.  Uses aimless.  Reads in an mtz file.
+        """
+
+        self.logger.debug('HCMerge::get_cc_aimless::Obtain correlation coefficient from %s with batches %s' % (
+            str(in_file)))
+
+        # Read in mtz file
+        # mtz_file = reflection_file_reader.any_reflection_file(
+        #     file_name=in_file+'_pointless.mtz')
+        mtz_file = in_file+'_pointless.mtz'
+        log_file = in_file+"_aimless.log"
+        com_file = in_file+"_aimless.sh"
+        # Create aimless command file
+        aimless_lines = ['#!/bin/tcsh\n',
+                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
+                         'anomalous on\n',
+                         'scales constant\n',
+                         'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
+                         'cycles 0\n']
+        with open(com_file, "w") as command_file:
+            for line in aimless_lines:
+                command_file.write(line)
+        os.chmod(com_file, stat.S_IRWXU)
+
+        # Run aimless
+        cmd = './%s' % com_file
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        stdout, stderr = p.communicate()
+
+        # Parse the file
+        # graphs, summary = aimless.parse_aimless(log_file)
+        cc_results = aimless.get_cc(log_file)
+        # print graphs
+        # print cc_results
+
+        # Return CC
+        return cc_results.get("cc", {}).get((1, 2), 0)
 
     def get_cc_pointless(self, in_file, batches):
         """
