@@ -333,8 +333,7 @@ def main():
         commandline_args.template,
         mode="integrate",
         start_image=commandline_args.start_image,
-        end_image=commandline_args.end_image,
-        timeout=3)
+        end_image=commandline_args.end_image)
 
     # Change hdf5 to cbf
     if "hdf5_files" in data_files:

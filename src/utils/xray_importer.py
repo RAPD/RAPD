@@ -402,7 +402,7 @@ def main():
 
         print "  Formats possible to be converted to:"
         for conversion in get_conversions(rapd_file_type):
-            print "          %s" % conversion
+            print "    %s" % conversion
 
         # Testing code
         # if rapd_file_type == "xds_corrected":
