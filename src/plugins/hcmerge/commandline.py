@@ -46,6 +46,7 @@ import detectors.detector_utils as detector_utils
 # Plugin-specific imports
 from cctbx.sgtbx import space_group_symbols
 
+
 def construct_command(commandline_args, logger):
     """
     Put together the command for the plugin
@@ -60,6 +61,7 @@ def construct_command(commandline_args, logger):
         nproc = int
         progress = True | False
         run_mode = "interactive" | "json" | "server" | "subprocess"
+        cc_mode = "cctbx" | "aimless"
         test = True | False
         verbose = True | False
     """
@@ -69,7 +71,7 @@ def construct_command(commandline_args, logger):
         "command": "HCMERGE",
         "process_id": uuid.uuid1().get_hex(),
         "status": 0,
-        }
+    }
 
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
@@ -81,7 +83,7 @@ def construct_command(commandline_args, logger):
     # Work directory
     command["directories"] = {
         "work": work_dir
-        }
+    }
 
     # Information on input
     command["input_data"] = {
@@ -93,6 +95,7 @@ def construct_command(commandline_args, logger):
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
         "run_mode": commandline_args.run_mode,
+        "cc_mode": commandline_args.cc_mode,
         "test": commandline_args.test,
     }
     for setting in commandline_args._get_kwargs():
@@ -101,6 +104,7 @@ def construct_command(commandline_args, logger):
     logger.debug("Command for hcmerge plugin: %s", command)
 
     return command
+
 
 def get_commandline():
     """Grabs the commandline"""
@@ -135,58 +139,65 @@ def get_commandline():
                         dest="method",
                         default="complete",
                         help="set alternative clustering method: single, complete (default), average, or weighted")
-# Number of processors to use
+    # Number of processors to use
     parser.add_argument("--nproc",
-                       action="store",
-                       dest="nproc",
-                       type=int,
-                       default=multiprocessing.cpu_count(),
-                       help="Number of processors to use. Defaults to the number of \
+                        action="store",
+                        dest="nproc",
+                        type=int,
+                        default=multiprocessing.cpu_count(),
+                        help="Number of processors to use. Defaults to the number of \
                              processors available")
     parser.add_argument("-o", "--output_prefix",
                         dest="prefix",
                         default="merged",
                         help="set a prefix for output files. Used in rerun as the name of the .pkl file")
     parser.add_argument("-p", "--precheck",
-                        action="store_false", # Automatic default of True
+                        action="store_false",  # Automatic default of True
                         dest="precheck",
                         help="precheck for duplicate or incorrect data files, default=True")
 
-# Resolution
+    # Resolution
     parser.add_argument("-r", "--resolution",
                         dest="resolution",
                         type=float,
                         default=0,
                         help="set a resolution cutoff for merging data")
 
-# Spacegroup
+    # Spacegroup
     parser.add_argument("-sg", "--sg", "--spacegroup",
-                       action="store",
-                       dest="spacegroup",
-                       default=False,
-                       help="Input a spacegroup")
+                        action="store",
+                        dest="spacegroup",
+                        default=False,
+                        help="Input a spacegroup")
 
-# Unit cell
+    # Unit cell
     parser.add_argument("-u", "--unit", "--unitcell",
-                       action="store",
-                       dest="unitcell",
-                       default=False,
-                       nargs=6,
-                       type=float,
-                       help="input a unit cell a b c alpha beta gamma")
+                        action="store",
+                        dest="unitcell",
+                        default=False,
+                        nargs=6,
+                        type=float,
+                        help="input a unit cell a b c alpha beta gamma")
 
-# Allow starting at a later point in the process
+    # Allow starting at a later point in the process
     parser.add_argument("--rerun",
                         dest="start_point",
                         default="start",
                         help="use pickle file and run merging again starting at: clustering, dendrogram")
 
-# Allow running in either no restriction (sloppy) or restricted (strict) mode.  Default is sloppy.
+    # Allow running in either no restriction (sloppy) or restricted (strict) mode.  Default is sloppy.
     parser.add_argument("--strict",
                         action="store_true",
                         dest="strict",
                         help="Have clustering run with strict parameters. Setting spacegroup or unitcell \
                         automatically forces strict mode.")
+
+    # Correlation Coefficient mode
+    parser.add_argument("--cc_mode",
+                        action="store",
+                        dest="cc_mode",
+                        default="cctbx",
+                        help="Input CC calculation method [cctbx | aimless]")    
 
     # Run in test mode
     parser.add_argument("-t", "--test",
@@ -198,7 +209,7 @@ def get_commandline():
     # Recommend defaulting to verbose during development and to
     # quiet during production
     # Verbose
-    #parser.add_argument("-v", "--verbose",
+    # parser.add_argument("-v", "--verbose",
     #                       action="store_true",
     #                       dest="verbose",
     #                       help="More output")
@@ -214,9 +225,9 @@ def get_commandline():
     # clean during production
     # Messy
     parser.add_argument("--messy",
-                          action="store_false",
-                          dest="clean",
-                          help="Keep intermediate files")
+                        action="store_false",
+                        dest="clean",
+                        help="Keep intermediate files")
 
     # Clean
     parser.add_argument("--clean",
@@ -280,7 +291,7 @@ def get_commandline():
     # Unit Cell Check to set strict mode
     if args.unitcell:
         args.strict = True
-            
+
     # Deal with negative integers and what happens if cpu_count() raises NotImplementedError
     if args.nproc <= 0:
         try:
@@ -292,7 +303,7 @@ def get_commandline():
         args.json = True
     else:
         args.json = False
-    
+
     # Set the clustering method
     try:
         method_list = ['single', 'complete', 'average', 'weighted']
@@ -320,6 +331,7 @@ def get_commandline():
 
     return args
 
+
 def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
@@ -327,6 +339,7 @@ def print_welcome_message(printer):
 RAPD Example
 ------------"""
     printer(message, 50, color="blue")
+
 
 def main():
     """
@@ -362,7 +375,8 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="default")
+        tprint(arg="  arg:%-20s  val:%s" %
+               (pair[0], pair[1]), level=10,             color="default")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
@@ -374,14 +388,15 @@ def main():
     tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
-        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="default")
+        tprint(arg="  arg:%-20s  val:%s" %
+               (key, val), level=10, color="default")
 
     # Should working directory go up or down?
     if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
-    
+
     # Construct the command
     command = construct_command(commandline_args=commandline_args,
                                 logger=logger)
@@ -393,13 +408,17 @@ def main():
 
     # Print plugin info
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="default")
-    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="default")
-    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="default")
+    tprint(arg="  Plugin type:    %s" %
+           plugin.PLUGIN_TYPE, level=10,             color="default")
+    tprint(arg="  Plugin subtype: %s" %
+           plugin.PLUGIN_SUBTYPE, level=10,             color="default")
+    tprint(arg="  Plugin version: %s" %
+           plugin.VERSION, level=10, color="default")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="default")
 
     # Run the plugin
     plugin.RapdPlugin(command, tprint, logger)
+
 
 if __name__ == "__main__":
 
