@@ -148,6 +148,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                          shell=True,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE).communicate()
+
     if user_spacegroup == 0:
         # Sub-routine for different point groups
         if (p[0] == '' and p[1] == '') == False:
@@ -742,7 +743,7 @@ class RapdPlugin(multiprocessing.Process):
             counter1 += 1
         self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
 
-        #TODO make a CSV
+        # Make a CSV
         csv_lines = []
         # Header
         csv_line = ""
@@ -770,8 +771,13 @@ class RapdPlugin(multiprocessing.Process):
                     csv_line += (",")
             # print csv_line
             csv_lines.append(csv_line)
-        for csv_line in csv_lines:
-            print csv_line
+        # for csv_line in csv_lines:
+        #     print csv_line
+
+        # Write CSV
+        with open("cc.csv", "w") as csv_file:
+            for csv_line in csv_lines:
+                csv_file.write(csv_line+"\n")
 
         # Make relationship matrix
         self.matrix = self.make_matrix(self.method)
