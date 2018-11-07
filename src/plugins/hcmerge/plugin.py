@@ -146,11 +146,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                          shell=True,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE).communicate()
-<<<<<<< HEAD
     
-=======
-
->>>>>>> 361d50e28ce8586e16ae9c190fd55a711fc609e2
     if user_spacegroup == 0:
         # Sub-routine for different point groups
         if (p[0] == '' and p[1] == '') == False:
