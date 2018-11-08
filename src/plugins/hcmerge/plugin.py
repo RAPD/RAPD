@@ -149,10 +149,11 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
     
     if user_spacegroup == 0:
         # Sub-routine for different point groups
+        pointless_error = ['WARNING: Cannot combine reflection lists with different symmetry', 'ERROR: cannot combine files belonging to different crystal systems']
         if (p[0] == '' and p[1] == '') == False:
             pass
             print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
-        if 'WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems' in p[1]:
+        if any(x in p[1] for x in pointless_error):
             print 'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files)
             for hklin in in_files:
                 cmd = []
@@ -646,8 +647,7 @@ class RapdPlugin(multiprocessing.Process):
                         self.results[pair]['CC'] = self.get_cc_pointless(
                             pair, batches)  # results are a dict with pair as key
                     else:
-                        # self.results[pair]['CC'] = self.get_cc_aimless(
-                        #     pair, batches)  # results are a dict with pair as key
+                        # set up CC calculation using AIMLESS
                         pairs_to_calculate_cc.append(pair)
                 else:
                     # If only one dataset in mtz, default to no correlation.
@@ -657,7 +657,7 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 self.results[pair]['CC'] = 0
 
-        # aimless for CC calculation
+        # AIMLESS for CC calculation using E^2 as 1/variance(I)
         if self.settings.get("cc_mode", "cctbx") == "aimless":
             r = pool.map(get_cc_aimless, pairs_to_calculate_cc)
             # print ">>>>"
