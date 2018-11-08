@@ -47,7 +47,7 @@ import multiprocessing
 import os
 from pprint import pprint
 # import pymongo
-# import re
+import re
 # import redis
 import shutil
 import stat
@@ -102,7 +102,25 @@ VERSIONS = {
 }
 
 # Threshold for CC - below will be highlighted in the table
-HIGHLIGHT_THRESHOLD = 0.8
+HIGHLIGHT_THRESHOLD = 0.9
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+     
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+
+def sort_nicely(l):
+    """ Sort the given list in the way that humans expect.
+    """
+    l.sort(key=alphanum_key)
 
 def combine_wrapper(args):
     """
