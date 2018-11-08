@@ -160,6 +160,9 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
             # logger.debug(
             #     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
+#            print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
+        if any(x in p[1] for x in pointless_error):
+            print 'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files)
             for hklin in in_files:
                 cmd = []
                 cmd.append('pointless hklin '+hklin +
@@ -502,7 +505,9 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::Prechecking files: %s' %
                           str(self.datasets))
 
-        if self.precheck:
+        if not self.precheck:
+            self.tprint("Prechecking Files Off.  Skipping to File Copying.")
+        else: 
             # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
             types = []
             hashset = {}
@@ -886,136 +891,136 @@ class RapdPlugin(multiprocessing.Process):
             combos.append(i)
         return(combos)
 
-    def combine(self, in_files, out_file):
-        """
-        Combine XDS_ASCII.HKL files using POINTLESS
-        in_files = list of files
-        """
+#     def combine(self, in_files, out_file):
+#         """
+#         Combine XDS_ASCII.HKL files using POINTLESS
+#         in_files = list of files
+#         """
 
-        self.logger.debug(
-            'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
-        command = []
-        command.append('pointless hklout '+out_file +
-                       '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
+#         self.logger.debug(
+#             'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
+#         command = []
+#         command.append('pointless hklout '+out_file +
+#                        '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
 
-        for hklin in in_files:
-            command.append('hklin '+hklin+' \n')
-            # Add ability to do batches
-        # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
-        if self.strict != False:
-            command.append('tolerance 1000.0 \n')
-        # Add LAUEGROUP if user has chosen a spacegroup
-        if self.user_spacegroup:
-            command.append('lauegroup %s \n' % space_group_symbols(
-                self.user_spacegroup).universal_hermann_mauguin())
-            command.append('choose spacegroup %s \n' % space_group_symbols(
-                self.user_spacegroup).universal_hermann_mauguin())
-        command.append('eof\n')
-        # print command
-        comfile = open(out_file+'_pointless.sh', 'w')
-        comfile.writelines(command)
-        comfile.close()
-        os.chmod('./'+out_file+'_pointless.sh', 0755)
-#            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
-        p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE).communicate()
-        if self.user_spacegroup == 0:
-            # Sub-routine for different point groups
-            if (p[0] == '' and p[1] == '') == False:
-                self.logger.debug(
-                    'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
-            if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
-                self.logger.debug(
-                    'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
-                for hklin in in_files:
-                    cmd = []
-                    cmd.append('pointless hklin '+hklin +
-                               ' hklout '+hklin+'> '+hklin+'_p.log \n')
-                    subprocess.Popen(
-                        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE).communicate()
-                if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
-                    self.logger.debug(
-                        'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
-                    for hklin in in_files:
-                        cmd = []
-                        hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
-                        cmd.append('pointless hklin '+hklin+' hklout ' +
-                                   hklout+'> '+hklin+'_p1.log <<eof \n')
-                        cmd.append('lauegroup P1 \n')
-                        cmd.append('choose spacegroup P1 \n')
-                        cmd.append('eof\n')
-                        cmdfile = open('p1_pointless.sh', 'w')
-                        cmdfile.writelines(cmd)
-                        cmdfile.close()
-                        os.chmod('./p1_pointless.sh', 0755)
-                        p1 = subprocess.Popen('p1_pointless.sh',
-                                              shell=True,
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE).communicate()
-                    command = [x.replace('.mtz', 'p1.mtz')
-                               for x in command if any('hklin')]
-                    comfile = open(out_file+'_pointless.sh', 'w')
-                    comfile.writelines(command)
-                    comfile.close()
-                    p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                         shell=True,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE).communicate()
+#         for hklin in in_files:
+#             command.append('hklin '+hklin+' \n')
+#             # Add ability to do batches
+#         # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
+#         if self.strict != False:
+#             command.append('tolerance 1000.0 \n')
+#         # Add LAUEGROUP if user has chosen a spacegroup
+#         if self.user_spacegroup:
+#             command.append('lauegroup %s \n' % space_group_symbols(
+#                 self.user_spacegroup).universal_hermann_mauguin())
+#             command.append('choose spacegroup %s \n' % space_group_symbols(
+#                 self.user_spacegroup).universal_hermann_mauguin())
+#         command.append('eof\n')
+#         # print command
+#         comfile = open(out_file+'_pointless.sh', 'w')
+#         comfile.writelines(command)
+#         comfile.close()
+#         os.chmod('./'+out_file+'_pointless.sh', 0755)
+# #            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
+#         p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
+#                              shell=True,
+#                              stdout=subprocess.PIPE,
+#                              stderr=subprocess.PIPE).communicate()
+#         if self.user_spacegroup == 0:
+#             # Sub-routine for different point groups
+#             if (p[0] == '' and p[1] == '') == False:
+#                 self.logger.debug(
+#                     'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
+#             if 'WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems' in p[1]:
+#                 self.logger.debug(
+#                     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
+#                 for hklin in in_files:
+#                     cmd = []
+#                     cmd.append('pointless hklin '+hklin +
+#                                ' hklout '+hklin+'> '+hklin+'_p.log \n')
+#                     subprocess.Popen(
+#                         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+#                 p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
+#                                      shell=True,
+#                                      stdout=subprocess.PIPE,
+#                                      stderr=subprocess.PIPE).communicate()
+#                 if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
+#                     self.logger.debug(
+#                         'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
+#                     for hklin in in_files:
+#                         cmd = []
+#                         hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+#                         cmd.append('pointless hklin '+hklin+' hklout ' +
+#                                    hklout+'> '+hklin+'_p1.log <<eof \n')
+#                         cmd.append('lauegroup P1 \n')
+#                         cmd.append('choose spacegroup P1 \n')
+#                         cmd.append('eof\n')
+#                         cmdfile = open('p1_pointless.sh', 'w')
+#                         cmdfile.writelines(cmd)
+#                         cmdfile.close()
+#                         os.chmod('./p1_pointless.sh', 0755)
+#                         p1 = subprocess.Popen('p1_pointless.sh',
+#                                               shell=True,
+#                                               stdout=subprocess.PIPE,
+#                                               stderr=subprocess.PIPE).communicate()
+#                     command = [x.replace('.mtz', 'p1.mtz')
+#                                for x in command if any('hklin')]
+#                     comfile = open(out_file+'_pointless.sh', 'w')
+#                     comfile.writelines(command)
+#                     comfile.close()
+#                     p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
+#                                          shell=True,
+#                                          stdout=subprocess.PIPE,
+#                                          stderr=subprocess.PIPE).communicate()
 
-        # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
-        plog = open(out_file+'_pointless.log', 'r').readlines()
-        for num, line in enumerate(plog):
-            if line.startswith('FATAL ERROR'):
-                # Go to the next line for error message
-                if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
-                    self.logger.debug(
-                        'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
-                    for num, itm in enumerate(command):
-                        if itm == 'eof\n':
-                            command.insert(num, 'choose solution 1\n')
-                            break
-                comfile = open(out_file+'_pointless.sh', 'w')
-                comfile.writelines(command)
-                comfile.close()
-                # Run pointless again with new keyword
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE).wait()
-                if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
-                    self.logger.debug(
-                        'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
-                    for hklin in in_files:
-                        cmd = []
-                        hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
-                        cmd.append('pointless hklin '+hklin+' hklout ' +
-                                   hklout+'> '+hklin+'_p1.log <<eof \n')
-                        cmd.append('lauegroup P1 \n')
-                        cmd.append('choose spacegroup P1 \n')
-                        cmd.append('eof\n')
-                        cmdfile = open('p1_pointless.sh', 'w')
-                        cmdfile.writelines(cmd)
-                        cmdfile.close()
-                        os.chmod('./p1_pointless.sh', 0755)
-                        p1 = subprocess.Popen('p1_pointless.sh',
-                                              shell=True,
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE).communicate()
-                    command = [x.replace('.mtz', 'p1.mtz')
-                               for x in command if any('hklin')]
-                    comfile = open(out_file+'_pointless.sh', 'w')
-                    comfile.writelines(command)
-                    comfile.close()
-                    p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                         shell=True,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE).communicate()
+#         # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
+#         plog = open(out_file+'_pointless.log', 'r').readlines()
+#         for num, line in enumerate(plog):
+#             if line.startswith('FATAL ERROR'):
+#                 # Go to the next line for error message
+#                 if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
+#                     self.logger.debug(
+#                         'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
+#                     for num, itm in enumerate(command):
+#                         if itm == 'eof\n':
+#                             command.insert(num, 'choose solution 1\n')
+#                             break
+#                 comfile = open(out_file+'_pointless.sh', 'w')
+#                 comfile.writelines(command)
+#                 comfile.close()
+#                 # Run pointless again with new keyword
+#                 p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
+#                                      shell=True,
+#                                      stdout=subprocess.PIPE,
+#                                      stderr=subprocess.PIPE).wait()
+#                 if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
+#                     self.logger.debug(
+#                         'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
+#                     for hklin in in_files:
+#                         cmd = []
+#                         hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+#                         cmd.append('pointless hklin '+hklin+' hklout ' +
+#                                    hklout+'> '+hklin+'_p1.log <<eof \n')
+#                         cmd.append('lauegroup P1 \n')
+#                         cmd.append('choose spacegroup P1 \n')
+#                         cmd.append('eof\n')
+#                         cmdfile = open('p1_pointless.sh', 'w')
+#                         cmdfile.writelines(cmd)
+#                         cmdfile.close()
+#                         os.chmod('./p1_pointless.sh', 0755)
+#                         p1 = subprocess.Popen('p1_pointless.sh',
+#                                               shell=True,
+#                                               stdout=subprocess.PIPE,
+#                                               stderr=subprocess.PIPE).communicate()
+#                     command = [x.replace('.mtz', 'p1.mtz')
+#                                for x in command if any('hklin')]
+#                     comfile = open(out_file+'_pointless.sh', 'w')
+#                     comfile.writelines(command)
+#                     comfile.close()
+#                     p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
+#                                          shell=True,
+#                                          stdout=subprocess.PIPE,
+#                                          stderr=subprocess.PIPE).communicate()
 
     def get_batch(self, in_file):
         """
@@ -1307,15 +1312,20 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::Merge Wedges: %s' % wedge_files)
         # lists for running the multiprocessing
-        jobs = []
+#        jobs = []
+        pool = multiprocessing.Pool(self.nproc)
+        pool_arguments = []
 
         # Check for all_clusters flag
         if self.all_clusters:
             for cnt, cluster in enumerate(wedge_files.values()):
-                combine_all = Process(target=self.combine(
-                    cluster[0], self.prefix+str(cnt)))
-                jobs.append(combine_all)
-                combine_all.start()
+                pool_arguments.append(
+                    (cluster[0], self.prefix+str(cnt), self.cmd_prefix, self.strict, self.user_spacegroup))
+            r = pool.map(combine_wrapper, pool_arguments)
+#                combine_all = Process(target=self.combine(
+#                    cluster[0], self.prefix+str(cnt)))
+#                jobs.append(combine_all)
+#                combine_all.start()
             for pair in jobs:
                 pair.join()
             # Scale the files with aimless
@@ -1334,10 +1344,13 @@ class RapdPlugin(multiprocessing.Process):
                 self.results[new_prefix]['CC'] = 1 - wedge_files[itm][1]
                 self.merged_files.append(new_prefix)
         else:
-            combine_all = Process(target=self.combine, args=(
-                next(wedge_files.itervalues())[0], self.prefix))
-            combine_all.start()
-            combine_all.join()
+            pool_arguments.append(
+                (next(wedge_files.itervalues())[0], self.prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
+            r = pool.map(combine_wrapper, pool_arguments)
+#            combine_all = Process(target=self.combine, args=(
+#                next(wedge_files.itervalues())[0], self.prefix))
+#            combine_all.start()
+#            combine_all.join()
             # Scale the files with aimless
             scale = Process(target=self.scale, args=(self.prefix, self.prefix))
             scale.start()
