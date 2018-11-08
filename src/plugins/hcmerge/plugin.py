@@ -47,7 +47,7 @@ import multiprocessing
 import os
 from pprint import pprint
 # import pymongo
-# import re
+import re
 # import redis
 import shutil
 import stat
@@ -102,7 +102,25 @@ VERSIONS = {
 }
 
 # Threshold for CC - below will be highlighted in the table
-HIGHLIGHT_THRESHOLD = 0.8
+HIGHLIGHT_THRESHOLD = 0.9
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+     
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+
+def sort_nicely(l):
+    """ Sort the given list in the way that humans expect.
+    """
+    l.sort(key=alphanum_key)
 
 def combine_wrapper(args):
     """
@@ -495,6 +513,9 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("Preprocess: Prechecking files")
         self.logger.debug('HCMerge::Prechecking files: %s' %
                           str(self.datasets))
+
+        # Nicely sort datasets
+        # sort_nicely(self.datasets)
 
         if self.precheck:
             # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
