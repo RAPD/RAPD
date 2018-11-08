@@ -77,6 +77,8 @@ from scipy.cluster.hierarchy import linkage, dendrogram, to_tree
 import cPickle as pickle  # For storing dicts as pickle files for later use
 
 # RAPD imports
+import plugins.assess_integrated_data.plugin as assess_integrated_data_plugin
+import plugins.assess_integrated_data.commandline as assess_integrated_data_commandline
 import plugins.subcontractors.aimless as aimless
 import utils.commandline_utils as commandline_utils
 # import detectors.detector_utils as detector_utils
@@ -751,6 +753,7 @@ class RapdPlugin(multiprocessing.Process):
             counter2 = 1
             colorations = 0
             for key2 in wedge_keys[1:]:
+                # print counter1, counter2
                 if counter2 > counter1:
                     if "x".join([key1, key2]) in self.results:
                         cc = self.results["x".join([key1, key2])]["CC"]
@@ -762,10 +765,10 @@ class RapdPlugin(multiprocessing.Process):
                         csv_line += (",")
                 else:
                     csv_line += (",")
+                counter2 += 1
+            counter1 += 1
             # print csv_line
             csv_lines.append(csv_line)
-        # for csv_line in csv_lines:
-        #     print csv_line
 
         # Write CSV
         with open("cc.csv", "w") as csv_file:
