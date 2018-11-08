@@ -675,107 +675,110 @@ class RapdPlugin(multiprocessing.Process):
         # pprint(self.results)
         # pprint(self.id_list)
         
-        # Create a dict of wedge names keyed by the index used by the plugin
-        wedges = {}
-        for data_file in self.data_files:
-            key = data_file.split("_")[0]
-            value = "_".join(data_file.split("_")[1:])
-            wedges[key] = value
+        # Make chart of CC by pairs of files
+        self.make_cc_chart()
         
-        # Create an array of keys to put file strings in proper numerical order
-        wedge_keys =  wedges.keys()
-        wedge_keys.sort(key=lambda x: int(x))
-        # print wedge_keys
+        # # Create a dict of wedge names keyed by the index used by the plugin
+        # wedges = {}
+        # for data_file in self.data_files:
+        #     key = data_file.split("_")[0]
+        #     value = "_".join(data_file.split("_")[1:])
+        #     wedges[key] = value
+        
+        # # Create an array of keys to put file strings in proper numerical order
+        # wedge_keys =  wedges.keys()
+        # wedge_keys.sort(key=lambda x: int(x))
+        # # print wedge_keys
 
-        # Figure out the longest wedge name
-        longest = 0
-        for file_name in wedges.values():
-            length = len(file_name)
-            if length > longest:
-                longest = length
-        # print "Longest file name is %d characters" % longest
+        # # Figure out the longest wedge name
+        # longest = 0
+        # for file_name in wedges.values():
+        #     length = len(file_name)
+        #     if length > longest:
+        #         longest = length
+        # # print "Longest file name is %d characters" % longest
 
-        self.tprint("\nTable of correlation coefficients\n", 50, "blue")
+        # self.tprint("\nTable of correlation coefficients\n", 50, "blue")
 
-        # Print column headers
-        count = longest
-        while count > 0:
-            # print count
-            line = " "*longest+"  |"
-            for key in wedge_keys[1:]:
-                value = wedges[key]
-                position = len(value)-count
-                if position >= 0:
-                    line += "   "+value[position]+"   |"
-                else:
-                    line += "       |"
-            self.tprint(line, 50)
-            count -= 1
+        # # Print column headers
+        # count = longest
+        # while count > 0:
+        #     # print count
+        #     line = " "*longest+"  |"
+        #     for key in wedge_keys[1:]:
+        #         value = wedges[key]
+        #         position = len(value)-count
+        #         if position >= 0:
+        #             line += "   "+value[position]+"   |"
+        #         else:
+        #             line += "       |"
+        #     self.tprint(line, 50)
+        #     count -= 1
 
-        # Print the rows
-        counter1 = 0
-        for key1 in wedge_keys[:-1]:
-            value = wedges[key1]
-            line = " "+value+(" "*(longest-len(value)))+" |"
-            counter2 = 1
-            colorations = 0
-            for key2 in wedge_keys[1:]:
-                if counter2 > counter1:
-                    if "x".join([key1, key2]) in self.results:
-                        cc = self.results["x".join([key1, key2])]["CC"]
-                    elif "x".join([key2, key1]) in self.results:
-                        cc = self.results["x".join([key2, key1])]["CC"]
-                    else:
-                        cc = -1
-                    if cc < HIGHLIGHT_THRESHOLD:
-                        line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
-                        colorations += 1
-                    else:
-                        line += " %3.3f |" % cc
-                else:
-                    line += "       |"
-                counter2 += 1
-            self.tprint("-"*(len(line)-(9*colorations)), 50)
-            self.tprint(line, 50)
-            counter1 += 1
-        self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
+        # # Print the rows
+        # counter1 = 0
+        # for key1 in wedge_keys[:-1]:
+        #     value = wedges[key1]
+        #     line = " "+value+(" "*(longest-len(value)))+" |"
+        #     counter2 = 1
+        #     colorations = 0
+        #     for key2 in wedge_keys[1:]:
+        #         if counter2 > counter1:
+        #             if "x".join([key1, key2]) in self.results:
+        #                 cc = self.results["x".join([key1, key2])]["CC"]
+        #             elif "x".join([key2, key1]) in self.results:
+        #                 cc = self.results["x".join([key2, key1])]["CC"]
+        #             else:
+        #                 cc = -1
+        #             if cc < HIGHLIGHT_THRESHOLD:
+        #                 line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
+        #                 colorations += 1
+        #             else:
+        #                 line += " %3.3f |" % cc
+        #         else:
+        #             line += "       |"
+        #         counter2 += 1
+        #     self.tprint("-"*(len(line)-(9*colorations)), 50)
+        #     self.tprint(line, 50)
+        #     counter1 += 1
+        # self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
 
-        # Make a CSV
-        csv_lines = []
-        # Header
-        csv_line = ""
-        for key in wedge_keys[1:]:
-            csv_line += ("," + wedges[key])
-        csv_lines.append(csv_line)
-        # Body
-        counter1 = 0
-        for key1 in wedge_keys[:-1]:
-            value = wedges[key1]
-            csv_line = value
-            counter2 = 1
-            colorations = 0
-            for key2 in wedge_keys[1:]:
-                # print counter1, counter2
-                if counter2 > counter1:
-                    if "x".join([key1, key2]) in self.results:
-                        cc = self.results["x".join([key1, key2])]["CC"]
-                        csv_line += (",%f" % cc)
-                    elif "x".join([key2, key1]) in self.results:
-                        cc = self.results["x".join([key2, key1])]["CC"]
-                        csv_line += (",%f" % cc)
-                    else:
-                        csv_line += (",")
-                else:
-                    csv_line += (",")
-                counter2 += 1
-            counter1 += 1
-            # print csv_line
-            csv_lines.append(csv_line)
+        # # Make a CSV
+        # csv_lines = []
+        # # Header
+        # csv_line = ""
+        # for key in wedge_keys[1:]:
+        #     csv_line += ("," + wedges[key])
+        # csv_lines.append(csv_line)
+        # # Body
+        # counter1 = 0
+        # for key1 in wedge_keys[:-1]:
+        #     value = wedges[key1]
+        #     csv_line = value
+        #     counter2 = 1
+        #     colorations = 0
+        #     for key2 in wedge_keys[1:]:
+        #         # print counter1, counter2
+        #         if counter2 > counter1:
+        #             if "x".join([key1, key2]) in self.results:
+        #                 cc = self.results["x".join([key1, key2])]["CC"]
+        #                 csv_line += (",%f" % cc)
+        #             elif "x".join([key2, key1]) in self.results:
+        #                 cc = self.results["x".join([key2, key1])]["CC"]
+        #                 csv_line += (",%f" % cc)
+        #             else:
+        #                 csv_line += (",")
+        #         else:
+        #             csv_line += (",")
+        #         counter2 += 1
+        #     counter1 += 1
+        #     # print csv_line
+        #     csv_lines.append(csv_line)
 
-        # Write CSV
-        with open("cc.csv", "w") as csv_file:
-            for csv_line in csv_lines:
-                csv_file.write(csv_line+"\n")
+        # # Write CSV
+        # with open("cc.csv", "w") as csv_file:
+        #     for csv_line in csv_lines:
+        #         csv_file.write(csv_line+"\n")
 
         # Make relationship matrix
         self.matrix = self.make_matrix(self.method)
@@ -880,137 +883,6 @@ class RapdPlugin(multiprocessing.Process):
         for i in combinations(files, number):
             combos.append(i)
         return(combos)
-
-#     def combine(self, in_files, out_file):
-#         """
-#         Combine XDS_ASCII.HKL files using POINTLESS
-#         in_files = list of files
-#         """
-
-#         self.logger.debug(
-#             'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
-#         command = []
-#         command.append('pointless hklout '+out_file +
-#                        '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
-
-#         for hklin in in_files:
-#             command.append('hklin '+hklin+' \n')
-#             # Add ability to do batches
-#         # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
-#         if self.strict != False:
-#             command.append('tolerance 1000.0 \n')
-#         # Add LAUEGROUP if user has chosen a spacegroup
-#         if self.user_spacegroup:
-#             command.append('lauegroup %s \n' % space_group_symbols(
-#                 self.user_spacegroup).universal_hermann_mauguin())
-#             command.append('choose spacegroup %s \n' % space_group_symbols(
-#                 self.user_spacegroup).universal_hermann_mauguin())
-#         command.append('eof\n')
-#         # print command
-#         comfile = open(out_file+'_pointless.sh', 'w')
-#         comfile.writelines(command)
-#         comfile.close()
-#         os.chmod('./'+out_file+'_pointless.sh', 0755)
-# #            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
-#         p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-#                              shell=True,
-#                              stdout=subprocess.PIPE,
-#                              stderr=subprocess.PIPE).communicate()
-#         if self.user_spacegroup == 0:
-#             # Sub-routine for different point groups
-#             if (p[0] == '' and p[1] == '') == False:
-#                 self.logger.debug(
-#                     'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
-#             if 'WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems' in p[1]:
-#                 self.logger.debug(
-#                     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
-#                 for hklin in in_files:
-#                     cmd = []
-#                     cmd.append('pointless hklin '+hklin +
-#                                ' hklout '+hklin+'> '+hklin+'_p.log \n')
-#                     subprocess.Popen(
-#                         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
-#                 p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-#                                      shell=True,
-#                                      stdout=subprocess.PIPE,
-#                                      stderr=subprocess.PIPE).communicate()
-#                 if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
-#                     self.logger.debug(
-#                         'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
-#                     for hklin in in_files:
-#                         cmd = []
-#                         hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
-#                         cmd.append('pointless hklin '+hklin+' hklout ' +
-#                                    hklout+'> '+hklin+'_p1.log <<eof \n')
-#                         cmd.append('lauegroup P1 \n')
-#                         cmd.append('choose spacegroup P1 \n')
-#                         cmd.append('eof\n')
-#                         cmdfile = open('p1_pointless.sh', 'w')
-#                         cmdfile.writelines(cmd)
-#                         cmdfile.close()
-#                         os.chmod('./p1_pointless.sh', 0755)
-#                         p1 = subprocess.Popen('p1_pointless.sh',
-#                                               shell=True,
-#                                               stdout=subprocess.PIPE,
-#                                               stderr=subprocess.PIPE).communicate()
-#                     command = [x.replace('.mtz', 'p1.mtz')
-#                                for x in command if any('hklin')]
-#                     comfile = open(out_file+'_pointless.sh', 'w')
-#                     comfile.writelines(command)
-#                     comfile.close()
-#                     p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-#                                          shell=True,
-#                                          stdout=subprocess.PIPE,
-#                                          stderr=subprocess.PIPE).communicate()
-
-#         # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
-#         plog = open(out_file+'_pointless.log', 'r').readlines()
-#         for num, line in enumerate(plog):
-#             if line.startswith('FATAL ERROR'):
-#                 # Go to the next line for error message
-#                 if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
-#                     self.logger.debug(
-#                         'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
-#                     for num, itm in enumerate(command):
-#                         if itm == 'eof\n':
-#                             command.insert(num, 'choose solution 1\n')
-#                             break
-#                 comfile = open(out_file+'_pointless.sh', 'w')
-#                 comfile.writelines(command)
-#                 comfile.close()
-#                 # Run pointless again with new keyword
-#                 p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-#                                      shell=True,
-#                                      stdout=subprocess.PIPE,
-#                                      stderr=subprocess.PIPE).wait()
-#                 if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
-#                     self.logger.debug(
-#                         'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
-#                     for hklin in in_files:
-#                         cmd = []
-#                         hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
-#                         cmd.append('pointless hklin '+hklin+' hklout ' +
-#                                    hklout+'> '+hklin+'_p1.log <<eof \n')
-#                         cmd.append('lauegroup P1 \n')
-#                         cmd.append('choose spacegroup P1 \n')
-#                         cmd.append('eof\n')
-#                         cmdfile = open('p1_pointless.sh', 'w')
-#                         cmdfile.writelines(cmd)
-#                         cmdfile.close()
-#                         os.chmod('./p1_pointless.sh', 0755)
-#                         p1 = subprocess.Popen('p1_pointless.sh',
-#                                               shell=True,
-#                                               stdout=subprocess.PIPE,
-#                                               stderr=subprocess.PIPE).communicate()
-#                     command = [x.replace('.mtz', 'p1.mtz')
-#                                for x in command if any('hklin')]
-#                     comfile = open(out_file+'_pointless.sh', 'w')
-#                     comfile.writelines(command)
-#                     comfile.close()
-#                     p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-#                                          shell=True,
-#                                          stdout=subprocess.PIPE,
-#                                          stderr=subprocess.PIPE).communicate()
 
     def get_batch(self, in_file):
         """
@@ -1400,6 +1272,113 @@ class RapdPlugin(multiprocessing.Process):
                                     (newick), node.dist, leaf_names)
             newick = "(%s" % (newick)
             return newick
+
+    def make_cc_chart():
+        """
+        Make a chart of the correlation coefficients by file pairs.
+        """
+        # Create a dict of wedge names keyed by the index used by the plugin
+        wedges = {}
+        for data_file in self.data_files:
+            key = data_file.split("_")[0]
+            value = "_".join(data_file.split("_")[1:])
+            wedges[key] = value
+        
+        # Create an array of keys to put file strings in proper numerical order
+        wedge_keys =  wedges.keys()
+#        wedge_keys = self.id_list.keys()
+        wedge_keys.sort(key=lambda x: int(x))
+        # print wedge_keys
+
+        # Figure out the longest wedge name
+        longest = 0
+        for file_name in wedges.values():
+            length = len(file_name)
+            if length > longest:
+                longest = length
+        # print "Longest file name is %d characters" % longest
+
+        self.tprint("\nTable of correlation coefficients\n", 50, "blue")
+
+        # Print column headers
+        count = longest
+        while count > 0:
+            # print count
+            line = " "*longest+"  |"
+            for key in wedge_keys[1:]:
+                value = wedges[key]
+                position = len(value)-count
+                if position >= 0:
+                    line += "   "+value[position]+"   |"
+                else:
+                    line += "       |"
+            self.tprint(line, 50)
+            count -= 1
+
+        # Print the rows
+        counter1 = 0
+        for key1 in wedge_keys[:-1]:
+            value = wedges[key1]
+            line = " "+value+(" "*(longest-len(value)))+" |"
+            counter2 = 1
+            colorations = 0
+            for key2 in wedge_keys[1:]:
+                if counter2 > counter1:
+                    if "x".join([key1, key2]) in self.results:
+                        cc = self.results["x".join([key1, key2])]["CC"]
+                    elif "x".join([key2, key1]) in self.results:
+                        cc = self.results["x".join([key2, key1])]["CC"]
+                    else:
+                        cc = -1
+                    if cc < HIGHLIGHT_THRESHOLD:
+                        line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
+                        colorations += 1
+                    else:
+                        line += " %3.3f |" % cc
+                else:
+                    line += "       |"
+                counter2 += 1
+            self.tprint("-"*(len(line)-(9*colorations)), 50)
+            self.tprint(line, 50)
+            counter1 += 1
+        self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
+
+        # Make a CSV
+        csv_lines = []
+        # Header
+        csv_line = ""
+        for key in wedge_keys[1:]:
+            csv_line += ("," + wedges[key])
+        csv_lines.append(csv_line)
+        # Body
+        counter1 = 0
+        for key1 in wedge_keys[:-1]:
+            value = wedges[key1]
+            csv_line = value
+            counter2 = 1
+            colorations = 0
+            for key2 in wedge_keys[1:]:
+                # print counter1, counter2
+                if counter2 > counter1:
+                    if "x".join([key1, key2]) in self.results:
+                        cc = self.results["x".join([key1, key2])]["CC"]
+                        csv_line += (",%f" % cc)
+                    elif "x".join([key2, key1]) in self.results:
+                        cc = self.results["x".join([key2, key1])]["CC"]
+                        csv_line += (",%f" % cc)
+                    else:
+                        csv_line += (",")
+                else:
+                    csv_line += (",")
+                counter2 += 1
+            counter1 += 1
+            # print csv_line
+            csv_lines.append(csv_line)
+
+        # Write CSV
+        with open("cc.csv", "w") as csv_file:
+            for csv_line in csv_lines:
+                csv_file.write(csv_line+"\n")
 
     def make_log(self, files):
         """
