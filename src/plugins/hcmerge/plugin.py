@@ -77,8 +77,8 @@ from scipy.cluster.hierarchy import linkage, dendrogram, to_tree
 import cPickle as pickle  # For storing dicts as pickle files for later use
 
 # RAPD imports
-import plugins.assess_integrated_data.plugin as assess_integrated_data_plugin
-import plugins.assess_integrated_data.commandline as assess_integrated_data_commandline
+#import plugins.assess_integrated_data.plugin as assess_integrated_data_plugin
+#import plugins.assess_integrated_data.commandline as assess_integrated_data_commandline
 import plugins.subcontractors.aimless as aimless
 import utils.commandline_utils as commandline_utils
 # import detectors.detector_utils as detector_utils
@@ -693,111 +693,9 @@ class RapdPlugin(multiprocessing.Process):
         # pprint(self.results)
         # pprint(self.id_list)
         
-        # Make chart of CC by pairs of files
+        # Make chart of CC by pairs of files (and a CSV file)
         self.make_cc_chart()
         
-        # # Create a dict of wedge names keyed by the index used by the plugin
-        # wedges = {}
-        # for data_file in self.data_files:
-        #     key = data_file.split("_")[0]
-        #     value = "_".join(data_file.split("_")[1:])
-        #     wedges[key] = value
-        
-        # # Create an array of keys to put file strings in proper numerical order
-        # wedge_keys =  wedges.keys()
-        # wedge_keys.sort(key=lambda x: int(x))
-        # # print wedge_keys
-
-        # # Figure out the longest wedge name
-        # longest = 0
-        # for file_name in wedges.values():
-        #     length = len(file_name)
-        #     if length > longest:
-        #         longest = length
-        # # print "Longest file name is %d characters" % longest
-
-        # self.tprint("\nTable of correlation coefficients\n", 50, "blue")
-
-        # # Print column headers
-        # count = longest
-        # while count > 0:
-        #     # print count
-        #     line = " "*longest+"  |"
-        #     for key in wedge_keys[1:]:
-        #         value = wedges[key]
-        #         position = len(value)-count
-        #         if position >= 0:
-        #             line += "   "+value[position]+"   |"
-        #         else:
-        #             line += "       |"
-        #     self.tprint(line, 50)
-        #     count -= 1
-
-        # # Print the rows
-        # counter1 = 0
-        # for key1 in wedge_keys[:-1]:
-        #     value = wedges[key1]
-        #     line = " "+value+(" "*(longest-len(value)))+" |"
-        #     counter2 = 1
-        #     colorations = 0
-        #     for key2 in wedge_keys[1:]:
-        #         if counter2 > counter1:
-        #             if "x".join([key1, key2]) in self.results:
-        #                 cc = self.results["x".join([key1, key2])]["CC"]
-        #             elif "x".join([key2, key1]) in self.results:
-        #                 cc = self.results["x".join([key2, key1])]["CC"]
-        #             else:
-        #                 cc = -1
-        #             if cc < HIGHLIGHT_THRESHOLD:
-        #                 line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
-        #                 colorations += 1
-        #             else:
-        #                 line += " %3.3f |" % cc
-        #         else:
-        #             line += "       |"
-        #         counter2 += 1
-        #     self.tprint("-"*(len(line)-(9*colorations)), 50)
-        #     self.tprint(line, 50)
-        #     counter1 += 1
-        # self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
-
-        # # Make a CSV
-        # csv_lines = []
-        # # Header
-        # csv_line = ""
-        # for key in wedge_keys[1:]:
-        #     csv_line += ("," + wedges[key])
-        # csv_lines.append(csv_line)
-        # # Body
-        # counter1 = 0
-        # for key1 in wedge_keys[:-1]:
-        #     value = wedges[key1]
-        #     csv_line = value
-        #     counter2 = 1
-        #     colorations = 0
-        #     for key2 in wedge_keys[1:]:
-        #         # print counter1, counter2
-        #         if counter2 > counter1:
-        #             if "x".join([key1, key2]) in self.results:
-        #                 cc = self.results["x".join([key1, key2])]["CC"]
-        #                 csv_line += (",%f" % cc)
-        #             elif "x".join([key2, key1]) in self.results:
-        #                 cc = self.results["x".join([key2, key1])]["CC"]
-        #                 csv_line += (",%f" % cc)
-        #             else:
-        #                 csv_line += (",")
-        #         else:
-        #             csv_line += (",")
-        #         counter2 += 1
-        #     counter1 += 1
-        #     # print csv_line
-        #     csv_lines.append(csv_line)
-
-        # # Write CSV
-        # with open("cc.csv", "w") as csv_file:
-        #     for csv_line in csv_lines:
-        #         csv_file.write(csv_line+"\n")
-
         # Make relationship matrix
         self.matrix = self.make_matrix(self.method)
 
@@ -921,19 +819,6 @@ class RapdPlugin(multiprocessing.Process):
         for k, g in groupby(enumerate(batch_list), lambda x: x[0]-x[1]):
             group = list(map(itemgetter(1), g))
             batches.append((group[0], group[-1]))
-        #
-        # batches = {}
-        # log = open(in_file+'_pointless.log','r').readlines()
-        #
-        # for line in log:
-        #     if ('consists of batches' in line):
-        #         sline = line.split()
-        #         run_number = int(sline[2])
-        #         batch_start = int(sline[6])
-        #         batch_end = int(sline[len(sline)-1])
-        #         batches[run_number] = (batch_start,batch_end)
-        #         self.logger.debug('%s has batches %d to %d' % (in_file,batch_start,batch_end))
-        #
         return(batches)
 
     def get_cc_aimless(self, in_file):
@@ -1192,7 +1077,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::Merge Wedges: %s' % wedge_files)
         # lists for running the multiprocessing
-#        jobs = []
+        jobs = []
         pool = multiprocessing.Pool(self.nproc)
         pool_arguments = []
 
@@ -1206,8 +1091,8 @@ class RapdPlugin(multiprocessing.Process):
 #                    cluster[0], self.prefix+str(cnt)))
 #                jobs.append(combine_all)
 #                combine_all.start()
-            for pair in jobs:
-                pair.join()
+#            for pair in jobs:
+#                pair.join()
             # Scale the files with aimless
             for cnt, itm in enumerate(wedge_files):
                 scale = Process(target=self.scale, args=(
@@ -1291,7 +1176,7 @@ class RapdPlugin(multiprocessing.Process):
             newick = "(%s" % (newick)
             return newick
 
-    def make_cc_chart():
+    def make_cc_chart(self):
         """
         Make a chart of the correlation coefficients by file pairs.
         """
