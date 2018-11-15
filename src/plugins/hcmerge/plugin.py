@@ -849,7 +849,7 @@ class RapdPlugin(multiprocessing.Process):
         com_file = in_file+"_aimless.sh"
         # Create aimless command file
         aimless_lines = ['#!/bin/tcsh\n',
-                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
+                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "_aimless.mtz", log_file),
                          'anomalous on\n',
                          'scales constant\n',
                          'sdcorrection norefine full 1 0 0 partial 1 0 0\n',

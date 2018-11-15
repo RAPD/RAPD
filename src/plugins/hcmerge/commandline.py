@@ -57,6 +57,7 @@ def construct_command(commandline_args, logger):
         clean = True | False
         datafile = ""
         json = True | False
+        method = "single" | "complete" | "average" | "weighted" | "centroid" | "median" | "ward"
         no_color = True | False
         nproc = int
         progress = True | False
@@ -95,6 +96,7 @@ def construct_command(commandline_args, logger):
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
         "run_mode": commandline_args.run_mode,
+        "method": commandline_args.method,
         "cc_mode": commandline_args.cc_mode,
         "test": commandline_args.test,
     }
@@ -138,7 +140,7 @@ def get_commandline():
     parser.add_argument("-m", "--method",
                         dest="method",
                         default="complete",
-                        help="set alternative clustering method: single, complete (default), average, or weighted")
+                        help="set alternative clustering method: single, complete (default), average, weighted, centroid, median, or ward")
     # Number of processors to use
     parser.add_argument("--nproc",
                         action="store",
@@ -306,7 +308,7 @@ def get_commandline():
 
     # Set the clustering method
     try:
-        method_list = ['single', 'complete', 'average', 'weighted']
+        method_list = ['single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward']
         if [i for i in method_list if i in args.method]:
             args.method = args.method
     except:
