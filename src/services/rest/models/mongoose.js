@@ -7,6 +7,7 @@ mongoose.Promise = require('q').Promise;
 // CONTROL CONNECTION
 mongoose.ctrl_conn = mongoose.createConnection(config.control_conn, {
   // useMongoClient: true,
+  useNewUrlParser: true
 }, function(error) {
   if (error) {
     console.error(error);
@@ -20,6 +21,7 @@ if (! config.auth_conn) {
   console.log('Connecting to', config.auth_conn);
   mongoose.auth_conn = mongoose.createConnection(config.auth_conn, {
     // useMongoClient: true,
+    useNewUrlParser: true
   }, function(error) {
     if (error) {
       console.error(error);

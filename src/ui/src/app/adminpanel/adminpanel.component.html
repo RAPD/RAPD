@@ -12,9 +12,9 @@
             [limit]="10"
             [rowHeight]="'auto'"
             [reorderable]="reorderable"
-            [sorts]="[{prop: 'username', dir: 'asc'}]"
+            [sorts]="[{prop: 'name', dir: 'asc'}]"
             (activate)='editUser($event)'>
-            <ngx-datatable-column name="Username" prop="username">
+            <ngx-datatable-column name="Name" prop="name">
               <ng-template let-value="value" ngx-datatable-cell-template>
                 {{value}}
               </ng-template>
@@ -31,7 +31,7 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </article>
-        <mat-toolbar class="rapd-main-panel-action-bar">
+        <mat-toolbar class="rapd-main-panel-action-bar" style="height:4em;">
           <form class="user-filter-form">
             <mat-form-field
               floatPlaceholder="never"
@@ -82,7 +82,7 @@
       </article>
       <article class="c-content">
       </article>
-      <mat-toolbar class="rapd-main-panel-action-bar">
+      <mat-toolbar class="rapd-main-panel-action-bar" style="height:4em;">
         <form class="group-filter-form">
           <mat-form-field
             floatPlaceholder="never"
@@ -138,7 +138,7 @@
           </ngx-datatable-column>
         </ngx-datatable>
       </article>
-      <mat-toolbar class="rapd-main-panel-action-bar">
+      <mat-toolbar class="rapd-main-panel-action-bar" style="height:4em;">
         <form class="session-filter-form">
           <mat-form-field
             (keyup)='updateSessionFilter($event)'>
@@ -158,14 +158,14 @@
     <table class="is-full-width sessions-table">
       <thead>
         <tr>
-          <th>Username</th>
+          <th>Name</th>
           <th>Email</th>
           <th>Role</th>
           <th>Group(s)</th>
         </tr>
       </thead>
       <tr>
-        <td>{{user.username}}</td>
+        <td>{{user.name}}</td>
         <td>{{user.email}}</td>
         <td>{{user.role}}</td>
         <td> <span *ngFor="let group of user.groups">{{group.groupname}}</span> </td>

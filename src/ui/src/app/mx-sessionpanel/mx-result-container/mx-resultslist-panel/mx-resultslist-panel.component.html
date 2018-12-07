@@ -38,11 +38,12 @@
         <table style="width:100%;">
           <tr>
             <td
-              [ngClass]="data_result.status < 0 ? 'rapd-error-result' : ''"
+              [ngClass]="data_result.status < 0 || data_result.status > 100 ? 'rapd-error-result' : ''"
               style="padding:0 0 0 0;">
               {{data_result.repr}}
             </td>
           </tr>
+          <!-- Progressbar -->
           <tr *ngIf="data_result.status > 0 && data_result.status < 99">
             <td style="padding:0 0 0 0;">
               <mat-progress-bar
@@ -64,7 +65,7 @@
           <table style="width:100%;">
             <tr>
               <td
-                [ngClass]="child.status < 0 ? 'rapd-error-result' : ''"
+                [ngClass]="child.status < 0 || data_result.status > 100 ? 'rapd-error-result' : ''"
                 style="padding:0 0 0 0;">
                 Reprocess {{data_result.children.length-i+1}} {{child.display}}
               </td>

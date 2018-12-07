@@ -1,25 +1,24 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from "@angular/common";
+import { NgModule } from "@angular/core";
 
-import { RapdMaterialModule } from '../material.module';
-import { FlexLayoutModule } from '@angular/flex-layout';
+import { RapdMaterialModule } from "../material.module";
 
-import { FileUploadModule } from 'ng2-file-upload';
+import { FlexLayoutModule } from "@angular/flex-layout";
 
-import { ProjectMxComponent } from './project-mx/project-mx.component';
+import { FileUploadModule } from "ng2-file-upload";
 
-import { ProjectsRoutingModule } from './projects-routing.module';
+import { ProjectMxComponent } from "./project-mx/project-mx.component";
+
+import { ProjectsRoutingModule } from "./projects-routing.module";
 
 @NgModule({
+  declarations: [ProjectMxComponent],
   imports: [
     CommonModule,
     RapdMaterialModule,
     FileUploadModule,
     FlexLayoutModule,
     ProjectsRoutingModule
-  ],
-  declarations: [
-    ProjectMxComponent
   ]
 })
-export class ProjectsModule { }
+export class ProjectsModule {}
