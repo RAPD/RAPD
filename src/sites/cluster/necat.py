@@ -70,15 +70,19 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         "INDEX"          : 'phase2.q,phase3.q,index.q',
-         #"INDEX"          : 'phase1.q',
+         #"INDEX"          : 'phase2.q,phase3.q,index.q',
+         "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
-         "XDS"            : 'phase2.q,phase1.q,fibre.q',
+         #"XDS"            : 'phase2.q,phase1.q,fibre.q',
+         "XDS"            : 'phase3.q',
          #"INTEGRATE"      : 'integrate.q',
-         "INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
-         "PDBQUERY"       : 'phase2.q,phase1.q,general.q',
-         "ANALYSIS"       : 'phase2.q,phase1.q,general.q',
+         #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
+         "INTEGRATE"      : 'phase3.q',
+         #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
+         "PDBQUERY"       : 'phase3.q',
+         #"ANALYSIS"       : 'phase2.q,phase1.q,general.q',
+         "ANALYSIS"       : 'phase3.q',
          }
     if d.get(inp, False):
         return(d[inp])

@@ -117,6 +117,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["shape"] = 2.0
     command["preferences"]["susceptibility"] = 1.0
     command["preferences"]["aimed_res"] = 0.0
+    command["preferences"]["aimed_redundancy"] = commandline_args.best_aimed_redundancy
 
     # Best & Labelit
     command["preferences"]["sample_type"] = commandline_args.sample_type
@@ -223,6 +224,14 @@ def get_commandline():
                         default="none",
                         choices=["none", "min", "full"],
                         help="Complexity of BEST strategy")
+
+    # BEST aimed redundancy for LS-CAT
+    parser.add_argument("--best_redundancy",
+                        action="store",
+                        dest="best_aimed_redundancy",
+                        default=False,
+                        type=float,
+                        help="Aimed redundancy for BEST strategy")
 
     # Number of mosflm segments
     parser.add_argument("--mosflm_segments",

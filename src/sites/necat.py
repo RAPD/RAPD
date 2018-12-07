@@ -81,14 +81,34 @@ BEAM_INFO = {
                 #                 -0.0014631216,
                 #                 8.60559283424e-07,
                 #                 -2.5709929645e-10)
-                'BEAM_CENTER_X' : (217.89545788464195,
-                                 -0.0095051886470180359,
-                                 4.5313419256785272e-05,
-                                 -1.3544716298203249e-07),
-                'BEAM_CENTER_Y' : (222.69061623307075,
-                                 0.008371144274918689,
-                                 -6.6628778965267953e-05,
-                                 2.4131282311413717e-07)
+                #'BEAM_CENTER_X' : (217.89545788464195,
+                #                -0.0095051886470180359,
+                #                 4.5313419256785272e-05,
+                #                -1.3544716298203249e-07),
+                #'BEAM_CENTER_Y' : (222.69061623307075,
+                #                 0.008371144274918689,
+                #                 -6.6628778965267953e-05,
+                #                 2.4131282311413717e-07)
+                #'BEAM_CENTER_X' : (217.55864605,
+                #                   -0.00199770779024,
+                #                   1.16082561287e-06,
+                #                   1.40862457675e-10),
+                #'BEAM_CENTER_Y' : (225.078687367,
+                #                   0.00130328024604,
+                #                   -1.8128376189e-06,
+                #                   1.3400233455e-09),
+                'BEAM_CENTER_X' : (217.354843551,
+                                    0.00196378671817,
+                                    -2.87273346253e-05,
+                                     1.10320981196e-07,
+                                    -2.05961860935e-10,
+                  ),
+                'BEAM_CENTER_Y' : (224.477413744,
+                                  0.0148281008073,
+                                  -0.000106235126328,
+                                  3.65071163955e-07,
+                                  -6.24373960251e-10
+                  ),
                 },
     "NECAT_E": {# Detector distance limits
                 "DETECTOR_DISTANCE_MIN": 150.0,
@@ -113,17 +133,25 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_X":0.03,
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
-                'BEAM_CENTER_DATE' : "2017-3-02",
+                'BEAM_CENTER_DATE' : "2018-10-16",
                 # Beamcenter equation coefficients (b, m1, m2, m3)
-                'BEAM_CENTER_X' : (163.89684278768254,
-                                 -0.0015633263872817393,
-                                 -2.5624797406798966e-06,
-                                 3.9573203673686396e-09),
-                'BEAM_CENTER_Y' : (154.56630526168037,
-                                 -0.0004545100450374418,
-                                 -1.1274954741267088e-06,
-                                 8.4937063175024929e-10)
-                
+                'BEAM_CENTER_X' : (164.72070756207401,
+                                   -0.0013409358206944552,
+                                   -2.29343913762685e-06,
+                                    3.4872750035666701e-09),
+                'BEAM_CENTER_Y' : (154.79725866966157,
+                                   -0.0015094308731870999,
+                                   7.3597978380100895e-07,
+                                   -1.4267298732928363e-10)
+                #'BEAM_CENTER_DATE' : "2017-3-02",
+                #'BEAM_CENTER_X' : (163.89684278768254,
+                #                 -0.0015633263872817393,
+                #                 -2.5624797406798966e-06,
+                #                 3.9573203673686396e-09),
+                #'BEAM_CENTER_Y' : (154.56630526168037,
+                #                 -0.0004545100450374418,
+                #                 -1.1274954741267088e-06,
+                #                 8.4937063175024929e-10)
                 #'BEAM_CENTER_X' : (163.2757684023,
                 #                 0.0003178917,
                 #                 -5.0236657815e-06,
@@ -335,7 +363,7 @@ CONTROL_DATABASE_SETTINGS = {
     "REDIS_PORT":           REDIS_PORT,
     "REDIS_DB":             REDIS_DB,
     "REDIS_PASSWORD":       REDIS_PASSWORD,
-    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    #"REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
     "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
 }
 
@@ -352,7 +380,7 @@ LAUNCH_SETTINGS = {
 
 IMAGE_MONITOR_SETTINGS = {
     "REDIS_CONNECTION":     REDIS_CONNECTION,
-    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    #"REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
     "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
     "REDIS_HOST":           REDIS_HOST,
     "REDIS_PORT":           REDIS_PORT,
@@ -361,7 +389,7 @@ IMAGE_MONITOR_SETTINGS = {
 
 RUN_MONITOR_SETTINGS = {
     "REDIS_CONNECTION":     REDIS_CONNECTION,
-    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    #"REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
     "REDIS_MASTER_NAME" :   REDIS_MASTER_NAME,
     "REDIS_HOST":           REDIS_HOST,
     "REDIS_PORT":           REDIS_PORT,
@@ -413,7 +441,7 @@ REMOTE_ADAPTER_SETTINGS = {
     "ID":                      ID,
     "MONGO_CONNECTION_STRING": MONGO_CONNECTION_STRING,
     'REDIS_CONNECTION':        REDIS_CONNECTION,
-    "REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
+    #"REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
     "REDIS_MASTER_NAME":       REDIS_MASTER_NAME,
     "REDIS_HOST":              REDIS_HOST,
     "REDIS_PORT":              REDIS_PORT,
