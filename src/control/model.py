@@ -38,6 +38,7 @@ from pprint import pprint
 # import socket
 import sys
 import time
+import types
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
@@ -732,10 +733,10 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-        # If the detector can determine if run or snap
+        # If the detector can determine if run or snap from the image name
         if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
-            if type(detector.is_run_from_imagename) == "function":
+            if isinstance(detector.is_run_from_imagename, types.FunctionType):
                 self.logger.debug("Have function")
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
