@@ -2,7 +2,7 @@
 #
 # VERSION 2.0.0
 
-FROM centos:7
+FROM centos:centos7.5.1804
 MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
