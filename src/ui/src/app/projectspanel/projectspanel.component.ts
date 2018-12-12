@@ -41,12 +41,13 @@ export class ProjectspanelComponent implements OnInit {
         parameters => {
           console.log(parameters);
           //TODO
-          // this.projects = parameters.projects;
+          this.projects = parameters.projects;
         }
       )
   }
 
-  newProject() {
+  private newProject() {
+
     let project = new Project();
 
     project._id = undefined;
@@ -54,7 +55,7 @@ export class ProjectspanelComponent implements OnInit {
     project.created = undefined;
     project.description = undefined;
     project.group = undefined;
-    project.last_action = "created";
+    project.last_action = undefined;
     project.last_timestamp = undefined;
     project.project_type = "mx";
     project.results = [];
@@ -63,19 +64,20 @@ export class ProjectspanelComponent implements OnInit {
     this.editProject(project, "Create Project");
   }
 
-  editProject(project, dialog_title: string) {
-    if (dialog_title !== "Create Project") {
-      dialog_title = "Edit Project";
+  private editProject(project, dialogTitle: string) {
+
+    if (dialogTitle !== "Create Project") {
+      dialogTitle = "Edit Project";
     }
 
-    let config = new MatDialogConfig();
+    const config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
     this.dialogRef.componentInstance.project = project;
-    this.dialogRef.componentInstance.dialog_title = dialog_title;
+    this.dialogRef.componentInstance.dialog_title = dialogTitle;
 
-    this.dialogRef.afterClosed().subscribe(result => {
+    this.dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (result.success === true) {
           if (result.operation === "delete") {
@@ -88,27 +90,27 @@ export class ProjectspanelComponent implements OnInit {
     });
   }
 
-  addProject(new_project: Project) {
+  private addProject(newProject: Project) {
     // If the user already exists, replace it
-    let index = this.projects.findIndex(
-      project => project._id === new_project._id
+    const index = this.projects.findIndex(
+      (project) => project._id === newProject._id
     );
     if (index !== -1) {
-      this.projects.splice(index, 1, new_project);
+      this.projects.splice(index, 1, newProject);
     } else {
-      this.projects.unshift(new_project);
+      this.projects.unshift(newProject);
     }
   }
 
-  removeProject(_id: string) {
+  private removeProject(_ID: string) {
     // If the user already exists, replace it
-    let index = this.projects.findIndex(project => project._id === _id);
+    const index = this.projects.findIndex((project) => project._id === _ID);
     if (index !== -1) {
       this.projects.splice(index, 1);
     }
   }
 
-  selectProject(project: any) {
+  private selectProject(project: any) {
     this.router.navigate(["project-" + project.project_type, project._id]);
   }
 }

@@ -347,13 +347,13 @@ export class RestService {
   //
   // PROJECT methods
   //
-  public getProjects() {
+  public getProjects(): Observable<any> {
     // TODO :Observable<Project[]> {
     console.log("getProjects");
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/projects")
-      .catch(error => this.handleError(error));
+      .catch((error) => this.handleError(error));
   }
 
   public getProject(id: string): Observable<any> {
@@ -384,7 +384,7 @@ export class RestService {
           // { headers: header }
         )
         // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .catch((error) => this.handleError(error))
     );
   }
 
@@ -561,9 +561,18 @@ export class RestService {
 
   // Generic error handler for connection problems
   private handleError(error) {
-    return Observable.of({
-      success: false,
-      message: error.toString()
+    // return Observable.of({
+    //   message: error.toString(),
+    //   success: false,
+    // });
+
+    // console.log(error);
+
+    return Observable.create((observer) => {
+      observer.next({
+        message: error.message,
+        success: false,
+      });
     });
   }
 }
