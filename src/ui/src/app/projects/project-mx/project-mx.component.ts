@@ -33,8 +33,6 @@ import { GlobalsService } from "../../shared/services/globals.service";
 import { RestService } from "../../shared/services/rest.service";
 import { WebsocketService } from "../../shared/services/websocket.service";
 
-
-
 // Import agent components here
 import * as mx from "../../plugin_components/mx";
 var mx_values = [];
@@ -55,11 +53,11 @@ export class ProjectMxComponent implements OnInit {
   selected_integrated_data: string[] = [];
   selected_integrate_action: string = "";
   actions: any = {
+    INDEX: ["Display Result", "Remove"],
     INTEGRATE: [
-      ["Display Result", "ReIntegrate", "MR", "SAD", "Remove"],
+      ["ReIntegrate", "MR", "SAD", "Display Result", "Remove"],
       ["Merge"]
     ],
-    INDEX: ["Display Result", "Remove"]
   };
   action_icons: any = {
     "Display Result": "visibility",
@@ -87,9 +85,8 @@ export class ProjectMxComponent implements OnInit {
     private componentfactoryResolver: ComponentFactoryResolver,
     public confirm_dialog: MatDialog,
     public error_dialog: MatDialog,
-    public reintegrate_dialog: MatDialog
-  ) // public upload_dialog: MatDialog
-  {}
+    public reintegrate_dialog: MatDialog // public upload_dialog: MatDialog
+  ) {}
 
   ngOnInit() {
     this.id = this.route.snapshot.paramMap.get("id");
