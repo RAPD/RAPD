@@ -11,13 +11,14 @@
   </mat-dialog-content>
 
   <mat-dialog-content *ngIf="(projects)?.length > 0" [ngClass]="submitted ? 'overlay-grey': ''">
-    <form [formGroup]="project_form">
+    <form [formGroup]="projectForm">
       <mat-form-field>
         <mat-select [(ngModel)]="model._id"
                   formControlName="_id">
           <mat-option *ngFor="let project of projects" [value]="project._id">
             {{project.title}}
           </mat-option>
+          <mat-option [value]=-1>New Project</mat-option>
         </mat-select>
       </mat-form-field>
     </form>
@@ -29,7 +30,7 @@
   </mat-dialog-actions>
 </div>
 
-<div *ngIf="submit_error">    
+<div *ngIf="submit_error">
   <mat-dialog-content>
     <h2>Error</h2>
     {{submit_error}}

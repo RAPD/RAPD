@@ -1,44 +1,45 @@
 import { Component, OnInit, ViewContainerRef } from "@angular/core";
-import { Router } from "@angular/router";
 import {
   MatDialog,
   MatDialogConfig,
   MatDialogRef,
   MatToolbarModule
 } from "@angular/material";
+import { Router } from "@angular/router";
 
-import { RestService } from "../shared/services/rest.service";
+
 import { Project } from "../shared/classes/project";
 import { DialogNewProjectComponent } from "../shared/components/dialog-new-project/dialog-new-project.component";
+import { RestService } from "../shared/services/rest.service";
 // import { FileUploadModule } from 'ng2-file-upload';
 
 @Component({
   selector: "app-projectspanel",
+  styleUrls: ["./projectspanel.component.css"],
   templateUrl: "./projectspanel.component.html",
-  styleUrls: ["./projectspanel.component.css"]
 })
 export class ProjectspanelComponent implements OnInit {
-  projects: Project[] = [];
-  dialogRef: MatDialogRef<DialogNewProjectComponent>;
+  private projects: Project[] = [];
+  private dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
   // File uploader
   // public uploader:FileUploader = new FileUploader({url: 'https://evening-anchorage-3159.herokuapp.com/api/'});
 
   constructor(
-    private rest_service: RestService,
+    private restService: RestService,
     public viewContainerRef: ViewContainerRef,
     public dialog: MatDialog,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  public ngOnInit() {
     this.getProjects();
   }
 
-  getProjects() {
-    this.rest_service.getProjects()
+  private getProjects() {
+    this.restService.getProjects()
       .subscribe(
-        parameters => {
+        (parameters) => {
           console.log(parameters);
           //TODO
           this.projects = parameters.projects;
@@ -48,7 +49,7 @@ export class ProjectspanelComponent implements OnInit {
 
   private newProject() {
 
-    let project = new Project();
+    const project = new Project();
 
     project._id = undefined;
     project.creator = undefined;
