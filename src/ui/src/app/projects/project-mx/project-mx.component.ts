@@ -48,33 +48,33 @@ for (let key in mx) {
   styleUrls: ["./project-mx.component.css"]
 })
 export class ProjectMxComponent implements OnInit {
-  id: string;
-  project: Project;
-  selected_integrated_data: string[] = [];
-  selected_integrate_action: string = "";
-  actions: any = {
+  public uploader: FileUploader;
+
+  private id: string;
+  private project: Project;
+  private selected_integrated_data: string[] = [];
+  private selected_integrate_action: string = "";
+  private actions: any = {
     INDEX: ["Display Result", "Remove"],
     INTEGRATE: [
       ["ReIntegrate", "MR", "SAD", "Display Result", "Remove"],
-      ["Merge"]
+      ["Merge"],
     ],
   };
-  action_icons: any = {
+  private actionIcons: any = {
     "Display Result": "visibility",
-    Merge: "call_merge",
-    MR: "search",
-    ReIntegrate: "refresh",
-    Remove: "delete",
-    SAD: "search"
+    "MR": "search",
+    "Merge": "call_merge",
+    "ReIntegrate": "refresh",
+    "Remove": "delete",
+    "SAD": "search",
   };
 
-  selected_indexed_data: string[] = [];
+  private selected_indexed_data: string[] = [];
 
   // Where results got
   @ViewChild("output_outlet", { read: ViewContainerRef })
-  outlet;
-
-  public uploader: FileUploader;
+outlet;
 
   constructor(
     private route: ActivatedRoute,
@@ -176,6 +176,26 @@ export class ProjectMxComponent implements OnInit {
     }
   }
 
+  selectMultipleIntgrationAction(action: string) {
+    console.log("selectMultipleIntgrationAction", action);
+
+    switch (action) {
+      case "Display Result":
+        this.displayResult(this.selected_integrated_data[0]);
+        break;
+
+      case "ReIntegrate":
+        this.activateReintegration(this.selected_integrated_data[0]);
+        break;
+
+      case "Remove":
+        this.activateRemoveConfirm(this.selected_integrated_data[0]);
+
+      default:
+        break;
+    }
+  }
+
   selectSingleIndexAction(action: string) {
     console.log("selectSingleIndexAction", action);
 
@@ -229,18 +249,18 @@ export class ProjectMxComponent implements OnInit {
     console.log("activateReintegration", result_id);
 
     // Get the full result
-    this.rest_service.getResultDetail(result_id).subscribe(parameters => {
+    this.rest_service.getResultDetail(result_id).subscribe((parameters) => {
       console.log(parameters);
       if (parameters.success === true) {
         let dialogRef = this.reintegrate_dialog.open(
           ReintegrateDialogComponent,
           {
-            data: parameters.results
+            data: parameters.results,
           }
         );
       } else {
         let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
-          data: { message: parameters.message }
+          data: { message: parameters.message },
         });
       }
     });
@@ -249,7 +269,7 @@ export class ProjectMxComponent implements OnInit {
   activateRemoveConfirm(result_id: string) {
     console.log("activateRemoveConfirm", result_id);
 
-    let label = this.project.source_data.filter(function(obj) {
+    let label = this.project.source_data.filter((obj) => {
       return obj._id === result_id;
     })[0].repr;
 

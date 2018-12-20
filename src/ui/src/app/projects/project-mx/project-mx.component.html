@@ -50,7 +50,7 @@
                       <mat-list-item >
                         <button mat-button color="primary"
                         (click)="selectSingleIntgrationAction(action)">
-                          <mat-icon>{{action_icons[action]}}</mat-icon>
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
                           {{action}}
                         </button>
                       </mat-list-item>
@@ -68,7 +68,11 @@
                   <mat-list dense class="rapd-corral-content">
                     <ng-container *ngFor="let action of actions.INTEGRATE[1]">
                       <mat-list-item>
-                        {{action}}
+                        <button mat-button color="primary"
+                        (click)="selectMultipleIntgrationAction(action)">
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
+                          {{action}}
+                        </button>
                       </mat-list-item>
                     </ng-container>
                   </mat-list>
@@ -156,7 +160,7 @@
                       <mat-list-item >
                         <button mat-button color="primary"
                         (click)="selectSingleIndexAction(action)">
-                          <mat-icon>{{action_icons[action]}}</mat-icon>
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
                           {{action}}
                         </button>
                       </mat-list-item>
