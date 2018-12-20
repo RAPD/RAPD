@@ -25,8 +25,6 @@ export class DialogSelectProjectComponent implements OnInit {
   public model: any = { _id: "" };
   public projectForm: FormGroup;
 
-  // private newProjectDialogRef: MatDialogRef<DialogNewProjectComponent>;
-
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<DialogSelectProjectComponent>,
@@ -39,7 +37,7 @@ export class DialogSelectProjectComponent implements OnInit {
     // TODO
     this.restService.getProjects().subscribe(
       (parameters) => {
-        console.log(parameters);
+        // console.log(parameters);
         this.projects = parameters.projects;
       }
     );
@@ -52,12 +50,25 @@ export class DialogSelectProjectComponent implements OnInit {
   }
 
   private onChanges(): void {
+
+    const self = this;
+
     this.projectForm.valueChanges.subscribe((val) => {
-      console.log("onChanges", val);
+      // console.log("onChanges", val);
 
       // New project
-      if (val._id == -1) {
+      if (val._id === -1) {
         const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
+        newProjectDialogRef.componentInstance.dialog_title = "New Project";
+        newProjectDialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            console.log(result);
+            if (result.success === true) {
+              self.projects.push(result.project);
+              self.model._id = result.project._id;
+            }
+          }
+        });
       }
     });
   }
