@@ -1,56 +1,53 @@
-import { Component,
-         Inject,
-         OnInit } from '@angular/core';
-import { FormGroup,
-         FormControl } from '@angular/forms';
-import { MatDialogRef,
-         MAT_DIALOG_DATA,
-         MatSnackBar } from '@angular/material';
+import { Component, Inject, OnInit } from "@angular/core";
+import { FormGroup, FormControl } from "@angular/forms";
+import { MatDialogRef, MAT_DIALOG_DATA, MatSnackBar } from "@angular/material";
 
-import { RestService } from '../../../shared/services/rest.service';
-import { GlobalsService } from '../../../shared/services/globals.service';
+import { RestService } from "../../../shared/services/rest.service";
+import { GlobalsService } from "../../../shared/services/globals.service";
 
 @Component({
-  selector: 'app-reintegrate-dialog',
-  templateUrl: './reintegrate-dialog.component.html',
-  styleUrls: ['./reintegrate-dialog.component.css']
+  selector: "app-reintegrate-dialog",
+  templateUrl: "./reintegrate-dialog.component.html",
+  styleUrls: ["./reintegrate-dialog.component.css"]
 })
 export class ReintegrateDialogComponent implements OnInit {
-
   submitted: boolean = false;
-  submit_error: string = '';
+  submit_error: string = "";
   model: any;
   reintegrate_form: FormGroup;
 
   sample_types = [
-    {val:'protein', label:'Protein'},
-    {val:'dna', label:'DNA'},
-    {val:'rna', label:'RNA'},
-    {val:'peptide', label:'Peptide'}];
+    { val: "protein", label: "Protein" },
+    { val: "dna", label: "DNA" },
+    { val: "rna", label: "RNA" },
+    { val: "peptide", label: "Peptide" }
+  ];
 
   spacegroup_deciders = [
-    {val:'auto', label:'Automatic'},
-    {val:'xds', label:'XDS'},
-    {val:'pointless', label:'Pointless'}
-  ]
+    { val: "auto", label: "Automatic" },
+    { val: "xds", label: "XDS" },
+    { val: "pointless", label: "Pointless" }
+  ];
 
-  constructor(private globals_service: GlobalsService,
-              private rest_service: RestService,
-              public dialogRef: MatDialogRef<ReintegrateDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: any,
-              public snackBar: MatSnackBar) { }
+  constructor(
+    private globals_service: GlobalsService,
+    private rest_service: RestService,
+    public dialogRef: MatDialogRef<ReintegrateDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
     console.log(this.data);
 
     this.model = {
-      spacegroup: this.data.preferences.spacegroup,
-      start_frame: 0, //this.data.preferences.spacegroup,
-      end_frame: 360, //this.data.preferences.spacegroup,
-      rounds_polishing: this.data.preferences.rounds_polishing,
-      spacegroup_decider: this.data.preferences.spacegroup_decider,
-      low_res: this.data.preferences.low_res,
+      end_frame: 360,
       hi_res: this.data.preferences.hi_res,
+      low_res: this.data.preferences.low_res,
+      rounds_polishing: this.data.preferences.rounds_polishing,
+      spacegroup: this.data.preferences.spacegroup,
+      spacegroup_decider: this.data.preferences.spacegroup_decider,
+      start_frame: 0
     };
 
     if (this.model.spacegroup === false) {
@@ -58,27 +55,26 @@ export class ReintegrateDialogComponent implements OnInit {
     }
 
     if (this.model.low_res === 0) {
-      this.model.low_res = 'None';
+      this.model.low_res = "None";
     }
 
     if (this.model.hi_res === 0) {
-      this.model.hi_res = 'None';
+      this.model.hi_res = "None";
     }
 
     this.reintegrate_form = new FormGroup({
-      spacegroup: new FormControl(),
-      start_frame: new FormControl(),
       end_frame: new FormControl(),
-      sample_type: new FormControl(),
-      rounds_polishing: new FormControl(),
-      spacegroup_decider: new FormControl(),
+      hi_res: new FormControl(),
       low_res: new FormControl(),
-      hi_res: new FormControl()
+      rounds_polishing: new FormControl(),
+      sample_type: new FormControl(),
+      spacegroup: new FormControl(),
+      spacegroup_decider: new FormControl(),
+      start_frame: new FormControl(),
     });
   }
 
-  submitReintegrate() {
-
+  private submitReintegrate() {
     /*
     command = {
                 "command":"INTEGRATE",
@@ -106,21 +102,28 @@ export class ReintegrateDialogComponent implements OnInit {
             }
     */
 
+    console.log(this.data);
+
     // Start to make the request object
     let request: any = {
-      command:'INTEGRATE',
-      process:{
-        image_id:this.data.process.image_id,
-        parent_id:this.data._id,
-        run_id:this.data.process.run_id,
-        session_id:this.data.process.session_id,
-        status:0,
-        type:'plugin'
+      command: "INTEGRATE",
+      data: false,
+      directories: {
+        work: "reintegrate/2018-12-20/foobar1",
       },
-      directories:false,
-      data:false,
-      site_parameters:false,
-      preferences:Object.assign(this.data.preferences, this.reintegrate_form.value)
+      preferences: Object.assign(
+        this.data.preferences,
+        this.reintegrate_form.value
+      ),
+      process: {
+        image_id: this.data.process.image_id,
+        parent_id: this.data._id,
+        run_id: this.data.process.run_id,
+        session_id: this.data.process.session_id,
+        status: 0,
+        type: "plugin",
+      },
+      site_parameters: false,
     };
 
     // request.parent_result_id = this.data._id;
@@ -132,20 +135,20 @@ export class ReintegrateDialogComponent implements OnInit {
     console.log(request);
 
     this.submitted = true;
-    this.rest_service
-        .submitJob(request)
-        .subscribe(
-          parameters => {
-            console.log(parameters);
-            if (parameters.success === true) {
-              let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
-                duration: 10000,
-              });
-              this.dialogRef.close(parameters);
-            } else {
-              this.submit_error = parameters.error;
-            }
-          });
-
+    this.rest_service.submitJob(request).subscribe(parameters => {
+      console.log(parameters);
+      if (parameters.success === true) {
+        let snackBarRef = this.snackBar.open(
+          "Reintegrate request submitted",
+          "Ok",
+          {
+            duration: 10000
+          }
+        );
+        this.dialogRef.close(parameters);
+      } else {
+        this.submit_error = parameters.error;
+      }
+    });
   }
 }
