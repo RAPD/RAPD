@@ -44,9 +44,9 @@ export class ReintegrateDialogComponent implements OnInit {
       end_frame: 360,
       hi_res: this.data.preferences.hi_res,
       low_res: this.data.preferences.low_res,
-      rounds_polishing: this.data.preferences.rounds_polishing,
-      spacegroup: this.data.preferences.spacegroup,
-      spacegroup_decider: this.data.preferences.spacegroup_decider,
+      rounds_polishing: this.data.preferences.rounds_polishing || 1,
+      spacegroup: this.data.preferences.spacegroup || 0,
+      spacegroup_decider: this.data.preferences.spacegroup_decider || "auto",
       start_frame: 0
     };
 
@@ -104,6 +104,10 @@ export class ReintegrateDialogComponent implements OnInit {
 
     console.log(this.data);
 
+    // Working on work directory
+    // /gpfs6/users/necat/rapd2/integrate/2018-12-17/AKE004_9_2/wedge_1_360
+    console.log(this.data.results.dir);
+
     // Start to make the request object
     let request: any = {
       command: "INTEGRATE",
@@ -134,21 +138,21 @@ export class ReintegrateDialogComponent implements OnInit {
     // Debugging
     console.log(request);
 
-    this.submitted = true;
-    this.rest_service.submitJob(request).subscribe(parameters => {
-      console.log(parameters);
-      if (parameters.success === true) {
-        let snackBarRef = this.snackBar.open(
-          "Reintegrate request submitted",
-          "Ok",
-          {
-            duration: 10000
-          }
-        );
-        this.dialogRef.close(parameters);
-      } else {
-        this.submit_error = parameters.error;
-      }
-    });
+    // this.submitted = true;
+    // this.rest_service.submitJob(request).subscribe(parameters => {
+    //   console.log(parameters);
+    //   if (parameters.success === true) {
+    //     let snackBarRef = this.snackBar.open(
+    //       "Reintegrate request submitted",
+    //       "Ok",
+    //       {
+    //         duration: 10000
+    //       }
+    //     );
+    //     this.dialogRef.close(parameters);
+    //   } else {
+    //     this.submit_error = parameters.error;
+    //   }
+    // });
   }
 }

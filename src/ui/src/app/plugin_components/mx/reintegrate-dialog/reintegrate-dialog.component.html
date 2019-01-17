@@ -15,7 +15,8 @@
               <td class="rapd-form-table-rj">Spacegroup Override</td>
               <td class="rapd-form-table-select">
                 <mat-select [(ngModel)]="model.spacegroup"
-                           formControlName="spacegroup">
+                           formControlName="spacegroup"
+                            class="table-mat-select">
                   <mat-option [value]="0">None</mat-option>
                   <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
                     {{globals_service.intl2std[sg]}}
@@ -67,7 +68,8 @@
               <td class="rapd-form-table-rj">Spacegroup Decider</td>
               <td class="rapd-form-table-select">
                 <mat-select [(ngModel)]="model.spacegroup_decider"
-                           formControlName="spacegroup_decider">
+                           formControlName="spacegroup_decider"
+                           class="table-mat-select">
                   <mat-option *ngFor="let spacegroup_decider of spacegroup_deciders" [value]="spacegroup_decider.val">
                     {{spacegroup_decider.label}}
                   </mat-option>
@@ -78,7 +80,8 @@
               <td class="rapd-form-table-rj">Polishing Rounds</td>
               <td class="rapd-form-table-select">
                 <mat-select [(ngModel)]="model.rounds_polishing"
-                           formControlName="rounds_polishing">
+                           formControlName="rounds_polishing"
+                           class="table-mat-select">
                   <mat-option [value]=1>1</mat-option>
                   <mat-option [value]=2>2</mat-option>
                   <mat-option [value]=3>3</mat-option>
