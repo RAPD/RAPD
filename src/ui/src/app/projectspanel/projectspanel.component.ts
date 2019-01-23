@@ -19,7 +19,7 @@ import { RestService } from "../shared/services/rest.service";
   templateUrl: "./projectspanel.component.html",
 })
 export class ProjectspanelComponent implements OnInit {
-  private projects: Project[] = [];
+  public projects: Project[] = [];
   private dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
   // File uploader

@@ -49,9 +49,9 @@ for (let key in mx) {
 })
 export class ProjectMxComponent implements OnInit {
   public uploader: FileUploader;
+  public project: Project;
 
   private id: string;
-  private project: Project;
   private selected_integrated_data: string[] = [];
   private selected_integrate_action: string = "";
   private actions: any = {
@@ -245,7 +245,7 @@ outlet;
     );
   }
 
-  activateReintegration(result_id: string) {
+  private activateReintegration(result_id: string) {
     console.log("activateReintegration", result_id);
 
     // Get the full result
@@ -266,7 +266,7 @@ outlet;
     });
   }
 
-  activateRemoveConfirm(result_id: string) {
+  private activateRemoveConfirm(result_id: string) {
     console.log("activateRemoveConfirm", result_id);
 
     let label = this.project.source_data.filter((obj) => {
