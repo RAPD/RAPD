@@ -36,18 +36,7 @@ export class ProjectspanelComponent implements OnInit {
     this.getProjects();
   }
 
-  private getProjects() {
-    this.restService.getProjects()
-      .subscribe(
-        (parameters) => {
-          console.log(parameters);
-          //TODO
-          this.projects = parameters.projects;
-        }
-      )
-  }
-
-  private newProject() {
+  public newProject() {
 
     const project = new Project();
 
@@ -63,6 +52,17 @@ export class ProjectspanelComponent implements OnInit {
     project.title = undefined;
 
     this.editProject(project, "Create Project");
+  }
+
+  private getProjects() {
+    this.restService.getProjects()
+      .subscribe(
+        (parameters) => {
+          console.log(parameters);
+          //TODO
+          this.projects = parameters.projects;
+        }
+      )
   }
 
   private editProject(project, dialogTitle: string) {
