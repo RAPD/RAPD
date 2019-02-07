@@ -5,7 +5,7 @@
   <h2>Add To Project</h2>
 </div>
 
-<div *ngIf="! submit_error">
+<div *ngIf="! submitError">
   <mat-dialog-content *ngIf="(projects)?.length === 0">
     Please create a project in the projects tab first.
   </mat-dialog-content>
@@ -30,10 +30,10 @@
   </mat-dialog-actions>
 </div>
 
-<div *ngIf="submit_error">
+<div *ngIf="submitError">
   <mat-dialog-content>
     <h2>Error</h2>
-    {{submit_error}}
+    {{submitError}}
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-raised-button color="primary" mat-dialog-close>Ok</button>

@@ -1,19 +1,18 @@
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Headers, Response } from "@angular/http";
-
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import * as moment from "moment-mini";
+// import * as moment from "moment-mini";
 
 import { GlobalsService } from "./globals.service";
 
-import { User } from "../classes/user";
 import { Group } from "../classes/group";
-import { Session } from "../classes/session";
-import { Project } from "../classes/project";
 import { Image } from "../classes/image";
+import { Project } from "../classes/project";
 import { Run } from "../classes/run";
+import { Session } from "../classes/session";
+import { User } from "../classes/user";
 
 function baseName(str: string): string {
   var base = new String(str).substring(str.lastIndexOf("/") + 1);
@@ -265,14 +264,14 @@ export class RestService {
   public submitJob(request: any): Observable<any> {
     // console.log('submitJob', request);
 
-    let header = new HttpHeaders();
+    const header = new HttpHeaders();
     header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
 
     return (
       this.authHttp
         .put(
           this.globals_service.site.restApiUrl + "/jobs/submit",
-          JSON.stringify({ request: request })
+          JSON.stringify({request})
           // { headers: header }
         )
         // .map(res => res.json())

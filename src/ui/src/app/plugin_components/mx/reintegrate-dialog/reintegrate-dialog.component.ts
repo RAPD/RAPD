@@ -2,6 +2,8 @@ import { Component, Inject, OnInit } from "@angular/core";
 import { FormGroup, FormControl } from "@angular/forms";
 import { MatDialogRef, MAT_DIALOG_DATA, MatSnackBar } from "@angular/material";
 
+import * as moment from "moment-mini";
+
 import { RestService } from "../../../shared/services/rest.service";
 import { GlobalsService } from "../../../shared/services/globals.service";
 
@@ -41,13 +43,13 @@ export class ReintegrateDialogComponent implements OnInit {
     console.log(this.data);
 
     this.model = {
-      end_frame: 360,
+      end_frame: this.data.preferences.end_frame,
       hi_res: this.data.preferences.hi_res,
       low_res: this.data.preferences.low_res,
       rounds_polishing: this.data.preferences.rounds_polishing || 1,
       spacegroup: this.data.preferences.spacegroup || 0,
       spacegroup_decider: this.data.preferences.spacegroup_decider || "auto",
-      start_frame: 0
+      start_frame: this.data.preferences.start_frame || 1,
     };
 
     if (this.model.spacegroup === false) {
@@ -102,19 +104,24 @@ export class ReintegrateDialogComponent implements OnInit {
             }
     */
 
+    let formData = this.reintegrate_form.value;
+    console.log(formData);
+
     console.log(this.data);
 
-    // Working on work directory
-    // /gpfs6/users/necat/rapd2/integrate/2018-12-17/AKE004_9_2/wedge_1_360
-    console.log(this.data.results.dir);
+    //
+
+    // Tweak repr in case images have changed
+    if ((this.data.preferences.start_frame !== formData.start_frame) &&
+    (this.data.preferences.end_frame !== formData.end_frame)) {
+      false;
+    }
+
 
     // Start to make the request object
     let request: any = {
-      command: "INTEGRATE",
+      command: "REINTEGRATE",
       data: false,
-      directories: {
-        work: "reintegrate/2018-12-20/foobar1",
-      },
       preferences: Object.assign(
         this.data.preferences,
         this.reintegrate_form.value
@@ -122,6 +129,7 @@ export class ReintegrateDialogComponent implements OnInit {
       process: {
         image_id: this.data.process.image_id,
         parent_id: this.data._id,
+        repr: this.data.process.repr,
         run_id: this.data.process.run_id,
         session_id: this.data.process.session_id,
         status: 0,
