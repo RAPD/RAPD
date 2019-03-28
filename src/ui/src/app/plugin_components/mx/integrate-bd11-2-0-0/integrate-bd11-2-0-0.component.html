@@ -38,11 +38,11 @@
           </h3>
         </div>
         <div class="rapd-select-panel">
-          <mat-select 
+          <mat-select
             class="rapd-matselect-panel"
             placeholder="View mode"
-            floatPlaceholder="auto" 
-            (selectionChange)="onViewModeSelect($event)" 
+            floatPlaceholder="auto"
+            (selectionChange)="onViewModeSelect($event)"
             [(value)]="view_mode"
             style="display:initial;"
             name="view_mode"
@@ -187,7 +187,7 @@
         </div>
         <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
           <div fxFlex="none" class="rapd-plot-header">
-            
+
             <div class="rapd-titleselect-panel">
               <mat-select class="rapd-matselect-panel" placeholder="Select plot" (selectionChange)="setPlot(selected_plot)" [(ngModel)]="selected_plot" name="plot">
                 <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
@@ -276,12 +276,12 @@
       <button *ngIf="(full_result.results.archive_files)?.length > 0" mat-button color="primary" (click)="initDownload(full_result.results.archive_files[0])">
         <mat-icon>file_download</mat-icon>Download
       </button>
-      <button mat-raised-button color="primary" (click)="openReintegrateDialog()">
+      <button mat-button color="primary" (click)="openReintegrateDialog()">
         <mat-icon>refresh</mat-icon>Reintegrate</button>
+      <button mat-button color="primary" (click)="openMRDialog()">
+        <mat-icon>search</mat-icon>MR</button>
       <button mat-raised-button color="primary" (click)="openMergeDialog()">
         <mat-icon>call_merge</mat-icon>Merge</button>
-      <button mat-raised-button color="primary" (click)="openMrDialog()">
-        <mat-icon>search</mat-icon>MR</button>
       <button mat-raised-button color="primary" (click)="openSadDialog()">
         <mat-icon>search</mat-icon>SAD</button>
       <button mat-raised-button color="primary" (click)="openMadDialog()">

@@ -24,6 +24,7 @@ import { GlobalsService } from "../../../shared/services/globals.service";
 
 import { RunDialogComponent } from "../run-dialog/run-dialog.component";
 import { ReintegrateDialogComponent } from "../reintegrate-dialog/reintegrate-dialog.component";
+import { MrDialogComponent } from "../mr-dialog/mr-dialog.component";
 import { DialogSelectProjectComponent } from "../../../shared/components/dialog-select-project/dialog-select-project.component";
 
 // Import encapsulated plugin components here
@@ -377,10 +378,18 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   openReintegrateDialog() {
     let config = {
-      data: this.full_result
+      data: this.full_result,
     };
 
     let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
+  }
+
+  openMRDialog() {
+    let config = {
+      data: this.full_result,
+    };
+
+    let dialogRef = this.dialog.open(MrDialogComponent, config);
   }
 
   openProjectDialog() {

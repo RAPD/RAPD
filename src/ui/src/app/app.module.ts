@@ -77,6 +77,7 @@ import { LogCardComponent } from './shared/components/log-card/log-card.componen
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
 import { MxImageComponent } from './plugin_components/mx/mx-image/mx-image.component';
 import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
+import { MrDialogComponent } from './plugin_components/mx/mr-dialog/mr-dialog.component';
 import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { ErrorDialogComponent } from './shared/dialogs/error-dialog/error-dialog.component';
@@ -128,6 +129,7 @@ export function tokenGetter() {
     MxImageComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MrDialogComponent,
     //
     LogCardComponent,
     RunDialogComponent,
@@ -147,7 +149,7 @@ export function tokenGetter() {
     // JwtModule.forRoot({
     //   config: {
     //     tokenGetter: tokenGetter,
-    //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')), 
+    //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')),
     //     // blacklistedRoutes: ['localhost:3001/auth/']
     //   }
     // }),
@@ -196,6 +198,7 @@ export function tokenGetter() {
     HeaderDialogComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MrDialogComponent,
     RunDialogComponent,
     UploadDialogComponent,
   ],

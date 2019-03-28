@@ -1,4 +1,6 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component,
+         Input,
+         OnInit } from "@angular/core";
 
 import { GlobalsService } from "../../../shared/services/globals.service";
 
@@ -56,7 +58,7 @@ export class AnalysisF068200Component implements OnInit {
 
   constructor(private globals_service: GlobalsService) {}
 
-  private ngOnInit() {
+  public ngOnInit() {
 
     console.log(this.result);
 
