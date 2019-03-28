@@ -28,8 +28,8 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
 
 // Import encapsulated plugin components here
 import * as mx from "../";
-var analysis_components = {};
-var pdbquery_components = {};
+const analysis_components = {};
+const pdbquery_components = {};
 for (let key in mx) {
   console.log(key);
   // Analysis
@@ -55,7 +55,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   full_result: any = { process: { status: 0 }, results: {} };
 
   // viewModeForm: FormControl;
-  view_mode: string = "summary";
+  public view_mode: string = "summary";
 
   selected_plot: string;
   selected_plot_label: string;
@@ -116,15 +116,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   };
 
   // @ViewChild(BaseChartDirective) private _chart;
-  @ViewChild("analysistarget", { read: ViewContainerRef })
-  analysistarget;
-  @ViewChild("pdbquerytarget", { read: ViewContainerRef })
-  pdbquerytarget;
+  @ViewChild("analysistarget", { read: ViewContainerRef }) public analysistarget;
+  @ViewChild("pdbquerytarget", { read: ViewContainerRef }) public pdbquerytarget;
 
-  analysis_component: any;
-  pdbquery_component: any;
+  public analysis_component: any;
+  public pdbquery_component: any;
 
-  objectKeys = Object.keys;
+  public objectKeys = Object.keys;
 
   constructor(
     private componentfactoryResolver: ComponentFactoryResolver,
@@ -151,7 +149,9 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   public handleIncomingData(data: any) {
+
     console.log("handleIncomingData", data);
+
     this.full_result = data;
 
     // Select the default plot to show
@@ -372,7 +372,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       default:
         this.data = false;
     }
-    console.log(this.data);
+    // console.log(this.data);
   }
 
   openReintegrateDialog() {

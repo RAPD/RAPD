@@ -56,7 +56,8 @@ export class AnalysisF068200Component implements OnInit {
 
   constructor(private globals_service: GlobalsService) {}
 
-  ngOnInit() {
+  private ngOnInit() {
+
     console.log(this.result);
 
     if ("Intensity plots" in this.result.results.parsed.xtriage.plots) {
