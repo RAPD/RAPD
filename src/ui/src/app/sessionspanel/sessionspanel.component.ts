@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { Highlight } from '../shared/directives/highlight.directive';
 import { RestService } from '../shared/services/rest.service';
+import { GlobalsService } from '../shared/services/globals.service';
 import { Session } from '../shared/classes/session';
 
 @Component({
@@ -18,7 +19,8 @@ export class SessionspanelComponent implements OnInit {
   filtered_sessions: Session[] = [];
   errorMessage: string;
 
-  constructor(private rest_service: RestService,
+  constructor(private globalsService: GlobalsService,
+              private rest_service: RestService,
               private router: Router) { }
 
   ngOnInit() {
@@ -38,7 +40,10 @@ export class SessionspanelComponent implements OnInit {
   // Handle a click on the session
   selectSession(event) {
 
-    let id = event.selected[0]._id
+    let id = event.selected[0]._id;
+
+    // Share through globalsService
+    this.globalsService.currentSession = id;
 
     this.router.navigate(['/mx', id]);
   }

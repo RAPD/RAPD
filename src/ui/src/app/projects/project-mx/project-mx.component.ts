@@ -6,7 +6,7 @@ import {
   ViewContainerRef
 } from "@angular/core";
 
-import { Router, ActivatedRoute, ParamMap } from "@angular/router";
+import { ActivatedRoute, ParamMap, Router } from "@angular/router";
 
 import {
   MatDialog,

@@ -7,61 +7,40 @@
     <h3>{{data.process.repr}}</h3>
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
-    <form [formGroup]="reintegrate_form">
+    <form [formGroup]="mrForm">
       <div class="form-group">
         <table class="rapd-form-table">
           <tbody>
+
             <tr>
-              <td class="rapd-form-table-rj">Spacegroup Override</td>
+              <td class="rapd-form-table-rji">PDB ID</td>
+              <td>
+                <mat-form-field style="width:5em;">
+                  <input matInput
+                         style="text-align:center;"
+                         placeholder=""
+                         formControlName="pdb_id"
+                         [(ngModel)]="model.pdb_id">
+                </mat-form-field>
+              </td>
+            </tr>
+              <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
+              <td class="rapd-form-table-rj">Upload PDB/CIF</td>
+              <td>
+                <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
+              </td>
+            <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
+            <tr>
+              <td class="rapd-form-table-rj">Selected PDB</td>
               <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.spacegroup"
-                           formControlName="spacegroup"
-                            class="table-mat-select">
-                  <mat-option [value]="0">None</mat-option>
-                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
-                    {{globals_service.intl2std[sg]}}
+                <mat-select [(ngModel)]="model.selected_pdb"
+                           formControlName="selected_pdb"
+                           class="table-mat-select"
+                           style="margin-top:1em">
+                  <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
+                    {{pdb.originalname}}
                   </mat-option>
                 </mat-select>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rji">Frame Range</td>
-              <td>
-                <mat-form-field style="width:5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder=""
-                         formControlName="start_frame"
-                         [(ngModel)]="model.start_frame">
-                </mat-form-field>
-                -
-                <mat-form-field style="width:5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder=""
-                         formControlName="end_frame"
-                         [(ngModel)]="model.end_frame">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rji">Resolution Range</td>
-              <td>
-                <mat-form-field style="width:5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder="Low"
-                         formControlName="low_res"
-                         [(ngModel)]="model.low_res">
-                </mat-form-field>
-                -
-                <mat-form-field style="width:5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder="Hi"
-                         formControlName="hi_res"
-                         [(ngModel)]="model.hi_res">
-                </mat-form-field>
               </td>
             </tr>
             <tr>
@@ -71,7 +50,7 @@
                            formControlName="number_molecules"
                            class="table-mat-select"
                            style="margin-top:1em">
-                  <mat-option *ngFor="let number_molecule of number_molecules" [value]="number_molecule.val">
+                  <mat-option *ngFor="let number_molecule of NUMBER_MOLECULES" [value]="number_molecule.val">
                     {{number_molecule.label}}
                   </mat-option>
                 </mat-select>
@@ -86,6 +65,9 @@
   <mat-dialog-actions align="end">
     <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
     <button mat-raised-button color="primary" (click)="submitReintegrate()">Execute</button>
+    <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
+      <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
+  </span>
   </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">

@@ -7,10 +7,11 @@ import { Site } from '../../site';
 @Injectable()
 export class GlobalsService implements OnInit {
 
-  constructor(@Inject(Site) public site:Site) {}
-
   // public apiUrl = 'http://localhost:3000/api';
   // public apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
+
+  public currentSession = undefined;
+  public currentProject = undefined;
 
   // public site = "SERCAT";
   public site_color = '#EE0000';
@@ -253,8 +254,9 @@ export class GlobalsService implements OnInit {
     '213':'P4132',
   };
 
-  ngOnInit() {
-  }
+  constructor(@Inject(Site) public site:Site) {}
+
+  private ngOnInit() {}
 }
 
 

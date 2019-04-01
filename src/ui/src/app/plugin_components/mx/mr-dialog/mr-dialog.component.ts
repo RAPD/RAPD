@@ -1,6 +1,8 @@
 import { Component, Inject, OnInit } from "@angular/core";
-import { FormGroup, FormControl } from "@angular/forms";
-import { MatDialogRef, MAT_DIALOG_DATA, MatSnackBar } from "@angular/material";
+import { FormControl, FormGroup } from "@angular/forms";
+import { MAT_DIALOG_DATA, MatDialogRef, MatSnackBar } from "@angular/material";
+
+import { FileUploader } from "ng2-file-upload";
 
 import * as moment from "moment-mini";
 import { GlobalsService } from "../../../shared/services/globals.service";
@@ -12,19 +14,16 @@ import { RestService } from "../../../shared/services/rest.service";
   styleUrls: ["./mr-dialog.component.css"]
 })
 export class MrDialogComponent implements OnInit {
-  submitted: boolean = false;
-  submit_error: string = "";
-  model: any;
-  reintegrate_form: FormGroup;
+  public submitted: boolean = false;
+  public submit_error: string = "";
+  public model: any;
+  public mrForm: FormGroup;
+  public uploader: FileUploader;
 
-  sample_types = [
-    { val: "protein", label: "Protein" },
-    { val: "dna", label: "DNA" },
-    { val: "rna", label: "RNA" },
-    { val: "peptide", label: "Peptide" }
-  ];
+  // List of PDB files uploaded by this group
+  private uploadedPdbs = [];
 
-  number_molecules = [
+  private NUMBER_MOLECULES = [
     { val: 0, label: "Automatic" },
     { val: 1, label: "1" },
     { val: 2, label: "2" },
@@ -35,48 +34,81 @@ export class MrDialogComponent implements OnInit {
   ];
 
   constructor(
-    private globals_service: GlobalsService,
-    private rest_service: RestService,
+    private globalsService: GlobalsService,
+    private restService: RestService,
     public dialogRef: MatDialogRef<MrDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
-    public snackBar: MatSnackBar
-  ) {}
+    public snackBar: MatSnackBar) {}
 
-  ngOnInit() {
-    console.log(this.data);
+  public ngOnInit() {
+    // console.log(this.data);
+
+    // let self = this;
+
+    console.log(this.globalsService.currentSession);
+
+    // init the file uploader
+    this.initUploader();
 
     this.model = {
-      end_frame: this.data.preferences.end_frame,
-      hi_res: this.data.preferences.hi_res,
-      low_res: this.data.preferences.low_res,
-      rounds_polishing: this.data.preferences.rounds_polishing || 1,
-      spacegroup: this.data.preferences.spacegroup || 0,
       number_molecules: this.data.preferences.number_molecules || 0,
-      start_frame: this.data.preferences.start_frame || 1,
+      pdb_id: this.data.preferences.pdb_id || "",
+      selected_pdb: "",
     };
 
-    if (this.model.spacegroup === false) {
-      this.model.spacegroup = 0;
-    }
-
-    if (this.model.low_res === 0) {
-      this.model.low_res = "None";
-    }
-
-    if (this.model.hi_res === 0) {
-      this.model.hi_res = "None";
-    }
-
-    this.reintegrate_form = new FormGroup({
-      end_frame: new FormControl(),
-      hi_res: new FormControl(),
-      low_res: new FormControl(),
-      rounds_polishing: new FormControl(),
-      sample_type: new FormControl(),
-      spacegroup: new FormControl(),
+    this.mrForm = new FormGroup({
       number_molecules: new FormControl(),
-      start_frame: new FormControl(),
+      pdb_id: new FormControl(),
+      selected_pdb: new FormControl(),
     });
+
+    // Get the uploads for the current group
+    this.getUploads(this.globalsService.currentSession);
+  }
+
+  private getUploads(session_id: string) {
+
+    this.restService.getUploadedPdbsBySession(session_id).subscribe(parameters => {
+      console.log(parameters);
+      if (parameters.success === true) {
+        this.uploadedPdbs = parameters.uploaded_pdbs;
+      }
+    });
+  }
+
+  private initUploader() {
+    let self = this;
+
+    this.uploader = new FileUploader({
+      authToken: localStorage.getItem("access_token"),
+      autoUpload: true,
+      url: this.globalsService.site.restApiUrl + "/upload_pdb",
+    });
+    // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
+    this.uploader.onAfterAddingFile = (file) => {
+      file.withCredentials = false;
+    };
+    // overide the onCompleteItem property of the uploader so we are
+    // able to deal with the server response.
+    this.uploader.onCompleteItem = (
+      item: any,
+      response: any,
+      status: any,
+      headers: any
+    ) => {
+      console.log("PdbUpload:uploaded:", item, status, response);
+      const res = JSON.parse(response);
+      console.log(typeof(res));
+      if (res.success === true) {
+        const snackBarRef = self.snackBar.open(
+          "File uploaded",
+          "Ok",
+          {
+            duration: 5000,
+          }
+        );
+      }
+    };
   }
 
   private submitReintegrate() {
@@ -107,7 +139,7 @@ export class MrDialogComponent implements OnInit {
             }
     */
 
-    let formData = this.reintegrate_form.value;
+    let formData = this.mrForm.value;
     console.log(formData);
 
     console.log(this.data);
@@ -127,7 +159,7 @@ export class MrDialogComponent implements OnInit {
       data: false,
       preferences: Object.assign(
         this.data.preferences,
-        this.reintegrate_form.value
+        this.mrForm.value
       ),
       process: {
         image_id: this.data.process.image_id,

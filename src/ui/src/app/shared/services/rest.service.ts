@@ -344,6 +344,17 @@ export class RestService {
   }
 
   //
+  // PDB Methods
+  //
+  public getUploadedPdbsBySession(id: string): Observable<any> {
+    console.log("getUploadedPdbsBySession", id);
+
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/pdbs/by_session/" + id)
+      .catch((error) => this.handleError(error));
+  }
+
+  //
   // PROJECT methods
   //
   public getProjects(): Observable<any> {
