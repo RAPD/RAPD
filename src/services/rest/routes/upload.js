@@ -74,15 +74,17 @@ router
   .route("/upload_pdb")
   .post(upload.any(), function(req, res) {
     
+    console.log(req);
     console.log(req.decoded);
     console.log(req.files);
     
     // Save a record of where the file is
     let new_pdb = new Pdb({
       filename:req.files[0].filename,
-      group:req.decoded.group_id,
+      // group:req.decoded.group_id,
       originalname:req.files[0].originalname,
       path:req.files[0].path,
+      session:req.body.session_id,
       uploader:req.decoded._id,
     });
 

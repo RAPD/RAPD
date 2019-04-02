@@ -41,25 +41,20 @@ export class MrDialogComponent implements OnInit {
     public snackBar: MatSnackBar) {}
 
   public ngOnInit() {
-    // console.log(this.data);
-
-    // let self = this;
-
-    console.log(this.globalsService.currentSession);
 
     // init the file uploader
     this.initUploader();
 
-    this.model = {
-      number_molecules: this.data.preferences.number_molecules || 0,
-      pdb_id: this.data.preferences.pdb_id || "",
-      selected_pdb: "",
-    };
+    // this.model = {
+    //   number_molecules: this.data.preferences.number_molecules || 0,
+    //   pdb_id: this.data.preferences.pdb_id || "",
+    //   selected_pdb: 0,
+    // };
 
     this.mrForm = new FormGroup({
-      number_molecules: new FormControl(),
-      pdb_id: new FormControl(),
-      selected_pdb: new FormControl(),
+      number_molecules: new FormControl(this.data.preferences.number_molecules || 0),
+      pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
+      selected_pdb: new FormControl(0),
     });
 
     // Get the uploads for the current group
@@ -69,9 +64,9 @@ export class MrDialogComponent implements OnInit {
   private getUploads(session_id: string) {
 
     this.restService.getUploadedPdbsBySession(session_id).subscribe(parameters => {
-      console.log(parameters);
+      // console.log(parameters);
       if (parameters.success === true) {
-        this.uploadedPdbs = parameters.uploaded_pdbs;
+        this.uploadedPdbs = parameters.result;
       }
     });
   }
@@ -80,6 +75,7 @@ export class MrDialogComponent implements OnInit {
     let self = this;
 
     this.uploader = new FileUploader({
+      additionalParameter: {session_id:this.globalsService.currentSession},
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
       url: this.globalsService.site.restApiUrl + "/upload_pdb",
@@ -100,6 +96,10 @@ export class MrDialogComponent implements OnInit {
       const res = JSON.parse(response);
       console.log(typeof(res));
       if (res.success === true) {
+        // Add to pdbs on file
+        this.uploadedPdbs.unshift(res.pdb);
+        this.mrForm.controls["selected_pdb"].setValue(res.pdb._id);
+        // Pop the snackbar
         const snackBarRef = self.snackBar.open(
           "File uploaded",
           "Ok",

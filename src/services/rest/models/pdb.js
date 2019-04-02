@@ -13,7 +13,7 @@ var PdbSchema = new Schema({
       group: {
         type: Schema.Types.ObjectId,
         ref: 'Group',
-        required: true,
+        required: false,
       },
       originalname: {
         type: String,
@@ -22,6 +22,11 @@ var PdbSchema = new Schema({
       path: {
         type: String,
         required: true
+      },
+      session: {
+        type: Schema.Types.ObjectId,
+        ref: 'Session',
+        required: false,
       },
       uploaded: {
         type: Date,

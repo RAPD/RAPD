@@ -9,45 +9,49 @@
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="mrForm">
       <div class="form-group">
+        <div style="border:1px solid rgba(0,0,0,0.2);">
+          <table class="rapd-form-table">
+            <tbody>
+              <tr>
+                <td class="rapd-form-table-rji">PDB ID</td>
+                <td>
+                  <mat-form-field style="width:5em;">
+                    <input matInput
+                          style="text-align:center;"
+                          placeholder=""
+                          formControlName="pdb_id"
+                          placeholder="None">
+                  </mat-form-field>
+                </td>
+              </tr>
+                <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
+                <td class="rapd-form-table-rj">Upload PDB/CIF</td>
+                <td>
+                  <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
+                </td>
+              <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
+              <tr>
+                <td class="rapd-form-table-rj">Selected PDB</td>
+                <td class="rapd-form-table-select">
+                  <mat-select formControlName="selected_pdb"
+                            class="table-mat-select"
+                            style="margin-top:1em">
+                    <mat-option [value]="0">None</mat-option>
+                    <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
+                      {{pdb.originalname}}
+                    </mat-option>
+                  </mat-select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <table class="rapd-form-table">
           <tbody>
-
-            <tr>
-              <td class="rapd-form-table-rji">PDB ID</td>
-              <td>
-                <mat-form-field style="width:5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder=""
-                         formControlName="pdb_id"
-                         [(ngModel)]="model.pdb_id">
-                </mat-form-field>
-              </td>
-            </tr>
-              <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
-              <td class="rapd-form-table-rj">Upload PDB/CIF</td>
-              <td>
-                <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
-              </td>
-            <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
-            <tr>
-              <td class="rapd-form-table-rj">Selected PDB</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.selected_pdb"
-                           formControlName="selected_pdb"
-                           class="table-mat-select"
-                           style="margin-top:1em">
-                  <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
-                    {{pdb.originalname}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
             <tr>
               <td class="rapd-form-table-rj"># Molecules in ASU</td>
               <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.number_molecules"
-                           formControlName="number_molecules"
+                <mat-select formControlName="number_molecules"
                            class="table-mat-select"
                            style="margin-top:1em">
                   <mat-option *ngFor="let number_molecule of NUMBER_MOLECULES" [value]="number_molecule.val">

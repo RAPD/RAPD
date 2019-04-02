@@ -196,6 +196,7 @@ apiRoutes.post("/authenticate", function(req, res) {
         console.log("user:", user);
 
         // create a token
+        user.pass = undefined;
         var token = jwt.sign(user.toJSON(), app.get("superSecret"), {
           expiresIn: 86400 // expires in 24 hours
         });
