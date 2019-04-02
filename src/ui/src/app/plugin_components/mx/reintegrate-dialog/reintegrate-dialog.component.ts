@@ -77,49 +77,16 @@ export class ReintegrateDialogComponent implements OnInit {
   }
 
   private submitReintegrate() {
-    /*
-    command = {
-                "command":"INTEGRATE",
-                "process":{
-                    "image_id":image1.get("_id"),
-                    "parent_id":False,
-                    "result_id":str(ObjectId()),
-                    "run_id":run_data.get("_id"),
-                    "session_id":session_id,
-                    "status":0,
-                    "type":"plugin"
-                    },
-                "directories":directories,
-                "data": {
-                    "image_data":image1,
-                    "run_data":run_data
-                },
-                "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
-                "preferences":{
-                    "cleanup":False,
-                    "json":False,
-                    "exchange_dir":self.site.EXCHANGE_DIR,
-                    "xdsinp":xdsinp
-                },
-            }
-    */
-
-    let formData = this.reintegrate_form.value;
-    console.log(formData);
-
-    console.log(this.data);
-
-    //
 
     // Tweak repr in case images have changed
+    const formData = this.reintegrate_form.value;
     if ((this.data.preferences.start_frame !== formData.start_frame) &&
     (this.data.preferences.end_frame !== formData.end_frame)) {
       false;
     }
 
-
     // Start to make the request object
-    let request: any = {
+    const request: any = {
       command: "REINTEGRATE",
       data: false,
       preferences: Object.assign(
@@ -138,29 +105,27 @@ export class ReintegrateDialogComponent implements OnInit {
       site_parameters: false,
     };
 
-    // request.parent_result_id = this.data._id;
-
     // Update the preferences with the form values
     // request.preferences = Object.assign(this.data.preferences, this.reintegrate_form.value);
 
     // Debugging
     console.log(request);
 
-    // this.submitted = true;
-    // this.rest_service.submitJob(request).subscribe(parameters => {
-    //   console.log(parameters);
-    //   if (parameters.success === true) {
-    //     let snackBarRef = this.snackBar.open(
-    //       "Reintegrate request submitted",
-    //       "Ok",
-    //       {
-    //         duration: 10000
-    //       }
-    //     );
-    //     this.dialogRef.close(parameters);
-    //   } else {
-    //     this.submit_error = parameters.error;
-    //   }
-    // });
+    this.submitted = true;
+    this.rest_service.submitJob(request).subscribe((parameters) => {
+      console.log(parameters);
+      if (parameters.success === true) {
+        const snackBarRef = this.snackBar.open(
+          "Reintegrate request submitted",
+          "Ok",
+          {
+            duration: 10000,
+          }
+        );
+        this.dialogRef.close(parameters);
+      } else {
+        this.submit_error = parameters.error;
+      }
+    });
   }
 }

@@ -13,43 +13,26 @@ router.route('/pdbs/by_session/:session_id')
       .get(function(req, res) {
         console.log(req.params);
 
-        Session.findOne({_id:req.params.session_id}, function(err, result) {
-          console.log(result);
-        })
-
-        Pdb.find({session:req.params.session_id}, function(err, result) {
+        Session.findOne({_id:req.params.session_id}, function(err, session) {
           // console.log(result);
-          if (err) {
-            console.error(err);
-            res.status(500).json({
-              success: false,
-              message: err
-            });
-          } else {
-            console.log('Returning result:', result);
-            res.status(200).json({
-              success: true,
-              result: result
-            });
-          }
-        })
 
-        // console.log(res);
-        // Result.findOne({_id:req.params.result_id}, function(err, result) {
-        //   if (err) {
-        //     console.error(err);
-        //     res.status(500).json({
-        //       success: false,
-        //       message: err
-        //     });
-        //   } else {
-        //     console.log('Returning result:', result);
-        //     res.status(200).json({
-        //       success: true,
-        //       result: result
-        //     });
-        //   }
-        //  });
+          Pdb.find({group:session.group}, function(err, result) {
+            // console.log(result);
+            if (err) {
+              console.error(err);
+              res.status(500).json({
+                success: false,
+                message: err
+              });
+            } else {
+              console.log('Returning result:', result);
+              res.status(200).json({
+                success: true,
+                result: result
+              });
+            }
+          })
+        })
       });
 
 // // resultsbysession

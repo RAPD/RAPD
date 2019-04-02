@@ -7,38 +7,81 @@
     <h3>{{data.process.repr}}</h3>
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
-    <form [formGroup]="mrForm">
-      <div class="form-group">
-        <div style="border:1px solid rgba(0,0,0,0.2);">
+    <div style="border:1px solid rgba(0,0,0,0.2);padding:0.5em;border-radius:0.2em;">
+      <form [formGroup]="mrForm">
+        <div class="form-group">
           <table class="rapd-form-table">
             <tbody>
               <tr>
-                <td class="rapd-form-table-rji">PDB ID</td>
+                <td class="rapd-form-table-rji">Description</td>
                 <td>
-                  <mat-form-field style="width:5em;">
+                  <mat-form-field style="width:10em;">
                     <input matInput
                           style="text-align:center;"
                           placeholder=""
-                          formControlName="pdb_id"
-                          placeholder="None">
+                          formControlName="description">
                   </mat-form-field>
                 </td>
               </tr>
-                <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
-                <td class="rapd-form-table-rj">Upload PDB/CIF</td>
-                <td>
-                  <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
-                </td>
-              <tr><td class="rapd-form-table-rji">OR</td><td></td></tr>
+            </tbody>
+          </table>
+          <div style="border:1px solid rgba(0,0,0,0.2);">
+            <table class="rapd-form-table">
+              <tbody>
+                <tr>
+                  <td class="rapd-form-table-rji">PDB ID</td>
+                  <td>
+                    <mat-form-field style="width:5em;">
+                      <input matInput
+                            style="text-align:center;"
+                            placeholder=""
+                            formControlName="pdb_id">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rji">OR</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Selected PDB</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="selected_pdb"
+                              class="table-mat-select"
+                              style="margin-top:1em">
+                      <mat-option [value]="0">None</mat-option>
+                      <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
+                        {{pdb.originalname}}
+                      </mat-option>
+                    </mat-select>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rji">OR</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Upload PDB/CIF</td>
+                  <td>
+                    <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
+                    <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
+                      <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <table class="rapd-form-table">
+            <tbody>
               <tr>
-                <td class="rapd-form-table-rj">Selected PDB</td>
+                <td class="rapd-form-table-rj"># Molecules in ASU</td>
                 <td class="rapd-form-table-select">
-                  <mat-select formControlName="selected_pdb"
+                  <mat-select formControlName="number_molecules"
                             class="table-mat-select"
                             style="margin-top:1em">
-                    <mat-option [value]="0">None</mat-option>
-                    <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
-                      {{pdb.originalname}}
+                    <mat-option *ngFor="let number_molecule of NUMBER_MOLECULES" [value]="number_molecule.val">
+                      {{number_molecule.label}}
                     </mat-option>
                   </mat-select>
                 </td>
@@ -46,38 +89,19 @@
             </tbody>
           </table>
         </div>
-        <table class="rapd-form-table">
-          <tbody>
-            <tr>
-              <td class="rapd-form-table-rj"># Molecules in ASU</td>
-              <td class="rapd-form-table-select">
-                <mat-select formControlName="number_molecules"
-                           class="table-mat-select"
-                           style="margin-top:1em">
-                  <mat-option *ngFor="let number_molecule of NUMBER_MOLECULES" [value]="number_molecule.val">
-                    {{number_molecule.label}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </form>
+      </form>
+    </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
     <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
-    <button mat-raised-button color="primary" (click)="submitReintegrate()">Execute</button>
-    <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
-      <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
-  </span>
+    <button mat-raised-button color="primary" (click)="submitMr()">Execute</button>
   </mat-dialog-actions>
 </div>
-<div *ngIf="submit_error">
+<div *ngIf="submitError">
   <mat-dialog-content>
     <h2>Error</h2>
-    {{submit_error}}
+    {{submitError}}
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-raised-button color="primary" mat-dialog-close>Ok</button>

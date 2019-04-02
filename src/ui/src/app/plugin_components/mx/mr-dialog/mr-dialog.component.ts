@@ -15,13 +15,13 @@ import { RestService } from "../../../shared/services/rest.service";
 })
 export class MrDialogComponent implements OnInit {
   public submitted: boolean = false;
-  public submit_error: string = "";
+  public submitError: string = "";
   public model: any;
   public mrForm: FormGroup;
   public uploader: FileUploader;
 
   // List of PDB files uploaded by this group
-  private uploadedPdbs = [];
+  public uploadedPdbs = [];
 
   private NUMBER_MOLECULES = [
     { val: 0, label: "Automatic" },
@@ -52,6 +52,7 @@ export class MrDialogComponent implements OnInit {
     // };
 
     this.mrForm = new FormGroup({
+      description: new FormControl(""),
       number_molecules: new FormControl(this.data.preferences.number_molecules || 0),
       pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
       selected_pdb: new FormControl(0),
@@ -111,51 +112,15 @@ export class MrDialogComponent implements OnInit {
     };
   }
 
-  private submitReintegrate() {
-    /*
-    command = {
-                "command":"INTEGRATE",
-                "process":{
-                    "image_id":image1.get("_id"),
-                    "parent_id":False,
-                    "result_id":str(ObjectId()),
-                    "run_id":run_data.get("_id"),
-                    "session_id":session_id,
-                    "status":0,
-                    "type":"plugin"
-                    },
-                "directories":directories,
-                "data": {
-                    "image_data":image1,
-                    "run_data":run_data
-                },
-                "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
-                "preferences":{
-                    "cleanup":False,
-                    "json":False,
-                    "exchange_dir":self.site.EXCHANGE_DIR,
-                    "xdsinp":xdsinp
-                },
-            }
-    */
+  private submitMr() {
 
-    let formData = this.mrForm.value;
-    console.log(formData);
-
-    console.log(this.data);
-
-    //
-
-    // Tweak repr in case images have changed
-    if ((this.data.preferences.start_frame !== formData.start_frame) &&
-    (this.data.preferences.end_frame !== formData.end_frame)) {
-      false;
-    }
-
+    // let formData = this.mrForm.value;
+    // console.log(formData);
+    // console.log(this.data);
 
     // Start to make the request object
-    let request: any = {
-      command: "REINTEGRATE",
+    const request: any = {
+      command: "MR",
       data: false,
       preferences: Object.assign(
         this.data.preferences,
@@ -173,29 +138,33 @@ export class MrDialogComponent implements OnInit {
       site_parameters: false,
     };
 
-    // request.parent_result_id = this.data._id;
-
-    // Update the preferences with the form values
-    // request.preferences = Object.assign(this.data.preferences, this.reintegrate_form.value);
+    // Cleanup the preferences
+    if ("xdsinp" in request.preferences) {
+      delete request.preferences.xdsinp;
+    }
+    if ("analysis" in request.preferences) {
+      delete request.preferences.analysis;
+    }
 
     // Debugging
     console.log(request);
 
-    // this.submitted = true;
-    // this.rest_service.submitJob(request).subscribe(parameters => {
-    //   console.log(parameters);
-    //   if (parameters.success === true) {
-    //     let snackBarRef = this.snackBar.open(
-    //       "Reintegrate request submitted",
-    //       "Ok",
-    //       {
-    //         duration: 10000
-    //       }
-    //     );
-    //     this.dialogRef.close(parameters);
-    //   } else {
-    //     this.submit_error = parameters.error;
-    //   }
-    // });
+    this.submitted = true;
+    this.restService.submitJob(request).subscribe(parameters => {
+      console.log(parameters);
+      if (parameters.success === true) {
+        let snackBarRef = this.snackBar.open(
+          "Reintegrate request submitted",
+          "Ok",
+          {
+            duration: 10000,
+          }
+        );
+        // Close the dialog
+        this.dialogRef.close(parameters);
+      } else {
+        this.submitError = parameters.error;
+      }
+    });
   }
 }
