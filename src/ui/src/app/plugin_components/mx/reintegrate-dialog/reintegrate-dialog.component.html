@@ -7,15 +7,39 @@
     <h3>{{data.process.repr}}</h3>
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
-    <form [formGroup]="reintegrate_form">
-      <div class="form-group">
+    <form [formGroup]="reintegrateForm">
+      <div class="form-group rapd-dialog-border">
         <table class="rapd-form-table">
           <tbody>
             <tr>
+              <td class="rapd-form-table-rji">Description</td>
+              <td>
+                <mat-form-field style="width:10em;">
+                  <input matInput
+                        style="text-align:center;"
+                        placeholder=""
+                        formControlName="description">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rj">Project</td>
+              <td class="rapd-form-table-select">
+                <mat-select formControlName="project"
+                          class="table-mat-select"
+                          style="margin-top:1em">
+                  <mat-option [value]="0">None</mat-option>
+                  <mat-option [value]="-1">New Project</mat-option>
+                  <mat-option *ngFor="let project of projects" [value]="project._id">
+                    {{project.title}}
+                  </mat-option>
+                </mat-select>
+              </td>
+            </tr>
+            <tr>
               <td class="rapd-form-table-rj">Spacegroup Override</td>
               <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.spacegroup"
-                           formControlName="spacegroup"
+                <mat-select formControlName="spacegroup"
                             class="table-mat-select">
                   <mat-option [value]="0">None</mat-option>
                   <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
@@ -30,17 +54,15 @@
                 <mat-form-field style="width:5em;">
                   <input matInput
                          style="text-align:center;"
-                         placeholder=""
-                         formControlName="start_frame"
-                         [(ngModel)]="model.start_frame">
+                         placeholder="Start"
+                         formControlName="start_frame">
                 </mat-form-field>
                 -
                 <mat-form-field style="width:5em;">
                   <input matInput
                          style="text-align:center;"
-                         placeholder=""
-                         formControlName="end_frame"
-                         [(ngModel)]="model.end_frame">
+                         placeholder="End"
+                         formControlName="end_frame">
                 </mat-form-field>
               </td>
             </tr>
@@ -51,25 +73,22 @@
                   <input matInput
                          style="text-align:center;"
                          placeholder="Low"
-                         formControlName="low_res"
-                         [(ngModel)]="model.low_res">
+                         formControlName="low_res">
                 </mat-form-field>
                 -
                 <mat-form-field style="width:5em;">
                   <input matInput
                          style="text-align:center;"
-                         placeholder="Hi"
-                         formControlName="hi_res"
-                         [(ngModel)]="model.hi_res">
+                         placeholder="High"
+                         formControlName="hi_res">
                 </mat-form-field>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rj">Spacegroup Decider</td>
               <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.spacegroup_decider"
-                           formControlName="spacegroup_decider"
-                           class="table-mat-select">
+                <mat-select formControlName="spacegroup_decider"
+                            class="table-mat-select">
                   <mat-option *ngFor="let spacegroup_decider of spacegroup_deciders" [value]="spacegroup_decider.val">
                     {{spacegroup_decider.label}}
                   </mat-option>
@@ -79,9 +98,8 @@
             <tr>
               <td class="rapd-form-table-rj">Polishing Rounds</td>
               <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.rounds_polishing"
-                           formControlName="rounds_polishing"
-                           class="table-mat-select">
+                <mat-select formControlName="rounds_polishing"
+                            class="table-mat-select">
                   <mat-option [value]=1>1</mat-option>
                   <mat-option [value]=2>2</mat-option>
                   <mat-option [value]=3>3</mat-option>

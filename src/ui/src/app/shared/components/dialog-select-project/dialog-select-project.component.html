@@ -13,8 +13,7 @@
   <mat-dialog-content *ngIf="(projects)?.length > 0" [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="projectForm">
       <mat-form-field>
-        <mat-select [(ngModel)]="model._id"
-                  formControlName="_id">
+        <mat-select formControlName="_id">
           <mat-option *ngFor="let project of projects" [value]="project._id">
             {{project.title}}
           </mat-option>

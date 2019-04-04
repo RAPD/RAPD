@@ -1,11 +1,17 @@
-import { Component, Inject, OnInit } from "@angular/core";
-import { FormGroup, FormControl } from "@angular/forms";
-import { MatDialogRef, MAT_DIALOG_DATA, MatSnackBar } from "@angular/material";
+import { Component,
+         Inject,
+         OnInit } from "@angular/core";
+import { FormControl,
+         FormGroup } from "@angular/forms";
+import { MAT_DIALOG_DATA,
+         MatDialogRef,
+         MatSnackBar } from "@angular/material";
 
 import * as moment from "moment-mini";
 
-import { RestService } from "../../../shared/services/rest.service";
+import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
 import { GlobalsService } from "../../../shared/services/globals.service";
+import { RestService } from "../../../shared/services/rest.service";
 
 @Component({
   selector: "app-reintegrate-dialog",
@@ -13,33 +19,37 @@ import { GlobalsService } from "../../../shared/services/globals.service";
   styleUrls: ["./reintegrate-dialog.component.css"]
 })
 export class ReintegrateDialogComponent implements OnInit {
-  submitted: boolean = false;
-  submit_error: string = "";
-  model: any;
-  reintegrate_form: FormGroup;
+  public submitted: boolean = false;
+  public submit_error: string = "";
+  public model: any;
+  public reintegrateForm: FormGroup;
 
-  sample_types = [
+  public sample_types = [
     { val: "protein", label: "Protein" },
     { val: "dna", label: "DNA" },
     { val: "rna", label: "RNA" },
     { val: "peptide", label: "Peptide" }
   ];
 
-  spacegroup_deciders = [
+  public spacegroup_deciders = [
     { val: "auto", label: "Automatic" },
     { val: "xds", label: "XDS" },
     { val: "pointless", label: "Pointless" }
   ];
 
+  // Projects for the group that owns the session
+  public projects = [];
+
   constructor(
     private globals_service: GlobalsService,
-    private rest_service: RestService,
+    private restService: RestService,
     public dialogRef: MatDialogRef<ReintegrateDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public snackBar: MatSnackBar
   ) {}
 
-  ngOnInit() {
+  private ngOnInit() {
+
     console.log(this.data);
 
     this.model = {
@@ -64,22 +74,77 @@ export class ReintegrateDialogComponent implements OnInit {
       this.model.hi_res = "None";
     }
 
-    this.reintegrate_form = new FormGroup({
-      end_frame: new FormControl(),
-      hi_res: new FormControl(),
-      low_res: new FormControl(),
-      rounds_polishing: new FormControl(),
+    this.reintegrateForm = new FormGroup({
+      description: new FormControl(""),
+      end_frame: new FormControl(this.data.preferences.end_frame),
+      hi_res: new FormControl(this.data.preferences.hi_res || "None"),
+      low_res: new FormControl(this.data.preferences.low_res || "None"),
+      project: new FormControl(0),
+      rounds_polishing: new FormControl(this.data.preferences.rounds_polishing || 1),
       sample_type: new FormControl(),
-      spacegroup: new FormControl(),
-      spacegroup_decider: new FormControl(),
-      start_frame: new FormControl(),
+      spacegroup: new FormControl(this.data.preferences.spacegroup || 0),
+      spacegroup_decider: new FormControl(this.data.preferences.spacegroup_decider || "auto"),
+      start_frame: new FormControl(this.data.preferences.start_frame || 1),
+    });
+
+    // Handle changes of the form
+    this.onChanges();
+
+    // Get the projects for the current group
+    this.getProjects(this.globalsService.currentSession);
+  }
+
+  private onChanges(): void {
+
+    const self = this;
+
+    this.reintegrateForm.valueChanges.subscribe((val) => {
+      console.log("onChanges", val);
+
+      // New project
+      if (val.project === -1) {
+        const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
+        newProjectDialogRef.componentInstance.dialog_title = "Create New Project";
+        newProjectDialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            console.log(result);
+            if (result.success === true) {
+              self.projects.push(result.project);
+              self.reintegrateForm.controls["project"].setValue(result.project._id);
+            }
+          }
+        });
+      }
+
+      // // Enable execute button when conditions are correct
+      // if (val.pdb_id.length > 3 || val.selected_pdb != 0) {
+      //   self.executeDisabled = false;
+      // } else {
+      //   self.executeDisabled = true;
+      // }
+
+      // if (val.project != 0) {
+      //   self.executeDisabled = false;
+      // } else {
+      //   self.executeDisabled = true;
+      // }
+    });
+  }
+
+  private getProjects(session_id: string) {
+
+    this.restService.getProjectsBySession(session_id).subscribe(parameters => {
+      // console.log(parameters);
+      if (parameters.success === true) {
+        this.projects = parameters.result;
+      }
     });
   }
 
   private submitReintegrate() {
 
     // Tweak repr in case images have changed
-    const formData = this.reintegrate_form.value;
+    const formData = this.reintegrateForm.value;
     if ((this.data.preferences.start_frame !== formData.start_frame) &&
     (this.data.preferences.end_frame !== formData.end_frame)) {
       false;
@@ -91,7 +156,7 @@ export class ReintegrateDialogComponent implements OnInit {
       data: false,
       preferences: Object.assign(
         this.data.preferences,
-        this.reintegrate_form.value
+        this.reintegrateForm.value
       ),
       process: {
         image_id: this.data.process.image_id,
@@ -112,7 +177,7 @@ export class ReintegrateDialogComponent implements OnInit {
     console.log(request);
 
     this.submitted = true;
-    this.rest_service.submitJob(request).subscribe((parameters) => {
+    this.restService.submitJob(request).subscribe((parameters) => {
       console.log(parameters);
       if (parameters.success === true) {
         const snackBarRef = this.snackBar.open(

@@ -366,6 +366,14 @@ export class RestService {
       .catch((error) => this.handleError(error));
   }
 
+  public getProjectsBySession(id: string): Observable<any> {
+    console.log("getProjectsBySession", id);
+
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/projects/by_session/" + id)
+      .catch((error) => this.handleError(error));
+  }
+
   public getProject(id: string): Observable<any> {
     console.log("getProject", id);
 

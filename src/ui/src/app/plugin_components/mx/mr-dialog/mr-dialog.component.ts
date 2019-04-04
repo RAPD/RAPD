@@ -1,10 +1,17 @@
-import { Component, Inject, OnInit } from "@angular/core";
-import { FormControl, FormGroup } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialogRef, MatSnackBar } from "@angular/material";
-
-import { FileUploader } from "ng2-file-upload";
+import { Component,
+         Inject,
+         OnInit } from "@angular/core";
+import { FormControl,
+         FormGroup } from "@angular/forms";
+import { MAT_DIALOG_DATA,
+         MatDialog,
+         MatDialogRef,
+         MatSnackBar } from "@angular/material";
 
 import * as moment from "moment-mini";
+import { FileUploader } from "ng2-file-upload";
+
+import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
 import { GlobalsService } from "../../../shared/services/globals.service";
 import { RestService } from "../../../shared/services/rest.service";
 
@@ -20,46 +27,81 @@ export class MrDialogComponent implements OnInit {
   public mrForm: FormGroup;
   public uploader: FileUploader;
 
+  // Projects for the group that owns the session
+  public projects = [];
+
   // List of PDB files uploaded by this group
   public uploadedPdbs = [];
 
-  private NUMBER_MOLECULES = [
-    { val: 0, label: "Automatic" },
-    { val: 1, label: "1" },
-    { val: 2, label: "2" },
-    { val: 3, label: "3" },
-    { val: 4, label: "4" },
-    { val: 5, label: "5" },
-    { val: 6, label: "6" },
-  ];
+  public executeDisabled = true;
 
   constructor(
     private globalsService: GlobalsService,
     private restService: RestService,
     public dialogRef: MatDialogRef<MrDialogComponent>,
+    private newProjectDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public snackBar: MatSnackBar) {}
 
   public ngOnInit() {
 
-    // init the file uploader
-    this.initUploader();
+    console.log(this.data);
 
-    // this.model = {
-    //   number_molecules: this.data.preferences.number_molecules || 0,
-    //   pdb_id: this.data.preferences.pdb_id || "",
-    //   selected_pdb: 0,
-    // };
-
+    // Create form
     this.mrForm = new FormGroup({
       description: new FormControl(""),
-      number_molecules: new FormControl(this.data.preferences.number_molecules || 0),
+      number_molecules: new FormControl(0),
       pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
+      project: new FormControl(0),
       selected_pdb: new FormControl(0),
     });
+    this.onChanges();
+
+    // Init the file uploader
+    this.initUploader();
 
     // Get the uploads for the current group
     this.getUploads(this.globalsService.currentSession);
+
+    // Get the projects for the current group
+    this.getProjects(this.globalsService.currentSession);
+  }
+
+  private onChanges(): void {
+
+    const self = this;
+
+    this.mrForm.valueChanges.subscribe((val) => {
+      console.log("onChanges", val);
+
+      // New project
+      if (val.project === -1) {
+        const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
+        newProjectDialogRef.componentInstance.dialog_title = "Create New Project";
+        newProjectDialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            console.log(result);
+            if (result.success === true) {
+              self.projects.push(result.project);
+              self.mrForm.controls["project"].setValue(result.project._id);
+            }
+          }
+        });
+      }
+
+      // Enable execute button when conditions are correct
+      if (val.pdb_id.length > 3 || val.selected_pdb != 0) {
+        self.executeDisabled = false;
+      } else {
+        self.executeDisabled = true;
+      }
+
+      if (val.project != 0) {
+        self.executeDisabled = false;
+      } else {
+        self.executeDisabled = true;
+      }
+    });
   }
 
   private getUploads(session_id: string) {
@@ -68,6 +110,16 @@ export class MrDialogComponent implements OnInit {
       // console.log(parameters);
       if (parameters.success === true) {
         this.uploadedPdbs = parameters.result;
+      }
+    });
+  }
+
+  private getProjects(session_id: string) {
+
+    this.restService.getProjectsBySession(session_id).subscribe(parameters => {
+      // console.log(parameters);
+      if (parameters.success === true) {
+        this.projects = parameters.result;
       }
     });
   }

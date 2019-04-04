@@ -7,7 +7,7 @@
     <h3>{{data.process.repr}}</h3>
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
-    <div style="border:1px solid rgba(0,0,0,0.2);padding:0.5em;border-radius:0.2em;">
+    <div class="rapd-dialog-border">
       <form [formGroup]="mrForm">
         <div class="form-group">
           <table class="rapd-form-table">
@@ -23,9 +23,23 @@
                   </mat-form-field>
                 </td>
               </tr>
+              <tr>
+                <td class="rapd-form-table-rj">Project</td>
+                <td class="rapd-form-table-select">
+                  <mat-select formControlName="project"
+                            class="table-mat-select"
+                            style="margin-top:1em">
+                    <mat-option [value]="0">None</mat-option>
+                    <mat-option [value]="-1">New Project</mat-option>
+                    <mat-option *ngFor="let project of projects" [value]="project._id">
+                      {{project.title}}
+                    </mat-option>
+                  </mat-select>
+                </td>
+              </tr>
             </tbody>
           </table>
-          <div style="border:1px solid rgba(0,0,0,0.2);">
+          <div class="rapd-dialog-border">
             <table class="rapd-form-table">
               <tbody>
                 <tr>
@@ -47,8 +61,8 @@
                   <td class="rapd-form-table-rj">Selected PDB</td>
                   <td class="rapd-form-table-select">
                     <mat-select formControlName="selected_pdb"
-                              class="table-mat-select"
-                              style="margin-top:1em">
+                                class="table-mat-select"
+                                style="margin-top:1em">
                       <mat-option [value]="0">None</mat-option>
                       <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
                         {{pdb.originalname}}
@@ -78,11 +92,13 @@
                 <td class="rapd-form-table-rj"># Molecules in ASU</td>
                 <td class="rapd-form-table-select">
                   <mat-select formControlName="number_molecules"
-                            class="table-mat-select"
-                            style="margin-top:1em">
-                    <mat-option *ngFor="let number_molecule of NUMBER_MOLECULES" [value]="number_molecule.val">
-                      {{number_molecule.label}}
-                    </mat-option>
+                              class="table-mat-select"
+                              style="margin-top:1em;width:4em;">
+                    <mat-option [value]="0">Auto</mat-option>
+                    <mat-option [value]="1">1</mat-option>
+                    <mat-option [value]="2">2</mat-option>
+                    <mat-option [value]="3">3</mat-option>
+                    <mat-option [value]="4">4</mat-option>
                   </mat-select>
                 </td>
               </tr>
@@ -95,7 +111,7 @@
 
   <mat-dialog-actions align="end">
     <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
-    <button mat-raised-button color="primary" (click)="submitMr()">Execute</button>
+    <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitMr()">Execute</button>
   </mat-dialog-actions>
 </div>
 <div *ngIf="submitError">
