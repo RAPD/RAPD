@@ -2,8 +2,10 @@ import { Component,
          Inject,
          OnInit } from "@angular/core";
 import { FormControl,
-         FormGroup } from "@angular/forms";
+         FormGroup,
+         Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA,
+         MatDialog,
          MatDialogRef,
          MatSnackBar } from "@angular/material";
 
@@ -41,45 +43,53 @@ export class ReintegrateDialogComponent implements OnInit {
   public projects = [];
 
   constructor(
-    private globals_service: GlobalsService,
+    public globalsService: GlobalsService,
     private restService: RestService,
+    private newProjectDialog: MatDialog,
     public dialogRef: MatDialogRef<ReintegrateDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public snackBar: MatSnackBar
   ) {}
 
-  private ngOnInit() {
+  public ngOnInit() {
 
     console.log(this.data);
 
-    this.model = {
-      end_frame: this.data.preferences.end_frame,
-      hi_res: this.data.preferences.hi_res,
-      low_res: this.data.preferences.low_res,
-      rounds_polishing: this.data.preferences.rounds_polishing || 1,
-      spacegroup: this.data.preferences.spacegroup || 0,
-      spacegroup_decider: this.data.preferences.spacegroup_decider || "auto",
-      start_frame: this.data.preferences.start_frame || 1,
-    };
+    // this.model = {
+    //   end_frame: this.data.preferences.end_frame,
+    //   hi_res: this.data.preferences.hi_res,
+    //   low_res: this.data.preferences.low_res,
+    //   rounds_polishing: this.data.preferences.rounds_polishing || 1,
+    //   spacegroup: this.data.preferences.spacegroup || 0,
+    //   spacegroup_decider: this.data.preferences.spacegroup_decider || "auto",
+    //   start_frame: this.data.preferences.start_frame || 1,
+    // };
 
-    if (this.model.spacegroup === false) {
-      this.model.spacegroup = 0;
-    }
+    // if (! this.data.preferences.spacegroup) {
+    //   this.model.spacegroup = 0;
+    // }
 
-    if (this.model.low_res === 0) {
-      this.model.low_res = "None";
-    }
+    // if (! this.data.preferences.low_res) {
+    //   this.model.low_res = "None";
+    // }
 
-    if (this.model.hi_res === 0) {
-      this.model.hi_res = "None";
+    // if (! this.data.preferences.hi_res) {
+    //   this.model.hi_res = "None";
+    // }
+
+    // Figure out end frame from repr - a bit of a kludge, need to improve
+    let endFrame;
+    if (! this.data.preferences.end_frame) {
+      const repr = this.data.process.repr;
+      endFrame = parseInt(repr.slice(repr.indexOf("[")+1,repr.indexOf("]")).split("-")[1], 10);
     }
 
     this.reintegrateForm = new FormGroup({
       description: new FormControl(""),
-      end_frame: new FormControl(this.data.preferences.end_frame),
-      hi_res: new FormControl(this.data.preferences.hi_res || "None"),
-      low_res: new FormControl(this.data.preferences.low_res || "None"),
-      project: new FormControl(0),
+      end_frame: new FormControl(endFrame),
+      hi_res: new FormControl(this.data.preferences.hi_res || undefined),
+      low_res: new FormControl(this.data.preferences.low_res || null),
+      project: new FormControl("", Validators.required),
       rounds_polishing: new FormControl(this.data.preferences.rounds_polishing || 1),
       sample_type: new FormControl(),
       spacegroup: new FormControl(this.data.preferences.spacegroup || 0),
@@ -106,12 +116,14 @@ export class ReintegrateDialogComponent implements OnInit {
         const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
         newProjectDialogRef.componentInstance.dialog_title = "Create New Project";
         newProjectDialogRef.afterClosed().subscribe((result) => {
+          console.log(result);
           if (result) {
-            console.log(result);
             if (result.success === true) {
               self.projects.push(result.project);
               self.reintegrateForm.controls["project"].setValue(result.project._id);
             }
+          } else {
+            self.reintegrateForm.controls["project"].reset();
           }
         });
       }

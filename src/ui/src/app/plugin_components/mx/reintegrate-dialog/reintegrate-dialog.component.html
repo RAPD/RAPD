@@ -26,14 +26,19 @@
               <td class="rapd-form-table-rj">Project</td>
               <td class="rapd-form-table-select">
                 <mat-select formControlName="project"
-                          class="table-mat-select"
-                          style="margin-top:1em">
-                  <mat-option [value]="0">None</mat-option>
-                  <mat-option [value]="-1">New Project</mat-option>
+                            required
+                            class="table-mat-select"
+                            style="margin-top:1em">
+                  <!-- <mat-option [value]="0">None</mat-option> -->
                   <mat-option *ngFor="let project of projects" [value]="project._id">
                     {{project.title}}
                   </mat-option>
+                  <mat-option [value]="-1">New Project</mat-option>
                 </mat-select>
+                <!-- <div *ngIf="reintegrateForm.get('project').hasError('required')">
+                  Project required
+                </div> -->
+                <mat-error *ngIf="reintegrateForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
               </td>
             </tr>
             <tr>
@@ -42,8 +47,8 @@
                 <mat-select formControlName="spacegroup"
                             class="table-mat-select">
                   <mat-option [value]="0">None</mat-option>
-                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
-                    {{globals_service.intl2std[sg]}}
+                  <mat-option *ngFor="let sg of globalsService.sgs_in_order" [value]="sg">
+                    {{globalsService.intl2std[sg]}}
                   </mat-option>
                 </mat-select>
               </td>

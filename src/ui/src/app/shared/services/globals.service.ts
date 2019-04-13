@@ -256,7 +256,7 @@ export class GlobalsService implements OnInit {
 
   constructor(@Inject(Site) public site:Site) {}
 
-  private ngOnInit() {}
+  public ngOnInit() {}
 }
 
 
