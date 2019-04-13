@@ -38,7 +38,7 @@ export class RestService {
       this.authHttp
         .get(this.globals_service.site.restApiUrl + "/dashboard/results")
         // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .catch((error) => this.handleError(error))
     );
   }
 
@@ -49,7 +49,7 @@ export class RestService {
       this.authHttp
         .get(this.globals_service.site.restApiUrl + "/dashboard/logins")
         // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .catch((error) => this.handleError(error))
     );
   }
 
