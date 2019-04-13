@@ -18,21 +18,23 @@ import {
 
 import { ReplaySubject } from "rxjs/Rx";
 
+import { GlobalsService } from "../../../shared/services/globals.service";
 import { RestService } from "../../../shared/services/rest.service";
 import { WebsocketService } from "../../../shared/services/websocket.service";
-import { GlobalsService } from "../../../shared/services/globals.service";
 
-import { RunDialogComponent } from "../run-dialog/run-dialog.component";
-import { ReintegrateDialogComponent } from "../reintegrate-dialog/reintegrate-dialog.component";
-import { MrDialogComponent } from "../mr-dialog/mr-dialog.component";
 import { DialogSelectProjectComponent } from "../../../shared/components/dialog-select-project/dialog-select-project.component";
+import { MrDialogComponent } from "../mr-dialog/mr-dialog.component";
+import { ReintegrateDialogComponent } from "../reintegrate-dialog/reintegrate-dialog.component";
+import { RunDialogComponent } from "../run-dialog/run-dialog.component";
+import { SadDialogComponent } from "../sad-dialog/sad-dialog.component";
+
 
 // Import encapsulated plugin components here
 import * as mx from "../";
 const analysis_components = {};
 const pdbquery_components = {};
 for (let key in mx) {
-  console.log(key);
+  // console.log(key);
   // Analysis
   if (key.match("Analysis")) {
     analysis_components[key.toLowerCase()] = mx[key];
@@ -49,18 +51,16 @@ for (let key in mx) {
   styleUrls: ["./integrate-bd11-2-0-0.component.css"]
 })
 export class IntegrateBd11200Component implements OnInit, OnDestroy {
-  @Input() current_result: any;
+  @Input() public current_result: any;
 
-  incomingData$: ReplaySubject<string>;
-
-  full_result: any = { process: { status: 0 }, results: {} };
+  public full_result: any = { process: { status: 0 }, results: {} };
 
   // viewModeForm: FormControl;
   public view_mode: string = "summary";
 
-  selected_plot: string;
-  selected_plot_label: string;
-  plot_select_labels: any = {
+  public selected_plot: string;
+  public selected_plot_label: string;
+  public plot_select_labels: any = {
     "Rmerge vs Frame": "Rmerge vs Batch",
     "I/sigma, Mean Mn(I)/sd(Mn(I))": "I / sigma I",
     "Average I, RMS deviation, and Sd": "I vs Resolution",
@@ -125,6 +125,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   public objectKeys = Object.keys;
 
+  private incomingData$: ReplaySubject<string>;
+
   constructor(
     private componentfactoryResolver: ComponentFactoryResolver,
     private rest_service: RestService,
@@ -134,7 +136,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     public snackBar: MatSnackBar
   ) {}
 
-  ngOnInit() {
+  public ngOnInit() {
     // Subscribe to results for the displayed result
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.data_type,
@@ -145,7 +147,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  ngOnDestroy() {
+  public ngOnDestroy() {
     this.websocket_service.unsubscribeResultDetails(this.incomingData$);
   }
 
@@ -168,18 +170,18 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   // Display the header information
-  displayRunInfo() {
-    let config = {
+  public displayRunInfo() {
+    const config = {
       data: {
         run_id: this.full_result.process.run_id,
         image_id: this.full_result.process.image_id
       }
     };
 
-    let dialogRef = this.dialog.open(RunDialogComponent, config);
+    const dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  onViewModeSelect(event) {
+  public onViewModeSelect(event) {
     // console.log('onViewModeSelect', event.value);
 
     var self = this;
@@ -248,13 +250,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     }, 200);
   }
 
-  onPlotSelect(plot_key: string) {
-    console.log("onPlotSelect", plot_key);
-    this.setPlot(plot_key);
-  }
+  // public onPlotSelect(plot_key: string) {
+  //   console.log("onPlotSelect", plot_key);
+  //   this.setPlot(plot_key);
+  // }
 
   // Set up the plot
-  setPlot(plot_key: string) {
+  public setPlot(plot_key: string) {
     console.log("setPlot", plot_key);
 
     let plot_result = this.full_result.results.plots[plot_key];
@@ -376,48 +378,56 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     // console.log(this.data);
   }
 
-  openReintegrateDialog() {
-    let config = {
+  public openReintegrateDialog() {
+    const config = {
       data: this.full_result,
     };
 
-    let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
+    const dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
   }
 
-  openMRDialog() {
-    let config = {
+  public openMrDialog() {
+    const config = {
       data: this.full_result,
     };
 
-    let dialogRef = this.dialog.open(MrDialogComponent, config);
+    const dialogRef = this.dialog.open(MrDialogComponent, config);
   }
 
-  openProjectDialog() {
-    let config = { data: this.current_result };
+  public openSadDialog() {
+    const config = {
+      data: this.full_result,
+    };
 
-    let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
+    const dialogRef = this.dialog.open(SadDialogComponent, config);
+  }
+
+  public openProjectDialog() {
+    const config = { data: this.current_result };
+
+    const dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'
-  pinResult(result) {
+  public pinResult(result) {
     result.display = "pinned";
     this.websocket_service.updateResult(result);
   }
 
   // Change the current result's display to undefined
-  undefResult(result) {
+  public undefResult(result) {
     result.display = "";
     this.websocket_service.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
-  junkResult(result) {
+  public junkResult(result) {
     result.display = "junked";
     this.websocket_service.updateResult(result);
   }
 
   // Start the download of data
-  initDownload(record: any) {
+  public initDownload(record: any) {
     console.log(record);
 
     // Signal that the request has been made
