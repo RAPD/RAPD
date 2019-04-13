@@ -41,6 +41,7 @@ export class ReintegrateDialogComponent implements OnInit {
 
   // Projects for the group that owns the session
   public projects = [];
+  public executeDisabled = true;
 
   constructor(
     public globalsService: GlobalsService,
@@ -116,7 +117,7 @@ export class ReintegrateDialogComponent implements OnInit {
         const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
         newProjectDialogRef.componentInstance.dialog_title = "Create New Project";
         newProjectDialogRef.afterClosed().subscribe((result) => {
-          console.log(result);
+          // console.log(result);
           if (result) {
             if (result.success === true) {
               self.projects.push(result.project);
@@ -128,18 +129,12 @@ export class ReintegrateDialogComponent implements OnInit {
         });
       }
 
-      // // Enable execute button when conditions are correct
-      // if (val.pdb_id.length > 3 || val.selected_pdb != 0) {
-      //   self.executeDisabled = false;
-      // } else {
-      //   self.executeDisabled = true;
-      // }
-
-      // if (val.project != 0) {
-      //   self.executeDisabled = false;
-      // } else {
-      //   self.executeDisabled = true;
-      // }
+      // Enable execute button when conditions are correct
+      if (val.project != 0) {
+        self.executeDisabled = false;
+      } else {
+        self.executeDisabled = true;
+      }
     });
   }
 

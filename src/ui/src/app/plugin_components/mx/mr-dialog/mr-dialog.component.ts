@@ -2,7 +2,8 @@ import { Component,
          Inject,
          OnInit } from "@angular/core";
 import { FormControl,
-         FormGroup } from "@angular/forms";
+         FormGroup,
+         Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA,
          MatDialog,
          MatDialogRef,
@@ -34,6 +35,7 @@ export class MrDialogComponent implements OnInit {
   public uploadedPdbs = [];
 
   public executeDisabled = true;
+  public pdbSelectDisabled = false;
 
   constructor(
     private globalsService: GlobalsService,
@@ -52,7 +54,7 @@ export class MrDialogComponent implements OnInit {
       description: new FormControl(""),
       number_molecules: new FormControl(0),
       pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
-      project: new FormControl(0),
+      project: new FormControl("", Validators.required),
       selected_pdb: new FormControl(0),
     });
     this.onChanges();
@@ -80,13 +82,21 @@ export class MrDialogComponent implements OnInit {
         newProjectDialogRef.componentInstance.dialog_title = "Create New Project";
         newProjectDialogRef.afterClosed().subscribe((result) => {
           if (result) {
-            console.log(result);
             if (result.success === true) {
               self.projects.push(result.project);
               self.mrForm.controls["project"].setValue(result.project._id);
             }
+          } else {
+            self.mrForm.controls["project"].reset();
           }
         });
+      }
+
+      // Disable/Enable the PDB select and upload based on the input
+      if (val.pdb_id) {
+        this.pdbSelectDisabled = true;
+      } else {
+        this.pdbSelectDisabled = false;
       }
 
       // Enable execute button when conditions are correct

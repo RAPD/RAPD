@@ -29,12 +29,12 @@
                   <mat-select formControlName="project"
                             class="table-mat-select"
                             style="margin-top:1em">
-                    <mat-option [value]="0">None</mat-option>
-                    <mat-option [value]="-1">New Project</mat-option>
                     <mat-option *ngFor="let project of projects" [value]="project._id">
                       {{project.title}}
                     </mat-option>
+                    <mat-option [value]="-1">New Project</mat-option>
                   </mat-select>
+                  <mat-error *ngIf="mrForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
                 </td>
               </tr>
             </tbody>
@@ -62,8 +62,9 @@
                   <td class="rapd-form-table-select">
                     <mat-select formControlName="selected_pdb"
                                 class="table-mat-select"
-                                style="margin-top:1em">
-                      <mat-option [value]="0">None</mat-option>
+                                style="margin-top:1em"
+                                [disabled]="pdbSelectDisabled">
+                      <mat-option>None</mat-option>
                       <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
                         {{pdb.originalname}}
                       </mat-option>
@@ -77,7 +78,12 @@
                 <tr>
                   <td class="rapd-form-table-rj">Upload PDB/CIF</td>
                   <td>
-                    <button mat-raised-button (click)="fileInput.click()"><mat-icon>cloud_upload</mat-icon>Upload</button>
+                    <button mat-raised-button
+                            (click)="fileInput.click()"
+                            [disabled]="pdbSelectDisabled">
+                      <mat-icon>cloud_upload</mat-icon>
+                      Upload
+                    </button>
                     <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
                       <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
                     </span>
