@@ -243,7 +243,7 @@ class Gatherer(object):
         atexit.register(exit_gracefully)
 
         # Start by adding the current dir in the beamline redis db
-        DATA_DIR = "ADX_SUBDIR_SV" # "datadir_%s" % self.tag
+        DATA_DIR = "ADX_DIRECTORY_SV" # "datadir_%s" % self.tag
 
         # Listen for new directory
         current_dir = ""
