@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from "@angular/core";
 
-import { FormGroup, FormControl } from "@angular/forms";
+import { FormControl, FormGroup } from "@angular/forms";
 
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material";
 
 import { Project } from "../../classes/project";
 import { User } from "../../classes/user";
@@ -21,7 +21,7 @@ export class DialogNewProjectComponent implements OnInit {
   public submit_error: string;
   public submitted: boolean = false;
   @Input() project: Project;
-  @Input() dialog_title: string;
+  @Input() public dialog_title: string;
   public model: Project;
   public project_form: FormGroup;
 

@@ -8,6 +8,7 @@ import {
 } from "@angular/material";
 
 import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
+import { SequenceDialogComponent } from "../../../shared/dialogs/sequence-dialog/sequence-dialog.component";
 import { GlobalsService } from "../../../shared/services/globals.service";
 import { RestService } from "../../../shared/services/rest.service";
 
@@ -20,7 +21,6 @@ export class SadDialogComponent implements OnInit {
   public submitted: boolean = false;
   public submitError: string = "";
   public sadForm: FormGroup;
-  public disulfideDisabled = true;
 
   // Projects for the group that owns the session
   public projects = [];
@@ -32,6 +32,7 @@ export class SadDialogComponent implements OnInit {
     private globalsService: GlobalsService,
     private restService: RestService,
     private newProjectDialog: MatDialog,
+    private newSequenceDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<SadDialogComponent>,
     public snackBar: MatSnackBar
@@ -44,7 +45,7 @@ export class SadDialogComponent implements OnInit {
       element: new FormControl("Se"),
       hires_cutoff: new FormControl(0),
       number_atoms: new FormControl(0),
-      number_disulfides: new FormControl(0),
+      number_disulfides: new FormControl({value: 0, disabled: true}),
       number_trials: new FormControl(1024),
       project: new FormControl("", Validators.required),
       sequence: new FormControl(0),
@@ -62,6 +63,20 @@ export class SadDialogComponent implements OnInit {
     this.sadForm.valueChanges.subscribe((val) => {
       console.log("onChanges", val);
 
+      // Disulfides
+      if (val.element === "S") {
+        if (this.sadForm.controls["number_disulfides"].disabled) {
+          this.sadForm.controls["number_disulfides"].enable();
+        }
+      } else {
+        if (val.number_disulfides > 0) {
+          this.sadForm.controls["number_disulfides"].setValue(0);
+        }
+        if (this.sadForm.controls["number_disulfides"].enabled) {
+          this.sadForm.controls["number_disulfides"].disable();
+        }
+      }
+
       // New project
       if (val.project === -1) {
         const newProjectDialogRef = this.newProjectDialog.open(DialogNewProjectComponent);
@@ -78,13 +93,22 @@ export class SadDialogComponent implements OnInit {
         });
       }
 
-      // Disable/Enable the PDB select and upload based on the input
-      if (val.pdb_id) {
-        this.pdbSelectDisabled = true;
-      } else {
-        this.pdbSelectDisabled = false;
+      // New sequence
+      if (val.sequence === -1) {
+        const newSequenceDialogRef = this.newSequenceDialog.open(SequenceDialogComponent);
+        newSequenceDialogRef.componentInstance.dialogTitle = "Enter New Sequence";
+        newSequenceDialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            if (result.success === true) {
+              self.projects.push(result.project);
+              self.sadForm.controls["sequence"].setValue(result.project._id);
+            }
+          } else {
+            self.sadForm.controls["sequence"].setValue(0);
+          }
+        });
       }
-  }
+  })
 }
 
   private getProjects(session_id: string) {

@@ -67,7 +67,8 @@
                               style="text-align:center;"
                               formControlName="number_disulfides"
                               type="number"
-                              [disabled]="disulfideDisabled">
+                              min="0"
+                              max="20">
                     </mat-form-field>
                   </td>
                 </tr>
@@ -78,7 +79,9 @@
                         <input matInput
                               style="text-align:center;"
                               formControlName="number_trials"
-                              type="number">
+                              type="number"
+                              min="0"
+                              max="10000">
                     </mat-form-field>
                   </td>
                 </tr>
