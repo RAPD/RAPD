@@ -243,7 +243,7 @@ class Gatherer(object):
         atexit.register(exit_gracefully)
 
         # Start by adding the current dir in the beamline redis db
-        DATA_DIR = "ADX_SUBDIR_SV" # "datadir_%s" % self.tag
+        DATA_DIR = "ADX_DIRECTORY_SV" # "datadir_%s" % self.tag
 
         # Listen for new directory
         current_dir = ""
@@ -345,7 +345,9 @@ def main():
 
     # If no commandline site, look to environmental args 
     if site == None: 
-        site = environmental_vars["RAPD_SITE"] 
+        site = environmental_vars.get("RAPD_SITE")
+    
+    assert site != None, "site is not set" 
 
     # Determine the site 
     site_file = usite.determine_site(site_arg=site) 
