@@ -282,9 +282,9 @@ if [ $INSTALL_CCTBX == 1 ]; then
     cd $CCTBX_PREFIX_TGT
 
     # Get the bootstrap installer
-    cp $SRC_DIR/cctbx/bootstrap.py .
+    # cp $SRC_DIR/cctbx/bootstrap.py .
     # printf "  Downloading CCTBX bootstrap script"
-    # wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+    wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
 
     # Install CCTBX
     printf "  Installing CCTBX"
