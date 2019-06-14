@@ -28,11 +28,11 @@ RUN echo -e "bjsdjhdx\nbjsdjhdx" | (passwd tester)
 RUN  echo "tester ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 USER tester
 WORKDIR /home/tester
-RUN wget https://sbgrid.org/wiki/downloads/sbgrid-1.0.660-Linux.tgz
-RUN gunzip sbgrid-1.0.660-Linux.tgz
-RUN tar xvf sbgrid-1.0.660-Linux.tar
-WORKDIR /home/tester/sbgrid-1.0.660-Linux
+# RUN wget https://sbgrid.org/wiki/downloads/sbgrid-1.0.660-Linux.tgz
+# RUN gunzip sbgrid-1.0.660-Linux.tgz
+# RUN tar xvf sbgrid-1.0.660-Linux.tar
+# WORKDIR /home/tester/sbgrid-1.0.660-Linux
 
-# RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
-# WORKDIR /home/tester/rapd/install
-# RUN ./install -mb
+RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
+WORKDIR /home/tester/rapd/install
+RUN ./install -mb
