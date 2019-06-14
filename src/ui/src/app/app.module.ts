@@ -101,6 +101,7 @@ import { DialogSelectProjectComponent } from "./shared/components/dialog-select-
 import { DialogNewProjectComponent } from "./shared/components/dialog-new-project/dialog-new-project.component";
 import { ErrorDialogComponent } from "./shared/dialogs/error-dialog/error-dialog.component";
 import { ConfirmDialogComponent } from "./shared/dialogs/confirm-dialog/confirm-dialog.component";
+import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
 export function tokenGetter() {
   return localStorage.getItem("access_token");
@@ -158,7 +159,8 @@ export function tokenGetter() {
     ErrorDialogComponent,
     ConfirmDialogComponent,
     UploadDialogComponent,
-    Hcmerge4cba100Component
+    Hcmerge4cba100Component,
+    Mrc33b200Component
   ],
   imports: [
     BrowserModule,
