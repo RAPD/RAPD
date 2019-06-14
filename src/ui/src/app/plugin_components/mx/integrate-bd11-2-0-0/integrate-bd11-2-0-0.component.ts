@@ -117,8 +117,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   };
 
   // @ViewChild(BaseChartDirective) private _chart;
-  @ViewChild("analysistarget", { read: ViewContainerRef }) public analysistarget;
-  @ViewChild("pdbquerytarget", { read: ViewContainerRef }) public pdbquerytarget;
+  @ViewChild("analysistarget", { read: ViewContainerRef, static: false }) public analysistarget;
+  @ViewChild("pdbquerytarget", { read: ViewContainerRef, static: false }) public pdbquerytarget;
 
   public analysis_component: any;
   public pdbquery_component: any;
