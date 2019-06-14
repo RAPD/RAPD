@@ -70,14 +70,23 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         "INDEX"          : 'index.q',
-         #"INDEX"          : 'phase1.q',
+         #"INDEX"          : 'phase2.q,phase3.q,index.q',
+         "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
-         "XDS"            : 'fibre.q',
+         #"XDS"            : 'phase2.q,phase1.q,fibre.q',
+         "XDS"            : 'phase3.q',
          #"INTEGRATE"      : 'integrate.q',
-         "INTEGRATE"      : 'fibre.q', # because phase 3 nodes are having problems allocating memory
-         "PDBQUERY"       : 'all.q,general.q',
+         #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
+         #"INTEGRATE"      : 'phase3.q',
+         "INTEGRATE"      : 'phase1.q,general.q',
+         #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
+         #"PDBQUERY"       : 'phase3.q',
+         "PDBQUERY"      : 'phase1.q,general.q',
+         #"ANALYSIS"       : 'phase2.q,phase1.q,general.q',
+         #"ANALYSIS"       : 'phase3.q',
+         "ANALYSIS"       : 'phase1.q,general.q',
+         "MR"             : 'phase1.q,general.q',
          }
     if d.get(inp, False):
         return(d[inp])
@@ -91,7 +100,7 @@ def get_nproc_njobs():
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
     nproc = 1
-    if command in ('INDEX', 'INTEGRATE'):
+    if command in ('INDEX'):
         nproc = 4
     return nproc
   
@@ -159,21 +168,8 @@ def connectCluster(inp, job=True):
 #class Cluster_Event():
 #    def __init__(self):
 #        pass
-def mp_job(func):
-    """
-    wrapper to run processCluster in a multiprocessing.Process to avoid
-    threading problems in DRMAA with multiple jobs sent to same session.
-    """
-    
-    @wraps(func)
-    def wrapper(**kwargs):
-        #job = False
-        job = Process(target=func, kwargs=kwargs)
-        job.start()
-        job.join()
-    return wrapper
 
-def mp_job_NEW(func):
+def mp_job(func):
     """
     wrapper to run processCluster in a multiprocessing.Process to avoid
     threading problems in DRMAA with multiple jobs sent to same session.
@@ -192,33 +188,11 @@ def mp_job_NEW(func):
             return func(**kwargs)
     return wrapper
 
-def process_cluster_fix_OLD(func):
-    """
-    wrapper to run processCluster in a multiprocessing.Process to avoid
-    threading problems in DRMAA with multiple jobs sent to same session.
-    """
-    # If command starts with any in list, then mp.Process it.
-    l = ['labelit.index', 'best -f', 'mosflm_strat']
-    @wraps(func)
-    def wrapper(**kwargs):
-        job = False
-        for s in l:
-            if kwargs['command'].count(s):
-                job = Process(target=func, kwargs=kwargs)
-                job.start()
-                break
-        # wait for the job to finish and join
-        if job:
-            job.join()
-        else:
-            return func(**kwargs)
-    return wrapper
-
-@mp_job_NEW
+@mp_job
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,
-                   batch_queue='all.q',
+                   batch_queue='general.q,all.q',
                    nproc=1,
                    logger=False,
                    name=False,
@@ -253,15 +227,13 @@ def process_cluster(command,
     s = False
     jt = False
     fd = False
+    m = False
     if work_dir == False:
         work_dir = os.getcwd()
     if result_queue:
         if logfile == False:
             fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
             logfile = fd.name
-    if not batch_queue:
-         batch_queue ='all.q'
-    
     counter = 0
 
     #'-clear' can be added to the options to eliminate the general.q
@@ -340,7 +312,6 @@ def process_cluster(command,
                   "stderr": '',
                   "tag": tag}
         result_queue.put(result)
-
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     if s:
         s.exit()

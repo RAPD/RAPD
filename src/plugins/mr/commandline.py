@@ -30,6 +30,7 @@ import multiprocessing
 import os
 import sys
 import uuid
+import importlib
 
 # RAPD imports
 import utils.log
@@ -45,22 +46,20 @@ def construct_command(commandline_args):
 
     class commandline_args(object):
         clean = True | False
-        contaminants = True | False
-        datafile = ""
+        data_file = ""
+        struct_file = ""
         json = True | False
         no_color = True | False
         nproc = int
-        pdbs = False | ["pdbid", ...]
         progress = True | False
         run_mode = "interactive" | "json" | "server" | "subprocess"
-        search = True | False
         test = True | False
         verbose = True | False
     """
 
     # The task to be carried out
     command = {
-        "command": "PDBQUERY",
+        "command": "MR",
         "process_id": uuid.uuid1().get_hex(),
         "status": 0,
         }
@@ -69,8 +68,8 @@ def construct_command(commandline_args):
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
-            "rapd_pdbquery_%s" %  ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            "rapd_mr_%s" %  ".".join(
+                os.path.basename(commandline_args.data_file).split(".")[:-1])),
         active=True,
         up=commandline_args.dir_up)
 
@@ -81,23 +80,20 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile),
-        "pdbs": commandline_args.pdbs,
-        "db_settings": commandline_args.db_settings
+        "data_file": os.path.abspath(commandline_args.data_file),
+        "struct_file": os.path.abspath(commandline_args.struct_file),
+        #"db_settings": commandline_args.db_settings
     }
 
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
         "json": commandline_args.json,
-        "contaminants": commandline_args.contaminants,
         "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
-        "search": commandline_args.search,
         "test": commandline_args.test,
-        #"computer_cluster": commandline_args.computer_cluster,
-        #"results_queue": commandline_args.results_queue,
+        "adf": commandline_args.adf,
     }
 
     return command
@@ -106,101 +102,106 @@ def get_commandline():
     """Grabs the commandline"""
 
     # Parse the commandline arguments
-    commandline_description = "Launch pdbquery plugin"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
+    commandline_description = "Launch mr plugin"
+    parser = argparse.ArgumentParser(description=commandline_description)
+    
+    # Parse the commandline arguments
+    #commandline_description = """Launch an MR on input model and data"""
+    #parser = argparse.ArgumentParser(parents=[commandline_utils.dp_parser],
+    #                                 description=commandline_description)
 
     # Run in test mode
-    my_parser.add_argument("-t", "--test",
+    parser.add_argument("-t", "--test",
                            action="store_true",
                            dest="test",
                            help="Run in test mode")
 
     # Verbose
-    # my_parser.add_argument("-v", "--verbose",
-    #                        action="store_true",
-    #                        dest="verbose",
-    #                        help="More output")
+    parser.add_argument("-v", "--verbose",
+                            action="store_true",
+                            dest="verbose",
+                            help="More output")
 
     # Quiet
-    my_parser.add_argument("-q", "--quiet",
+    parser.add_argument("-q", "--quiet",
                            action="store_false",
                            dest="verbose",
                            help="Run with less output")
-
-    # Messy
-    # my_parser.add_argument("--messy",
-    #                        action="store_false",
-    #                        dest="clean",
-    #                        help="Keep intermediate files")
+    # The site
+    parser.add_argument("-s", "--site",
+                       action="store",
+                       dest="site",
+                       help="Define the site (ie. NECAT)")
 
     # Clean
-    my_parser.add_argument("--clean",
+    parser.add_argument("--clean",
                            action="store_true",
                            dest="clean",
                            help="Remove intermediate files")
 
     # Color
-    # my_parser.add_argument("--color",
-    #                        action="store_false",
-    #                        dest="no_color",
-    #                        help="Color the terminal output")
+    parser.add_argument("--color",
+                           action="store_false",
+                           dest="no_color",
+                           default=False,
+                           help="Color the terminal output")
 
     # No color
-    my_parser.add_argument("--nocolor",
+    parser.add_argument("--nocolor",
                            action="store_true",
                            dest="no_color",
                            help="Do not color the terminal output")
 
     # JSON Output
-    my_parser.add_argument("-j", "--json",
+    parser.add_argument("-j", "--json",
                            action="store_true",
                            dest="json",
                            help="Output JSON format string")
 
     # Output progress updates?
-    my_parser.add_argument("--progress",
+    parser.add_argument("--progress",
                            action="store_true",
                            dest="progress",
                            help="Output progress updates to the terminal")
+    
+    # Set filehandle for progress output
+    parser.add_argument("--progress-fd",
+                           action="store",
+                           dest="progress_fd",
+                           default=False,
+                           help="Output progress updates to a file descriptor. No need to also use --progress, unless you want JSON on the terminal too.")
 
     # Multiprocessing
-    my_parser.add_argument("--nproc",
+    parser.add_argument("--nproc",
                            dest="nproc",
                            type=int,
                            default=max(1, multiprocessing.cpu_count() - 1),
                            help="Number of processors to employ")
-
-    # Run similarity search
-    my_parser.add_argument("--search",
-                           dest="search",
+    
+    # Calculate ADF map on solutions
+    parser.add_argument("--adf",
                            action="store_true",
-                           help="Search for structures with similar unit cells")
+                           dest="adf",
+                           help="Calculate Anomalous Difference Fourier map on solution")
 
-    # Run contaminant screen
-    my_parser.add_argument("--contaminants",
-                           action="store_true",
-                           dest="contaminants",
-                           help="Run screen of known common contaminants")
-
-    # Run contaminant screen
-    my_parser.add_argument("--pdbs", "--pdb",
-                           dest="pdbs",
-                           nargs="*",
-                           default=False,
-                           help="PDB codes to test")
+    # Run specific structure file
+    parser.add_argument("--struct_file", "--pdb", "--cif",
+                           dest="struct_file",
+                           required=True,
+                           help="PDB/mmCIF file path or a PDB code.")
 
     # Positional argument
-    my_parser.add_argument("--datafile",
-                           dest="datafile",
+    parser.add_argument("--data_file", "--mtz",
+                           dest="data_file",
                            required=True,
                            help="Name of data file to be analyzed")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:
-        my_parser.print_help()
-        my_parser.exit()
+        parser.print_help()
+        parser.exit()
 
-    args = my_parser.parse_args()
+    args = parser.parse_args()
 
     # Fixes a problem from plugin-called code
     args.exchange_dir = False
@@ -213,16 +214,8 @@ def get_commandline():
         args.run_mode = "json"
     else:
         args.run_mode = "interactive"
-
-    # Capitalize pdb codes
-    if args.pdbs:
-        tmp_pdbs = []
-        for pdb in args.pdbs:
-            if not len(pdb) == 4:
-                raise Exception(\
-                "PDB codes must be 4 characters. %s is not valid." % pdb)
-            tmp_pdbs.append(pdb.upper())
-        args.pdbs = tmp_pdbs
+        # Show progress in interactive version
+        args.progress = True
 
     return args
 
@@ -230,7 +223,7 @@ def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
 ------------
-RAPD Example
+RAPD MR
 ------------"""
     printer(message, 50, color="blue")
 
@@ -247,10 +240,11 @@ def main():
 
     # Set up logging
     logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_pdbquery",
+                                  logfile_id="rapd_mr",
                                   level=log_level,
-                                  console=commandline_args.test)
-
+                                  #console=commandline_args.test
+                                  console=False)
+    
     # Set up terminal printer
     # Verbosity
     if commandline_args.json:
@@ -286,12 +280,25 @@ def main():
     else:
         commandline_args.dir_up = False
 
+    # Get site - commandline wins over the environmental variable
+    site = False
+    site_module = False
+    if commandline_args.site:
+        site = commandline_args.site
+    elif environmental_vars.has_key("RAPD_SITE"):
+        site = environmental_vars["RAPD_SITE"]
+
+    # If someone specifies the site or found in env.
+    if site and not site_module:
+        site_file = utils.site.determine_site(site_arg=site)
+        site_module = importlib.import_module(site_file)
+
     # Construct the command
     command = construct_command(commandline_args=commandline_args)
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
-                                 directories=["plugins.pdbquery"],
+                                 directories=["plugins.mr"],
                                  logger=logger)
 
     # Print out plugin info
@@ -302,7 +309,12 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Run the plugin
-    plugin.RapdPlugin(command, tprint, logger)
+    # Instantiate the plugin
+    plugin_instance = plugin.RapdPlugin(command=command,
+                                        site=site_module,
+                                        tprint=tprint,
+                                        logger=logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

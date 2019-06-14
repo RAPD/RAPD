@@ -360,7 +360,7 @@ class hdf5_to_cbf_converter(object):
 
 def get_prefix(img_path):
     """Return the image prefix"""
-    # get rif of '_master.h5' and any extra '.' which will screw up Labelit.
+    # get rid of '_master.h5' and any extra '.' which will screw up Labelit.
     return os.path.basename(img_path).replace("_master.h5", "").replace('.', '_')
 
 def main(args):

@@ -28,7 +28,7 @@ __status__ = "Development"
 # import json
 # import multiprocessing
 from multiprocessing import Process, Queue
-from Queue import Queue as tqueue
+#from Queue import Queue as tqueue
 import os
 from pprint import pprint
 import signal
@@ -47,12 +47,11 @@ import phaser
 
 # RAPD imports
 from utils import archive
-from utils.xutils import convert_unicode
+from utils.xutils import convert_unicode, calc_ADF_map
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
-
 
 def run_phaser_pdbquery_script_OLD(command):
     """
@@ -62,10 +61,10 @@ def run_phaser_pdbquery_script_OLD(command):
     os.chdir(command["work_dir"])
 
     # Setup params
-    run_before = command.get("run_before", False)
+    full = command.get("full", False)
     copy = command.get("copy", 1)
     resolution = command.get("res", False)
-    datafile = command.get("data")
+    data_file = command.get("data")
     input_pdb = command.get("pdb", False)
     input_cif = command.get("cif", False)
     spacegroup = command.get("spacegroup")
@@ -78,7 +77,7 @@ def run_phaser_pdbquery_script_OLD(command):
 
     # Construct the phaser command file
     command = "phaser << eof\nMODE MR_AUTO\n"
-    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
+    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % data_file
 
     # CIF or PDB?
     if input_pdb:
@@ -94,7 +93,7 @@ def run_phaser_pdbquery_script_OLD(command):
         command += "JOBS 1\n"
     else:
         command += "SGALTERNATIVE SELECT NONE\n"
-    if run_before:
+    if full:
         # Picks own resolution
         # Round 2, pick best solution as long as less that 10% clashes
         command += "PACK SELECT PERCENT\n"
@@ -290,31 +289,38 @@ def mp_job(func):
             launcher = kwargs.pop('launcher', None)
             # Pop out the batch_queue
             batch_queue = kwargs.pop('batch_queue', None)
+            # Pop out the results_queue
+            result_queue = kwargs.pop('result_queue', None)
             # Create a unique identifier for Phaser results
-            kwargs['output_id'] = 'Phaser_%d' % random.randint(0, 10000)
+            #kwargs['output_id'] = 'Phaser_%d' % random.randint(0, 10000)
+            # Grab the RAPD python path (if available)
+            rapd_python = kwargs.pop('rapd_python', 'rapd.python')
             # Signal to launch run
             kwargs['script'] = True
             if kwargs.get('pool', False):
                 # If running on local machine
                 pool = kwargs.pop('pool')
                 f = write_script(kwargs)
-                new_kwargs = {"command": "rapd2.python %s" % f,
-                              "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
-                              }
-                proc = pool.apply_async(launcher, kwds=new_kwargs,)
-                return (proc, 'junk', kwargs['output_id'])
+                proc = pool.apply_async(launcher,
+                                        kwds={"command": "%s %s" % (rapd_python, f),
+                                              "logfile": os.path.join(convert_unicode(kwargs.get('work_dir')), 'rapd_phaser.log'),
+                                              "result_queue" : result_queue,
+                                               })
+                #return (proc, 'junk', kwargs['output_id'])
+                return (proc, 'junk')
             else:
                 # If running on computer cluster
                 f = write_script(kwargs)
                 pid_queue = Queue()
                 proc = Process(target=launcher,
-                               kwargs={"command": "rapd2.python %s" % f,
+                               kwargs={"command": "%s %s" % (rapd_python, f),
+                                       "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
                                        "pid_queue": pid_queue,
                                        "batch_queue": batch_queue,
-                                       "logfile": os.path.join(kwargs.get('work_dir'), 'rapd_phaser.log'),
                                        })
                 proc.start()
-                return (proc, pid_queue.get(), kwargs['output_id'])
+                #return (proc, pid_queue.get(), kwargs['output_id'])
+                return (proc, pid_queue.get())
         else:
             # Remove extra input params used to setup job
             l = ['script', 'test']
@@ -325,40 +331,38 @@ def mp_job(func):
             return func(**kwargs)
     return wrapper
 
-
 @mp_job
-def run_phaser(datafile,
+def run_phaser(data_file,
+               struct_file,
                spacegroup,
-               output_id,
-               db_settings,
+               db_settings=False,
+               tag=False,
                work_dir=False,
-               cif=False,
-               pdb=False,
+               adf=False,
                name=False,
                ncopy=1,
                cell_analysis=False,
                resolution=False,
-               large_cell=False,
-               run_before=False,
+               full=False,
                ):
     """
     Run Phaser and passes results back to RAPD Redis DB
     **Requires Phaser src code!**
 
-    datafile - input data as mtz
-    spacegroup - The space group to run MR
-    output_id - a Redis key where the results are sent
-    db_settings - Redis connection settings for sending results
-    work_dir - working directory
-    cif - input search model path in mmCIF format (do not use with 'pdb')
-    pdb -  input search model path in PDB format (do not use with 'cif')
-    name - root name for output files
+    data_file - input data as mtz (required)
+    struct_file - input search model path in mmCIF or PDB format (required)
+    spacegroup - The space group to run MR (required)
+
+    tag - a Redis key where the results are sent (cluster mode)
+    db_settings - Redis connection settings for sending results (cluster mode)
+    work_dir - working directory (defaults to current working dir)
+    name - root name for output files (defaults to spacegroup)
     ncopy - number of molecules to search for
     cell_analysis - internal RAPD signal so all possible SG's are searched
     resolution - high res limit to run MR (float)
-    large_cell - optimizes parameters to speed up MR with large unit cell.
-    run_before - signal to run more comprehensive MR
+    full - signal to run more comprehensive MR
     """
+    phaser_log = False
     # Change to work_dir
     if not work_dir:
         work_dir = os.getcwd()
@@ -367,12 +371,9 @@ def run_phaser(datafile,
     if not name:
         name = spacegroup
 
-    # Connect to Redis
-    redis = connect_to_redis(db_settings)
-
     # Read the dataset
     i = phaser.InputMR_DAT()
-    i.setHKLI(convert_unicode(datafile))
+    i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)
@@ -382,12 +383,12 @@ def run_phaser(datafile,
         # i.setREFL_DATA(r.DATA_REFL())
         i.setREFL_F_SIGF(r.getMiller(), r.getFobs(), r.getSigFobs())
         i.setCELL6(r.getUnitCell())
-        if cif:
+        if struct_file[-3:].lower() == "cif":
             #i.addENSE_CIF_ID('model', cif, 0.7)
             ### Typo in PHASER CODE!!!###
-            i.addENSE_CIT_ID('model', convert_unicode(cif), 0.7)
-        if pdb:
-            i.addENSE_PDB_ID('model', convert_unicode(pdb), 0.7)
+            i.addENSE_CIT_ID('model', convert_unicode(struct_file), 0.7)
+        else:
+            i.addENSE_PDB_ID('model', convert_unicode(struct_file), 0.7)
         i.addSEAR_ENSE_NUM("model", ncopy)
         i.setSPAC_NAME(spacegroup)
         if cell_analysis:
@@ -397,7 +398,7 @@ def run_phaser(datafile,
             i.setJOBS(1)
         else:
             i.setSGAL_SELE("NONE")
-        if run_before:
+        if full:
             # Picks own resolution
             # Round 2, pick best solution as long as less that 10% clashes
             i.setPACK_SELE("PERCENT")
@@ -409,13 +410,7 @@ def run_phaser(datafile,
             if resolution:
                 i.setRESO_HIGH(resolution)
             else:
-                # Otherwise it runs a second MR at full resolution!!
-                # I dont think a second round is run anymore.
-                # command += "RESOLUTION SEARCH HIGH OFF\n"
-                if large_cell:
-                    i.setRESO_HIGH(6.0)
-                else:
-                    i.setRESO_HIGH(4.5)
+                i.setRESO_HIGH(6.0)
             i.setSEAR_DEEP(False)
             # Don"t seem to work since it picks the high res limit now.
             # Get an error when it prunes all the solutions away and TF has no input.
@@ -443,21 +438,21 @@ def run_phaser(datafile,
         # launch the run
         r = phaser.runMR_AUTO(i)
         if r.Success():
-            if r.foundSolutions():
-                print "Phaser has found MR solutions"
+            pass
+            #if r.foundSolutions():
+                #print "Phaser has found MR solutions"
                 #print "Top LLG = %f" % r.getTopLLG()
                 #print "Top PDB file = %s" % r.getTopPdbFile()
-            else:
-                print "Phaser has not found any MR solutions"
+            #else:
+                #print "Phaser has not found any MR solutions"
         else:
             print "Job exit status FAILURE"
             print r.ErrorName(), "ERROR :", r.ErrorMessage()
-
+        
+        # Save log files for debugging
+        phaser_log = r.logfile()
         with open('phaser.log', 'w') as log:
             log.write(r.logfile())
-            log.close()
-        with open('phaser_sum.log', 'w') as log:
-            log.write(r.summary())
             log.close()
 
     if r.foundSolutions():
@@ -485,8 +480,8 @@ def run_phaser(datafile,
         tncs = bool(len(tncs_test))
         phaser_result = {"ID": name,
                          "solution": r.foundSolutions(),
-                         "pdb": r.getTopPdbFile(),
-                         "mtz": r.getTopMtzFile(),
+                         "pdb": os.path.join(work_dir, r.getTopPdbFile()),
+                         "mtz": os.path.join(work_dir, r.getTopMtzFile()),
                          "gain": float(r.getTopLLG()),
                          "rfz": rfz,
                          # "tfz": r.getTopTFZ(),
@@ -499,22 +494,25 @@ def run_phaser(datafile,
                          "adf": None,
                          "peak": None,
                          }
-        
-        # make tar.bz2 of result files
-        # l = ['pdb', 'mtz', 'adf', 'peak']
-        # archive = "%s.tar.bz2" % name
-        # with tarfile.open(archive, "w:bz2") as tar:
-        #     for f in l:
-        #         fo = phaser_result.get(f, False)
-        #         if fo:
-        #             if os.path.exists(fo):
-        #                 tar.add(fo)
-        #     tar.close()
-        # phaser_result['tar'] = os.path.join(work_dir, archive)
-        
+
+        # Calc ADF map
+        if adf:
+            if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
+                adf_results = calc_ADF_map(data_file=data_file,
+                                           mtz=phaser_result["mtz"],
+                                           pdb=phaser_result["pdb"])
+                if adf_results.get("adf"):
+                    phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
+                if adf_results.get("peak"):
+                    phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
+                #phaser_result.update({"adf": adf_results.get("adf", None),
+                #                      "peak": adf_results.get("peak", None),})
+
         # New procedure for making tar of results
         # Create directory
-        os.mkdir(name)
+        # Remove the run # from the name
+        new_name = name[:-2]
+        os.mkdir(new_name)
         # Go through and copy files to archive directory
         file_types = ("pdb", "mtz", "adf", "peak")
         for file_type in file_types:
@@ -522,33 +520,37 @@ def run_phaser(datafile,
             if target_file:
                 if os.path.exists(target_file):
                     # Copy the file to the directory to be archived
-                    shutil.copy(target_file, name+"/.")
+                    shutil.copy(target_file, new_name+"/.")
         # Create the archive
-        archive_result = archive.create_archive(name)
-        archive_result["description"] = name
+        archive_result = archive.create_archive(new_name)
+        archive_result["description"] = '%s_files'%new_name
         phaser_result["tar"] = archive_result
-        
-        phaser_result["pdb_file"] = os.path.join(work_dir, r.getTopPdbFile())
     else:
         phaser_result = {"ID": name,
                          "solution": False,
                          "message": "No solution"}
+    # Add the phaser log
+    if phaser_log:
+        phaser_result.update({"logs": {"phaser": phaser_log}})
 
-    # Print the result so it can be seen in the rapd._phaser.log if needed
-    print phaser_result
-
-    # Key should be deleted once received, but set the key to expire in 24 hours just in case.
-    redis.setex(output_id, 86400, json.dumps(phaser_result))
-    # Do a little sleep to make sure results are in Redis for postprocess_phaser
-    time.sleep(0.1)
-
+    if db_settings and tag:
+        # Connect to Redis
+        redis = connect_to_redis(db_settings)
+        # Key should be deleted once received, but set the key to expire in 24 hours just in case.
+        redis.setex(tag, 86400, json.dumps(phaser_result))
+        # Do a little sleep to make sure results are in Redis for postprocess_phaser
+        time.sleep(0.1)
+    else:
+        # Print the result so it can be seen thru the queue by reading stdout
+        #print phaser_result
+        print json.dumps(phaser_result)
 
 def run_phaser_module(data_file,
                       result_queue=False,
                       cca=False,
                       tncs=False,
                       ellg=False,
-                      mmcif=False,
+                      struct_file=False,
                       dres=False,
                       np=0,
                       na=0,):
@@ -560,7 +562,7 @@ def run_phaser_module(data_file,
     cca - Run CCA to determine number of molecules in AU, and solvent content (Matthew's Coefficient calc)
     tncs - Run Anisotropy and tNCS correction on CID plots
     ellg - Run analysis to determonine optimum Phaser resolution MR.
-    mmcif - input mmcif file. Could also be a PDB file
+    struct_file - input struct_file file. Could be a PDB or mmCIF file
     dres - resolution of dataset (ELLG, CCA)
     np - default number of protein residues (CCA)
     na - default number of nucleic acid residues (CCA)
@@ -577,10 +579,10 @@ def run_phaser_module(data_file,
         i0.setCELL6(r.getUnitCell())
         i0.setMUTE(True)
         i0.setREFL_DATA(r.getDATA())
-        if mmcif[-3:] in ('cif'):
-            i0.addENSE_CIT_ID('model', convert_unicode(mmcif), 0.7)
+        if struct_file[-3:] in ('cif'):
+            i0.addENSE_CIT_ID('model', convert_unicode(struct_file), 0.7)
         else:
-            i0.addENSE_PDB_ID("model", convert_unicode(mmcif), 0.7)
+            i0.addENSE_PDB_ID("model", convert_unicode(struct_file), 0.7)
         r1 = phaser.runMR_ELLG(i0)
         #print r1.logfile()
         if r1.Success():
@@ -717,7 +719,7 @@ def run_phaser_module(data_file,
     """
 
 
-def run_phaser_module_OLD(datafile, inp=False):
+def run_phaser_module_OLD(data_file, inp=False):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
@@ -827,7 +829,7 @@ def run_phaser_module_OLD(datafile, inp=False):
 
     # Read the dataset
     i = phaser.InputMR_DAT()
-    i.setHKLI(convert_unicode(datafile))
+    i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)

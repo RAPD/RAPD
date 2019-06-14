@@ -751,9 +751,9 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
     
             # Run the plugin
-            self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
+            self.pdbq_process = plugin.RapdPlugin(site=self.site,
+                                                  command=pdbquery_command,
                                                   processed_results = self.results,
-                                                  computer_cluster=self.computer_cluster,
                                                   tprint=self.tprint,
                                                   logger=self.logger)
 

@@ -122,11 +122,19 @@ class Database(object):
         # Store passed in variables
         # Using the settings "shorthand"
         if settings:
-            self.db_host = settings["DATABASE_HOST"]
-            self.db_port = settings["DATABASE_PORT"]
-            self.db_user = settings["DATABASE_USER"]
-            self.db_password = settings["DATABASE_PASSWORD"]
-            self.db_string = settings["DATABASE_STRING"]
+            #self.db_host = settings["DATABASE_HOST"]
+            #self.db_port = settings["DATABASE_PORT"]
+            #self.db_user = settings["DATABASE_USER"]
+            #self.db_password = settings["DATABASE_PASSWORD"]
+            #elf.db_string = settings["DATABASE_STRING"]
+            #self.db_host = settings["DATABASE_HOST"]
+            #self.db_port = settings["DATABASE_PORT"]
+            self.db_host = settings.get("DATABASE_HOST", host)
+            self.db_port = settings.get("DATABASE_PORT", port)
+            self.db_user = settings.get("DATABASE_USER", user)
+            self.db_password = settings.get("DATABASE_PASSWORD", password)
+            self.db_string = settings.get("DATABASE_STRING", string)
+            
             # self.db_data_name = settings["DATABASE_NAME_DATA"]
             # self.db_users_name = settings["DATABASE_NAME_USERS"]
             # self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]

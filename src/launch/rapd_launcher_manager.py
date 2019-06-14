@@ -105,10 +105,6 @@ class Launcher_Manager(threading.Thread):
         try:
             # This is the server portion of the code
             while self.running:
-                # Have Registrar update status
-                #if self.overwatch_id:
-                #    self.ow_registrar.update()
-
                 # Get updated job list by checking which launchers are running
                 # Reassign jobs if launcher(s) status changes
                 if round(self.timer%TIMER,1) == 1.0:
@@ -151,7 +147,6 @@ class Launcher_Manager(threading.Thread):
                         command = self.redis.rpop("RAPD_JOBS")
                         # Handle the message
                         if command:
-                            #self.push_command(json.loads(command))
                             self.push_command(json.loads(command))
                             # Only run 1 command
                             # self.running = False

@@ -14,17 +14,36 @@ import logging.handlers
 from utils.processes import local_subprocess, mp_pool
 #from utils.xutils import convert_unicode
 import utils.xutils as xutils
+import utils.log
 
 # The pdbquery plugin
-logger = logging.getLogger("RAPDLogger")
-logger.debug("__init__")
+#logger = logging.getLogger("RAPDLogger")
+#logger.debug("__init__")
+
+#LOG_FILENAME = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd.log'
+#logger = logging.getLogger("RAPDLogger")
+#logger.debug("__init__")
+## Add the log message handler to the logger
+#handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=100000, backupCount=5)
+##add a formatter
+#formatter = logging.Formatter("%(asctime)s - %(message)s")
+#handler.setFormatter(formatter)
+#logger.addHandler(handler)
+
+
+# Set up logging
+logger = utils.log.get_logger(logfile_dir="/gpfs6/users/necat/Jon/RAPD_test/Output",
+                              logfile_id="rapd_mr",
+                              level=1,
+                              #console=commandline_args.test
+                              console=False)
 
 # Setup cluster
 import sites.necat as site
 
-from utils.modules import load_module
-cluster_launcher = load_module(site.CLUSTER_ADAPTER)
-launcher = cluster_launcher.process_cluster
+#from utils.modules import load_module
+#cluster_launcher = load_module(site.CLUSTER_ADAPTER)
+#launcher = cluster_launcher.process_cluster
 # Setup local_subprocess
 #launcher = local_subprocess
 
@@ -124,7 +143,7 @@ plugin_instance.start()
 #analysis_result = plugin_queue.get()
 #print analysis_result
 """
-
+"""
 import plugins.pdbquery.plugin
 import plugins.pdbquery.commandline
 
@@ -162,6 +181,65 @@ plugin = plugins.pdbquery.plugin
 # Run the plugin
 plugin_instance = plugin.RapdPlugin(command=pdbquery_command,
                                     computer_cluster=cluster_launcher,
+                                    logger=logger)
+plugin_instance.start()
+"""
+"""
+data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+pdb = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.pdb'
+mtz = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.mtz'
+
+os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0')
+
+adf_results = xutils.calc_ADF_map(data_file=data_file,
+                           mtz=mtz,
+                           pdb=pdb)
+print adf_results
+"""
+
+
+import plugins.mr.plugin
+import plugins.mr.commandline
+import uuid
+
+os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
+#launcher = local_subprocess
+
+
+# Construct the pdbquery plugin command
+class MRArgs(object):
+    #Object for command construction
+    clean = False
+    #datafile = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
+    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    struct_file = '/gpfs6/users/necat/Jon/RAPD_test/Pdb/thau.pdb'
+    dir_up = False
+    json = False
+    nproc = 11
+    adf = False
+    progress = False
+    run_mode = 'server'
+    #pdbs = False
+    #pdbs = ['1111', '2qk9']
+    #contaminants = True
+    ##run_mode = None
+    #search = True
+    test = False
+    #verbose = True
+    #no_color = False
+    db_settings = site.CONTROL_DATABASE_SETTINGS
+    #output_id = False
+    exchange_dir = '/gpfs6/users/necat/rapd2/exchange_dir'
+
+mr_command = plugins.mr.commandline.construct_command(MRArgs)
+
+# The pdbquery plugin
+plugin = plugins.mr.plugin
+
+# Run the plugin
+plugin_instance = plugin.RapdPlugin(site=site,
+                                    command=mr_command,
+                                    #computer_cluster=cluster_launcher,
                                     logger=logger)
 plugin_instance.start()
 

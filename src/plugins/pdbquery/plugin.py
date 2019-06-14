@@ -138,7 +138,8 @@ class RapdPlugin(Thread):
     # Timers for processes
     phaser_timer = rglobals.PHASER_TIMEOUT
 
-    def __init__(self, command, processed_results=False, computer_cluster=False, tprint=False, logger=False, verbosity=False):
+    #def __init__(self, command, processed_results=False, computer_cluster=False, tprint=False, logger=False, verbosity=False):
+    def __init__(self, site, command, processed_results=False, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
         Thread.__init__ (self)
 
@@ -171,12 +172,16 @@ class RapdPlugin(Thread):
         self.verbose = verbosity
 
         # Store passed-in variables
+        self.site = site
         self.command = command
         self.preferences = self.command.get("preferences", {})
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
-        self.test = self.preferences.get("test", False)
+        
+        #self.test = self.preferences.get("test", False)
+        self.test = self.preferences.get("test", True) # Limit number of runs on cluster
+        
         self.sample_type = self.preferences.get("type", "protein")
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
@@ -185,11 +190,9 @@ class RapdPlugin(Thread):
         # Used for setting up Redis connection
         self.db_settings = self.command["input_data"].get("db_settings")
         self.nproc = self.preferences.get("nproc", 1)
-        self.computer_cluster = self.preferences.get("computer_cluster", False)
-        
-        # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
 
-        self.computer_cluster = computer_cluster
+        # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
+        self.computer_cluster = xutils.load_cluster_adapter(self)
         if self.computer_cluster:
             self.launcher = self.computer_cluster.process_cluster
             self.batch_queue = self.computer_cluster.check_queue(self.command.get('command'))
@@ -199,8 +202,12 @@ class RapdPlugin(Thread):
         # Setup a multiprocessing pool if not using a computer cluster.
         if not self.computer_cluster:
             self.pool = mp_pool(self.nproc)
-
-        #Process.__init__(self, name="pdbquery")
+        
+        # Set Python path for subcontractors.rapd_phaser
+        self.rapd_python = "rapd.python"
+        if self.site:
+            if hasattr(self.site, "RAPD_PYTHON_PATH"):
+                self.rapd_python = self.site.RAPD_PYTHON_PATH
 
     def run(self):
         """Execution path of the plugin"""
@@ -575,12 +582,16 @@ class RapdPlugin(Thread):
         def launch_job(inp):
             """Launch the Phaser job"""
             #self.logger.debug("process_phaser Launching %s"%inp['name'])
+            tag = 'Phaser_%d' % random.randint(0, 10000)
             if self.pool:
                 inp['pool'] = self.pool
-            job, pid, output_id = run_phaser(**inp)
+            else:
+                inp['tag'] = tag
+            #job, pid, tag = run_phaser(**inp)
+            job, pid = run_phaser(**inp)
             self.jobs[job] = {'name': inp['name'],
                               'pid' : pid,
-                              'output_id' : output_id}
+                              'tag' : tag}
 
         # Run through the pdbs
         for pdb_code in self.cell_output.keys():
@@ -623,7 +634,7 @@ class RapdPlugin(Thread):
                 # Fewer mols in AU or in common_contaminents.
                 if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
-                    pdb_info = get_pdb_info(cif_file=cif_path,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
                                             data_file=self.datafile,
                                             dres=self.dres,
                                             matthews=True,
@@ -643,7 +654,7 @@ class RapdPlugin(Thread):
     
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
-                    pdb_info = get_pdb_info(cif_file=cif_path,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
                                             data_file=self.datafile,
                                             dres=self.dres,
                                             matthews=True,
@@ -652,7 +663,7 @@ class RapdPlugin(Thread):
     
                 # Same number of mols in AU.
                 else:
-                    pdb_info = get_pdb_info(cif_file=cif_path,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
                                             data_file=self.datafile,
                                             dres=self.dres,
                                             matthews=False,
@@ -661,21 +672,23 @@ class RapdPlugin(Thread):
                 job_description = {
                     "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
                     "datafile": self.datafile,
-                    "cif": cif_path,
+                    #"cif": cif_path,
                     #"pdb": cif_path,
+                    "struct_file": cif_path,
                     "name": pdb_code,
                     "spacegroup": data_spacegroup,
                     "ncopy": copy,
-                    "test": self.test,
+                    #"test": self.test,
                     "cell_analysis": True,
-                    "large_cell": self.large_cell,
+                    #"large_cell": self.large_cell,
                     "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
                                                  self.large_cell,
                                                  self.dres),
                     "launcher": self.launcher,
                     "db_settings": self.db_settings,
-                    "output_id": False,
-                    "batch_queue": self.batch_queue}
+                    "tag": False,
+                    "batch_queue": self.batch_queue,
+                    "rapd_python": self.rapd_python}
     
                 if not l:
                     launch_job(job_description)
@@ -686,8 +699,9 @@ class RapdPlugin(Thread):
                         job_description.update({
                             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
                                 new_code)),
-                            "cif":pdb_info[chain]["file"],
+                            #"cif":pdb_info[chain]["file"],
                             #"pdb":pdb_info[chain]["file"],
+                            "struct_file": pdb_info[chain]["file"],
                             "name":new_code,
                             "ncopy":pdb_info[chain]["NMol"],
                             "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
@@ -704,7 +718,7 @@ class RapdPlugin(Thread):
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
-        # Copy tar to working dir
+        # Copy tar to working dir for commandline results
         if results.get("tar", False):
             orig = results.get("tar", {"path":False}).get("path")
             if orig:
@@ -841,25 +855,25 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['output_id'])
+            print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
-            results_json = self.redis.get(info['output_id'])
+            results_json = self.redis.get(info['tag'])
             # This try/except is for when results aren't in Redis in time.
             try:
                 results = json.loads(results_json)
                 self.postprocess_phaser(info['name'], results)
-                self.redis.delete(info['output_id'])
+                self.redis.delete(info['tag'])
             except Exception as e:
                 self.logger.error('Error'+ str(e))
-                # print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
+                # print 'PROBLEM: %s %s'%(info['name'], info['tag'])
                 # print results_json
-                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
+                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['tag']))
                 # self.logger.debug(results_json)
             
             #results = json.loads(results_json)
             #print results
             #self.postprocess_phaser(info['name'], results)
-            #self.redis.delete(info['output_id'])
+            #self.redis.delete(info['tag'])
             jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
@@ -908,7 +922,7 @@ class RapdPlugin(Thread):
                 self.postprocess_phaser(info['name'], {"solution": False,
                                                        "message": "Timed out"})
                 # Delete the Redis key
-                self.redis.delete(info['output_id'])
+                self.redis.delete(info['tag'])
 
         # Join the self.pool if used
         if self.pool:
