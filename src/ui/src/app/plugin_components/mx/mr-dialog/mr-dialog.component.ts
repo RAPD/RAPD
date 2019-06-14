@@ -4,10 +4,8 @@ import { Component,
 import { FormControl,
          FormGroup,
          Validators } from "@angular/forms";
-import { MAT_DIALOG_DATA,
-         MatDialog,
-         MatDialogRef,
-         MatSnackBar } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 import * as moment from "moment-mini";
 import { FileUploader } from "ng2-file-upload";

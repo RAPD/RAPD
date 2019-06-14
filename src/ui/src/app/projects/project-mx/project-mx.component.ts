@@ -8,13 +8,9 @@ import {
 
 import { ActivatedRoute, ParamMap, Router } from "@angular/router";
 
-import {
-  MatDialog,
-  MatDialogRef,
-  MAT_DIALOG_DATA,
-  MatSnackBar,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatToolbarModule } from "@angular/material/toolbar";
 
 import "rxjs/add/operator/switchMap";
 // import { Observable } from 'rxjs/Observable';

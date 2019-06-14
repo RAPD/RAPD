@@ -9,12 +9,9 @@ import {
   ViewContainerRef
 } from "@angular/core";
 
-import {
-  MatDialog,
-  MAT_DIALOG_DATA,
-  MatSnackBar,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatToolbarModule } from "@angular/material/toolbar";
 
 import { ReplaySubject } from "rxjs/Rx";
 

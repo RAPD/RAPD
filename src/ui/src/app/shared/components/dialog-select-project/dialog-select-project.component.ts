@@ -6,7 +6,7 @@ import {
   ViewContainerRef
 } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 
 import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
 import { RestService } from "../../../shared/services/rest.service";

@@ -1,10 +1,6 @@
 import { Component, OnInit, ViewContainerRef } from "@angular/core";
-import {
-  MatDialog,
-  MatDialogConfig,
-  MatDialogRef,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material/dialog";
+import { MatToolbarModule } from "@angular/material/toolbar";
 import { Router } from "@angular/router";
 
 

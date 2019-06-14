@@ -1,7 +1,7 @@
 // import { CdkTextareaAutosize } from "@angular/cdk/text-field";
 import { Component, Input, NgZone, OnInit, ViewChild } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { take } from "rxjs/operators";
 
 @Component({

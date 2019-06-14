@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from "@angular/core";
 
 import { FormControl, FormGroup } from "@angular/forms";
 
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 
 import { Project } from "../../classes/project";
 import { User } from "../../classes/user";
