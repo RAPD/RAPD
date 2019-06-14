@@ -427,7 +427,10 @@ if [ $INSTALL_PYTHON == 1 ]; then
 
   # Modules
   printf "  Installing python modules needed by RAPD"
-
+  
+  # Allow Python to use TLS1.2
+  rapd.pip install 'requests[security]'
+  
   rapd.pip install crypto
   if [[ $PLATFORM == "Darwin" ]]; then
     rapd.pip install pyopenssl

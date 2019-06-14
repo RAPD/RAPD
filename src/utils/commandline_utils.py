@@ -111,7 +111,7 @@ dp_parser.add_argument("--progress-fd",
 dp_parser.add_argument("-s", "--site",
                        action="store",
                        dest="site",
-                       help="Define the site (ex. NECAT_C)")
+                       help="Define the site (ex. NECAT)")
 
 # List possible sites
 dp_parser.add_argument("-ls", "--listsites",
