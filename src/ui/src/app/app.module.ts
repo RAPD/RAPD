@@ -29,7 +29,7 @@ import { GlobalsService } from "./shared/services/globals.service";
 import { Site } from "./site";
 
 // JWT
-import { JwtModule } from "@auth0/angular-jwt";
+// import { JwtModule } from "@auth0/angular-jwt";
 import { JwtHttpInterceptor } from "./shared/interceptors/auth.interceptor";
 
 // File Uploader
@@ -58,6 +58,8 @@ import { SessionDialogComponent } from "./adminpanel/session-dialog/session-dial
 import { MxSessionpanelComponent } from "./mx-sessionpanel/mx-sessionpanel.component";
 import { SessionspanelComponent } from "./sessionspanel/sessionspanel.component";
 
+// Sequence
+import { SequenceDialogComponent } from "./shared/dialogs/sequence-dialog/sequence-dialog.component";
 
 // MX
 import { MxResultContainerComponent } from "./mx-sessionpanel/mx-result-container/mx-result-container.component";
@@ -118,6 +120,7 @@ export function tokenGetter() {
     SessionspanelComponent,
     ProjectspanelComponent,
     AdminpanelComponent,
+    SequenceDialogComponent,
     TaskspanelComponent,
     //
     MxSessionpanelComponent,
@@ -203,6 +206,7 @@ export function tokenGetter() {
     DialogSelectProjectComponent,
     GroupDialogComponent,
     LoginDialogComponent,
+    SequenceDialogComponent,
     SessionDialogComponent,
     UserDialogComponent,
     // Plugin components

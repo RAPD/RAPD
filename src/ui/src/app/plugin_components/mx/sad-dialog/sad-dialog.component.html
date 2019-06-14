@@ -1,3 +1,133 @@
-<p>
-  sad-dialog works!
-</p>
+<div *ngIf="! submit_error">
+    <div MatDialogTitle>
+      <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+        <mat-icon>close</mat-icon>
+      </button>
+      <h2>SAD</h2>
+      <h3>{{data.process.repr}}</h3>
+    </div>
+    <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+      <div class="rapd-dialog-border">
+        <form [formGroup]="sadForm">
+          <div class="form-group">
+            <table class="rapd-form-table">
+              <tbody>
+                <tr>
+                  <td class="rapd-form-table-rji">Description</td>
+                  <td>
+                    <mat-form-field style="width:10em;">
+                      <input matInput
+                            style="text-align:center;"
+                            formControlName="description">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Project</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="project"
+                              class="table-mat-select"
+                              style="margin-top:1em">
+                      <mat-option *ngFor="let project of projects" [value]="project._id">
+                        {{project.title}}
+                      </mat-option>
+                      <mat-option [value]="-1">New Project</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="sadForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Anomalous Atom</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="element"
+                                class="table-mat-select"
+                                style="margin-top:1em;width:4em;">
+                      <mat-option *ngFor="let element of globalsService.anomalousAtoms" [value]="element">
+                        {{element}}
+                      </mat-option>
+                    </mat-select>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Number of Atoms</td>
+                  <td class="rapd-form-table-select">
+                      <mat-form-field style="width:4em;">
+                        <input matInput
+                              style="text-align:center;"
+                              formControlName="number_atoms"
+                              type="number">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Number of Disulfide Bridges</td>
+                  <td class="rapd-form-table-select">
+                      <mat-form-field style="width:4em;">
+                        <input matInput
+                              style="text-align:center;"
+                              formControlName="number_disulfides"
+                              type="number"
+                              min="0"
+                              max="20">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Number of Trials</td>
+                  <td class="rapd-form-table-select">
+                      <mat-form-field style="width:4em;">
+                        <input matInput
+                              style="text-align:center;"
+                              formControlName="number_trials"
+                              type="number"
+                              min="0"
+                              max="10000">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">High Res Cutoff</td>
+                  <td class="rapd-form-table-select">
+                      <mat-form-field style="width:4em;">
+                        <input matInput
+                              style="text-align:center;"
+                              formControlName="hires_cutoff"
+                              type="number">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Sequence</td>
+                  <td class="rapd-form-table-select">
+                      <mat-select formControlName="sequence"
+                      class="table-mat-select"
+                      style="margin-top:1em">
+                      <mat-option *ngFor="let sequence of sequences" [value]="sequence._id">
+                        {{sequence.title}}
+                      </mat-option>
+                      <mat-option [value]="0">None</mat-option>
+                      <mat-option [value]="-1">New Sequence</mat-option>
+                    </mat-select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+      <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitMr()">Execute</button>
+    </mat-dialog-actions>
+  </div>
+  <div *ngIf="submitError">
+    <mat-dialog-content>
+      <h2>Error</h2>
+      {{submitError}}
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+    </mat-dialog-actions>
+  </div>

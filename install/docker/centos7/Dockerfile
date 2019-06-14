@@ -7,6 +7,7 @@ MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
 RUN yum -y install bzip2 \
+                   bzip2-devel \
                    gcc-c++ \
                    git \
                    libffi-devel \
@@ -35,4 +36,4 @@ WORKDIR /home/tester
 
 RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
 WORKDIR /home/tester/rapd/install
-RUN ./install -mb
+# RUN ./install -mb
