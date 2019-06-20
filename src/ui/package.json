@@ -40,7 +40,7 @@
     "roboto-fontface": "^0.9.0",
     "rxjs": "^6.4.0",
     "rxjs-compat": "^6.1.0",
-    "webpack": "~4.8.3",
+    "webpack": "~4.35.0",
     "zone.js": "^0.9.1"
   },
   "devDependencies": {
