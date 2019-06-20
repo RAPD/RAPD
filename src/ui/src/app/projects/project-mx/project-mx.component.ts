@@ -34,6 +34,7 @@ import * as mx from "../../plugin_components/mx";
 var mx_values = [];
 var mx_components = {};
 for (let key in mx) {
+  console.log(mx[key]);
   mx_values.push(mx[key]);
   mx_components[key.toLowerCase()] = mx[key];
 }
@@ -110,7 +111,7 @@ outlet;
     };
   }
 
-  getProject(id: string) {
+  public getProject(id: string) {
     this.rest_service.getProject(id).subscribe(parameters => {
       console.log(parameters);
       if (parameters.success === true) {
@@ -119,7 +120,7 @@ outlet;
     });
   }
 
-  toggleSourceDataIntegrateSelection(id: string) {
+  public toggleSourceDataIntegrateSelection(id: string) {
     // console.log('toggleSourceDataSelection', id);
 
     // Clear the result display?
@@ -136,7 +137,7 @@ outlet;
     }
   }
 
-  toggleSourceDataIndexSelection(id: string) {
+  public toggleSourceDataIndexSelection(id: string) {
     let index = this.selected_indexed_data.indexOf(id);
 
     // Clear the result display?
@@ -152,7 +153,14 @@ outlet;
     }
   }
 
-  selectSingleIntgrationAction(action: string) {
+  public toggleResultSelection(id:string) {
+
+    console.log("toggleResultSelection", id);
+
+    this.displayResult(id);
+  }
+
+  public selectSingleIntgrationAction(action: string) {
     console.log("selectSingleIntgrationAction", action);
 
     switch (action) {
@@ -172,7 +180,7 @@ outlet;
     }
   }
 
-  selectMultipleIntgrationAction(action: string) {
+  public selectMultipleIntgrationAction(action: string) {
     console.log("selectMultipleIntgrationAction", action);
 
     switch (action) {
@@ -192,7 +200,7 @@ outlet;
     }
   }
 
-  selectSingleIndexAction(action: string) {
+  public selectSingleIndexAction(action: string) {
     console.log("selectSingleIndexAction", action);
 
     switch (action) {
@@ -208,10 +216,11 @@ outlet;
     }
   }
 
-  displayResult(result_id: string) {
-    console.log("displayResult", result_id);
+  public displayResult(resultId: string) {
 
-    this.rest_service.getResult(result_id).subscribe(
+    console.log("displayResult", resultId);
+
+    this.rest_service.getResult(resultId).subscribe(
       parameters => {
         console.log(parameters);
         if (parameters.success === true) {

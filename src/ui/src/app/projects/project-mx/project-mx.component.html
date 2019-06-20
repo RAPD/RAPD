@@ -92,12 +92,14 @@
                   <div class="rapd-corral-heading">
                     Results
                   </div>
-                  <mat-list dense class="rapd-corral-content">
+                  <mat-list dense class="rapd-corral-content" style="padding-top:0px;">
                     <!-- Here is container for results from actions taken on integrated data??-->
-                    <!-- <ng-container *ngFor="let action of actions.INTEGRATE[0]"> -->
-                    <ng-container>
-                      <mat-list-item >
-                        None
+                    <ng-container *ngFor="let result of project.results">
+                      <mat-list-item (click)="toggleResultSelection(result._id)">
+                        <!-- *ngIf="project.plugin_type==='INTEGRATE'" -->
+                        <!-- (click)="toggleSourceDataIntegrateSelection(source_datum._id)" -->
+                        <!-- [ngClass]="selected_integrated_data.indexOf(source_datum._id) != -1 ? 'active-result': ''"> -->
+                        {{result.repr}}
                       </mat-list-item>
                     </ng-container>
                   </mat-list>

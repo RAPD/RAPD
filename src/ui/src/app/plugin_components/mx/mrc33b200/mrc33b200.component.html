@@ -1,4 +1,76 @@
 <div class="result-panel child">
   <mat-card *ngIf="full_result.process.status === 0" class="rapd-result">
+    <mat-card-header class="rapd-result">
+      <div style="width:100%">
+        <div style="float:left;">
+          <h3>Loading...</h3>
+        </div>
+      </div>
+    </mat-card-header>
+  </mat-card>
+
+  <mat-card *ngIf="(full_result.process)?.status > 1" class="rapd-result">
+    <mat-tab-group>
+
+      <mat-tab label="Summary">
+        <div fxLayout="row" fxLayoutGap="10px">
+          <div fxFlex="none">
+            <div>
+              <h3>Search Results</h3>
+              <table class="rapd-table">
+                <thead>
+                  <tr>
+                    <th>Spacegroup</th>
+                    <th># Placed</th>
+                    <th>LL-Gain</th>
+                    <th>RF Z-score</th>
+                    <th>TF Z-score</th>
+                    <th># Clashes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let mr_result of full_result?.results.mr_results | keyvalue">
+                    <td>{{mr_result.value.spacegroup}}</td>
+                    <td>{{default_val(mr_result.value.nmol, 'No Solution', '1.0')}}</td>
+                    <td>{{default_val(mr_result.value.gain, '-', '1.1-1')}}</td>
+                    <td>{{default_val(mr_result.value.rfz, '-', '1.1-1')}}</td>
+                    <td>{{default_val(mr_result.value.tfz, '-', '1.1-1')}}</td>
+                    <td>{{default_val(mr_result.value.clash, '-', '1.0')}}</td>
+                    <td>
+                        <button mat-button *ngIf="mr_result.value.tar !== undefined"> <!-- (click)="initDownload(element)">-->
+                            <mat-icon>get_app</mat-icon>
+                        </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+
+      <mat-tab label="Logs">
+        <!-- <app-log-card [log]="result.results.raw.xtriage" header="Xtriage">
+        </app-log-card>
+        <app-log-card [log]="result.results.raw.molrep" header="Molrep">
+        </app-log-card>
+        <app-log-card [log]="result.results.raw.phaser" header="Phaser">
+        </app-log-card> -->
+      </mat-tab>
+
+      <mat-tab label="Raw">
+        <div fxLayout="row" fxLayoutGap="10px">
+          <div fxFlex="none">
+            <div>
+              <pre>{{full_result | json}}</pre>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+      
+    </mat-tab-group>
+
   </mat-card>
 </div>

@@ -66,13 +66,14 @@ import { MxResultContainerComponent } from "./mx-sessionpanel/mx-result-containe
 import { MxResultPanelComponent } from "./mx-sessionpanel/mx-result-container/mx-result-panel/mx-result-panel.component";
 import { MxResultslistPanelComponent } from "./mx-sessionpanel/mx-result-container/mx-resultslist-panel/mx-resultslist-panel.component";
 
-// MX Result Dialogs
+// MX Result Components
 import { AnalysisF068200Component } from "./plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component";
 import { Hcmerge4cba100Component } from "./plugin_components/mx/hcmerge4cba100/hcmerge4cba100.component";
 import { Index3b34200Component } from "./plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component";
 import { IntegrateBd11200Component } from "./plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component";
 import { Pdbquery9a2e200Component } from "./plugin_components/mx/pdbquery9a2e200/pdbquery9a2e200.component";
 import { ReindexDialogComponent } from "./plugin_components/mx/index-3b34-2-0-0/reindex-dialog/reindex-dialog.component";
+import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
 
 // MX Request Dialogs
@@ -101,7 +102,6 @@ import { DialogSelectProjectComponent } from "./shared/components/dialog-select-
 import { DialogNewProjectComponent } from "./shared/components/dialog-new-project/dialog-new-project.component";
 import { ErrorDialogComponent } from "./shared/dialogs/error-dialog/error-dialog.component";
 import { ConfirmDialogComponent } from "./shared/dialogs/confirm-dialog/confirm-dialog.component";
-import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
 export function tokenGetter() {
   return localStorage.getItem("access_token");
@@ -143,6 +143,7 @@ export function tokenGetter() {
     AnalysisF068200Component,
     Pdbquery9a2e200Component,
     Hcmerge4cba100Component,
+    Mrc33b200Component,
     // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
     //
     HeaderDialogComponent,
@@ -160,7 +161,6 @@ export function tokenGetter() {
     ConfirmDialogComponent,
     UploadDialogComponent,
     Hcmerge4cba100Component,
-    Mrc33b200Component
   ],
   imports: [
     BrowserModule,
@@ -217,6 +217,7 @@ export function tokenGetter() {
     IntegrateBd11200Component,
     Pdbquery9a2e200Component,
     Hcmerge4cba100Component,
+    Mrc33b200Component,
     // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS
     // Plugin helpers
     HeaderDialogComponent,
@@ -225,7 +226,7 @@ export function tokenGetter() {
     MrDialogComponent,
     RunDialogComponent,
     SadDialogComponent,
-    UploadDialogComponent
+    UploadDialogComponent,
   ],
   bootstrap: [AppComponent]
 })
