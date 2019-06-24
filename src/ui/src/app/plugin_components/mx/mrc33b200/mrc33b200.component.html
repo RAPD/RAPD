@@ -41,6 +41,9 @@
                         <button mat-button *ngIf="mr_result.value.tar !== undefined"> <!-- (click)="initDownload(element)">-->
                             <mat-icon>get_app</mat-icon>
                         </button>
+                        <button mat-button *ngIf="mr_result.value.tar !== undefined" (click)="openViewer(mr_result.value)">
+                          <mat-icon>zoom_in</mat-icon>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -69,7 +72,7 @@
           </div>
         </div>
       </mat-tab>
-      
+
     </mat-tab-group>
 
   </mat-card>

@@ -38,7 +38,7 @@ export class RestService {
       this.authHttp
         .get(this.globals_service.site.restApiUrl + "/dashboard/results")
         // .map(res => res.json())
-        .catch((error) => this.handleError(error))
+        .catch(error => this.handleError(error))
     );
   }
 
@@ -49,7 +49,7 @@ export class RestService {
       this.authHttp
         .get(this.globals_service.site.restApiUrl + "/dashboard/logins")
         // .map(res => res.json())
-        .catch((error) => this.handleError(error))
+        .catch(error => this.handleError(error))
     );
   }
 
@@ -105,18 +105,6 @@ export class RestService {
           pom.click();
         }
       });
-    //   // Tell the subscribed caller we are all good
-    //   return Observable.of({
-    //     success: true
-    //   });
-    //   // There was an error in the REST server
-    // } else {
-    //   return data;
-    // }
-    // })
-    // // There was an error
-    // .catch(error => this.handleError(error))
-    // );
   }
 
   public getDownloadByHash(hash: string, filename: string): void {
@@ -156,18 +144,21 @@ export class RestService {
           pom.click();
         }
       });
-    //   // Tell the subscribed caller we are all good
-    //   return Observable.of({
-    //     success: true
-    //   });
-    //   // There was an error in the REST server
-    // } else {
-    //   return data;
-    // }
-    // })
-    // // There was an error
-    // .catch(error => this.handleError(error))
-    // );
+  }
+
+  //
+  // UglyMol Methods
+  //
+  public getPdb(pdbFile: string) {
+    console.log("getPdb", pdbFile);
+
+    return (this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_pdb/" + pdbFile, {
+        responseType: "text"
+      }));
+      // .subscribe(res => {
+      //   console.log(res);
+      // });
   }
 
   //
@@ -271,7 +262,7 @@ export class RestService {
       this.authHttp
         .put(
           this.globals_service.site.restApiUrl + "/jobs/submit",
-          JSON.stringify({request})
+          JSON.stringify({ request })
           // { headers: header }
         )
         // .map(res => res.json())
@@ -351,7 +342,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/pdbs/by_session/" + id)
-      .catch((error) => this.handleError(error));
+      .catch(error => this.handleError(error));
   }
 
   //
@@ -363,7 +354,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/projects")
-      .catch((error) => this.handleError(error));
+      .catch(error => this.handleError(error));
   }
 
   public getProjectsBySession(id: string): Observable<any> {
@@ -371,7 +362,7 @@ export class RestService {
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/projects/by_session/" + id)
-      .catch((error) => this.handleError(error));
+      .catch(error => this.handleError(error));
   }
 
   public getProject(id: string): Observable<any> {
@@ -402,7 +393,7 @@ export class RestService {
           // { headers: header }
         )
         // .map(res => res.json())
-        .catch((error) => this.handleError(error))
+        .catch(error => this.handleError(error))
     );
   }
 
@@ -586,10 +577,10 @@ export class RestService {
 
     // console.log(error);
 
-    return Observable.create((observer) => {
+    return Observable.create(observer => {
       observer.next({
         message: error.message,
-        success: false,
+        success: false
       });
     });
   }

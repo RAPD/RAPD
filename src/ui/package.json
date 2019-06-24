@@ -40,6 +40,7 @@
     "roboto-fontface": "^0.10.0",
     "rxjs": "^6.4.0",
     "rxjs-compat": "^6.1.0",
+    "uglymol": "^0.6.1",
     "webpack": "~4.35.0",
     "zone.js": "^0.9.1"
   },

@@ -75,16 +75,19 @@ import { Pdbquery9a2e200Component } from "./plugin_components/mx/pdbquery9a2e200
 import { ReindexDialogComponent } from "./plugin_components/mx/index-3b34-2-0-0/reindex-dialog/reindex-dialog.component";
 import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
-
 // MX Request Dialogs
 import { MrDialogComponent } from "./plugin_components/mx/mr-dialog/mr-dialog.component";
 import { ReintegrateDialogComponent } from "./plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component";
 import { SadDialogComponent } from "./plugin_components/mx/sad-dialog/sad-dialog.component";
 
-
 // Directives
 import { Highlight } from "./shared/directives/highlight.directive";
 
+// Shared Components
+import { LogCardComponent } from "./shared/components/log-card/log-card.component";
+import { DialogSelectProjectComponent } from "./shared/components/dialog-select-project/dialog-select-project.component";
+import { DialogNewProjectComponent } from "./shared/components/dialog-new-project/dialog-new-project.component";
+import { DialogUglymolComponent } from "./shared/components/dialog-uglymol/dialog-uglymol.component"
 
 import { AdminpanelComponent } from "./adminpanel/adminpanel.component";
 import { TaskspanelComponent } from "./taskspanel/taskspanel.component";
@@ -95,11 +98,10 @@ import { GroupDialogComponent } from "./adminpanel/group-dialog/group-dialog.com
 
 import { CommunicateDialogComponent } from "./shared/dialogs/communicate-dialog/communicate-dialog.component";
 import { HeaderDialogComponent } from "./plugin_components/mx/header-dialog/header-dialog.component";
-import { LogCardComponent } from "./shared/components/log-card/log-card.component";
+
 import { RunDialogComponent } from "./plugin_components/mx/run-dialog/run-dialog.component";
 import { MxImageComponent } from "./plugin_components/mx/mx-image/mx-image.component";
-import { DialogSelectProjectComponent } from "./shared/components/dialog-select-project/dialog-select-project.component";
-import { DialogNewProjectComponent } from "./shared/components/dialog-new-project/dialog-new-project.component";
+
 import { ErrorDialogComponent } from "./shared/dialogs/error-dialog/error-dialog.component";
 import { ConfirmDialogComponent } from "./shared/dialogs/confirm-dialog/confirm-dialog.component";
 
@@ -157,6 +159,7 @@ export function tokenGetter() {
     RunDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
+    DialogUglymolComponent,
     ErrorDialogComponent,
     ConfirmDialogComponent,
     UploadDialogComponent,
@@ -206,6 +209,7 @@ export function tokenGetter() {
     ChangepassDialogComponent,
     DialogNewProjectComponent,
     DialogSelectProjectComponent,
+    DialogUglymolComponent,
     GroupDialogComponent,
     LoginDialogComponent,
     SequenceDialogComponent,

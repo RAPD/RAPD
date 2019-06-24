@@ -7,7 +7,7 @@ import { FormControl,
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
-import * as moment from "moment-mini";
+// import * as moment from "moment-mini";
 
 import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
 import { GlobalsService } from "../../../shared/services/globals.service";
