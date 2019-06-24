@@ -34,7 +34,7 @@ import * as mx from "../../plugin_components/mx";
 var mx_values = [];
 var mx_components = {};
 for (let key in mx) {
-  console.log(mx[key]);
+  // console.log(mx[key]);
   mx_values.push(mx[key]);
   mx_components[key.toLowerCase()] = mx[key];
 }

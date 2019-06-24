@@ -99,6 +99,9 @@
                                     <button mat-button *ngIf="element.pdb !== undefined" (click)="initDownload(element)">
                                         <mat-icon>get_app</mat-icon>
                                     </button>
+                                    <button mat-button *ngIf="element.pdb !== undefined" (click)="openViewer(element)">
+                                        <mat-icon>zoom_in</mat-icon>
+                                    </button>
                                 </td>
                             </ng-container>
 

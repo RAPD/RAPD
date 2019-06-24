@@ -161,6 +161,18 @@ export class RestService {
       // });
   }
 
+  public getMap(mapFile: string) {
+    console.log("getMap", mapFile);
+
+    return (this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_map/" + mapFile, {
+        responseType: "arraybuffer",
+      }));
+      // .subscribe(res => {
+      //   console.log(res);
+      // });
+  }
+
   //
   // GROUP METHODS
   //

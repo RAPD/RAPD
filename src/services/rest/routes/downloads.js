@@ -73,7 +73,38 @@ router
   .get(function(req, res) {
     console.log("download_pdb", req.params.file);
 
-    res.download("1qrv.pdb");
+    // res.download("1qrv.pdb");
+    res.download("P41212.1.pdb");
+
+    // var gridfs = Grid(mongoose.ctrl_conn.db);
+
+    // gridfs.files.findOne({ 'metadata.hash': req.params.hash}, function (err, file) {
+    //   console.log(file);
+    //   var readstream = gridfs.createReadStream({
+    //     _id: file._id
+    //   });
+    //   req.on("error", function(err) {
+    //     console.error(err);
+    //     res.send(500, err);
+    //   });
+    //   readstream.on("error", function(err) {
+    //     console.error(err);
+    //     res.send(500, err);
+    //   });
+    //   console.log("Success");
+    //   readstream.pipe(res);
+    // });
+  });
+
+  router
+  .route("/download_map/:file")
+
+  // Get a file for download
+  .get(function(req, res) {
+    console.log("download_pdb", req.params.file);
+
+    // res.download("1qrv.pdb");
+    res.download("P41212_all_0_adf.map");
 
     // var gridfs = Grid(mongoose.ctrl_conn.db);
 

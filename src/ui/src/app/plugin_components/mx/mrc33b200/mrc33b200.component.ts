@@ -172,10 +172,12 @@ export class Mrc33b200Component implements OnInit {
 
     console.log("openViewer", mrResult);
 
+    console.log((window.innerHeight-50).toString()+"px");
+
     const dialogRef = this.viewerDialog.open(DialogUglymolComponent, {
       data: {mrResult},
-      width:"500px",
-      height:"500px",
+      width: (window.innerWidth-50).toString()+"px",
+      height: (window.innerHeight-50).toString()+"px",
     });
 
   }

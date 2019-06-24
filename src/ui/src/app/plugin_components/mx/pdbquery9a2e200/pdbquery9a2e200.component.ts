@@ -62,6 +62,7 @@ export class Pdbquery9a2e200Component implements OnInit {
       return val;
     }
   }
+
   sortData(sort, data_type) {
     var data;
 
@@ -109,7 +110,15 @@ export class Pdbquery9a2e200Component implements OnInit {
       .getDownloadByHash(record.tar.hash, record.tar.path);
       // .subscribe(result => {}, error => {});
   }
+
+  public openViewer(record:any) {
+    console.log('openViewer');
+    console.log(record);
+  }
+  
 }
+
+
 
 function compare(a, b, isAsc) {
   if (a === undefined) {

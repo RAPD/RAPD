@@ -38,11 +38,11 @@
                     <td>{{default_val(mr_result.value.tfz, '-', '1.1-1')}}</td>
                     <td>{{default_val(mr_result.value.clash, '-', '1.0')}}</td>
                     <td>
-                        <button mat-button *ngIf="mr_result.value.tar !== undefined"> <!-- (click)="initDownload(element)">-->
-                            <mat-icon>get_app</mat-icon>
-                        </button>
-                        <button mat-button *ngIf="mr_result.value.tar !== undefined" (click)="openViewer(mr_result.value)">
-                          <mat-icon>zoom_in</mat-icon>
+                      <button mat-button *ngIf="mr_result.value.tar !== undefined"> <!-- (click)="initDownload(element)">-->
+                        <mat-icon>get_app</mat-icon>
+                      </button>
+                      <button mat-button *ngIf="mr_result.value.tar !== undefined" (click)="openViewer(mr_result.value)">
+                        <mat-icon>zoom_in</mat-icon>
                       </button>
                     </td>
                   </tr>
