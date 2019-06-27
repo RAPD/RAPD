@@ -39,11 +39,15 @@ import random
 import shutil
 import importlib
 from functools import wraps
+import sys
 import tarfile
 import time
 
 # Phaser import
-import phaser
+try:
+    import phaser
+except ImportError:
+    phaser = False
 
 # RAPD imports
 from utils import archive
@@ -53,12 +57,12 @@ def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
 
-def run_phaser_pdbquery_script_OLD(command):
+def run_phaser_pdbquery_script(command):
     """
     Run phaser for pdbquery
     """
     # Change to correct directory
-    os.chdir(command["work_dir"])
+    # os.chdir(command["work_dir"])
 
     # Setup params
     full = command.get("full", False)
@@ -545,6 +549,34 @@ def run_phaser(data_file,
         #print phaser_result
         print json.dumps(phaser_result)
 
+def run_phaser(data_file,
+               result_queue=False,
+               cca=False,
+               tncs=False,
+               ellg=False,
+               struct_file=False,
+               dres=False,
+               np=0,
+               na=0):
+    # The module is properly loaded
+    if phaser:
+        run_phaser_module(data_file=data_file,
+                          result_queue=result_queue,
+                          cca=cca,
+                          tncs=tncs,
+                          ellg=ellg,
+                          struct_file=struct_file,
+                          dres=dres,
+                          np=np,
+                          na=na)
+    # No module!
+    else:
+        command = {
+            "data":data_file
+        }
+        run_phaser_pdbquery_script(command)
+
+
 def run_phaser_module(data_file,
                       result_queue=False,
                       cca=False,
@@ -553,7 +585,7 @@ def run_phaser_module(data_file,
                       struct_file=False,
                       dres=False,
                       np=0,
-                      na=0,):
+                      na=0):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
@@ -666,6 +698,7 @@ def run_phaser_module(data_file,
     # MAIN
     # Setup which modules are run
     # Read input MTZ file
+    print dir(phaser)
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')

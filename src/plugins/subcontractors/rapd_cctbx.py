@@ -36,7 +36,7 @@ import os
 #from bson.objectid import ObjectId
 from utils.xutils import convert_unicode, fix_R3_sg
 
-from plugins.subcontractors.rapd_phaser import run_phaser_module
+from plugins.subcontractors.rapd_phaser import run_phaser, run_phaser_module
 #import plugins.subcontractors.rapd_phaser as rapd_phaser
 
 
@@ -198,8 +198,8 @@ def get_pdb_info(struct_file,
                     else:
                         #res1 = run_phaser_module(n)
                         phaser_return = run_phaser_module(data_file=data_file,
-                                                           ellg=True, 
-                                                           struct_file=n)
+                                                          ellg=True, 
+                                                          struct_file=n)
                         d[chain.id].update({'res': phaser_return.get("target_resolution", res1)})
                     """
                     d[chain.id] = {'file': n,
@@ -237,9 +237,12 @@ def get_pdb_info(struct_file,
     else:
         #phaser_return = run_phaser_module((np, na, dres, struct_file, data_file))
         #phaser_return = run_phaser_module(data_file, (np, na, dres, struct_file))
-        phaser_return = run_phaser_module(data_file=data_file,
-                                           ellg=True, 
-                                           struct_file=struct_file)
+        # phaser_return = run_phaser_module(data_file=data_file,
+        #                                   ellg=True, 
+        #                                   struct_file=struct_file)
+        phaser_return = run_phaser(data_file=data_file,
+                                   ellg=True, 
+                                   struct_file=struct_file)
         d['all'].update({'res': phaser_return.get("target_resolution", res1)})
     """
     d['all'] = {'file': struct_file,
