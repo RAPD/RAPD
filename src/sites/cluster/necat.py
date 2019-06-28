@@ -69,13 +69,13 @@ def check_queue(inp):
     """
     Returns which cluster batch queue should be used with the plugin.
     """
-    d = {"ECHO"           : 'general.q',
+    d = {"ECHO"           : 'phase1.q,general.q',
          #"INDEX"          : 'phase2.q,phase3.q,index.q',
-         "INDEX"          : 'phase3.q',
+         "INDEX"          : 'phase1.q,general.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
          #"XDS"            : 'phase2.q,phase1.q,fibre.q',
-         "XDS"            : 'phase3.q',
+         "XDS"            : 'phase1.q,general.q',
          #"INTEGRATE"      : 'integrate.q',
          #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
          #"INTEGRATE"      : 'phase3.q',
@@ -91,13 +91,23 @@ def check_queue(inp):
     if d.get(inp, False):
         return(d[inp])
     else:
-        return 'general.q'
+        return 'phase1.q,general.q'
   
-def get_nproc_njobs():
+def get_resources(command):
+    """Return the number of processors used for specific plugin."""
+    if command in ('INDEX'):
+        return 4
+    elif command in ('INTEGRATE'):
+        #Integrate gets number of processors and number of jobs
+        return (4, 8)
+    else:
+        return 1
+
+def get_nproc_njobs_OLD():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 10)
+    return (4, 8)
   
-def determine_nproc(command):
+def determine_nproc_OLD(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
     nproc = 1
     if command in ('INDEX'):

@@ -41,7 +41,7 @@ import redis
 
 # RAPD imports
 import utils.commandline
-import utils.lock
+from utils.lock import lock_file, close_lock_file
 import utils.log
 from utils.overwatch import Registrar
 import utils.site
@@ -98,7 +98,8 @@ class Gatherer(object):
         self.ow_registrar = Registrar(site=self.site,
                                       ow_type="gatherer",
                                       ow_id=self.overwatch_id)
-        self.ow_registrar.register({"site_id":self.site.ID})
+        #self.ow_registrar.register({"site_id":self.site.ID})
+        self.ow_registrar.register({"site_id":self.tag})
 
         #self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
@@ -106,10 +107,10 @@ class Gatherer(object):
         self.logger.debug("  Will push new datasets onto runs_data:%s" % self.tag)
         
         # path prefix for RDMA folder location with Eiger
-        if self.tag == 'NECAT_E':
-            path_prefix = '/epu2/rdma'
-        else:
-            path_prefix = ''
+        #if self.tag == 'NECAT_E':
+        #    path_prefix = '/epu/rdma'
+        #else:
+        #    path_prefix = ''
 
         try:
             while self.go:
@@ -139,7 +140,7 @@ class Gatherer(object):
 
                 time.sleep(0.2)
                 # Have Registrar update status
-                self.ow_registrar.update({"site_id":self.site.ID})
+                self.ow_registrar.update({"site_id":self.tag})
         except KeyboardInterrupt:
             self.stop()
 
@@ -150,23 +151,17 @@ class Gatherer(object):
         self.logger.debug("NecatGatherer.stop")
 
         self.go = False
-        #self.redis_database.stop()
-        #self.bl_database.stop()
+        # Close the lock file
+        close_lock_file()
 
     def connect(self):
         """Connect to redis host"""
         # Connect to control redis for publishing run data info
         redis_database = importlib.import_module('database.redis_adapter')
-
-        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # Connect to beamline Redis to monitor if run is launched
-        #self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
-        #self.bl_redis = self.bl_database.connect_redis_pool()
         self.bl_redis = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
-        #self.pipe = self.bl_redis.pipeline()
 
     def set_host(self):
         """
@@ -286,8 +281,10 @@ def main():
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
-  # Single process lock?
-    utils.lock.file_lock(SITE.GATHERER_LOCK_FILE)
+    # Single process lock?
+    if lock_file(SITE.GATHERER_LOCK_FILE):
+        print 'another instance of rapd.gather is running... exiting now'
+        sys.exit(9)
 
     # Set up logging
     if commandline_args.verbose:

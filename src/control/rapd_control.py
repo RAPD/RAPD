@@ -34,7 +34,7 @@ import time
 # RAPD imports
 import utils.commandline
 import utils.log
-import utils.lock
+from utils.lock import lock_file, close_lock_file
 import utils.site
 import utils.text as text
 from control.model import Model
@@ -96,7 +96,9 @@ def main():
     SITE = importlib.import_module(site_file)
 
     # Single process lock?
-    utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
+    if lock_file(SITE.CONTROL_LOCK_FILE):
+        print 'another instance of rapd.control is running... exiting now'
+        sys.exit(9)
 
     # Set up logging
     if commandline_args.verbose:
@@ -126,6 +128,8 @@ def main():
     except KeyboardInterrupt:
         # Close everything cleanly
         MODEL.stop()
+        # c;lose the file lock
+        close_lock_file()
 
 
 if __name__ == "__main__":

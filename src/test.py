@@ -690,7 +690,7 @@ for d in l:
     #   red.srem('working', d)
 print red.smembers('working')
 """
-#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_3080/images/hui/runs/hy_640_9/hy_640_9_1_000002.cbf')
@@ -735,8 +735,8 @@ print red.smembers('working')
 #print red.lrange('run_data:NECAT_E', 0, -1)
 
 #print red.llen('current_run_C')
-"""
-print red.llen('RAPD_QSUB_JOBS_0')
+
+print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('images_collected:NECAT_E')
 #red.delete("images_collected:NECAT_E")
@@ -751,13 +751,13 @@ print red.llen('runs_data:NECAT_E')
 #red.delete("runs_data:NECAT_E")
 print red.llen('runs_data:NECAT_C')
 #red.delete("runs_data:NECAT_C")
-print red.lrange('runs_data:NECAT_C', 0, -1)
+#print red.lrange('runs_data:NECAT_C', 0, -1)
 #red.delete("runs_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
-red.delete('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
 print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_2')
-"""
+
 
 
 

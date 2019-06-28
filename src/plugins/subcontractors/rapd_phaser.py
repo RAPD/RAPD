@@ -302,7 +302,7 @@ def mp_job(func):
             # Signal to launch run
             kwargs['script'] = True
             if kwargs.get('pool', False):
-                # If running on local machine
+                # If running on local machine. Launcher will be 'utils.processes.local_subprocess'
                 pool = kwargs.pop('pool')
                 f = write_script(kwargs)
                 proc = pool.apply_async(launcher,
@@ -313,7 +313,7 @@ def mp_job(func):
                 #return (proc, 'junk', kwargs['output_id'])
                 return (proc, 'junk')
             else:
-                # If running on computer cluster
+                # If running on computer cluster. Launcher will be sites.cluster.(site_name).process_cluster
                 f = write_script(kwargs)
                 pid_queue = Queue()
                 proc = Process(target=launcher,
@@ -389,7 +389,7 @@ def run_phaser(data_file,
         i.setCELL6(r.getUnitCell())
         if struct_file[-3:].lower() == "cif":
             #i.addENSE_CIF_ID('model', cif, 0.7)
-            ### Typo in PHASER CODE!!!###
+            ### Typo in PHASER CODE!!! <<<CIT>>> ###
             i.addENSE_CIT_ID('model', convert_unicode(struct_file), 0.7)
         else:
             i.addENSE_PDB_ID('model', convert_unicode(struct_file), 0.7)
@@ -532,7 +532,8 @@ def run_phaser(data_file,
     else:
         phaser_result = {"ID": name,
                          "solution": False,
-                         "message": "No solution"}
+                         "message": "No solution",
+                         "spacegroup": spacegroup}
     # Add the phaser log
     if phaser_log:
         phaser_result.update({"logs": {"phaser": phaser_log}})

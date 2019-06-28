@@ -109,7 +109,8 @@ class FileLocation():
         self.ram_prefix = '/epu/rdma'
         #self.ip = '164.54.212.219'
         #self.ram_prefix = '/epu2/rdma'
-        self.nvme_prefix = '/epu/nvme'
+        #self.nvme_prefix = '/epu/nvme'
+        self.nvme_prefix = '/lustre/fs1'
         self.ft_redis = self.redis_ft_connect()
 
     def redis_ft_connect(self):

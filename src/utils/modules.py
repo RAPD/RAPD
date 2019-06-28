@@ -26,7 +26,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import glob
+#import glob
 import importlib
 
 def load_module(seek_module, directories=False, logger=False):

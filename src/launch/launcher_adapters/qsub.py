@@ -29,10 +29,9 @@ __status__ = "Development"
 # Standard imports
 import logging
 import os
-from subprocess import Popen
-import drmaa
+#from subprocess import Popen
+#import drmaa
 import time
-#from multiprocessing import Queue, Process
 from multiprocessing import Process
 from multiprocessing import Queue as mp_Queue
 from Queue import Queue as t_Queue
@@ -41,7 +40,7 @@ from threading import Thread
 # RAPD imports
 import utils.launch_tools as launch_tools
 from utils.modules import load_module
-from utils.text import json
+#from utils.text import json
 from bson.objectid import ObjectId
 
 #class LauncherAdapter(Thread):

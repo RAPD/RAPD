@@ -33,16 +33,12 @@ import shlex
 #import time
 #import subprocess32 as subprocess
 from subprocess import Popen, call, PIPE, STDOUT
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager, cpu_count
 from multiprocessing.pool import ThreadPool
 from multiprocessing.managers import BaseManager
 from utils.site import get_ip_address
-#import Queue
 from queue import Queue
-
-import threading
-#import subprocess
-
+from threading import Thread
 
 import traceback
 #from multiprocessing.pool import Pool
@@ -77,7 +73,7 @@ class LogExceptions(object):
 
 
 
-class LocalSubprocess(threading.Thread):
+class LocalSubprocess(Thread):
 
     done = False
 
@@ -100,7 +96,7 @@ class LocalSubprocess(threading.Thread):
         self.result_queue=result_queue
         self.tag=tag
 
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
     def run(self):
 
@@ -138,7 +134,9 @@ class LocalSubprocess(threading.Thread):
 # print myclass.stdout
 
 class QueueManager(BaseManager):
-    """Setup a multiprocessing.manager to pass results queue through Process or apply."""
+    """Setup a multiprocessing.manager to pass results queue through Process or apply.
+       This is a way to get a queue across different machines. 
+       DID NOT WORK because you cannot close the manager server?!?"""
     def __init__(self,
                  ip=False,
                  port=20100,
@@ -181,6 +179,36 @@ class QueueManager(BaseManager):
         manager.connect()
         queue = manager.get_queue()
         return queue
+
+def mp_manager():
+    # This is a way to get a queue across different machines. 
+    # DID NOT WORK because you cannot close the manager server?!?
+
+    queue = Queue()
+    class QueueManager(BaseManager): pass
+    
+    QueueManager.register('get_queue', callable=lambda:queue)
+    m = QueueManager(address=(get_ip_address(), 20100), authkey=None)
+    #m.start()
+    s = m.get_server()
+    print dir(s)
+    stop_timer = threading.Timer(1, lambda:s.stop_event.set())
+    QueueManager.register('stop', callable=lambda:stop_timer.start())
+    s.serve_forever()
+    return (m, queue)
+
+def mp_client(inp):
+   # This is a way to get a queue across different machines. 
+    # DID NOT WORK because you cannot close the manger server?!?
+
+    class QueueManager(BaseManager): pass
+    QueueManager.register('get_queue')
+    #QueueManager.register('stop')
+    m = QueueManager(address=(inp[0],inp[1]), authkey=None)
+    m.connect()
+    queue = m.get_queue()
+    return (m, queue)
+
 
 def local_subprocess(command,
                      logfile=False,
@@ -254,43 +282,18 @@ def local_subprocess(command,
             pass
 
     # print "  finished...", command
+
+def total_nproc():
+    """Returns the nproc on machine."""
+    return cpu_count()
+
 #@staticmethod
 def mp_pool(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
     return Pool(processes=nproc)
-    
 
-def mp_simple_manager():
-    return Manager()
-    
 def mp_manager():
-    # This is a way to get a queue across different machines. 
-    # DID NOT WORK because you cannot close the manger server?!?
-    from multiprocessing.managers import BaseManager
-    queue = Queue()
-    class QueueManager(BaseManager): pass
-    
-    QueueManager.register('get_queue', callable=lambda:queue)
-    m = QueueManager(address=(get_ip_address(), 20100), authkey=None)
-    #m.start()
-    s = m.get_server()
-    print dir(s)
-    stop_timer = threading.Timer(1, lambda:s.stop_event.set())
-    QueueManager.register('stop', callable=lambda:stop_timer.start())
-    s.serve_forever()
-    return (m, queue)
-
-def mp_client(inp):
-   # This is a way to get a queue across different machines. 
-    # DID NOT WORK because you cannot close the manger server?!?
-    from multiprocessing.managers import BaseManager
-    class QueueManager(BaseManager): pass
-    QueueManager.register('get_queue')
-    #QueueManager.register('stop')
-    m = QueueManager(address=(inp[0],inp[1]), authkey=None)
-    m.connect()
-    queue = m.get_queue()
-    return (m, queue)
+    return Manager()
 
 @staticmethod
 def mp_pool_TESTING(nproc=8):
