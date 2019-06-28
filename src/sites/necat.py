@@ -207,7 +207,7 @@ EXCHANGE_DIR = "/gpfs6/users/necat/rapd2/exchange_dir"
 
 ################# Lock file locations so only one instance can run. False if no locking.################
 # Launcher Manager to sort out where to send jobs
-LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
+#LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
 # dataset gatherer lock

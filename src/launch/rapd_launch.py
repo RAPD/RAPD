@@ -70,10 +70,6 @@ class Launch(object):
 
         # Load and decode json command file
         self.command = self.load_command()
-
-        # Put the site object into the command
-        #self.command["site"] = self.site
-
         self.new_logger.debug("command: %s", self.command.get("command", None))
 
         # Load the plugin for this command

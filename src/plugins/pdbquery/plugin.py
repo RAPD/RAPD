@@ -47,6 +47,7 @@ from pprint import pprint
 import shutil
 import time
 import importlib
+import random
 
 # RAPD 
 from bson.objectid import ObjectId
@@ -179,14 +180,14 @@ class RapdPlugin(Thread):
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
         
-        #self.test = self.preferences.get("test", False)
-        self.test = self.preferences.get("test", True) # Limit number of runs on cluster
+        self.test = self.preferences.get("test", False)
+        #self.test = self.preferences.get("test", True) # Limit number of runs on cluster
         
         self.sample_type = self.preferences.get("type", "protein")
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
         # self.verbose = self.command["preferences"].get("verbose", False)
-        self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
+        self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Used for setting up Redis connection
         self.db_settings = self.command["input_data"].get("db_settings")
         self.nproc = self.preferences.get("nproc", 1)
@@ -230,16 +231,16 @@ class RapdPlugin(Thread):
         self.tprint(arg=0, level="progress")
 
         # Glean some information on the input file
-        input_spacegroup, self.cell, volume = get_mtz_info(self.datafile)
+        input_spacegroup, self.cell, volume = get_mtz_info(self.data_file)
         # Get high resolution limt from MTZ
-        self.dres = get_res(self.datafile)
+        self.dres = get_res(self.data_file)
         # Determine the Laue group from the MTZ
         input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
         self.laue = xutils.get_sub_groups(input_spacegroup_num, "laue")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
-        self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
+        self.tprint("  Data file: %s" % self.data_file, level=10, color="white")
         self.tprint("  Spacegroup: %s  (%s)" % (input_spacegroup, input_spacegroup_num),
                     level=10,
                     color="white")
@@ -635,7 +636,7 @@ class RapdPlugin(Thread):
                 if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
                     pdb_info = get_pdb_info(struct_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=True)
@@ -655,7 +656,7 @@ class RapdPlugin(Thread):
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
                     pdb_info = get_pdb_info(struct_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=False)
@@ -664,16 +665,14 @@ class RapdPlugin(Thread):
                 # Same number of mols in AU.
                 else:
                     pdb_info = get_pdb_info(struct_file=cif_path,
-                                            data_file=self.datafile,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=False,
                                             chains=False)
     
                 job_description = {
                     "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                    "datafile": self.datafile,
-                    #"cif": cif_path,
-                    #"pdb": cif_path,
+                    "data_file": self.data_file,
                     "struct_file": cif_path,
                     "name": pdb_code,
                     "spacegroup": data_spacegroup,
@@ -699,8 +698,6 @@ class RapdPlugin(Thread):
                         job_description.update({
                             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
                                 new_code)),
-                            #"cif":pdb_info[chain]["file"],
-                            #"pdb":pdb_info[chain]["file"],
                             "struct_file": pdb_info[chain]["file"],
                             "name":new_code,
                             "ncopy":pdb_info[chain]["NMol"],

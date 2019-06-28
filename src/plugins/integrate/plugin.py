@@ -247,7 +247,6 @@ class RapdPlugin(Process):
         self.procs = 4
 
         # If using a computer cluster, overwrite the self.launcher
-        #self.cluster_use = self.preferences.get('cluster_use', False)
         if self.preferences.get('computer_cluster', False):
             # Load the cluster adapter
             computer_cluster = xutils.load_cluster_adapter(self)
@@ -262,7 +261,8 @@ class RapdPlugin(Process):
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
                     #self.jobs = 20
                     #self.procs = 8
             else:
@@ -593,7 +593,7 @@ class RapdPlugin(Process):
 
             # Send results back
             self.redis.lpush("RAPD_RESULTS", json_results)
-            self.redis.publish("RAPD_RESULTS", json_results)
+            #self.redis.publish("RAPD_RESULTS", json_results)
 
     def postprocess(self):
         """After it's all done"""
@@ -668,7 +668,7 @@ class RapdPlugin(Process):
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs
@@ -725,7 +725,7 @@ class RapdPlugin(Process):
             class PdbqueryArgs(object):
                 """Object for command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs

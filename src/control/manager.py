@@ -1,4 +1,6 @@
 """
+Manager 
+Monitors health of gathers and launchers and 
 Manager which sorts out jobs and send to appropriate launchers
 """
 
@@ -39,7 +41,7 @@ from threading import Thread
 # RAPD imports
 import utils.launch_tools as launch_tools
 from utils.commandline import base_parser
-#from utils.lock import file_lock
+from utils.lock import file_lock
 import utils.site
 import utils.log
 from utils.overwatch import Registrar
@@ -52,10 +54,11 @@ TIMER = 5
 
 class Launcher_Manager(Thread):
     """
-    Listens to the 'RAPD_JOBS'list and sends jobs to proper
+    Listens to the 'RAPD_JOBS' list and sends jobs to proper
     launcher.
     """
-    def __init__(self, site, logger=False, overwatch_id=False):
+    #def __init__(self, site, logger=False, overwatch_id=False):
+    def __init__(self, site, logger=False):
         """
         Initialize the Launcher instance
 
@@ -63,7 +66,6 @@ class Launcher_Manager(Thread):
         site -- site object with relevant information to run
         redis -- Redis instance for communication
         logger -- logger instance (default = None)
-        overwatch_id -- id for optional overwatcher instance
         """
         # If logger is passed in from main use that...
         if logger:
@@ -77,7 +79,7 @@ class Launcher_Manager(Thread):
 
         # Save passed-in variables
         self.site = site
-        self.overwatch_id = overwatch_id
+        #self.overwatch_id = overwatch_id
 
         self.running = True
         self.timer = 0
@@ -89,14 +91,14 @@ class Launcher_Manager(Thread):
 
     def run(self):
         """The core process of the Launcher instance"""
-
+        """
         # Set up overwatcher
         if self.overwatch_id:
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="launch_manager",
                                           ow_id=self.overwatch_id)
             self.ow_registrar.register()
-
+        """
         # Get the initial possible jobs lists
         full_job_list = [x.get('job_list') for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]]
 
@@ -108,8 +110,8 @@ class Launcher_Manager(Thread):
                 if round(self.timer%TIMER,1) == 1.0:
                     try:
                         # Have Registrar update status
-                        if self.overwatch_id:
-                            self.ow_registrar.update()
+                        #if self.overwatch_id:
+                        #    self.ow_registrar.update()
 
                         # Check which launchers are running
                         temp = [l for l in full_job_list if self.redis.get("OW:"+l)]
@@ -164,8 +166,8 @@ class Launcher_Manager(Thread):
         if self.logger:
             self.logger.debug('shutting down launcher manager')
         self.running = False
-        if self.overwatch_id:
-            self.ow_registrar.stop()
+        #if self.overwatch_id:
+        #   self.ow_registrar.stop()
 
     def set_launcher(self, command=False, site_tag=False):
         """Find the correct running launcher to launch a specific job COMMAND"""
@@ -246,14 +248,15 @@ class Launcher_Manager(Thread):
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
-"""
-# NOT LAUNCHED FROM COMMANDLINE AND NOT NEEDED
-def get_commandline():
-    #Get the commandline variables and handle them
 
-    # Parse the commandline arguments
-    #commandline_description = 
-    #The Launch process for handling calls for computation
+
+if __name__ == "__main__":
+    pass
+
+"""
+
+def get_commandline():
+   
     parser = argparse.ArgumentParser(parents=[base_parser],
                                      description=commandline_description,
                                      conflict_handler='resolve')
@@ -261,7 +264,7 @@ def get_commandline():
     return parser.parse_args()
 
 def main():
-    #Run the main process
+    
 
     # Get the commandline args
     commandline_args = get_commandline()

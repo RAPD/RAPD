@@ -37,6 +37,7 @@ import time
 # RAPD imports
 import utils.commandline
 import utils.site
+from utils.lock import lock_file, close_lock_file
 import utils.text as text
 
 def get_commandline():
@@ -47,9 +48,31 @@ def get_commandline():
 
     # Parse the commandline arguments
     commandline_description = """Data gatherer"""
-    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
-                                     description=commandline_description)
+    parser = argparse.ArgumentParser(description="""Data gatherer""",
+                                     add_help=False)
+    # Help
+    parser.add_argument("--help", "-h",
+                        action="store_true",
+                        dest="help")
+    
+    parser.add_argument("--python", "-p",
+                        action="store",
+                        default="rapd.python",
+                        dest="python",
+                        help="Which python to launch managed file")
+    
+    parser.add_argument("-s", "--site",
+                        action="store",
+                        dest="site",
+                        help="Define the site (ie. NECAT)")
+    
+    #parsed_args, unknownargs = parser.parse_known_args()
 
+    #if parsed_args.help:
+    #    parser.print_help()
+
+    #return parsed_args, unknownargs
+    
     return raw_args, parser.parse_args()
 
 def main():
@@ -78,6 +101,7 @@ def main():
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)
 
+
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
@@ -88,19 +112,25 @@ def main():
         path = os.environ.copy()
 
         # Compose the command
+        #command = raw_args[:]
+        #command.insert(0, "%s/src/sites/gatherers/" % environmental_vars["RAPD_HOME"] + SITE.GATHERER)
+        #command.insert(0, "rapd.python")
+        
         command = raw_args[:]
         command.insert(0, "%s/src/sites/gatherers/" % environmental_vars["RAPD_HOME"] + SITE.GATHERER)
-        #command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
-        command.insert(0, "rapd.python")
+        command.insert(0, "--managed_file")
+        command.insert(0, "%s/src/utils/overwatch.py" %environmental_vars["RAPD_HOME"])
+        command.insert(0, commandline_args.python)
 
         # Run it
-        print command
+        #print command
+        
         gatherer_process = subprocess.Popen(command, env=path)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)
         exit_code = gatherer_process.poll()
-        if exit_code != None:
+        if not exit_code == None:
             print text.error+"Gatherer exited on start. Exiting."+text.stop
             sys.exit(9)
 
