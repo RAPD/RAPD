@@ -44,13 +44,10 @@ import tarfile
 import time
 
 # Phaser import
-try:
-    import phaser
-except ImportError:
-    phaser = False
+import phaser
 
 # RAPD imports
-from utils import archive
+from utils import archive, pdb
 from utils.xutils import convert_unicode, calc_ADF_map
 
 def connect_to_redis(settings):
@@ -610,14 +607,34 @@ def run_phaser_module(data_file,
         i0 = phaser.InputMR_ELLG()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
-        i0.setMUTE(True)
+        i0.setMUTE(False)
         i0.setREFL_DATA(r.getDATA())
-        if struct_file[-3:] in ('cif'):
-            i0.addENSE_CIT_ID('model', convert_unicode(struct_file), 0.7)
+        #  Read in CIF file
+        if struct_file[-3:] in ('cif',):
+            i0.addENSE_CIT_ID("model", convert_unicode(struct_file), 0.7)
+        # Read in PDB file
         else:
             i0.addENSE_PDB_ID("model", convert_unicode(struct_file), 0.7)
-        r1 = phaser.runMR_ELLG(i0)
-        #print r1.logfile()
+        try:
+            r1 = phaser.runMR_ELLG(i0)
+        except RuntimeError as e:
+            print "Hit error"
+            # Known CIF error - convert to pdb and retry
+            if struct_file[-3:] in ('cif',):
+                print "Convert to pdb"
+                pdb.cif_as_pdb((struct_file,))
+                pdb_file = struct_file.replace(".cif", ".pdb")
+                i1 = phaser.InputMR_ELLG()
+                i1.setSPAC_HALL(r.getSpaceGroupHall())
+                i1.setCELL6(r.getUnitCell())
+                i1.setMUTE(False)
+                i1.setREFL_DATA(r.getDATA())
+                i1.addENSE_PDB_ID("model", convert_unicode(pdb_file), 0.7)
+                r1 = phaser.runMR_ELLG(i1)
+            else:
+                raise e
+
+        print r1.logfile()
         if r1.Success():
             # If it worked use the recommended resolution
             new_res = round(r1.get_target_resolution('model'), 1)
@@ -699,7 +716,6 @@ def run_phaser_module(data_file,
     # MAIN
     # Setup which modules are run
     # Read input MTZ file
-    print dir(phaser)
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')
