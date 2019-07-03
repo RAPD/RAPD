@@ -54,7 +54,6 @@ redis_database = importlib.import_module('database.redis_adapter')
 redis = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
 #redis = redis_database.connect_to_redis()
 
-
 """
 cif = '/gpfs6/users/necat/rapd2/integrate/2018-06-06/JDO_PUCK2_A14_Run4_1/rapd_pdbquery_JDO_PUCK2_A14_Run4_1_free/Phaser_1Z7E/1z7e.cif'
 l = ['2FGE_E', '2FGE']
@@ -143,7 +142,7 @@ plugin_instance.start()
 #analysis_result = plugin_queue.get()
 #print analysis_result
 """
-"""
+
 import plugins.pdbquery.plugin
 import plugins.pdbquery.commandline
 
@@ -155,7 +154,9 @@ class PdbqueryArgs(object):
     #Object for command construction
     clean = True
     #datafile = '/gpfs5/users/necat/rapd/copper/trunk/integrate/2018-06-07/P113_11_1/P113_11_1/P113_11_1_free.mtz'
-    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    #data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
+    #data_file = '/gpfs6/users/necat/Jon/RAPD_test/Output/thaum1_01s-01d_1_mergable.mtz'
+    data_file = '/gpfs6/users/necat/Jon/RAPD_test/Output/thau_free.mtz'
     dir_up = False
     json = False
     nproc = 2
@@ -183,7 +184,7 @@ plugin_instance = plugin.RapdPlugin(site=site,
                                     command=pdbquery_command,
                                     logger=logger)
 plugin_instance.start()
-"""
+
 """
 data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
 pdb = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.pdb'

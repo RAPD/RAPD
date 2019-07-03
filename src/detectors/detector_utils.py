@@ -459,6 +459,52 @@ def interrogate_hdf5_item_structure(key, g, header) :
 
     return header
 
+def get_resolution_at_edge(xdsinp):
+    # Calculate the detector distance or a resolution
+    import math
+    
+    for line in xdsinp:
+        print line
+        
+    """
+    if self.vendortype.startswith('ADSC'):
+        from rapd_site import settings_E as settings
+    else:
+        from rapd_site import settings_C as settings
+    max_dis = settings.get('max_distance')
+    min_dis = settings.get('min_distance')
+    # percent of resolution to use for distance calculation range.
+    percent = 0.1
+    _l0 = []
+    # Determine the size of the detector face for calc distance using ImageFactory.
+    header = read_header(image).parameters
+    _l = [header['SIZE1']*header['PIXEL_SIZE'],
+          header['SIZE2']*header['PIXEL_SIZE']]
+    # Pick the smallest detector dimension
+    m = min(_l)
+    rad1 = m / 2.0
+    #rad2 = math.sqrt(2) * rad1 # For res at corner
+    _l = [round(float(res)-float(res)*percent, 1),
+          round(float(res),1), 
+          round(float(res)+float(res)*percent, 1)]
+    try:
+        for i in range(len(_l)):
+            dis = round(rad1 / math.tan(2 * math.asin(header['WAVELENGTH'] / (2 * _l[i]))), -1)
+            # Calc res at min_dis
+            if dis < min_dis:
+                if i == 0:
+                    _l0.append([round(header['WAVELENGTH'] / (2 * math.sin(0.5 * math.atan(rad1 / min_dis))), 1), min_dis])
+            # Calc res at max_dis
+            elif dis > max_dis:
+                _l0.append([round(header['WAVELENGTH'] / (2 * math.sin(0.5 * math.atan(rad1 / max_dis))), 1), max_dis])
+                break
+            else:
+                _l0.append([_l[i], dis])
+        return(_l0)
+    except:
+        return(False)
+    """
+
 def main(test_images):
     """Print out some detector information"""
 

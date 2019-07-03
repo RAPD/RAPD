@@ -439,7 +439,8 @@ def run_phaser(data_file,
         # launch the run
         r = phaser.runMR_AUTO(i)
         if r.Success():
-            pass
+            print r
+            #pass
             #if r.foundSolutions():
                 #print "Phaser has found MR solutions"
                 #print "Top LLG = %f" % r.getTopLLG()
@@ -456,96 +457,96 @@ def run_phaser(data_file,
             log.write(r.logfile())
             log.close()
 
-    if r.foundSolutions():
-        rfz = None
-        tfz = None
-        tncs = False
-        # Parse results
-        for p in r.getTopSet().ANNOTATION.split():
-            if p.count('RFZ'):
-                if p.count('=') in [1]:
-                    rfz = float(p.split('=')[-1])
-            if p.count('RF*0'):
-                rfz = "NC"
-            if p.count('TFZ'):
-                if p.count('=') in [1]:
-                    tfz = p.split('=')[-1]
-                    if tfz == '*':
-                        tfz = 'arbitrary'
-                    else:
-                        tfz = float(tfz)
-            if p.count('TF*0'):
-                tfz = "NC"
-        tncs_test = [1 for line in r.getTopSet().unparse().splitlines()
-                     if line.count("+TNCS")]
-        tncs = bool(len(tncs_test))
-        phaser_result = {"ID": name,
-                         "solution": r.foundSolutions(),
-                         "pdb": os.path.join(work_dir, r.getTopPdbFile()),
-                         "mtz": os.path.join(work_dir, r.getTopMtzFile()),
-                         "gain": float(r.getTopLLG()),
-                         "rfz": rfz,
-                         # "tfz": r.getTopTFZ(),
-                         "tfz": tfz,
-                         "clash": r.getTopSet().PAK,
-                         "dir": os.getcwd(),
-                         "spacegroup": r.getTopSet().getSpaceGroupName().replace(' ', ''),
-                         "tNCS": tncs,
-                         "nmol": r.getTopSet().NUM,
-                         "adf": None,
-                         "peak": None,
-                         }
-
-        # Calc ADF map
-        if adf:
-            if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
-                adf_results = calc_ADF_map(data_file=data_file,
-                                           mtz=phaser_result["mtz"],
-                                           pdb=phaser_result["pdb"])
-                if adf_results.get("adf"):
-                    phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
-                if adf_results.get("peak"):
-                    phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
-                #phaser_result.update({"adf": adf_results.get("adf", None),
-                #                      "peak": adf_results.get("peak", None),})
-
-        # New procedure for making tar of results
-        # Create directory
-        # Remove the run # from the name
-        new_name = name[:-2]
-        os.mkdir(new_name)
-        # Go through and copy files to archive directory
-        file_types = ("pdb", "mtz", "adf", "peak")
-        for file_type in file_types:
-            target_file = phaser_result.get(file_type, False)
-            if target_file:
-                if os.path.exists(target_file):
-                    # Copy the file to the directory to be archived
-                    shutil.copy(target_file, new_name+"/.")
-        # Create the archive
-        archive_result = archive.create_archive(new_name)
-        archive_result["description"] = '%s_files'%new_name
-        phaser_result["tar"] = archive_result
-    else:
-        phaser_result = {"ID": name,
-                         "solution": False,
-                         "message": "No solution",
-                         "spacegroup": spacegroup}
-    # Add the phaser log
-    if phaser_log:
-        phaser_result.update({"logs": {"phaser": phaser_log}})
-
-    if db_settings and tag:
-        # Connect to Redis
-        redis = connect_to_redis(db_settings)
-        # Key should be deleted once received, but set the key to expire in 24 hours just in case.
-        redis.setex(tag, 86400, json.dumps(phaser_result))
-        # Do a little sleep to make sure results are in Redis for postprocess_phaser
-        time.sleep(0.1)
-    else:
-        # Print the result so it can be seen thru the queue by reading stdout
-        #print phaser_result
-        print json.dumps(phaser_result)
+        if r.foundSolutions():
+            rfz = None
+            tfz = None
+            tncs = False
+            # Parse results
+            for p in r.getTopSet().ANNOTATION.split():
+                if p.count('RFZ'):
+                    if p.count('=') in [1]:
+                        rfz = float(p.split('=')[-1])
+                if p.count('RF*0'):
+                    rfz = "NC"
+                if p.count('TFZ'):
+                    if p.count('=') in [1]:
+                        tfz = p.split('=')[-1]
+                        if tfz == '*':
+                            tfz = 'arbitrary'
+                        else:
+                            tfz = float(tfz)
+                if p.count('TF*0'):
+                    tfz = "NC"
+            tncs_test = [1 for line in r.getTopSet().unparse().splitlines()
+                         if line.count("+TNCS")]
+            tncs = bool(len(tncs_test))
+            phaser_result = {"ID": name,
+                             "solution": r.foundSolutions(),
+                             "pdb": os.path.join(work_dir, r.getTopPdbFile()),
+                             "mtz": os.path.join(work_dir, r.getTopMtzFile()),
+                             "gain": float(r.getTopLLG()),
+                             "rfz": rfz,
+                             # "tfz": r.getTopTFZ(),
+                             "tfz": tfz,
+                             "clash": r.getTopSet().PAK,
+                             "dir": os.getcwd(),
+                             "spacegroup": r.getTopSet().getSpaceGroupName().replace(' ', ''),
+                             "tNCS": tncs,
+                             "nmol": r.getTopSet().NUM,
+                             "adf": None,
+                             "peak": None,
+                             }
+    
+            # Calc ADF map
+            if adf:
+                if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
+                    adf_results = calc_ADF_map(data_file=data_file,
+                                               mtz=phaser_result["mtz"],
+                                               pdb=phaser_result["pdb"])
+                    if adf_results.get("adf"):
+                        phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
+                    if adf_results.get("peak"):
+                        phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
+                    #phaser_result.update({"adf": adf_results.get("adf", None),
+                    #                      "peak": adf_results.get("peak", None),})
+    
+            # New procedure for making tar of results
+            # Create directory
+            # Remove the run # from the name
+            new_name = name[:-2]
+            os.mkdir(new_name)
+            # Go through and copy files to archive directory
+            file_types = ("pdb", "mtz", "adf", "peak")
+            for file_type in file_types:
+                target_file = phaser_result.get(file_type, False)
+                if target_file:
+                    if os.path.exists(target_file):
+                        # Copy the file to the directory to be archived
+                        shutil.copy(target_file, new_name+"/.")
+            # Create the archive
+            archive_result = archive.create_archive(new_name)
+            archive_result["description"] = '%s_files'%new_name
+            phaser_result["tar"] = archive_result
+        else:
+            phaser_result = {"ID": name,
+                             "solution": False,
+                             "message": "No solution",
+                             "spacegroup": spacegroup}
+        # Add the phaser log
+        if phaser_log:
+            phaser_result.update({"logs": {"phaser": phaser_log}})
+    
+        if db_settings and tag:
+            # Connect to Redis
+            redis = connect_to_redis(db_settings)
+            # Key should be deleted once received, but set the key to expire in 24 hours just in case.
+            redis.setex(tag, 86400, json.dumps(phaser_result))
+            # Do a little sleep to make sure results are in Redis for postprocess_phaser
+            time.sleep(0.1)
+        else:
+            # Print the result so it can be seen thru the queue by reading stdout
+            #print phaser_result
+            print json.dumps(phaser_result)
 
 def run_phaser(data_file,
                result_queue=False,
