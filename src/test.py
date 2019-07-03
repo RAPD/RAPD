@@ -124,8 +124,6 @@ def clear_cluster():
 
 #clear_cluster()
 
-job = 'P21212_A_0'
-print job[:-2]
 
 """
 f = open('/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_index_CD546A_1_1_2_S.005_CD546A_1_1_2_S.004/result.json', 'r').read()
@@ -204,7 +202,7 @@ run_data = command.get("data", {}).get("run_data")
 image_data["start"] = run_data.get("start_image_number")
 print image_data["start"]
 """
-clear_cluster()
+
 
 """
 input = ['DATA_RANGE = 1 1200\n']

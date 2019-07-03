@@ -81,6 +81,7 @@ import plugins.analysis.plugin
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
 import utils.xutils as xutils
+from detectors.detector_utils import get_resolution_at_edge
 
 import info
 
@@ -1037,10 +1038,6 @@ class RapdPlugin(Process):
             new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
         else:
-            if self.low_res:
-                low_res = self.low_res
-            else:
-                low_res = 200.0
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
@@ -1476,27 +1473,10 @@ class RapdPlugin(Process):
                     line = (l0, line[1])
                     break
             xds_input.append("%s%s"%('='.join(line), '\n'))
-
-        """
-        for key, value in xds_dict.iteritems():
-            # Regions that are excluded are defined with
-            # various keyword containing the word UNTRUSTED.
-            # Since multiple regions may be specified using
-            # the same keyword on XDS but a dict cannot
-            # have multiple values assigned to a key,
-            # the following if statements work though any
-            # of these regions and add them to xdsinput.
-            if 'UNTRUSTED' in key:
-                if 'RECTANGLE' in key:
-                    line = 'UNTRUSTED_RECTANGLE=%s\n' %value
-                elif 'ELLIPSE' in key:
-                    line = 'UNTRUSTED_ELLIPSE=%s\n' %value
-                elif 'QUADRILATERAL' in key:
-                    line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
-            else:
-                line = "%s=%s\n" % (key, value)
-            xds_input.append(line)
-        """
+        
+        # Set resolution limit to edge of detector.
+        #xds_input = get_resolution_at_edge(xds_input)
+        
 
     	# If the detector is tilted in 2theta, adjust the value of
     	# DIRECTION_OF_DETECTOR_Y-AXIS.
@@ -2009,7 +1989,8 @@ class RapdPlugin(Process):
         """Parse out the XPARM file for information"""
 
         if not os.path.exists(infile):
-            return False
+            #return False
+            infile = "XPARM.XDS"
 
         in_lines = open(infile, "r").readlines()
         results = {}
@@ -2090,6 +2071,7 @@ class RapdPlugin(Process):
 
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
+        self.logger.debug('xds_parm_results: %s'%xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile, pointless_log = self.pointless()
