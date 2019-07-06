@@ -288,8 +288,10 @@ def get_cc_aimless(in_file):
                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
                         'anomalous on\n',
                         'scales constant\n',
-                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
-                        'cycles 0\n']
+                        'exclude sdmin 2.0\n'
+                        'sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n']
+#                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
+#                        'cycles 0\n']
     with open(com_file, "w") as command_file:
         for line in aimless_lines:
             command_file.write(line)
@@ -464,7 +466,8 @@ class RapdPlugin(multiprocessing.Process):
         if self.settings.has_key('strict'):
             if self.settings.has_key('spacegroup') or self.settings.has_key('unitcell'):
                 self.strict = True
-            self.strict = self.settings['strict']
+            else:
+                self.strict = self.settings['strict']
         else:
             self.strict = False
 
