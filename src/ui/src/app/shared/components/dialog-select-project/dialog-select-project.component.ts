@@ -31,12 +31,13 @@ export class DialogSelectProjectComponent implements OnInit {
   ngOnInit() {
 
     // Get available projects
-    this.rest_service.getProjects().subscribe(
-      parameters => {
-        console.log(parameters);
-        this.projects = parameters;
-      }
-    )
+    // TODO
+    // this.rest_service.getProjects().subscribe(
+    //   parameters => {
+    //     console.log(parameters);
+    //     this.projects = parameters;
+    //   }
+    // )
 
     // Create the form group
     this.project_form = new FormGroup({

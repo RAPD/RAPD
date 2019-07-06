@@ -57,7 +57,7 @@ export class LoginDialogComponent implements OnInit {
     console.log('this.login_form.value:', this.login_form.value);
 
     this.auth_service.login(this.login_form.value).subscribe(params => {
-      // console.log('onSubmit >>', params);
+      console.log('onSubmit >>', params);
       if (params.success === true) {
         // Initialize the websocket connection
         this.websocket_service.initializeWebsocket();

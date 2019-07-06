@@ -13,6 +13,12 @@ import re
 from pprint import pprint
 import inspect
 import sys
+import utils.archive as archive
+#import plugins.analysis.plugin
+import utils.log
+import utils.processes as process
+import datetime
+
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -87,13 +93,151 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
-#first_image_number = 1
-#wedge_size = 0
-#delta_omega = 0.3
-#print str(int(first_image_number + (float(wedge_size) / delta_omega)))
-#print str(first_image_number + int(round(wedge_size / delta_omega)))
+def clear_cluster():
+    l = []
+    inp = 'qstat'
+    myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    for line in myoutput.stdout:
+        split = line.split()
+        if len(split) == 8:
+            if split[2].split('_')[0] in ['INDEX', 'INTEGRATE_', 'shelxd']:
+              l.append(split[0])
+            #if split[4] == 'qw':
+                #l.append(split[0])
+            
+    for pid in l:
+        print pid
+        os.system('qdel %s'%pid)
+
+
+#clear_cluster()
+
+dat_dirs =  ['/gpfs5/users/necat/phii_dfa_1/in',
+                                           '/gpfs5/users/necat/phii_dfa_2/in',
+                                           '/gpfs5/users/necat/phii_raster_snap/in',
+                                           '/gpfs5/users/necat/phii_rastersnap_scan_data',
+                                           '/gpfs5/users/necat/phii_dfa_scan_data',
+                                           '/gpfs5/users/necat/phii_ova_scan_data',
+                                           '/gpfs5/users/necat/rapd/uranium/trunk/test_data']
+
+
+#image = '/ramdisk/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011/G11_10-JUL-18_21-03-32_1_000011.cbf'
+#dir = os.path.dirname(image)
+#image = '/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011.cbf'
+#_E_RAMDISK_PREFIX = '/ramdisk'
+
+#print os.path.join('%s%s'%(_E_RAMDISK_PREFIX, image[:image.rfind('.')]), os.path.basename(image))
 
 """
+for line in dat_dirs:
+    #print line
+    if dir.count(line):
+        print line
+
+dat_dirs_check = [1 for line in dat_dirs if dir.count(line)]
+check = bool(len(dat_dirs_check))
+print check
+print bool(len([1 for line in dat_dirs if dir.count(line)]))
+print bool(len([1 for line in dat_dirs if os.path.dirname(image).count(line)]))
+
+output_dict = {}
+search = []
+pdb_list = ['0thw', '1thw', '2thw','3thw','4thw','5thw','6thw','7thw']
+results = {'0THW' : {'description':'0'},
+           '1THW': {'description':'1'},
+           '3THW': {'description':'3'},
+           '7THW': {'description':'7'}}
+for pdb in pdb_list:
+    if results.get(pdb.upper(), False):
+        output_dict[pdb.upper()] = {'description': results.get(pdb.upper()).get('description')}
+    else:
+        search.append(pdb)
+q = 'pdb_id:(%s)'%" OR ".join(search)
+print q
+#search = [pdb for pdb in pdb_list if not results.keys().count(pdb)]
+#search = [pdb_list.pop(x) for x, pdb in enumerate(pdb_list) if not results.keys().count(pdb.upper())]
+#print search
+#print pdb_list
+
+
+
+image_data = command.get("data", {}).get("image_data")
+run_data = command.get("data", {}).get("run_data")
+
+image_data["start"] = run_data.get("start_image_number")
+print image_data["start"]
+"""
+#clear_cluster()
+
+"""
+input = ['DATA_RANGE = 1 1200\n']
+#tmp = ['DATA_RANGE', '1 1200\n']
+#tmp = input[-1].split('=')
+#print tmp
+#first, last = tmp[-1].split()
+first, last = input[-1].split('=')[-1].split()
+if int(last) == (int(1)+ int(1200) - 1):
+    print 'gh'
+#print first, type(first)
+#print last, type(last)
+"""
+
+"""
+cwd = '/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/rapd_analysis_L13_1_free'
+os.chdir(cwd)
+#command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
+#SIGI(+),I(-),SIGI(-)\" scaling.input.parameters.reporting.loggraphs=True" % '/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/L13_1/L13_1_free.mtz'
+command = "molrep -f %s -i << stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"% '/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/L13_1/L13_1_free.mtz'
+
+pid_queue = Queue()
+job = Process(target=process.local_subprocess, kwargs={'command': command,
+                                                       'result_queue': pid_queue,
+                                                       'logfile' : "molrep_selfrf.log",
+                                                       'pid_queue':pid_queue,
+                                                       'shell': True})
+job.start()
+print pid_queue.get()
+print pid_queue.get()
+
+
+
+
+cwd = '/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/rapd_analysis_L13_1_free'
+os.chdir(cwd)
+# Start logger
+#id,_ = os.path.splitext(os.path.basename(fpath))
+log = utils.log.get_logger(logfile_dir=cwd, logfile_id='testing')
+
+plugin_queue = Queue()
+plugin = plugins.analysis.plugin
+
+analysis_command = {'preferences': {'dir_up': False, 'json': False, 'clean': True, 'nproc': 1, 'test': False, 'progress': False, 'pdbquery': False, 'show_plots': False, 'sample_type': 'default', 'run_mode': 'subprocess'}, 
+                    'directories': {'work': u'/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/rapd_analysis_L13_1_free'}, 
+                    'queue': plugin_queue, 
+                    'input_data': {'datafile': u'/gpfs6/users/necat/rapd2/integrate/2018-04-12/L13/L13_1/L13_1_free.mtz'}, 
+                    'process_id': 'ffbfd87e3e5711e8911c002590757122', 
+                    'command': 'ANALYSIS'}
+
+
+plugin_instance = plugin.RapdPlugin(analysis_command,
+                                    logger = log,
+                                    verbosity = True
+                                    )
+
+plugin_instance.start()
+
+while True:
+    analysis_result = plugin_queue.get()
+    #self.results["results"]["analysis"] = analysis_result
+    #self.send_results(self.results)
+    print analysis_result['process']["status"]
+    if analysis_result['process']["status"] in (-1, 100):
+        print 'end'
+        break
+
+#analysis_result = plugin_queue.get()
+#pprint(analysis_result)
+
 #with open('/gpfs6/users/necat/Jon/RAPD_test/Output/logfile.log', 'w') as sys.stdout:
 job = subprocess.Popen(shlex.split('eiger2cbf /gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h_001_master.h5 1 /gpfs6/users/necat/Jon/RAPD_test/Output/cbf_files/Ni-edge-n59d-kda28cl36cf57h_001_000001.cbf'),
                                    stdout=subprocess.PIPE,
@@ -103,82 +247,6 @@ stdout, stderr = job.communicate()
 print stderr
 
 
-=======
-def clear_cluster():
-    l = []
-    inp = 'qstat'
-    myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    for line in myoutput.stdout:
-        split = line.split()
-        if len(split) == 8:
-            #print split
-            if split[2].count('INDEX'):
-                l.append(split[0])
-            if split[2].count('INTEGRATE_'):
-                l.append(split[0])
-    for pid in l:
-        os.system('qdel %s'%pid)
- # Create a pool connection and return it.
-pool = redis.ConnectionPool(host='127.0.0.1',
-                            port=6379,
-                            db=0)
-red = redis.Redis(connection_pool=pool)
-#red.ping()
-try:
-   red.ping()
-except redis.exceptions.ConnectionError as e:
-    print e, type(e)
-    print dir(e)
-    print e.message
-    print type(e.message)
-    print e.message.split()[4][:-1]
-
-"""
-import sites.necat as site
-if hasattr(site, 'ALT_IMAGE_LOCATION'):
-    print 'gh'
-if hasattr(site, 'junk'):
-    print 'gh1'
-
-
-#clear_cluster()
-
-from utils.modules import load_module
-#import 
-DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
-             "NECAT_E":("NECAT_DECTRIS_EIGER16M", ""),
-             "NECAT_T":("NECAT_DECTRIS_EIGER16M", "")}
-site_ids = ("NECAT_C", 'NECAT_E')
-
-for site_id in site_ids:
-    detector, suffix = DETECTORS[site_id]
-    detector = detector.lower()
-    detectors[site_id.upper()] = load_module(
-        seek_module=detector,
-        directories=("sites.detectors", "detectors"))
-
-print detectors
-"""
-#import sites.detectors.necat_dectris_eiger16m as det
-#print hasattr(det, 'FileLocation')
-#rint inspect.isclass(det, 'FileLocation')
-   
-
-
-
-"""
-jobs = {}
-l = ['cbf-worker', 'cbf-main', 'data-handler']
-output = subprocess.Popen('ps -eaf | grep python',shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-for line in output.stdout:
-    split = line.split()
-    for r in l:
-        if split[-1].count(r):
-            jobs[split[-1]] = {'time': int(self.timer + Config.HB_INT), 'score': 3}
-    
-
-
-#print "STAC file%s"%str(x+1)
 def read_header(image,
                 mode=None,
                 run_id=None,
@@ -572,6 +640,8 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/uic/yury_E_3441/images/zahra/snaps/ZB_YSP05_16_GGN_PAIR_0_000005.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/necat/necat_E_3100/images/Jon/runs/junk/junk_3_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/cwru/kiser_E_3619/images/philip/runs/PDK014_1/PDK014_1_2_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/kahne_E_3623/images/tristan/runs/KAHN012_14/KAHN012_14_1_000001.cbf')
 #time.sleep(1)
 """
 red = connect_ft_redis()
@@ -593,6 +663,13 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/upenn/christianson_E_3591/images/nicholas/runs/0004_12/0004_12_1_000001.cbf'),
+
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/upenn/christianson_E_3591/images/jeremy/runs/JDO_PUCK2_A14_Run4/JDO_PUCK2_A14_Run4_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/cornell/heninglin_E_3589/images/ian/runs/P113_11/P113_11_1_000001.cbf'),
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/yale/konigsberg_C_3608/images/aristidis/runs/CPS4580_C1r1/0_0/CPS4580_C1r1_1_0001.cbf'),
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/necat_C_3303/images/Igor/runs/thaum5_05s_05d/0_0/thaum5_05s-05d_1_0001.cbf'),
+#red.lpush('images_collected:NECAT_C', ''),
 
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
@@ -603,8 +680,24 @@ print red.smembers('working')
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
-#red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/snaps/m6a_PAIR_0_000001.cbf')
-<<<<<<< HEAD
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/cornell/heninglin_E_3513/images/ian/runs/apr4_127_05nme2/apr4_127_05nme2_1_000001.cbf')
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/upenn/marmorstein_C_3520/images/adam/runs/DF_007_15/0_0/DF_007_15_1_0001.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/wustl/yuan_E_3516/images/feifei/runs/py3255/py3255_1_000001.cbf')
+#red.lpush('images_collected:NECAT_E', '')
+#print red.llen('run_data:NECAT_E')
+#r = red.rpop('run_data:NECAT_E')
+#red.lpush('runs_data:NECAT_E', r)
+#print red.llen('run_data:NECAT_E')
+#print red.llen('run_info_E')
+#print red.llen('runs_data:NECAT_E')
+#print red.llen('runs_data:NECAT_C')
+#print red.lrange('runs_data:NECAT_E', 0, -1)
+#print red
+#red.delete('runs_data:NECAT_E')
+
+#print red.lrange('run_data:NECAT_E', 0, -1)
+
+#print red.llen('current_run_C')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
@@ -612,39 +705,22 @@ print red.llen('images_collected:NECAT_E')
 #red.delete("images_collected:NECAT_E")
 print red.llen('images_collected:NECAT_C')
 #red.delete("images_collected:NECAT_C")
-print red.llen('run_data:NECAT_E')
-#red.delete("run_data:NECAT_E")
-print red.llen('run_data:NECAT_C')
-#red.delete("run_data:NECAT_C")
+print red.llen('run_info_E')
+#red.delete('run_info_E')
+print red.llen('run_info_C')
+#red.delete('run_info_C')
+print red.llen('runs_data:NECAT_E')
+#print red.lrange('runs_data:NECAT_E', 0, 1)
+#red.delete("runs_data:NECAT_E")
+print red.llen('runs_data:NECAT_C')
+#red.delete("runs_data:NECAT_C")
+print red.lrange('runs_data:NECAT_C', 0, -1)
+#red.delete("runs_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
-#red.delete('RAPD_JOBS_WAITING')
-=======
-"""
-print red.llen('RAPD_QSUB_JOBS_0')
-#red.delete('RAPD_QSUB_JOBS_0')
-#print red.llen('run_info_C')
-print red.llen('RAPD_JOBS')
-#print red.llen("images_collected:SERCAT_ID")
-#red.delete("images_collected:SERCAT_ID")
-#print red.llen('run_data:SERCAT_ID')
-#red.delete("run_data:SERCAT_ID")
-print red.llen("images_collected:NECAT_E")
-#red.delete("images_collected:NECAT_E")
-print red.llen("images_collected:NECAT_C")
-#red.delete("images_collected:NECAT_C")
-print red.llen('run_data:NECAT_C')
-#red.delete("run_data:NECAT_C")
-print red.llen('run_data:NECAT_E')
-#red.delete("run_data:NECAT_E")
-#print red.llen('RAPD_RESULTS')
-#red.delete('RAPD_RESULTS')
-#print red.llen('run_info_T')
-print red.llen('RAPD_JOBS_WAITING')
-#red.delete('RAPD_JOBS_WAITING')
-#print red.lrange('run_info_T', 0, 5)
-#red.delete('images_collected_T')
-print red.llen('images_collected_E')
-#red.close()
->>>>>>> sercat
+red.delete('RAPD_JOBS_WAITING')
+print red.llen('RAPD_QSUB_JOBS_2')
+#red.delete('RAPD_QSUB_JOBS_2')
 
-"""
+
+
+

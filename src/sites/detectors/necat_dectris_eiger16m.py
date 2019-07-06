@@ -80,7 +80,8 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '9') ,
     ('OVERLOAD', '3000000') ,
     ('REFINE(CORRECT)', 'POSITION DISTANCE BEAM ORIENTATION CELL AXIS') ,
-    ('REFINE(INTEGRATE)', 'POSITION DISTANCE BEAM ORIENTATION CELL') ,
+    #('REFINE(INTEGRATE)', 'POSITION DISTANCE BEAM ORIENTATION CELL') ,
+    ('REFINE(INTEGRATE)', 'BEAM ORIENTATION CELL! POSITION') ,
     ('TRUSTED_REGION', '0.00 1.2') ,
     ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '8000. 30000.') ,
     ('UNTRUSTED_RECTANGLE11', '    0 4151    225  260'),
@@ -92,7 +93,9 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
     ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
     # Signal to say which beamline.
-    ('CLUSTER_NODES', 'NECAT_E'),
+    #('CLUSTER_NODES', 'NECAT_E'),
+    # Signal to say rapd2 job.
+    ('CLUSTER_NODES', 'RAPD2'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
@@ -102,10 +105,10 @@ class FileLocation():
     def __init__(self, logger=False, verbose=False):
         #threading.Thread.__init__ (self)
         #self.logger = logger
-        #self.ip = '164.54.212.218'
-        #self.ram_prefix = '/epu/rdma'
-        self.ip = '164.54.212.219'
-        self.ram_prefix = '/epu2/rdma'
+        self.ip = '164.54.212.218'
+        self.ram_prefix = '/epu/rdma'
+        #self.ip = '164.54.212.219'
+        #self.ram_prefix = '/epu2/rdma'
         self.nvme_prefix = '/epu/nvme'
         self.ft_redis = self.redis_ft_connect()
 
@@ -265,6 +268,11 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+
+    # Not in a data_root_dir environment
+    if not "gpfs" in fullname:
+        return False
+
     path_split    = fullname.split(os.path.sep)
     data_root_dir = False
 
@@ -375,7 +383,7 @@ def base_read_header(image,
         # "run_number": int(base.split("_")[-2]),
         "image_number": int(base.split("_")[-1]),
         "axis": "omega",
-        # "collect_mode": mode,
+        "collect_mode": False,
         # "run_id": run_id,
         # "place_in_run": place_in_run,
         # "size1": 2463,
@@ -424,13 +432,19 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
     # Calculate flux, new beam size and add them to header
     if beam_settings:
         flux, x_size, y_size = calculate_flux(header, beam_settings)
-        header['flux'] = flux
+        header["flux"] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
 
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
+
+    # Set collect_mode
+    if header["run_number"] == 0:
+        header["collect_mode"] = "SNAP"
+    else:
+        header["collect_mode"] = "RUN"
 
     # Add tag for module to header
     header["rapd_detector_id"] = "necat_dectris_eiger16m"
@@ -502,18 +516,22 @@ def main(args):
     if test_image.endswith(".h5"):
         header = read_header(hdf5_file=test_image)
     elif test_image.endswith(".cbf"):
-        header = read_header(cbf_file=test_image)
+        header = read_header(input_file=test_image)
 
     # And print it out
     pprint(header)
 
+    # Test is_run_from_imagename
+    print "is_run_from_imagename:", is_run_from_imagename(test_image)
+
 if __name__ == "__main__":
 
     # Get the commandline args
-    #commandline_args = get_commandline()
-
+    commandline_args = get_commandline()
+    
     # Execute code
-    #main(args=commandline_args)
+    main(args=commandline_args)
+    
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
 
     # header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
@@ -542,7 +560,7 @@ if __name__ == "__main__":
     # Test get_data_root_dir with new epu filenames
     #print get_data_root_dir("/epu2/rdma/gpfs2/users/stanford/feng_E_3426/images/minrui/snaps/ZH_PAIR_0_000144/ZH_PAIR_0_000144.cbf")
     #print get_data_root_dir("/gpfs1/users/ucsd/corbett_C_3425/images/Kevin/runs/2_9/0_0/2_9_1_0854.cbf")
-    fl = FileLocation()
-    fl.test()
-    print fl.get_path('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
-    fl.release_data('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
+    # fl = FileLocation()
+    # fl.test()
+    # print fl.get_path('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
+    # fl.release_data('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')

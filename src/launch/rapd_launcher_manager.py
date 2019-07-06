@@ -248,8 +248,11 @@ class Launcher_Manager(threading.Thread):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_db.connect_to_redis()
+        #self.redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = self.redis_db.connect_to_redis()
+        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
 def get_commandline():
     """Get the commandline variables and handle them"""

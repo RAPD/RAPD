@@ -28,16 +28,16 @@ var smtp_transport = nodemailer.createTransport(smtpTransport({
 router.route('/users')
   .get(function(req, res) {
 
-    //req.decoded._doc._id is the requesting user's _id
-    console.log(req.decoded._doc);
+    //req.decoded._id is the requesting user's _id
+    // console.log(req.decoded);
 
     // MONGO
     if (config.authenticate_mode === 'mongo') {
-      let query_params = {_id:mongoose.Types.ObjectId(req.decoded._doc._id)};
-      if (req.decoded._doc.role === 'site_admin') {
+      let query_params = {_id:mongoose.Types.ObjectId(req.decoded._id)};
+      if (req.decoded.role === 'site_admin') {
         query_params = {};
-      } else if (req.decoded._doc.role === 'group_admin') {
-        query_params = {groups:{'$elemMatch':{'$in':req.decoded._doc.groups.map(function(e){return e._id;})}}};
+      } else if (req.decoded.role === 'group_admin') {
+        query_params = {groups:{'$elemMatch':{'$in':req.decoded.groups.map(function(e){return e._id;})}}};
       }
 
         User.
@@ -126,7 +126,7 @@ router.route('/users/:user_id')
     } else {
 
       // Set the creator
-      user.creator = req.decoded._doc._id;
+      user.creator = req.decoded._id;
 
       // Save and return the user
       User.findOneAndUpdate(

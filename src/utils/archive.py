@@ -112,28 +112,31 @@ def compress_file(target):
 
     return (output_name, my_hash)
 
-def create_archive(directory, archive_name=False):
+def create_archive(target):
     """
-    Creates an archive file for the input directory
-    """
-    # print "create_archive"
-    # print "  directory: %s" % directory
-    # print "  archive_name: %s" % archive_name
-    cwd = os.getcwd()
+    Creates an archive file for the input target
 
-    if not os.path.isdir(directory):
+    If target is a directory it just goes,
+    """
+    
+    start_dir = os.getcwd()
+
+    # Only directory as target
+    if not os.path.isdir(target):
         return False
 
+    target = os.path.abspath(target)
+
     # Move to directory that contains directory to be archived
-    parent_dir = os.path.dirname(directory)
+    parent_dir = os.path.dirname(target)
     # print "  parent_dir:", parent_dir
     os.chdir(parent_dir)
 
     # Create a manifest and put it in the archive directory
-    records = create_manifest(directory, True)
+    records = create_manifest(target, True)
 
     # Compress the archive
-    archive_name = compress_dir(directory)
+    archive_name = compress_dir(target)
 
     # Get a hash value for the archive
     archive_hash = get_hash(archive_name)
@@ -144,8 +147,7 @@ def create_archive(directory, archive_name=False):
     }
 
     # Return to the original directory
-    if not cwd == directory:
-        os.chdir(cwd)
+    os.chdir(start_dir)
 
     return return_dict
 

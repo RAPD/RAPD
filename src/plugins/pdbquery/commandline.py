@@ -66,6 +66,25 @@ def construct_command(commandline_args):
         }
 
     # Work directory
+    """
+    if commandline_args.test:
+        # Don't make a new directory
+        work_dir = commandline_utils.check_work_dir(
+            os.path.join(
+                os.path.abspath(os.path.curdir),
+                "rapd_pdbquery_%s" %  ".".join(
+                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            active=False,
+            up=commandline_args.dir_up)
+    else:
+        work_dir = commandline_utils.check_work_dir(
+            os.path.join(
+                os.path.abspath(os.path.curdir),
+                "rapd_pdbquery_%s" %  ".".join(
+                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
+            active=True,
+            up=commandline_args.dir_up)
+    """
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
@@ -75,24 +94,29 @@ def construct_command(commandline_args):
         up=commandline_args.dir_up)
 
     command["directories"] = {
-        "work": work_dir
+        "work": work_dir,
+        "exchange_dir": commandline_args.exchange_dir
         }
 
     # Information on input
     command["input_data"] = {
         "datafile": os.path.abspath(commandline_args.datafile),
-        "pdbs": commandline_args.pdbs
+        "pdbs": commandline_args.pdbs,
+        "db_settings": commandline_args.db_settings
     }
 
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
+        "json": commandline_args.json,
         "contaminants": commandline_args.contaminants,
         "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
         "test": commandline_args.test,
+        #"computer_cluster": commandline_args.computer_cluster,
+        #"results_queue": commandline_args.results_queue,
     }
 
     return command
@@ -196,6 +220,10 @@ def get_commandline():
         my_parser.exit()
 
     args = my_parser.parse_args()
+
+    # Fixes a problem from plugin-called code
+    args.exchange_dir = False
+    args.db_settings = False
 
     # Insert logic to check or modify args here
 

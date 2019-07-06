@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var mongoose = require('../models/mongoose');
+var Q = require('q');
 
 const Activity     = mongoose.ctrl_conn.model('Activity', require('../models/activity').ActivitySchema);
 const Image        = mongoose.ctrl_conn.model('Image', require('../models/image').ImageSchema);
@@ -10,6 +11,37 @@ const Session      = mongoose.ctrl_conn.model('Session', require('../models/sess
 
 // on routes that end in /result_details
 // ----------------------------------------------------
+
+/*
+ * Populate image data for detailed result
+ * 
+ */
+function populate_image(detailed_result, image_key) {
+
+  // Create deferred
+  var deferred = Q.defer();
+
+  // If there is an image_key in result
+  if (image_key in detailed_result._doc.process) {
+
+    // Get the image
+    Image.
+    findOne({_id:detailed_result._doc.process[image_key]}).
+    exec(function(err, image1) {
+      if (err) {
+        console.error(err);
+        deferred.resolve(false);
+      } else {
+        deferred.resolve(image1);
+      }
+    });
+  } else {
+    deferred.resolve(false);
+  }
+  // Return promise
+  return deferred.promise;
+};
+
 router.route('/result_details/:result_id')
       .get(function(req, res) {
         Result.findOne({_id:req.params.result_id}, function(err, result) {
@@ -25,7 +57,7 @@ router.route('/result_details/:result_id')
             
             // Create a mongoose model for the result
             let name = (result._doc.data_type + '_' + result._doc.plugin_type +'_result').toLocaleLowerCase();
-            console.log('name', name);
+            // console.log('name', name);
             let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
             var ResultModel;
             try {
@@ -59,7 +91,7 @@ router.route('/result_details/:result_id')
               
               // No error
               } else {
-                console.log(detailed_result);
+                // console.log(detailed_result);
                 if (detailed_result) {
                   // console.log(Object.keys(detailed_result));
                   // console.log(detailed_result._doc);
@@ -67,61 +99,84 @@ router.route('/result_details/:result_id')
 
                   // Make sure there is a process
                   if ('process' in detailed_result._doc) {
-                    // If there is an image1_id
-                    if ('image1_id' in detailed_result._doc.process) {
 
-                      // Manually populate
-                      Image.
-                      findOne({_id:detailed_result._doc.process.image1_id}).
-                      exec(function(err, image1) {
-                        if (err) {
-                          console.error(err);
-                          return false;
-                        } else {
-                          detailed_result._doc.image1 = image1;
-                          // console.log('POPULATED image1');
-                          // console.log(detailed_result);
-                          // Now look for image2
-                          if ('image2_id' in detailed_result._doc.process) {
+                    Q.all([
+                      // Image 1
+                      populate_image(detailed_result, 'image1_id'),
+                      // Image 2
+                      populate_image(detailed_result, 'image2_id')
+                    ])
+                    .then(function(results) {
+                      // Assign results to detailed results
+                      detailed_result._doc.image1 = results[0];
+                      detailed_result._doc.image2 = results[1];
 
-                            // Manually populate
-                            Image.
-                            findOne({_id:detailed_result._doc.process.image1_id}).
-                            exec(function(err, image2) {
-                              if (err) {
-                                console.error(err);
-                                return false;
-                              } else {
-                                detailed_result._doc.image1 = image2;
-                                // console.log('POPULATED image2');
-                                // console.log(detailed_result);
-                                // Send back
-                                res.status(200).json({
-                                    success: true,
-                                    results: detailed_result
-                                });
-                              }
-                            });
-
-                          // No image2_id
-                          } else {
-                            // Send back
-                            res.status(200).json({
-                                success: true,
-                                results: detailed_result
-                            });
-                          }
-                        }
-                      });
-
-                    // No image1_id
-                    } else {
                       // Send back
                       res.status(200).json({
                         success: true,
                         results: detailed_result
                       });
-                    }
+                    });
+                    
+
+
+                    // // If there is an image1_id
+                    // if ('image1_id' in detailed_result._doc.process) {
+                    //   // Manually populate
+                    //   Image.
+                    //   findOne({_id:detailed_result._doc.process.image1_id}).
+                    //   exec(function(err, image1) {
+                    //     if (err) {
+                    //       console.error(err);
+                    //       return false;
+                    //     } else {
+                    //       detailed_result._doc.image1 = image1;
+                    //       return detailed_result;
+                    //     }
+                    //   })
+                    //   .then(function(detailed_result) {
+                    //     if ('image2_id' in detailed_result._doc.process) {
+
+                    //       // Manually populate
+                    //       Image.
+                    //       findOne({_id:detailed_result._doc.process.image1_id}).
+                    //       exec(function(err, image2) {
+                    //         if (err) {
+                    //           console.error(err);
+                    //           return false;
+                    //         } else {
+                    //           detailed_result._doc.image1 = image2;
+                    //           // console.log('POPULATED image2');
+                    //           // console.log(detailed_result);
+                    //           // Send back
+                    //           // res.status(200).json({
+                    //           //     success: true,
+                    //           //     results: detailed_result
+                    //           // });
+                    //           return detailed_result;
+                    //         }
+                    //       });
+
+                    //     // No image2_id
+                    //     } else {
+                    //       // Send back
+                    //       // res.status(200).json({
+                    //       //     success: true,
+                    //       //     results: detailed_result
+                    //       // });
+                    //       return detailed_result;
+                    //     }
+                    //   })
+                    //   .then();
+
+                    // // No image1_id
+                    // } else {
+                    //   // Send back
+                    //   res.status(200).json({
+                    //     success: true,
+                    //     results: detailed_result
+                    //   });
+                    // }
 
                   // No process  
                   } else {

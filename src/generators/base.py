@@ -325,38 +325,40 @@ class FileGenerator(BaseFileGenerator):
 
         super(FileGenerator, self).preprocess()
 
-    def write_commandline(self, description=False):
+    def write_commandline(self, description=False, commandline_lines=False):
         """Write commanling handling into the file"""
 
         if not description:
             description = "Generate a generic RAPD file"
 
-        commandline_lines = [
-            "def get_commandline():",
-            "    \"\"\"",
-            "    Grabs the commandline",
-            "    \"\"\"\n",
-            "    print \"get_commandline\"\n",
-            "    # Parse the commandline arguments",
-            "    commandline_description = \"%s\"\n" % description,
-            "    my_parser = argparse.ArgumentParser(description=commandline_description)\n",
-            "    # A True/False flag",
-            "    my_parser.add_argument(\"-c\", \"--commandline\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"commandline\",",
-            "                           help=\"Generate commandline argument parsing\")\n",
-            "    # File name to be generated",
-            "    my_parser.add_argument(action=\"store\",",
-            "                           dest=\"file\",",
-            "                           nargs=\"?\",",
-            "                           default=False,",
-            "                           help=\"Name of file to be generated\")\n",
-            "    # Print help message is no arguments",
-            "    if len(sys.argv[1:])==0:",
-            "        my_parser.print_help()",
-            "        my_parser.exit()\n",
-            "    return my_parser.parse_args()\n",
-            ]
+        if not commandline_lines:
+
+            commandline_lines = [
+                "def get_commandline():",
+                "    \"\"\"",
+                "    Grabs the commandline",
+                "    \"\"\"\n",
+                "    print \"get_commandline\"\n",
+                "    # Parse the commandline arguments",
+                "    commandline_description = \"%s\"\n" % description,
+                "    my_parser = argparse.ArgumentParser(description=commandline_description)\n",
+                "    # A True/False flag",
+                "    my_parser.add_argument(\"-c\", \"--commandline\",",
+                "                           action=\"store_true\",",
+                "                           dest=\"commandline\",",
+                "                           help=\"Generate commandline argument parsing\")\n",
+                "    # File name to be generated",
+                "    my_parser.add_argument(action=\"store\",",
+                "                           dest=\"file\",",
+                "                           nargs=\"?\",",
+                "                           default=False,",
+                "                           help=\"Name of file to be generated\")\n",
+                "    # Print help message is no arguments",
+                "    if len(sys.argv[1:])==0:",
+                "        my_parser.print_help()",
+                "        my_parser.exit()\n",
+                "    return my_parser.parse_args()\n",
+                ]
 
         self.output_function(commandline_lines)
 

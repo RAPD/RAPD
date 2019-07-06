@@ -78,6 +78,8 @@ import utils.spacegroup as spacegroup
 # Import RAPD plugins
 import plugins.analysis.commandline
 import plugins.analysis.plugin
+import plugins.pdbquery.commandline
+import plugins.pdbquery.plugin
 import utils.xutils as xutils
 
 import info
@@ -143,6 +145,15 @@ class RapdPlugin(Process):
 
     # Store archive directory for internal use
     archive_dir = False
+    
+    # Setup default for using compute_cluster
+    computer_cluster = False
+    
+    # analysis process
+    analysis_process = False
+    
+    # pdbquery process
+    pdbq_process = False
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -180,7 +191,7 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences")
+        #self.preferences = self.command.get("preferences")
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data", {}).get("image_data")
@@ -236,26 +247,28 @@ class RapdPlugin(Process):
         self.procs = 4
 
         # If using a computer cluster, overwrite the self.launcher
-        self.cluster_use = self.preferences.get('cluster_use', False)
-        if self.cluster_use:
+        #self.cluster_use = self.preferences.get('cluster_use', False)
+        if self.preferences.get('computer_cluster', False):
             # Load the cluster adapter
-            cluster_launcher = xutils.load_cluster_adapter(self)
+            computer_cluster = xutils.load_cluster_adapter(self)
             # If it cannot load, then the shell launcher is kept
-            if cluster_launcher:
-                self.launcher = cluster_launcher.process_cluster
+            if computer_cluster:
+                self.launcher = computer_cluster.process_cluster
                 # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-                self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
+                self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
+                self.computer_cluster = computer_cluster
                 if self.ram_use == True:
                     self.jobs = len(self.ram_nodes[0])
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    self.procs, self.jobs = cluster_launcher.get_nproc_njobs()
+                    self.procs, self.jobs = computer_cluster.get_nproc_njobs()
                     #self.jobs = 20
                     #self.procs = 8
             else:
                 if self.logger:
                     self.logger.debug('The cluster_adapter could not be loaded, defaulting to shell launching!!!')
+
 
         self.standalone = self.preferences.get('standalone', False)
 
@@ -337,6 +350,7 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 1
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+       
         # The repr
         self.results["process"]["repr"] = self.run_data["image_template"].replace(\
             "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.image_data["start"], \
@@ -460,7 +474,9 @@ class RapdPlugin(Process):
             self.tprint("\nPartial dataset summary %d-%d" % (first, last), 99, "blue")
             self.print_results(partial_integration_results)
             self.tprint(20, "progress")
-
+        
+        # if no full results, then wait for full dataset
+        if not full_integration_results:
             # Run XDS for the whole wedge of data
             self.tprint("Preparing for full dataset integration", 10, "blue")
             result = self.wait_for_image(final_image)
@@ -549,8 +565,11 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.connect_to_redis()
+        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = redis_database.connect_to_redis()
+        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
     def send_results(self, results):
         """Let everyone know we are working on this"""
@@ -598,6 +617,9 @@ class RapdPlugin(Process):
 
         # Run analysis
         self.run_analysis_plugin()
+        
+        # Run pdbquery
+        self.run_pdbquery_plugin()
 
         # Send back results - the final time
         #self.send_results(self.results)
@@ -640,14 +662,7 @@ class RapdPlugin(Process):
             os.chdir(self.dirs["work"])
 
             # Queue to exchange information
-            plugin_queue = Queue()
-
-            # Run mode
-            sub_run_mode = "interactive"
-            if self.preferences["run_mode"] == "interactive":
-                sub_run_mode = "subprocess-interactive"
-            elif self.preferences["run_mode"] == "server":
-                sub_run_mode = "subprocess"
+            #plugin_queue = Queue()
 
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
@@ -656,13 +671,12 @@ class RapdPlugin(Process):
                 datafile = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
-                nproc = self.preferences.get("nproc", 1)
-                pdbquery = False  #TODO
+                nproc = self.procs
                 progress = self.preferences.get("progress", False)
-                queue = plugin_queue
-                run_mode = sub_run_mode
+                run_mode = self.preferences.get("run_mode", False)
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
+                db_settings = self.site.CONTROL_DATABASE_SETTINGS
                 test = False
 
             analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
@@ -678,12 +692,74 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
             # Run the plugin
-            plugin_instance = plugin.RapdPlugin(analysis_command,
-                                                self.tprint,
-                                                self.logger)
-
-            plugin_instance.start()
+            self.analysis_process = plugin.RapdPlugin(command=analysis_command,
+                                                processed_results = self.results,
+                                                tprint=self.tprint,
+                                                logger=self.logger)
+            self.analysis_process.start()
             
+            # Back to where we were, in case it matters
+            os.chdir(start_dir)
+
+        # Do not run analysis
+        else:
+            self.results["results"]["analysis"] = False
+            
+    def run_pdbquery_plugin(self):
+        """Set up and run the analysis plugin"""
+
+        self.logger.debug("run_pdbquery_plugin")
+
+        # Run analysis
+        if self.preferences.get("pdbquery", False):
+
+            # Now Launch PDBQuery
+            self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
+            self.tprint("  This can take a while...", level=30, color="white")
+            
+            # Make sure we are in the work directory
+            start_dir = os.getcwd()
+            os.chdir(self.dirs["work"])
+
+            # Construct the pdbquery plugin command
+            class PdbqueryArgs(object):
+                """Object for command construction"""
+                clean = self.preferences.get("clean_up", False)
+                datafile = self.results["results"]["mtzfile"]
+                dir_up = self.preferences.get("dir_up", False)
+                json = self.preferences.get("json", True)
+                nproc = self.procs
+                progress = self.preferences.get("progress", False)
+                run_mode = self.preferences.get("run_mode", False)
+                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                exchange_dir = self.preferences.get("exchange_dir", False)
+                pdbs = False
+                contaminants = True
+                search = True
+                test = False
+    
+            pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
+    
+            # The pdbquery plugin
+            plugin = plugins.pdbquery.plugin
+    
+            # Print out plugin info
+            self.tprint(arg="\nPlugin information", level=10, color="blue")
+            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+    
+            # Run the plugin
+            self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
+                                                  processed_results = self.results,
+                                                  computer_cluster=self.computer_cluster,
+                                                  tprint=self.tprint,
+                                                  logger=self.logger)
+
+            self.pdbq_process.start()
+            
+            """
             # Allow multiple returns for each part of analysis.
             while True:
                 analysis_result = plugin_queue.get()
@@ -691,7 +767,7 @@ class RapdPlugin(Process):
                 self.send_results(self.results)
                 if analysis_result['process']["status"] in (-1, 100):
                     break
-            
+            """
             #analysis_result = plugin_queue.get()
             #self.results["results"]["analysis"] = analysis_result
 
@@ -700,7 +776,7 @@ class RapdPlugin(Process):
 
         # Do not run analysis
         else:
-            self.results["results"]["analysis"] = False
+            self.results["results"]["pdbquery"] = False
 
     def ram_total(self, xdsinput):
         """
@@ -860,7 +936,10 @@ class RapdPlugin(Process):
         self.xds_run(xdsdir)
 
         # Index
-        xdsinp[-2] = ("JOB=IDXREF \n\n")
+        #xdsinp[-2] = ("JOB=IDXREF \n\n")
+        xdsinp = self.change_xds_inp(
+            xdsinp,
+            "JOB=IDXREF\n")
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Indexing",
                     level=99,
@@ -1294,7 +1373,8 @@ class RapdPlugin(Process):
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
-        xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        #xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        xdsinp = self.change_xds_inp(xdsinp,'JOB=IDXREF DEFPIX INTEGRATE CORRECT\n')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
@@ -1316,8 +1396,10 @@ class RapdPlugin(Process):
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-                newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
-                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                #newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
+                #newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                newinp = self.change_xds_inp(newinp, 'JOB=INTEGRATE CORRECT\n')
+                newinp = self.change_xds_inp(newinp, 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut)
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
@@ -1641,91 +1723,125 @@ class RapdPlugin(Process):
                 if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line or \
                 'DIMENSION OF DIFFERENCE VECTOR SET' in line or \
                 'CANNOT READ XPARM.XDS' in line:
-                    self.logger.debug('    Found an indexing error')
-                    self.tprint(arg="\n  Found an indexing error",
-                                level=10,
-                                color="red")
-
-                    # Try to fix by extending the data range
-                    #tmp = input[-1].split('=')
-                    #first, last = tmp[-1].split()
-                    first, last = input[-1].split('=')[-1].split()
-                    if int(last) == (int(self.image_data['start'])
-                                     + int(self.image_data['total']) - 1):
-                        self.logger.debug(
-                            '         FAILURE: Already using the full data range available.')
-                        #return False
-                        warning = True
-                    else:
-                        input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
-                        fixed = True
-                        #self.write_file('XDS.INP', input)
-                        #os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Extending spot range",
+                    if not fixed:
+                        self.logger.debug('    Found an indexing error')
+                        self.tprint(arg="\n  Found an indexing error",
                                     level=10,
-                                    color="white",
-                                    newline=False)
-                        #self.xds_run(dir)
-                        #return input
+                                    color="red")
+    
+                        # Try to fix by extending the data range
+                        #tmp = input[-1].split('=')
+                        #first, last = tmp[-1].split()
+                        first, last = input[-1].split('=')[-1].split()
+                        if int(last) == (int(self.image_data['start'])
+                                         + int(self.image_data['total']) - 1):
+                            self.logger.debug(
+                                '         FAILURE: Already using the full data range available.')
+                            #return False
+                            warning = True
+                        else:
+                            #input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
+                            input = self.change_xds_inp(
+                                    input,
+                                    'SPOT_RANGE=%s %s' % (first, (int(last) + 1)))
+                            fixed = True
+                            #self.write_file('XDS.INP', input)
+                            #os.system('mv XDS.LOG initialXDS.LOG')
+                            self.tprint(arg="\n  Extending spot range",
+                                        level=10,
+                                        color="white",
+                                        newline=False)
+                            #self.xds_run(dir)
+                            #return input
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
-                    self.logger.debug('    Found inaccurate indexing solution error')
-                    self.logger.debug('    Will try to continue anyway')
-                    self.tprint(
-                        arg="  Found inaccurate indexing solution error - try to continue anyway",
-                        level=30,
-                        color="red")
-
-                    # Inaccurate indexing solution, can try to continue with DEFPIX,
-                    # INTEGRATE, and CORRECT anyway
-                    self.logger.debug(' The length of input is %s' % len(input))
-                    if 'JOB=DEFPIX' in input[-2]:
-                        self.logger.debug('Error = %s' %line)
-                        self.logger.debug(
-                            'XDS failed to run with inaccurate indexing solution error.')
+                    if not fixed:
+                        self.logger.debug('    Found inaccurate indexing solution error')
+                        self.logger.debug('    Will try to continue anyway')
                         self.tprint(
-                            arg="\n  XDS failed to run with inaccurate indexing solution error.",
+                            arg="  Found inaccurate indexing solution error - try to continue anyway",
                             level=30,
                             color="red")
-                        #return False
-                        warning = True
-                    else:
-                        input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
-                                     + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+    
+                        # Inaccurate indexing solution, can try to continue with DEFPIX,
+                        # INTEGRATE, and CORRECT anyway
+                        self.logger.debug(' The length of input is %s' % len(input))
+                        #if 'JOB=DEFPIX' in input[-2]:
+                        check_for_line = [1 for p in input if p.count('JOB=DEFPIX')]
+                        if bool(len(check_for_line)):
+                            self.logger.debug('Error = %s' %line)
+                            self.logger.debug(
+                                'XDS failed to run with inaccurate indexing solution error.')
+                            self.tprint(
+                                arg="\n  XDS failed to run with inaccurate indexing solution error.",
+                                level=30,
+                                color="red")
+                            #return False
+                            warning = True
+                        else:
+                            #input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
+                            #             + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+                            input = self.change_xds_inp(
+                                    input,
+                                    'JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT' \
+                                          ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+                            fixed = True
+                            #self.write_file('XDS.INP', input)
+                            #os.system('mv XDS.LOG initialXDS.LOG')
+                            self.tprint(arg="\n  Integrating with suboptimal indexing solution",
+                                        level=99,
+                                        color="white",
+                                        newline=False)
+                            #self.xds_run(dir)
+                            #return input
+                        
+                elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
+                    if not fixed:
+                        self.logger.debug('	Found failure in determining spot size parameters.')
+                        self.logger.debug(
+                            '	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
+                        self.tprint(arg="\n  Found failure in determining spot size parameters.",
+                                    level=99,
+                                    color="red")
+    
+                        l = ['REFLECTING_RANGE=1.0\n', 'REFLECTING_RANGE_E.S.D.=0.10\n',
+                             'BEAM_DIVERGENCE=0.9\n', 'BEAM_DIVERGENCE_E.S.D.=0.09\n']
+                        for p in l:
+                            input = self.change_xds_inp(input,p)
+                        #input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
+                        #input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                         fixed = True
                         #self.write_file('XDS.INP', input)
                         #os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Integrating with suboptimal indexing solution",
-                                    level=99,
-                                    color="white",
-                                    newline=False)
+                        self.tprint(
+                            arg="  Integrating after failure in determining spot size parameters",
+                            level=99,
+                            color="white",
+                            newline=False)
                         #self.xds_run(dir)
                         #return input
-                        
-                elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
-                    self.logger.debug('	Found failure in determining spot size parameters.')
-                    self.logger.debug(
-                        '	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
-                    self.tprint(arg="\n  Found failure in determining spot size parameters.",
-                                level=99,
-                                color="red")
-
-                    input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
-                    input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
-                    fixed = True
-                    #self.write_file('XDS.INP', input)
-                    #os.system('mv XDS.LOG initialXDS.LOG')
-                    self.tprint(
-                        arg="  Integrating after failure in determining spot size parameters",
-                        level=99,
-                        color="white",
-                        newline=False)
-                    #self.xds_run(dir)
-                    #return input
+                elif 'CANNOT READ SPOT.XDS' in line:
+                    if not fixed:
+                        self.logger.debug('Could not index. Wait for more frames...')
+                        warning = True
                 else:
-                    # Unanticipated Error, fail the error check by returning False.
-                    self.logger.debug('Error = %s' %line)
-                    warning = True
+                    if not fixed:
+                        # Unanticipated Error, fail the error check by returning False.
+                        self.logger.debug('Error = %s' %line)
+                        warning = True
+
                     #return False
+            if 'forrtl: severe (24): end-of-file during read,' in line:
+                if not fixed:
+                    self.logger.debug('Error = %s' %line)
+                    self.logger.debug(
+                                'XDS failed to integrate dataset. Crystal may have gone out of beam.')
+                    self.tprint(
+                        arg="\n  XDS failed to integrate dataset. Crystal may have gone out of beam.",
+                        level=30,
+                        color="red")
+                    #return False
+                    warning = True
+            # Did it finish???
             if 'a        b          ISa' in line:
                 finished = True
         
@@ -2578,6 +2694,7 @@ class RapdPlugin(Process):
 
             # Compress the directory
             archive_result = archive.create_archive(self.archive_dir)
+            archive_result["description"] = "archive"
 
             if archive_result:
                 self.results["results"]["archive_files"].append(archive_result)
@@ -2631,6 +2748,14 @@ class RapdPlugin(Process):
         self.logger.debug("clean_up")
 
         if self.preferences.get("clean_up", False):
+            # Wait for analysis and pdbquery to finish before deleting the files.
+            if self.analysis_process:
+                while self.analysis_process.is_alive():
+                    time.sleep(1)
+            if self.pdbq_process:
+                while self.pdbq_process.is_alive():
+                    time.sleep(1)
+            
             # Make sure we are in the work directory
             os.chdir(self.dirs["work"])
 

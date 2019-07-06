@@ -220,11 +220,12 @@ class Registrar(object):
         """Connect to the central redis Instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
     def stop(self):
-        """Stop the running process cleanly"""
+        """
+        Stop the running process cleanly
+        """
         self.redis_database.stop()
 
 class Overwatcher(Registrar):

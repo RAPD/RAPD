@@ -72,7 +72,6 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
                 #'BEAM_CENTER_X' : (163.2757684023,
                 #                 0.0003178917,
@@ -115,16 +114,24 @@ BEAM_INFO = {
                 #"BEAM_GAUSS_Y":0.01,
                 # Beam center calibration
                 'BEAM_CENTER_DATE' : "2017-3-02",
-                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
                 # Beamcenter equation coefficients (b, m1, m2, m3)
-                'BEAM_CENTER_X' : (163.2757684023,
-                                 0.0003178917,
-                                 -5.0236657815e-06,
-                                 5.8164218288e-09),
-                'BEAM_CENTER_Y' : (155.1904879862,
-                                 -0.0014631216,
-                                 8.60559283424e-07,
-                                 -2.5709929645e-10)
+                'BEAM_CENTER_X' : (163.89684278768254,
+                                 -0.0015633263872817393,
+                                 -2.5624797406798966e-06,
+                                 3.9573203673686396e-09),
+                'BEAM_CENTER_Y' : (154.56630526168037,
+                                 -0.0004545100450374418,
+                                 -1.1274954741267088e-06,
+                                 8.4937063175024929e-10)
+                
+                #'BEAM_CENTER_X' : (163.2757684023,
+                #                 0.0003178917,
+                #                 -5.0236657815e-06,
+                #                 5.8164218288e-09),
+                #'BEAM_CENTER_Y' : (155.1904879862,
+                #                 -0.0014631216,
+                #                 8.60559283424e-07,
+                #                 -2.5709929645e-10)
                 },
              }
 # Copy E to T for testing
@@ -167,6 +174,8 @@ RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
 RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
                            "plugins")
 
+# rapd.python path
+RAPD_PYTHON_PATH = '/gpfs6/users/necat/Jon/Programs/RAPD2/RAPD/bin/rapd2.python'
 
 # Method RAPD uses to track groups
 #   uid -- the uid of data root directory corresponds to session.group_id
@@ -312,27 +321,25 @@ REMOTE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER
 ##
 ## Aggregators
 ## Be extra careful when modifying
-CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
-                             'DATABASE_HOST':DB_HOST,
-                             #'DATABASE_PORT':SECRETS.DB_PORT,
-                             'DATABASE_USER':DB_USER,
-                             'DATABASE_PASSWORD':DB_PASSWORD,
-                             'DATABASE_STRING':DB_STRING,
-                             'DATABASE_NAME_DATA':"rapd_data",
-                             'DATABASE_NAME_USERS':"rapd_users",
-                             'DATABASE_NAME_CLOUD':"rapd_cloud",
-                             # Connection can be 'pool' for database on single computer, or
-                             # 'sentinal' for high availability on redundant computers.
-                             'REDIS_CONNECTION':"sentinel",
-                             "REDIS_HOST":REDIS_HOST,
-                             "REDIS_PORT":REDIS_PORT,
-                             "REDIS_DB":REDIS_DB,
-                             "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-                             "REDIS_MASTER_NAME":REDIS_MASTER_NAME,
-                             }
+CONTROL_DATABASE_SETTINGS = {
+    # MongoDB
+    "CONTROL_DATABASE":     CONTROL_DATABASE,
+    "DATABASE_STRING":      MONGO_CONNECTION_STRING,
+    "DATABASE_NAME_DATA":   "rapd_data",
+    "DATABASE_NAME_USERS":  "rapd_users",
+    "DATABASE_NAME_CLOUD":  "rapd_cloud",
+
+    # Redis
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
+    "REDIS_PASSWORD":       REDIS_PASSWORD,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+}
 
 LAUNCHER_SETTINGS = {
-    #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
@@ -340,30 +347,26 @@ LAUNCHER_SETTINGS = {
 
 LAUNCH_SETTINGS = {
     "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
-    #"LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
-    #                    LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
 
-IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          'REDIS_CONNECTION':"sentinel",
-                          "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                          #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                          "REDIS_HOST":REDIS_HOST,
-                          "REDIS_PORT":REDIS_PORT,
-                          "REDIS_DB":REDIS_DB,
-                          }
+IMAGE_MONITOR_SETTINGS = {
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":    REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB,
+}
 
-RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                        'REDIS_CONNECTION':"sentinel",
-                        "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
-                        #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                        "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                        "REDIS_HOST":REDIS_HOST,
-                        "REDIS_PORT":REDIS_PORT,
-                        "REDIS_DB":REDIS_DB,
-                          }
+RUN_MONITOR_SETTINGS = {
+    "REDIS_CONNECTION":     REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS": SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME" :   REDIS_MASTER_NAME,
+    "REDIS_HOST":           REDIS_HOST,
+    "REDIS_PORT":           REDIS_PORT,
+    "REDIS_DB":             REDIS_DB
+}
 
 CLOUD_MONITOR_SETTINGS = {
         "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
@@ -377,10 +380,10 @@ CLOUD_MONITOR_SETTINGS = {
         "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
         #"LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
         "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
-        "UI_HOST":UI_HOST,
-        "UI_PORT":UI_PORT,
-        "UI_USER":UI_USER,
-        "UI_PASSWORD":UI_PASSWORD,
+        #"UI_HOST":UI_HOST,
+        #"UI_PORT":UI_PORT,
+        #"UI_USER":UI_USER,
+        #"UI_PASSWORD":UI_PASSWORD,
         #"UPLOAD_DIR":UPLOAD_DIR
         }
 
@@ -388,20 +391,31 @@ CLOUD_MONITOR_SETTINGS = {
 #                         "REDIS_HOST":SITE_REDIS_IP,
 #                         "REDIS_PORT":SITE_REDIS_PORT,
 #                         "REDIS_DB":SITE_REDIS_DB}
-SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":ID,
-                                     "REDIS_HOST":E_REDIS_IP,
-                                     "REDIS_PORT":E_REDIS_PORT,
-                                     "REDIS_DB":E_REDIS_DB},
-                         "NECAT_C": {"ID":ID,
-                                     "REDIS_HOST":C_REDIS_IP,
-                                     "REDIS_PORT":C_REDIS_PORT,
-                                     "REDIS_DB":C_REDIS_DB},
+SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":                   ID,
+                                     "REDIS_CONNECTION":     E_REDIS_CONNECTION,
+                                     "REDIS_HOST":           E_REDIS_IP,
+                                     "REDIS_PORT":           E_REDIS_PORT,
+                                     "REDIS_DB":             E_REDIS_DB,
+                                     "REDIS_PASSWORD":       E_REDIS_PASSWORD,
+                                     "REDIS_SENTINEL_HOSTS": E_SENTINEL_HOSTS,
+                                     "REDIS_MASTER_NAME":    E_REDIS_MASTER_NAME,},
+                         "NECAT_C": {"ID":                   ID,
+                                     "REDIS_CONNECTION":     C_REDIS_CONNECTION,
+                                     "REDIS_HOST":           C_REDIS_IP,
+                                     "REDIS_PORT":           C_REDIS_PORT,
+                                     "REDIS_DB":             C_REDIS_DB,
+                                     "REDIS_PASSWORD":       C_REDIS_PASSWORD,
+                                     "REDIS_SENTINEL_HOSTS": C_SENTINEL_HOSTS,
+                                     "REDIS_MASTER_NAME":    C_REDIS_MASTER_NAME,},
                            }
 
-REMOTE_ADAPTER_SETTINGS = {"ID":ID,
-                           "MONGO_CONNECTION_STRING":MONGO_CONNECTION_STRING,
-                           "REDIS_CLUSTER":REDIS_CLUSTER,
-                           'REDIS_CONNECTION':"sentinel",
-                           "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-                           #"SENTINEL_PORT":SECRETS.SENTINEL_PORT,
-                           "REDIS_MASTER_NAME":REDIS_MASTER_NAME}
+REMOTE_ADAPTER_SETTINGS = {
+    "ID":                      ID,
+    "MONGO_CONNECTION_STRING": MONGO_CONNECTION_STRING,
+    'REDIS_CONNECTION':        REDIS_CONNECTION,
+    "REDIS_SENTINEL_HOSTS":    SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":       REDIS_MASTER_NAME,
+    "REDIS_HOST":              REDIS_HOST,
+    "REDIS_PORT":              REDIS_PORT,
+    "REDIS_DB":                REDIS_DB,
+}

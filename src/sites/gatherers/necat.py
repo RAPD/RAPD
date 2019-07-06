@@ -24,16 +24,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-rapd_adscserver provides an xmlrpclib  server that watches xf_status and
-marcollect on an adsc data collection computer to provide information back
-to rapd_server via to rapd_adsc
-
-This server is used at 24ID-E with an ADSC Q315 detector
-
-If you are adapting rapd to your locality, you will need to check this
-carefully.
-"""
 # Standard imports
 import argparse
 import datetime
@@ -58,7 +48,7 @@ import utils.site
 import utils.text as text
 from utils.text import json
 #import json
-from bson.objectid import ObjectId
+# from bson.objectid import ObjectId
 
 class Gatherer(object):
     """
@@ -146,20 +136,7 @@ class Gatherer(object):
                         # Push onto redis list in case no one is currently listening
                         self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
                         #self.redis.lpush("runs_data:%s" % self.tag, run_data)
-                        """
-                        ## This loop is for testing##
-                        for i in range(2):
-                            if i == 1:
-                                dir = dir.replace('/epu/', '/epu2/')
-                            run_data['directory'] = dir
-                            self.logger.debug("run_data:%s %s", self.tag, run_data)
-                            # Put into exchangable format
-                            run_data_json = json.dumps(run_data)
-                            # Publish to Redis
-                            self.redis.publish("run_data:%s" % self.tag, run_data_json)
-                            # Push onto redis list in case no one is currently listening
-                            self.redis.lpush("run_data:%s" % self.tag, run_data_json)
-                        """
+
                 time.sleep(0.2)
                 # Have Registrar update status
                 self.ow_registrar.update({"site_id":self.site.ID})
@@ -173,20 +150,22 @@ class Gatherer(object):
         self.logger.debug("NecatGatherer.stop")
 
         self.go = False
-        self.redis_database.stop()
-        self.bl_database.stop()
+        #self.redis_database.stop()
+        #self.bl_database.stop()
 
     def connect(self):
         """Connect to redis host"""
         # Connect to control redis for publishing run data info
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # Connect to beamline Redis to monitor if run is launched
-        self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
-        self.bl_redis = self.bl_database.connect_redis_pool()
+        #self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        #self.bl_redis = self.bl_database.connect_redis_pool()
+        self.bl_redis = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
         #self.pipe = self.bl_redis.pipeline()
 
     def set_host(self):

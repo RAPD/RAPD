@@ -224,8 +224,9 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
 
     command["preferences"] = {
         "analysis": commandline_args.analysis,
+        "pdbquery": commandline_args.pdbquery,
         "clean_up": commandline_args.clean_up,
-        "cluster_use": commandline_args.cluster_use,
+        "computer_cluster": commandline_args.computer_cluster,
         "dir_up": commandline_args.dir_up,
         "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,

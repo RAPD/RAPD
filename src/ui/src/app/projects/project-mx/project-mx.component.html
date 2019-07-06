@@ -88,14 +88,12 @@
                     Results
                   </div>
                   <mat-list dense class="rapd-corral-content">
-                    <ng-container *ngFor="let action of actions.INTEGRATE[0]">
-                      <!-- <mat-list-item >
-                        <button mat-button color="primary"
-                        (click)="selectSingleIntgrationAction(action)">
-                          <mat-icon>{{action_icons[action]}}</mat-icon>
-                          {{action}}
-                        </button> 
-                      </mat-list-item> -->
+                    <!-- Here is container for results from actions taken on integrated data??-->
+                    <!-- <ng-container *ngFor="let action of actions.INTEGRATE[0]"> -->
+                    <ng-container>
+                      <mat-list-item >
+                        None
+                      </mat-list-item>
                     </ng-container>
                   </mat-list>
                 </div>
@@ -118,6 +116,8 @@
               </div> -->
             </td>
           </tr>
+
+
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
               <div class="rapd-corral" [ngClass]="selected_indexed_data.length > 0 ? 'background-green': ''">
@@ -174,4 +174,11 @@
 
     </div>
   </mat-card-content>
+  <mat-toolbar class="result-panel-action-bar">
+      <!-- <button mat-button color="primary" (click)="activateUpload()"> <mat-icon>cloud_upload</mat-icon> Upload Data</button> -->
+      <button mat-raised-button color="primary" (click)="fileInput.click()"> <mat-icon>cloud_upload</mat-icon> Upload Data</button>
+      <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
+          <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
+      </span>
+  </mat-toolbar>
 </mat-card>

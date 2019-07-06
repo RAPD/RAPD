@@ -1,188 +1,141 @@
 <div class="result-panel child">
-  <!-- <mat-card class="rapd-result">
-  <mat-card-content> -->
   <mat-tab-group>
-  <mat-tab label="Summary">
-    <div fxLayout="row" fxLayoutGap="10px">
-      <div fxFlex="none">
-        <div>
-          <h3>Unit Cell</h3>
-          <table class="rapd-table">
-            <thead>
-              <tr>
-                <th>Spacegroup</th>
-                <th>Unit Cell</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{{result.parsed.xtriage.spacegroup.text}} ({{result.parsed.xtriage.spacegroup.number}})</td>
-                <td>
-                  {{result.parsed.xtriage.unit_cell.a | number:'1.1-2'}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.b | number:'1.1-2'}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.c | number:'1.1-2'}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.alpha | number:'1.1-2'}}&deg;
-                  {{result.parsed.xtriage.unit_cell.beta | number:'1.1-2'}}&deg;
-                  {{result.parsed.xtriage.unit_cell.gamma | number:'1.1-2'}}&deg;
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <h3>Patterson Analysis</h3>
-          <table class="rapd-table">
-            <thead>
-              <tr>
-                <th>% Origin</th>
-                <th>p-value</th>
-                <th>X</th>
-                <th>Y</th>
-                <th>Z</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
-                <td>{{(result.parsed.xtriage["Patterson peaks"][key].peak * 100.) | number:'1.1-2'}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"] | number:'1.1-4'}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"] | number:'1.1-2'}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"] | number:'1.1-2'}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"] | number:'1.1-2'}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <h3>Twinning Analysis</h3>
-          <div class="rapd-result-paragraph">
-            <p *ngIf="! result.parsed.xtriage.twin">No twinning suspected</p>
+    <mat-tab label="Summary">
+      <div fxLayout="row" fxLayoutGap="10px">
+        <div fxFlex="none">
+          <div>
+            <h3>Unit Cell</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>Spacegroup</th>
+                  <th>Unit Cell</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{result.results.parsed.xtriage.spacegroup.text}} ({{result.results.parsed.xtriage.spacegroup.number}})</td>
+                  <td>
+                    {{result.results.parsed.xtriage.unit_cell.a | number:'1.1-2'}} &Aring; {{result.results.parsed.xtriage.unit_cell.b | number:'1.1-2'}}
+                    &Aring; {{result.results.parsed.xtriage.unit_cell.c | number:'1.1-2'}} &Aring; {{result.results.parsed.xtriage.unit_cell.alpha
+                    | number:'1.1-2'}}&deg; {{result.results.parsed.xtriage.unit_cell.beta | number:'1.1-2'}}&deg; {{result.results.parsed.xtriage.unit_cell.gamma
+                    | number:'1.1-2'}}&deg;
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <table *ngIf="result.parsed.xtriage.twin" class="rapd-table">
-            <thead>
-              <tr>
-                <th>Operator</th>
-                <th>Type</th>
-                <th>Axis</th>
-                <th>Apparent SG</th>
-                <th>R<sub>obs</sub></th>
-                <th>Britton &alpha;</th>
-                <th>H-test &alpha;</th>
-                <th>ML &alpha;</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <h3>Xtriage Summary</h3>
-          <div class="rapd-result-paragraph">
-            <p *ngFor="let line of result.parsed.xtriage.verdict_text">{{line}}</p>
+          <div>
+            <h3>Patterson Analysis</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>% Origin</th>
+                  <th>p-value</th>
+                  <th>X</th>
+                  <th>Y</th>
+                  <th>Z</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let key of objectKeys(this.result.results.parsed.xtriage['Patterson peaks'])">
+                  <td>{{(result.results.parsed.xtriage["Patterson peaks"][key].peak * 100.) | number:'1.1-2'}}</td>
+                  <td>{{result.results.parsed.xtriage["Patterson peaks"][key]["p-val"] | number:'1.1-4'}}</td>
+                  <td>{{result.results.parsed.xtriage["Patterson peaks"][key]["frac x"] | number:'1.1-2'}}</td>
+                  <td>{{result.results.parsed.xtriage["Patterson peaks"][key]["frac y"] | number:'1.1-2'}}</td>
+                  <td>{{result.results.parsed.xtriage["Patterson peaks"][key]["frac z"] | number:'1.1-2'}}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
-      <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
-        <div fxFlex="none" class="rapd-plot-header">
-          <div style="float:left;">
-            <h3>{{selected_plot}}</h3>
-          </div>
-          <div style="float:right;">
-            <mat-select
-              placeholder="Select Plot"
-              (change)="setPlot(selected_plot)"
-              [(ngModel)]="selected_plot"
-              name="selected_plot"
-              value="intensity">
-              <mat-option *ngFor="let key of objectKeys(result.parsed.xtriage.plots)" [value]="key">{{key}}</mat-option>
-            </mat-select>
-          </div>
-        </div>
-        <div fxFlex="grow">
-          <div class="chart-container" style="position: relative;">
-            <div *ngIf="selected_plot=='Intensity plots'">
-              <canvas
-                *ngIf="data"
-                baseChart
-                [datasets]="data.ys"
-                [labels]="data.xs"
-                [options]="data.lineChartOptions"
-                [chartType]="data.lineChartType"
-                [colors]="globals_service.LineChartColors"
-                (chartHover)="chartHovered($event)"
-                (chartClick)="chartClicked($event)">
-              </canvas>
+          <div>
+            <h3>Twinning Analysis</h3>
+            <div class="rapd-result-paragraph">
+              <p *ngIf="! result.results.parsed.xtriage.twin">No twinning suspected</p>
             </div>
-            <div *ngIf="selected_plot=='Measurability of Anomalous signal'">
-              <canvas
-                *ngIf="data"
-                baseChart
-                [datasets]="data.ys"
-                [labels]="data.xs"
-                [options]="data.lineChartOptions"
-                [chartType]="data.lineChartType"
-                [colors]="globals_service.LineChartColors"
-                (chartHover)="chartHovered($event)"
-                (chartClick)="chartClicked($event)">
-              </canvas>
+            <table *ngIf="result.results.parsed.xtriage.twin" class="rapd-table">
+              <thead>
+                <tr>
+                  <th>Operator</th>
+                  <th>Type</th>
+                  <th>Axis</th>
+                  <th>Apparent SG</th>
+                  <th>R
+                    <sub>obs</sub>
+                  </th>
+                  <th>Britton &alpha;</th>
+                  <th>H-test &alpha;</th>
+                  <th>ML &alpha;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let key of objectKeys(this.result.results.parsed.xtriage['Patterson peaks'])">
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h3>Xtriage Summary</h3>
+            <div class="rapd-result-paragraph">
+              <p *ngFor="let line of result.results.parsed.xtriage.verdict_text">{{line}}</p>
             </div>
-            <div *ngIf="selected_plot=='NZ test'">
-              <canvas
-                *ngIf="data"
-                baseChart
-                [datasets]="data.ys"
-                [labels]="data.xs"
-                [options]="data.lineChartOptions"
-                [chartType]="data.lineChartType"
-                [colors]="globals_service.LineChartColors"
-                (chartHover)="chartHovered($event)"
-                (chartClick)="chartClicked($event)">
-              </canvas>
+          </div>
+        </div>
+        <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+          <div fxFlex="none" class="rapd-plot-header">
+            <div class="rapd-titleselect-panel">
+              <mat-select class="rapd-matselect-panel" placeholder="Select Plot" (selectionChange)="setPlot(selected_plot)" [(ngModel)]="selected_plot"
+                name="selected_plot" value="intensity" style="width:18em;">
+                <mat-option *ngFor="let key of objectKeys(result.results.parsed.xtriage.plots)" [value]="key">{{key}}</mat-option>
+              </mat-select>
             </div>
-            <div *ngIf="selected_plot=='L test, acentric data'">
-              <canvas
-                *ngIf="data"
-                baseChart
-                [datasets]="data.ys"
-                [labels]="data.xs"
-                [options]="data.lineChartOptions"
-                [chartType]="data.lineChartType"
-                [colors]="globals_service.LineChartColors"
-                (chartHover)="chartHovered($event)"
-                (chartClick)="chartClicked($event)">
-              </canvas>
+            <div class="rapd-chart-select-panel">
+              <!-- <h3>{{selected_plot}}</h3> -->
+            </div>
+
+          </div>
+          <div fxFlex="grow">
+            <div class="chart-container" style="position: relative;">
+              <div *ngIf="selected_plot=='Intensity plots'">
+                <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
+                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='Measurability of Anomalous signal'">
+                <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
+                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='NZ test'">
+                <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
+                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='L test, acentric data'">
+                <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
+                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </mat-tab>
-  <!-- <mat-tab label="PDBQuery">
-  </mat-tab> -->
-  <mat-tab label="Self-Rotation">
-    <img src={{result.parsed.molrep.self_rotation_image_60}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_90}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_120}}/>
-    <img src={{result.parsed.molrep.self_rotation_image_180}}/>
-  </mat-tab>
-  <!-- <mat-tab label="Precessions">
-  </mat-tab> -->
-  <mat-tab label="Logs">
-    <app-log-card
-      [log]="result.raw.xtriage"
-      header="Xtriage">
-    </app-log-card>
-    <app-log-card
-      [log]="result.raw.molrep"
-      header="Molrep">
-    </app-log-card>
-    <app-log-card
-      [log]="result.raw.phaser"
-      header="Phaser">
-    </app-log-card>
-  </mat-tab>
-</mat-tab-group>
-<!-- </mat-card-content>
-</mat-card> -->
+    </mat-tab>
+    <mat-tab label="Self-Rotation">
+      <div *ngIf="(result.results.parsed.molrep)?.self_rotation_image_60">
+        <img src={{result.results.parsed.molrep.self_rotation_image_60}}/>
+        <img src={{result.results.parsed.molrep.self_rotation_image_90}}/>
+        <img src={{result.results.parsed.molrep.self_rotation_image_120}}/>
+        <img src={{result.results.parsed.molrep.self_rotation_image_180}}/>
+      </div>
+    </mat-tab>
+    <mat-tab label="Logs">
+      <app-log-card [log]="result.results.raw.xtriage" header="Xtriage">
+      </app-log-card>
+      <app-log-card [log]="result.results.raw.molrep" header="Molrep">
+      </app-log-card>
+      <app-log-card [log]="result.results.raw.phaser" header="Phaser">
+      </app-log-card>
+    </mat-tab>
+  </mat-tab-group>
 </div>

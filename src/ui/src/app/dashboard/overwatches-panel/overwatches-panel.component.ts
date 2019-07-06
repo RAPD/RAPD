@@ -53,13 +53,14 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'stopped') {
       this.rest_service.stopOverwatch(parent.id).subscribe(
        parameters => {
-         // console.log(parameters);
-         if (parameters.success) {
-           let snackBarRef = this.snackBar.open('Stop requested', 'Ok', {
-             duration: 5000,
-           });
-           parent.status = 'stop requested';
-         }
+         console.log(parameters);
+        // TODO
+         //  if (parameters.success) {
+        //    let snackBarRef = this.snackBar.open('Stop requested', 'Ok', {
+        //      duration: 5000,
+        //    });
+        //    parent.status = 'stop requested';
+        //  }
        },
        error => this.error_message = <any>error);
     } else {
@@ -74,13 +75,14 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'running') {
       this.rest_service.startOverwatch(parent.id).subscribe(
        parameters => {
-         // console.log(parameters);
-         if (parameters.success) {
-           let snackBarRef = this.snackBar.open('Start requested', 'Ok', {
-             duration: 5000,
-           });
-           parent.status = 'start requested';
-         }
+         console.log(parameters);
+        // TODO
+         //  if (parameters.success) {
+        //    let snackBarRef = this.snackBar.open('Start requested', 'Ok', {
+        //      duration: 5000,
+        //    });
+        //    parent.status = 'start requested';
+        //  }
        },
        error => this.error_message = <any>error);
     } else {
@@ -99,13 +101,14 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 
     this.rest_service.stopAllOverwatches().subscribe(
      parameters => {
-       // console.log(parameters);
-       if (parameters.success) {
-         let snackBarRef = this.snackBar.open('Stop all requested', 'Ok', {
-           duration: 5000,
-         });
-         parent.status = 'start requested';
-       }
+       console.log(parameters);
+      // TODO
+       //  if (parameters.success) {
+      //    let snackBarRef = this.snackBar.open('Stop all requested', 'Ok', {
+      //      duration: 5000,
+      //    });
+      //    parent.status = 'start requested';
+      //  }
      },
      error => this.error_message = <any>error);
 }

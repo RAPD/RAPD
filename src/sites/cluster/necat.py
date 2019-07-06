@@ -73,12 +73,16 @@ def check_queue(inp):
          "INDEX"          : 'index.q',
          #"INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
-         "XDS"            : 'all.q',
+         #"XDS"            : 'all.q',
+         "XDS"            : 'fibre.q',
          #"INTEGRATE"      : 'integrate.q',
-         "INTEGRATE"      : 'all.q',
+         "INTEGRATE"      : 'fibre.q', # because phase 3 nodes are having problems allocating memory
+         "PDBQUERY"       : 'all.q,general.q',
          }
-    
-    return(d[inp])
+    if d.get(inp, False):
+        return(d[inp])
+    else:
+        return 'general.q'
   
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
@@ -255,7 +259,9 @@ def process_cluster(command,
         if logfile == False:
             fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
             logfile = fd.name
-        
+    if not batch_queue:
+         batch_queue ='all.q'
+    
     counter = 0
 
     #'-clear' can be added to the options to eliminate the general.q
@@ -339,7 +345,15 @@ def process_cluster(command,
     if s:
         s.exit()
 
-def kill_job(inp, logger=False):
+def kill_job(jobid):
+  """
+  Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
+  a compute node on the cluster. Used in pipelines to kill jobs when timed out or if
+  a solution in Phaser is found in the first round and the second round jobs are not needed.
+  """
+  subprocess.Popen(['qdel', str(jobid)]).wait()
+
+def kill_job_OLD(inp, logger=False):
   """
   Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
   a compute node on the cluster. Used in pipelines to kill jobs when timed out or if
@@ -350,6 +364,7 @@ def kill_job(inp, logger=False):
   try:
       command = 'qdel %s'%inp
       if logger:
+        
           logger.debug(command)
       os.system(command)
   except:

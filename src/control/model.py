@@ -38,6 +38,7 @@ from pprint import pprint
 # import socket
 import sys
 import time
+import types
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
@@ -167,14 +168,17 @@ class Model(object):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        #self.redis = self.redis_database.connect_to_redis()
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
 
     def stop_redis(self):
         """Make a clean Redis disconnection if using a pool connection."""
         self.logger.debug("Close Redis")
 
-        self.redis_database.stop()
+        #self.redis_database.stop()
+        pass
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -443,12 +447,12 @@ class Model(object):
         # Image is in a run
         if isinstance(place_in_run, int):
 
-            self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
+            # self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
             # Save some typing
             current_run = self.recent_runs[str(run_id)]
 
-            self.logger.debug(current_run)
+            # self.logger.debug(current_run)
 
             # If not integrating trigger integration
 
@@ -485,7 +489,7 @@ class Model(object):
                         return False
 
                     # Put data about run in the header object
-                    header["collect_mode"] = "run"
+                    header["collect_mode"] = "RUN"
                     header["run_id"] = str(run_id)
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
@@ -721,7 +725,7 @@ class Model(object):
         fullname -- full path name of the image in question
         run_info -- dict describing run
         """
-        self.logger.debug("%s %s", site_tag, fullname)
+        # self.logger.debug("%s %s", site_tag, fullname)
 
         # Flag for snap
         could_be_snap = True
@@ -729,10 +733,10 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-        # If the detector can determine if run or snap
+        # If the detector can determine if run or snap from the image name
         if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
-            if type(detector.is_run_from_imagename) == "function":
+            if isinstance(detector.is_run_from_imagename, types.FunctionType):
                 self.logger.debug("Have function")
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
@@ -744,12 +748,12 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
-        self.logger.debug("%s %s %s %s %s",
-                          directory,
-                          basename,
-                          image_prefix,
-                          run_number,
-                          image_number)        
+        # self.logger.debug("%s %s %s %s %s",
+        #                   directory,
+        #                   basename,
+        #                   image_prefix,
+        #                   run_number,
+        #                   image_number)        
 
         # Look for run information for this image
         run_info = self.query_in_run(site_tag=site_tag,
@@ -774,13 +778,13 @@ class Model(object):
             # run_info is a list of dicts - take most recent match
             run_info = run_info[0]
 
-            self.logger.debug("run_info: %s", run_info)
-            self.logger.debug("%s %s %s %s %s",
-                              directory,
-                              basename,
-                              image_prefix,
-                              run_number,
-                              image_number)
+            # self.logger.debug("run_info: %s", run_info)
+            # self.logger.debug("%s %s %s %s %s",
+            #                   directory,
+            #                   basename,
+            #                   image_prefix,
+            #                   run_number,
+            #                   image_number)
 
             # Calculate the position of the image in the current run
             run_position = image_number - run_info.get("start_image_number", 1) + 1
@@ -1091,6 +1095,10 @@ class Model(object):
             # Save the result
             __ = self.database.save_plugin_result(message)
 
+        else:
+
+            self.logger.debug(message)
+
             """
             # Release hold on dataset in RAMDISK
             if self.site.ALT_IMAGE_LOCATION and self.site.ALT_IMAGE_SERVER_NAME:
@@ -1123,7 +1131,7 @@ class Model(object):
         # self.logger.debug("Received: %s", message)
 
         command = message.get("command")
-        self.logger.debug("Received message")
+        # self.logger.debug("Received message")
 
         # From a plugin
         if message.get("process", {}).get("type") == "plugin":

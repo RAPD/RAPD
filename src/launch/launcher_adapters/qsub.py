@@ -109,10 +109,16 @@ class LauncherAdapter(object):
             qsub_label = os.path.basename(command_file).replace(".rapd", "")
     
             # Determine the number of precessors to request for job
-            nproc = cluster.determine_nproc(self.message['command'])
+            if hasattr(cluster, 'determine_nproc'):
+                nproc = cluster.determine_nproc(self.message['command'])
+            else:
+                nproc = 1
     
             # Determine which cluster queue to run
-            queue = cluster.check_queue(self.message['command'])
+            if hasattr(cluster, 'check_queue'):
+                queue = cluster.check_queue(self.message['command'])
+            else:
+                queue = False
             
             Thread(target=cluster.process_cluster,
                           kwargs={'command':command_line,
@@ -126,7 +132,7 @@ class LauncherAdapter(object):
                                   'timeout':False,
                                   'pid_queue':False,
                                   }).start()
-            
+
             """
             # Setup a Queue to retreive the jobID.
             q = mp_Queue()

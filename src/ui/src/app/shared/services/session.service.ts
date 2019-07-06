@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
-import { AuthHttp } from 'angular2-jwt';
-import * as moment from 'moment-mini';
+import { HttpClient } from '@angular/common/http';
+// import * as moment from 'moment-mini';
 
 import { GlobalsService } from './globals.service';
 
@@ -13,7 +13,7 @@ import { Session } from '../classes/session';
 export class SessionService {
 
   constructor(private globals_service: GlobalsService,
-              public auth_http: AuthHttp) { }
+              public auth_http: HttpClient) { }
 
   getSessions(): Observable<Session[]> {
 

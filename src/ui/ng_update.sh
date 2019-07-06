@@ -2,7 +2,7 @@
 
 npm uninstall -g @angular/cli
 npm cache verify
-npm install -g @angular/cli@1.7.3
+npm install -g @angular/cli@7.1.2
 rm -rf node_modules dist
-npm install --save-dev @angular/cli@1.7.3
+npm install --save-dev @angular/cli@7.1.2
 npm install
