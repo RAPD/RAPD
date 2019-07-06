@@ -138,9 +138,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
     strict
     user_spacegroup
     """
-    # print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
-    # logger.debug(
-    #     'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
+    print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
     command = []
     command.append('pointless hklout '+out_file +
                    '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
@@ -168,17 +166,12 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                          shell=True,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE).communicate()
-
+    
     if user_spacegroup == 0:
         # Sub-routine for different point groups
         pointless_error = ['WARNING: Cannot combine reflection lists with different symmetry', 'ERROR: cannot combine files belonging to different crystal systems']
         if (p[0] == '' and p[1] == '') == False:
             pass
-            # logger.debug(
-            #     'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
-#        if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
-            # logger.debug(
-            #     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
 #            print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
         if any(x in p[1] for x in pointless_error):
             print 'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files)
@@ -193,8 +186,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE).communicate()
             if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
-                # logger.debug(
-                #     'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
+                print 'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files)
                 for hklin in in_files:
                     cmd = []
                     hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
@@ -227,8 +219,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         if line.startswith('FATAL ERROR'):
             # Go to the next line for error message
             if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
-                # logger.debug(
-                #     'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
+                print 'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.'
                 for num, itm in enumerate(command):
                     if itm == 'eof\n':
                         command.insert(num, 'choose solution 1\n')
@@ -242,8 +233,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE).wait()
             if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
-                # logger.debug(
-                #     'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
+                print 'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files)
                 for hklin in in_files:
                     cmd = []
                     hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
@@ -289,10 +279,8 @@ def get_cc_aimless(in_file):
                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
                         'anomalous on\n',
                         'scales constant\n',
-                        'exclude sdmin 2.0\n'
-                        'sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n']
-#                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
-#                        'cycles 0\n']
+                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
+                        'cycles 0\n']
     with open(com_file, "w") as command_file:
         for line in aimless_lines:
             command_file.write(line)
@@ -530,7 +518,9 @@ class RapdPlugin(multiprocessing.Process):
         # Nicely sort datasets
         # sort_nicely(self.datasets)
 
-        if self.precheck:
+        if not self.precheck:
+            self.tprint("Prechecking Files Off.  Skipping to File Copying.")
+        else: 
             # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
             types = []
             hashset = {}
