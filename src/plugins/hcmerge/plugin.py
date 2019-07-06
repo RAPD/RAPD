@@ -171,11 +171,12 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
 
     if user_spacegroup == 0:
         # Sub-routine for different point groups
+        pointless_error = ['WARNING: Cannot combine reflection lists with different symmetry', 'ERROR: cannot combine files belonging to different crystal systems']
         if (p[0] == '' and p[1] == '') == False:
             pass
             # logger.debug(
             #     'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
-        if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
+#        if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
             # logger.debug(
             #     'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
 #            print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
