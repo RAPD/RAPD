@@ -147,7 +147,7 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         command.append('hklin '+hklin+' \n')
         # Add ability to do batches
     # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
-    if strict != False:
+    if strict == False:
         command.append('tolerance 1000.0 \n')
     # Add LAUEGROUP if user has chosen a spacegroup
     if user_spacegroup:
