@@ -544,37 +544,10 @@ def run_phaser(data_file,
             # Do a little sleep to make sure results are in Redis for postprocess_phaser
             time.sleep(0.1)
         else:
+            print "Printing phaser_result"
             # Print the result so it can be seen thru the queue by reading stdout
             #print phaser_result
             print json.dumps(phaser_result)
-
-def run_phaser(data_file,
-               result_queue=False,
-               cca=False,
-               tncs=False,
-               ellg=False,
-               struct_file=False,
-               dres=False,
-               np=0,
-               na=0):
-    # The module is properly loaded
-    if phaser:
-        run_phaser_module(data_file=data_file,
-                          result_queue=result_queue,
-                          cca=cca,
-                          tncs=tncs,
-                          ellg=ellg,
-                          struct_file=struct_file,
-                          dres=dres,
-                          np=np,
-                          na=na)
-    # No module!
-    else:
-        command = {
-            "data":data_file
-        }
-        run_phaser_pdbquery_script(command)
-
 
 def run_phaser_module(data_file,
                       result_queue=False,

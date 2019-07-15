@@ -240,9 +240,9 @@ def get_pdb_info(struct_file,
         # phaser_return = run_phaser_module(data_file=data_file,
         #                                   ellg=True, 
         #                                   struct_file=struct_file)
-        phaser_return = run_phaser(data_file=data_file,
-                                   ellg=True, 
-                                   struct_file=struct_file)
+        phaser_return = run_phaser_module(data_file=data_file,
+                                          ellg=True, 
+                                          struct_file=struct_file)
         d['all'].update({'res': phaser_return.get("target_resolution", res1)})
     """
     d['all'] = {'file': struct_file,

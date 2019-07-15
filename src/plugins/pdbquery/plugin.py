@@ -672,22 +672,22 @@ class RapdPlugin(Thread):
                                             chains=False)
     
                 job_description = {
-                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)), #
                     "data_file": self.data_file,
                     "struct_file": cif_path,
-                    "name": pdb_code,
+                    "name": pdb_code, #
                     "spacegroup": data_spacegroup,
-                    "ncopy": copy,
+                    "ncopy": copy,  #
                     #"test": self.test,
-                    "cell_analysis": True,
+                    "cell_analysis": True,  #
                     #"large_cell": self.large_cell,
                     "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
                                                  self.large_cell,
                                                  self.dres),
-                    "launcher": self.launcher,
-                    "db_settings": self.db_settings,
-                    "tag": False,
-                    "batch_queue": self.batch_queue,
+                    "launcher": self.launcher,  #
+                    "db_settings": self.db_settings,  #
+                    "tag": False,  #
+                    "batch_queue": self.batch_queue, #
                     "rapd_python": self.rapd_python}
     
                 if not l:
@@ -859,6 +859,7 @@ class RapdPlugin(Thread):
             # This try/except is for when results aren't in Redis in time.
             try:
                 results = json.loads(results_json)
+                pprint(results)
                 self.postprocess_phaser(info['name'], results)
                 self.redis.delete(info['tag'])
             except Exception as e:
@@ -978,6 +979,8 @@ class RapdPlugin(Thread):
 
         self.tprint("\nResults", level=99, color="blue")
 
+        pprint(self.results["results"])
+
         def get_longest_field(pdb_codes):
             """Calculate the ongest field in a set of results"""
             longest_field = 0
@@ -1005,7 +1008,7 @@ class RapdPlugin(Thread):
         def print_result_line(pdb_code, my_result, longest_field):
             """Print the result line in the table"""
 
-            print my_result
+            # print my_result
 
             self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}".format(
                 pdb_code,
@@ -1036,6 +1039,7 @@ class RapdPlugin(Thread):
 
                 # Run through the codes
                 for pdb_code in pdb_codes:
+                    print pdb_code
                     if self.phaser_results.has_key(pdb_code):
                         # Get the result in question
                         my_result = self.phaser_results[pdb_code]["results"]
