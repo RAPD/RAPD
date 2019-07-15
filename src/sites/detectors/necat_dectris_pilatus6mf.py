@@ -62,7 +62,8 @@ XDSINP0 = detector.XDSINP
 # ie. XDSINP1 = [("SEPMIN", "4"),]
 XDSINP1 = [
           # Signal RAPD2 job
-          ('CLUSTER_NODES', 'RAPD2'),
+          #('CLUSTER_NODES', 'RAPD2'),
+          ('CLUSTER_NODES', 'general.q'),
           ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
