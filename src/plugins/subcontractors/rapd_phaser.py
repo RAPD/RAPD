@@ -42,6 +42,7 @@ from functools import wraps
 import sys
 import tarfile
 import time
+import re
 
 # Phaser import
 import phaser
@@ -383,6 +384,9 @@ def run_phaser(data_file,
     i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
     r = phaser.runMR_DAT(i)
+    # Need to determine Phaser version for keyword changes!
+    version = re.search(r'Version:\s*([\d.]+)', r.logfile()).group(1)
+
     if r.Success():
         i = phaser.InputMR_AUTO()
         # i.setREFL_DATA(r.getREFL_DATA())
@@ -417,7 +421,16 @@ def run_phaser(data_file,
                 i.setRESO_HIGH(resolution)
             else:
                 i.setRESO_HIGH(6.0)
+<<<<<<< HEAD
             i.setSEAR_DEEP(False) #FM
+=======
+             # If Phaser version < 2.6.0
+            if int(version.split('.')[1]) <= 6:
+                i.setSEAR_DEEP(False)
+            else:
+                i.setSEAR_METH("FAST")
+            
+>>>>>>> origin/jon_working
             # Don"t seem to work since it picks the high res limit now.
             # Get an error when it prunes all the solutions away and TF has no input.
             # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
