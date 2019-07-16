@@ -891,9 +891,10 @@ class RapdPlugin(Thread):
             else:
                 results = info['result_queue'].get()
                 # pprint(results)
-                if results["stderr"]:
-                    print results["stderr"]
-                self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
+                # pprint(json.loads(results.get('stdout'," ")))
+                # if results["stderr"]:
+                #     print results["stderr"]
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout'," ")))
             jobs.remove(job)
             
             #results_json = self.redis.get(info['tag'])

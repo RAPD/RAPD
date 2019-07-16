@@ -373,26 +373,26 @@ def run_phaser(data_file,
     if not name:
         name = spacegroup
 
-    # Handle CIF file input -> PDB
-    if struct_file[-3:] == "cif":
-        pdb.cif_as_pdb(struct_file)
-        struct_file = struct_file.replace(".cif", ".pdb")
+    # # Handle CIF file input -> PDB
+    # if struct_file[-3:] == "cif":
+    #     pdb.cif_as_pdb(struct_file)
+    #     struct_file = struct_file.replace(".cif", ".pdb")
 
     # Read the dataset
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
-    r = phaser.runMR_DAT(i)
+    r1 = phaser.runMR_DAT(i)
     # Need to determine Phaser version for keyword changes!
-    version = re.search(r'Version:\s*([\d.]+)', r.logfile()).group(1)
+    version = re.search(r'Version:\s*([\d.]+)', r1.logfile()).group(1)
 
-    if r.Success():
+    if r1.Success():
         i = phaser.InputMR_AUTO()
-        # i.setREFL_DATA(r.getREFL_DATA())
-        # i.setREFL_DATA(r.DATA_REFL())
-        i.setREFL_F_SIGF(r.getMiller(), r.getFobs(), r.getSigFobs())
-        i.setCELL6(r.getUnitCell())
+        # i.setREFL_DATA(r1.getREFL_DATA())
+        # i.setREFL_DATA(r1.DATA_REFL())
+        i.setREFL_F_SIGF(r1.getMiller(), r1.getFobs(), r1.getSigFobs())
+        i.setCELL6(r1.getUnitCell())
         if struct_file[-3:].lower() == "cif":
             #i.addENSE_CIF_ID('model', cif, 0.7)
             ### Typo in PHASER CODE!!! <<<CIT>>> ###
@@ -421,16 +421,12 @@ def run_phaser(data_file,
                 i.setRESO_HIGH(resolution)
             else:
                 i.setRESO_HIGH(6.0)
-<<<<<<< HEAD
-            i.setSEAR_DEEP(False) #FM
-=======
              # If Phaser version < 2.6.0
             if int(version.split('.')[1]) <= 6:
                 i.setSEAR_DEEP(False)
             else:
                 i.setSEAR_METH("FAST")
             
->>>>>>> origin/jon_working
             # Don"t seem to work since it picks the high res limit now.
             # Get an error when it prunes all the solutions away and TF has no input.
             # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
@@ -451,11 +447,85 @@ def run_phaser(data_file,
         #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
         i.setROOT(convert_unicode(name))
         # i.setMUTE(False)
-        i.setMUTE(False)  #FM
+        i.setMUTE(True)
         # Delete the setup results
-        del(r)
+        # del(r)
         # launch the run
-        r = phaser.runMR_AUTO(i)
+        # r = phaser.runMR_AUTO(i)
+
+        try:
+            r = phaser.runMR_AUTO(i)
+        except RuntimeError as e:
+            # print "Hit error"
+            # Known CIF error - convert to pdb and retry
+            if struct_file[-3:] in ('cif',):
+                # print "Convert to pdb"
+                pdb.cif_as_pdb((struct_file,))
+                pdb_file = struct_file.replace(".cif", ".pdb")
+                
+                i = phaser.InputMR_AUTO()
+                # i.setREFL_DATA(r1.getREFL_DATA())
+                # i.setREFL_DATA(r1.DATA_REFL())
+                i.setREFL_F_SIGF(r1.getMiller(), r1.getFobs(), r1.getSigFobs())
+                i.setCELL6(r1.getUnitCell())
+                i.addENSE_PDB_ID('model', convert_unicode(pdb_file), 0.7)
+                i.addSEAR_ENSE_NUM("model", ncopy)
+                i.setSPAC_NAME(spacegroup)
+                if cell_analysis:
+                    i.setSGAL_SELE("ALL")
+                    # Set it for worst case in orth
+                    # number of processes to run in parallel where possible
+                    i.setJOBS(1)
+                else:
+                    i.setSGAL_SELE("NONE")
+                if full:
+                    # Picks own resolution
+                    # Round 2, pick best solution as long as less that 10% clashes
+                    i.setPACK_SELE("PERCENT")
+                    i.setPACK_CUTO(0.1)
+                    #command += "PACK CUTOFF 10\n"
+                else:
+                    # For first round and cell analysis
+                    # Only set the resolution limit in the first round or cell analysis.
+                    if resolution:
+                        i.setRESO_HIGH(resolution)
+                    else:
+                        i.setRESO_HIGH(6.0)
+                    # If Phaser version < 2.6.0
+                    if int(version.split('.')[1]) <= 6:
+                        i.setSEAR_DEEP(False)
+                    else:
+                        i.setSEAR_METH("FAST")
+                    
+                    # Don"t seem to work since it picks the high res limit now.
+                    # Get an error when it prunes all the solutions away and TF has no input.
+                    # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
+                    # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
+                # Turn off pruning in 2.6.0
+                i.setSEAR_PRUN(False)
+                # Choose more top peaks to help with getting it correct.
+                i.setPURG_ROTA_ENAB(True)
+                i.setPURG_ROTA_NUMB(3)
+                #command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
+                i.setPURG_TRAN_ENAB(True)
+                i.setPURG_TRAN_NUMB(1)
+                #command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
+
+                # Only keep the top after refinement.
+                i.setPURG_RNP_ENAB(True)
+                i.setPURG_RNP_NUMB(1)
+                #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
+                i.setROOT(convert_unicode(name))
+                # i.setMUTE(False)
+                i.setMUTE(True)
+                # Delete the setup results
+                # del(r)
+                # launch the run
+                r = phaser.runMR_AUTO(i)
+            else:
+                raise e
+
+
         if r.Success():
             # print r
             pass
@@ -481,6 +551,9 @@ def run_phaser(data_file,
             tncs = False
             # Parse results
             for p in r.getTopSet().ANNOTATION.split():
+                # print p
+                # For v 2.8.3
+                # RF*0\nTF*0\nLLG=30699\nTFZ==174.8\nPAK=0\nLLG=30699\nTFZ==174.8\n
                 if p.count('RFZ'):
                     if p.count('=') in [1]:
                         rfz = float(p.split('=')[-1])
@@ -515,6 +588,10 @@ def run_phaser(data_file,
                              "peak": None,
                              }
     
+            # Calculate 2Fo-Fc map
+
+            # Calculate Fo-Fc map
+
             # Calc ADF map
             if adf:
                 if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
