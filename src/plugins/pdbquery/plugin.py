@@ -41,6 +41,7 @@ from distutils.spawn import find_executable
 import glob
 import logging
 #from multiprocessing import Process
+from multiprocessing import cpu_count
 from threading import Thread
 import os
 from pprint import pprint
@@ -62,7 +63,7 @@ import utils.exceptions as exceptions
 import utils.global_vars as rglobals
 from utils.text import json
 import utils.xutils as xutils
-from utils.processes import local_subprocess, mp_pool
+from utils.processes import local_subprocess, mp_pool, mp_manager
 
 import info
 
@@ -176,7 +177,6 @@ class RapdPlugin(Thread):
         # Store passed-in variables
         self.site = site
         self.command = command
-        print dir(command)
         self.preferences = self.command.get("preferences", {})
 
         # Params
@@ -875,7 +875,7 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
+            self.tprint('    Finished Phaser on %s with id: %s'%(info['name'], info['tag']), level=30, color="white")
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
@@ -890,27 +890,20 @@ class RapdPlugin(Thread):
                     #print results_json
             else:
                 results = info['result_queue'].get()
+                # pprint(results)
+                if results["stderr"]:
+                    print results["stderr"]
                 self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
             jobs.remove(job)
             
             #results_json = self.redis.get(info['tag'])
             # This try/except is for when results aren't in Redis in time.
-<<<<<<< HEAD
-            try:
-                results = json.loads(results_json)
-                pprint(results)
-                self.postprocess_phaser(info['name'], results)
-                self.redis.delete(info['tag'])
-            except Exception as e:
-                self.logger.error('Error'+ str(e))
-=======
             #try:
             #    results = json.loads(results_json)
             #    self.postprocess_phaser(info['name'], results)
             #    self.redis.delete(info['tag'])
             #except Exception as e:
             #    self.logger.error('Error'+ str(e))
->>>>>>> origin/jon_working
                 # print 'PROBLEM: %s %s'%(info['name'], info['tag'])
                 # print results_json
                 # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['tag']))
@@ -1026,7 +1019,7 @@ class RapdPlugin(Thread):
 
         self.tprint("\nResults", level=99, color="blue")
 
-        pprint(self.results["results"])
+        # pprint(self.results["results"])
 
         def get_longest_field(pdb_codes):
             """Calculate the ongest field in a set of results"""
@@ -1086,7 +1079,6 @@ class RapdPlugin(Thread):
 
                 # Run through the codes
                 for pdb_code in pdb_codes:
-                    print pdb_code
                     if self.phaser_results.has_key(pdb_code):
                         # Get the result in question
                         my_result = self.phaser_results[pdb_code]["results"]

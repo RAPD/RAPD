@@ -372,6 +372,11 @@ def run_phaser(data_file,
     if not name:
         name = spacegroup
 
+    # Handle CIF file input -> PDB
+    if struct_file[-3:] == "cif":
+        pdb.cif_as_pdb(struct_file)
+        struct_file = struct_file.replace(".cif", ".pdb")
+
     # Read the dataset
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
@@ -412,7 +417,7 @@ def run_phaser(data_file,
                 i.setRESO_HIGH(resolution)
             else:
                 i.setRESO_HIGH(6.0)
-            i.setSEAR_DEEP(False)
+            i.setSEAR_DEEP(False) #FM
             # Don"t seem to work since it picks the high res limit now.
             # Get an error when it prunes all the solutions away and TF has no input.
             # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
@@ -433,14 +438,14 @@ def run_phaser(data_file,
         #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
         i.setROOT(convert_unicode(name))
         # i.setMUTE(False)
-        i.setMUTE(True)
+        i.setMUTE(False)  #FM
         # Delete the setup results
         del(r)
         # launch the run
         r = phaser.runMR_AUTO(i)
         if r.Success():
-            print r
-            #pass
+            # print r
+            pass
             #if r.foundSolutions():
                 #print "Phaser has found MR solutions"
                 #print "Top LLG = %f" % r.getTopLLG()
@@ -544,7 +549,7 @@ def run_phaser(data_file,
             # Do a little sleep to make sure results are in Redis for postprocess_phaser
             time.sleep(0.1)
         else:
-            print "Printing phaser_result"
+            # print "Printing phaser_result"
             # Print the result so it can be seen thru the queue by reading stdout
             #print phaser_result
             print json.dumps(phaser_result)
@@ -581,7 +586,7 @@ def run_phaser_module(data_file,
         i0 = phaser.InputMR_ELLG()
         i0.setSPAC_HALL(r.getSpaceGroupHall())
         i0.setCELL6(r.getUnitCell())
-        i0.setMUTE(False)
+        i0.setMUTE(True)
         i0.setREFL_DATA(r.getDATA())
         #  Read in CIF file
         if struct_file[-3:] in ('cif',):
@@ -592,23 +597,23 @@ def run_phaser_module(data_file,
         try:
             r1 = phaser.runMR_ELLG(i0)
         except RuntimeError as e:
-            print "Hit error"
+            # print "Hit error"
             # Known CIF error - convert to pdb and retry
             if struct_file[-3:] in ('cif',):
-                print "Convert to pdb"
+                # print "Convert to pdb"
                 pdb.cif_as_pdb((struct_file,))
                 pdb_file = struct_file.replace(".cif", ".pdb")
                 i1 = phaser.InputMR_ELLG()
                 i1.setSPAC_HALL(r.getSpaceGroupHall())
                 i1.setCELL6(r.getUnitCell())
-                i1.setMUTE(False)
+                i1.setMUTE(True)
                 i1.setREFL_DATA(r.getDATA())
                 i1.addENSE_PDB_ID("model", convert_unicode(pdb_file), 0.7)
                 r1 = phaser.runMR_ELLG(i1)
             else:
                 raise e
 
-        print r1.logfile()
+        # print r1.logfile()
         if r1.Success():
             # If it worked use the recommended resolution
             new_res = round(r1.get_target_resolution('model'), 1)
