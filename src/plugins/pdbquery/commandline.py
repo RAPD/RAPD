@@ -288,6 +288,7 @@ def main():
 
     # Construct the command
     command = construct_command(commandline_args=commandline_args)
+    #print command
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
