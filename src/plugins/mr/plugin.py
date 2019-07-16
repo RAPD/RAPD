@@ -196,8 +196,6 @@ class RapdPlugin(Thread):
         self.rapd_python = "rapd.python"
         if self.site and hasattr(self.site, "RAPD_PYTHON_PATH"):
             self.rapd_python = self.site.RAPD_PYTHON_PATH
-        
-        print self.rapd_python
 
     def run(self):
         """Execution path of the plugin"""

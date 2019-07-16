@@ -176,6 +176,7 @@ class RapdPlugin(Thread):
         # Store passed-in variables
         self.site = site
         self.command = command
+        print dir(command)
         self.preferences = self.command.get("preferences", {})
 
         # Params
@@ -184,14 +185,14 @@ class RapdPlugin(Thread):
         self.test = self.preferences.get("test", False)
         #self.test = self.preferences.get("test", True) # Limit number of runs on cluster
         
-        self.sample_type = self.preferences.get("type", "protein")
-        self.solvent_content = self.preferences.get("solvent_content", 0.55)
+        #self.sample_type = self.preferences.get("type", "protein")
+        #self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
         # self.verbose = self.command["preferences"].get("verbose", False)
         self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Used for setting up Redis connection
         self.db_settings = self.command["input_data"].get("db_settings")
-        self.nproc = self.preferences.get("nproc", 1)
+        #self.nproc = self.preferences.get("nproc", 1)
 
         # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
         self.computer_cluster = xutils.load_cluster_adapter(self)
@@ -200,10 +201,12 @@ class RapdPlugin(Thread):
             self.batch_queue = self.computer_cluster.check_queue(self.command.get('command'))
         else:
             self.launcher = local_subprocess
+            self.pool = mp_pool(self.preferences.get("nproc", cpu_count()-1))
+            self.manager = mp_manager()
 
         # Setup a multiprocessing pool if not using a computer cluster.
-        if not self.computer_cluster:
-            self.pool = mp_pool(self.nproc)
+        #if not self.computer_cluster:
+        #    self.pool = mp_pool(self.nproc)
         
         # Set Python path for subcontractors.rapd_phaser
         self.rapd_python = "rapd.python"
@@ -256,8 +259,10 @@ class RapdPlugin(Thread):
         self.est_res_number = xutils.calc_res_number(input_spacegroup,
                                                      se=False,
                                                      volume=volume,
-                                                     sample_type=self.sample_type,
-                                                     solvent_content=self.solvent_content)
+                                                     #sample_type=self.sample_type,
+                                                     sample_type=self.preferences.get("type", "protein"),
+                                                     #solvent_content=self.solvent_content
+                                                     solvent_content=self.preferences.get("solvent_content", 0.55))
         if self.est_res_number > 5000:
             self.large_cell = True
             self.phaser_timer = self.phaser_timer * 1.5
@@ -265,8 +270,9 @@ class RapdPlugin(Thread):
         # Check for dependency problems
         self.check_dependencies()
         
-        # Connect to Redis
-        self.connect_to_redis()
+        # Connect to Redis (computer cluster sends results via Redis)
+        if self.preferences.get("run_mode") == "server" or self.computer_cluster:
+            self.connect_to_redis()
 
     def update_status(self):
         """Update the status of the run."""
@@ -585,15 +591,31 @@ class RapdPlugin(Thread):
             """Launch the Phaser job"""
             #self.logger.debug("process_phaser Launching %s"%inp['name'])
             tag = 'Phaser_%d' % random.randint(0, 10000)
-            if self.pool:
-                inp['pool'] = self.pool
-            else:
+            if self.computer_cluster:
+                # Create a unique identifier for Phaser results
                 inp['tag'] = tag
+                # Send Redis settings so results can be sent thru redis
+                #inp['db_settings'] = self.site.CONTROL_DATABASE_SETTINGS
+                # Don't need result queue since results will be sent via Redis
+                queue = False
+            else:
+                inp['pool'] = self.pool
+                # Add result queue
+                queue = self.manager.Queue()
+                inp['result_queue'] = queue
+            
+            #if self.pool:
+            #    inp['pool'] = self.pool
+            #else:
+            #    inp['tag'] = tag
             #job, pid, tag = run_phaser(**inp)
             job, pid = run_phaser(**inp)
             self.jobs[job] = {'name': inp['name'],
                               'pid' : pid,
-                              'tag' : tag}
+                              'tag' : tag,
+                              'result_queue': queue,
+                              'spacegroup': inp['spacegroup'] # Need for jobs that timeout.
+                              }
 
         # Run through the pdbs
         for pdb_code in self.cell_output.keys():
@@ -855,8 +877,25 @@ class RapdPlugin(Thread):
             info = self.jobs.pop(job)
             print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
-            results_json = self.redis.get(info['tag'])
+            if self.computer_cluster:
+                results_json = self.redis.get(info['tag'])
+                # This try/except is for when results aren't in Redis in time.
+                try:
+                    results = json.loads(results_json)
+                    self.postprocess_phaser(info['name'], results)
+                    self.redis.delete(info['tag'])
+                except Exception as e:
+                    self.logger.error('Error '+ str(e))
+                    #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
+                    #print results_json
+            else:
+                results = info['result_queue'].get()
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
+            jobs.remove(job)
+            
+            #results_json = self.redis.get(info['tag'])
             # This try/except is for when results aren't in Redis in time.
+<<<<<<< HEAD
             try:
                 results = json.loads(results_json)
                 pprint(results)
@@ -864,6 +903,14 @@ class RapdPlugin(Thread):
                 self.redis.delete(info['tag'])
             except Exception as e:
                 self.logger.error('Error'+ str(e))
+=======
+            #try:
+            #    results = json.loads(results_json)
+            #    self.postprocess_phaser(info['name'], results)
+            #    self.redis.delete(info['tag'])
+            #except Exception as e:
+            #    self.logger.error('Error'+ str(e))
+>>>>>>> origin/jon_working
                 # print 'PROBLEM: %s %s'%(info['name'], info['tag'])
                 # print results_json
                 # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['tag']))
@@ -873,7 +920,7 @@ class RapdPlugin(Thread):
             #print results
             #self.postprocess_phaser(info['name'], results)
             #self.redis.delete(info['tag'])
-            jobs.remove(job)
+            #jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
         if self.pool:
