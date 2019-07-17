@@ -39,6 +39,7 @@ import random
 import shutil
 import importlib
 from functools import wraps
+import sys
 import tarfile
 import time
 import re
@@ -47,19 +48,20 @@ import re
 import phaser
 
 # RAPD imports
-from utils import archive
+from utils import archive, pdb
+from utils.processes import local_subprocess
 from utils.xutils import convert_unicode, calc_ADF_map
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
     return redis_database.Database(settings=settings)
 
-def run_phaser_pdbquery_script_OLD(command):
+def run_phaser_pdbquery_script(command):
     """
     Run phaser for pdbquery
     """
     # Change to correct directory
-    os.chdir(command["work_dir"])
+    # os.chdir(command["work_dir"])
 
     # Setup params
     full = command.get("full", False)
@@ -372,21 +374,26 @@ def run_phaser(data_file,
     if not name:
         name = spacegroup
 
+    # # Handle CIF file input -> PDB
+    # if struct_file[-3:] == "cif":
+    #     pdb.cif_as_pdb(struct_file)
+    #     struct_file = struct_file.replace(".cif", ".pdb")
+
     # Read the dataset
     i = phaser.InputMR_DAT()
     i.setHKLI(convert_unicode(data_file))
     i.setLABI_F_SIGF('F', 'SIGF')
     i.setMUTE(True)
-    r = phaser.runMR_DAT(i)
+    r1 = phaser.runMR_DAT(i)
     # Need to determine Phaser version for keyword changes!
-    version = re.search(r'Version:\s*([\d.]+)', r.logfile()).group(1)
+    version = re.search(r'Version:\s*([\d.]+)', r1.logfile()).group(1)
 
-    if r.Success():
+    if r1.Success():
         i = phaser.InputMR_AUTO()
-        # i.setREFL_DATA(r.getREFL_DATA())
-        # i.setREFL_DATA(r.DATA_REFL())
-        i.setREFL_F_SIGF(r.getMiller(), r.getFobs(), r.getSigFobs())
-        i.setCELL6(r.getUnitCell())
+        # i.setREFL_DATA(r1.getREFL_DATA())
+        # i.setREFL_DATA(r1.DATA_REFL())
+        i.setREFL_F_SIGF(r1.getMiller(), r1.getFobs(), r1.getSigFobs())
+        i.setCELL6(r1.getUnitCell())
         if struct_file[-3:].lower() == "cif":
             #i.addENSE_CIF_ID('model', cif, 0.7)
             ### Typo in PHASER CODE!!! <<<CIT>>> ###
@@ -443,12 +450,86 @@ def run_phaser(data_file,
         # i.setMUTE(False)
         i.setMUTE(True)
         # Delete the setup results
-        del(r)
+        # del(r)
         # launch the run
-        r = phaser.runMR_AUTO(i)
+        # r = phaser.runMR_AUTO(i)
+
+        try:
+            r = phaser.runMR_AUTO(i)
+        except RuntimeError as e:
+            # print "Hit error"
+            # Known CIF error - convert to pdb and retry
+            if struct_file[-3:] in ('cif',):
+                # print "Convert to pdb"
+                pdb.cif_as_pdb((struct_file,))
+                pdb_file = struct_file.replace(".cif", ".pdb")
+                
+                i = phaser.InputMR_AUTO()
+                # i.setREFL_DATA(r1.getREFL_DATA())
+                # i.setREFL_DATA(r1.DATA_REFL())
+                i.setREFL_F_SIGF(r1.getMiller(), r1.getFobs(), r1.getSigFobs())
+                i.setCELL6(r1.getUnitCell())
+                i.addENSE_PDB_ID('model', convert_unicode(pdb_file), 0.7)
+                i.addSEAR_ENSE_NUM("model", ncopy)
+                i.setSPAC_NAME(spacegroup)
+                if cell_analysis:
+                    i.setSGAL_SELE("ALL")
+                    # Set it for worst case in orth
+                    # number of processes to run in parallel where possible
+                    i.setJOBS(1)
+                else:
+                    i.setSGAL_SELE("NONE")
+                if full:
+                    # Picks own resolution
+                    # Round 2, pick best solution as long as less that 10% clashes
+                    i.setPACK_SELE("PERCENT")
+                    i.setPACK_CUTO(0.1)
+                    #command += "PACK CUTOFF 10\n"
+                else:
+                    # For first round and cell analysis
+                    # Only set the resolution limit in the first round or cell analysis.
+                    if resolution:
+                        i.setRESO_HIGH(resolution)
+                    else:
+                        i.setRESO_HIGH(6.0)
+                    # If Phaser version < 2.6.0
+                    if int(version.split('.')[1]) <= 6:
+                        i.setSEAR_DEEP(False)
+                    else:
+                        i.setSEAR_METH("FAST")
+                    
+                    # Don"t seem to work since it picks the high res limit now.
+                    # Get an error when it prunes all the solutions away and TF has no input.
+                    # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
+                    # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
+                # Turn off pruning in 2.6.0
+                i.setSEAR_PRUN(False)
+                # Choose more top peaks to help with getting it correct.
+                i.setPURG_ROTA_ENAB(True)
+                i.setPURG_ROTA_NUMB(3)
+                #command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
+                i.setPURG_TRAN_ENAB(True)
+                i.setPURG_TRAN_NUMB(1)
+                #command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
+
+                # Only keep the top after refinement.
+                i.setPURG_RNP_ENAB(True)
+                i.setPURG_RNP_NUMB(1)
+                #command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
+                i.setROOT(convert_unicode(name))
+                # i.setMUTE(False)
+                i.setMUTE(True)
+                # Delete the setup results
+                # del(r)
+                # launch the run
+                r = phaser.runMR_AUTO(i)
+            else:
+                raise e
+
+
         if r.Success():
-            print r
-            #pass
+            # print r
+            pass
             #if r.foundSolutions():
                 #print "Phaser has found MR solutions"
                 #print "Top LLG = %f" % r.getTopLLG()
@@ -471,6 +552,9 @@ def run_phaser(data_file,
             tncs = False
             # Parse results
             for p in r.getTopSet().ANNOTATION.split():
+                # print p
+                # For v 2.8.3
+                # RF*0\nTF*0\nLLG=30699\nTFZ==174.8\nPAK=0\nLLG=30699\nTFZ==174.8\n
                 if p.count('RFZ'):
                     if p.count('=') in [1]:
                         rfz = float(p.split('=')[-1])
@@ -488,10 +572,11 @@ def run_phaser(data_file,
             tncs_test = [1 for line in r.getTopSet().unparse().splitlines()
                          if line.count("+TNCS")]
             tncs = bool(len(tncs_test))
+            mtz_file = os.path.join(work_dir, r.getTopMtzFile())
             phaser_result = {"ID": name,
                              "solution": r.foundSolutions(),
                              "pdb": os.path.join(work_dir, r.getTopPdbFile()),
-                             "mtz": os.path.join(work_dir, r.getTopMtzFile()),
+                             "mtz": mtz_file,
                              "gain": float(r.getTopLLG()),
                              "rfz": rfz,
                              # "tfz": r.getTopTFZ(),
@@ -505,6 +590,22 @@ def run_phaser(data_file,
                              "peak": None,
                              }
     
+            # Calculate 2Fo-Fc & Fo-Fc maps
+            # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
+            
+            local_subprocess(command="phenix.mtz2map %s" % mtz_file,
+                             logfile='map.log',
+                             shell=True)
+            # Map files should exist
+            map_2_1 = mtz_file.replace(".mtz", "_2mFo-DFc.ccp4")
+            map_1_1 = mtz_file.replace(".mtz", "_mFo-DFc.ccp4")
+
+            # Make sure the maps exist
+            if os.path.exists(map_2_1):
+                phaser_result["map_2_1"] = map_2_1
+            if os.path.exists(map_1_1):
+                phaser_result["map_1_1"] = map_1_1
+
             # Calc ADF map
             if adf:
                 if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
@@ -552,6 +653,7 @@ def run_phaser(data_file,
             # Do a little sleep to make sure results are in Redis for postprocess_phaser
             time.sleep(0.1)
         else:
+            # print "Printing phaser_result"
             # Print the result so it can be seen thru the queue by reading stdout
             #print phaser_result
             print json.dumps(phaser_result)
@@ -564,7 +666,7 @@ def run_phaser_module(data_file,
                       struct_file=False,
                       dres=False,
                       np=0,
-                      na=0,):
+                      na=0):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
@@ -590,12 +692,32 @@ def run_phaser_module(data_file,
         i0.setCELL6(r.getUnitCell())
         i0.setMUTE(True)
         i0.setREFL_DATA(r.getDATA())
-        if struct_file[-3:] in ('cif'):
-            i0.addENSE_CIT_ID('model', convert_unicode(struct_file), 0.7)
+        #  Read in CIF file
+        if struct_file[-3:] in ('cif',):
+            i0.addENSE_CIT_ID("model", convert_unicode(struct_file), 0.7)
+        # Read in PDB file
         else:
             i0.addENSE_PDB_ID("model", convert_unicode(struct_file), 0.7)
-        r1 = phaser.runMR_ELLG(i0)
-        #print r1.logfile()
+        try:
+            r1 = phaser.runMR_ELLG(i0)
+        except RuntimeError as e:
+            # print "Hit error"
+            # Known CIF error - convert to pdb and retry
+            if struct_file[-3:] in ('cif',):
+                # print "Convert to pdb"
+                pdb.cif_as_pdb((struct_file,))
+                pdb_file = struct_file.replace(".cif", ".pdb")
+                i1 = phaser.InputMR_ELLG()
+                i1.setSPAC_HALL(r.getSpaceGroupHall())
+                i1.setCELL6(r.getUnitCell())
+                i1.setMUTE(True)
+                i1.setREFL_DATA(r.getDATA())
+                i1.addENSE_PDB_ID("model", convert_unicode(pdb_file), 0.7)
+                r1 = phaser.runMR_ELLG(i1)
+            else:
+                raise e
+
+        # print r1.logfile()
         if r1.Success():
             # If it worked use the recommended resolution
             new_res = round(r1.get_target_resolution('model'), 1)

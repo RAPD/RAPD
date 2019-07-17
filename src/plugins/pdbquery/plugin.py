@@ -41,9 +41,11 @@ from distutils.spawn import find_executable
 import glob
 import logging
 #from multiprocessing import Process
+from multiprocessing import cpu_count
 from threading import Thread
 import os
 from pprint import pprint
+import random
 import shutil
 import time
 import importlib
@@ -61,7 +63,7 @@ import utils.exceptions as exceptions
 import utils.global_vars as rglobals
 from utils.text import json
 import utils.xutils as xutils
-from utils.processes import local_subprocess, mp_pool
+from utils.processes import local_subprocess, mp_pool, mp_manager
 
 import info
 
@@ -175,7 +177,6 @@ class RapdPlugin(Thread):
         # Store passed-in variables
         self.site = site
         self.command = command
-        print dir(command)
         self.preferences = self.command.get("preferences", {})
 
         # Params
@@ -352,7 +353,8 @@ class RapdPlugin(Thread):
             "common_contaminants": [],
             "search_results": [],
             "archive_files": [],
-            "data_produced": []
+            "data_produced": [],
+            "for_display": []
         }
     
     def connect_to_redis(self):
@@ -693,22 +695,22 @@ class RapdPlugin(Thread):
                                             chains=False)
     
                 job_description = {
-                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
+                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)), #
                     "data_file": self.data_file,
                     "struct_file": cif_path,
-                    "name": pdb_code,
+                    "name": pdb_code, #
                     "spacegroup": data_spacegroup,
-                    "ncopy": copy,
+                    "ncopy": copy,  #
                     #"test": self.test,
-                    "cell_analysis": True,
+                    "cell_analysis": True,  #
                     #"large_cell": self.large_cell,
                     "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
                                                  self.large_cell,
                                                  self.dres),
-                    "launcher": self.launcher,
-                    "db_settings": self.db_settings,
-                    "tag": False,
-                    "batch_queue": self.batch_queue,
+                    "launcher": self.launcher,  #
+                    "db_settings": self.db_settings,  #
+                    "tag": False,  #
+                    "batch_queue": self.batch_queue, #
                     "rapd_python": self.rapd_python}
     
                 if not l:
@@ -821,8 +823,29 @@ class RapdPlugin(Thread):
                     "description": result.get("ID")
                 }
                 # Add the file to results.data_produced array
-                self.results["results"]["data_produced"].append(
-                    new_data_produced)
+                self.results["results"]["data_produced"].append(new_data_produced)
+
+            # If there is data to be displayed
+            to_displays = ("map_1_1", "map_2_1", "pdb_file")
+            for to_display in to_displays:
+                file_to_move = result.get(to_display, False)
+                if file_to_move:
+                    # Move data
+                    target = os.path.join(
+                        target_dir, os.path.basename(file_to_move))
+                    shutil.move(file_to_move, target)
+                    # Compress data
+                    arch_prod_file, arch_prod_hash = archive.compress_file(target)
+                    # Remove the file that was compressed
+                    os.unlink(target)
+                    # Store information
+                    new_for_display = {
+                        "path": arch_prod_file,
+                        "hash": arch_prod_hash,
+                        "description": result.get("ID")+"_"+to_display
+                    }
+                    # Add the file to results.for_display array
+                    self.results["results"]["for_display"].append(new_for_display)
 
             # If there is an archive
             self.logger.debug("result", result)
@@ -874,7 +897,7 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
+            self.tprint('    Finished Phaser on %s with id: %s'%(info['name'], info['tag']), level=30, color="white")
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
@@ -889,7 +912,11 @@ class RapdPlugin(Thread):
                     #print results_json
             else:
                 results = info['result_queue'].get()
-                self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
+                # pprint(results)
+                # pprint(json.loads(results.get('stdout'," ")))
+                # if results["stderr"]:
+                #     print results["stderr"]
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout'," ")))
             jobs.remove(job)
             
             #results_json = self.redis.get(info['tag'])
@@ -1015,6 +1042,8 @@ class RapdPlugin(Thread):
 
         self.tprint("\nResults", level=99, color="blue")
 
+        # pprint(self.results["results"])
+
         def get_longest_field(pdb_codes):
             """Calculate the ongest field in a set of results"""
             longest_field = 0
@@ -1042,7 +1071,7 @@ class RapdPlugin(Thread):
         def print_result_line(pdb_code, my_result, longest_field):
             """Print the result line in the table"""
 
-            print my_result
+            # print my_result
 
             self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}".format(
                 pdb_code,
