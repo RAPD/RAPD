@@ -475,7 +475,8 @@ class Database(object):
 
         add_funcs = {
             "archive_files":add_archive_file_to_db,
-            "data_produced":add_raw_file_to_db
+            "data_produced":add_raw_file_to_db,
+            "for_display":add_raw_file_to_db
         }
 
         for file_type in ("archive_files", "data_produced"):

@@ -353,7 +353,8 @@ class RapdPlugin(Thread):
             "common_contaminants": [],
             "search_results": [],
             "archive_files": [],
-            "data_produced": []
+            "data_produced": [],
+            "for_display": []
         }
     
     def connect_to_redis(self):
@@ -822,8 +823,29 @@ class RapdPlugin(Thread):
                     "description": result.get("ID")
                 }
                 # Add the file to results.data_produced array
-                self.results["results"]["data_produced"].append(
-                    new_data_produced)
+                self.results["results"]["data_produced"].append(new_data_produced)
+
+            # If there is data to be displayed
+            to_displays = ("map_1_1", "map_2_1", "pdb_file")
+            for to_display in to_displays:
+                file_to_move = result.get(to_display, False)
+                if file_to_move:
+                    # Move data
+                    target = os.path.join(
+                        target_dir, os.path.basename(file_to_move))
+                    shutil.move(file_to_move, target)
+                    # Compress data
+                    arch_prod_file, arch_prod_hash = archive.compress_file(target)
+                    # Remove the file that was compressed
+                    os.unlink(target)
+                    # Store information
+                    new_for_display = {
+                        "path": arch_prod_file,
+                        "hash": arch_prod_hash,
+                        "description": result.get("ID")+"_"+to_display
+                    }
+                    # Add the file to results.for_display array
+                    self.results["results"]["for_display"].append(new_for_display)
 
             # If there is an archive
             self.logger.debug("result", result)
