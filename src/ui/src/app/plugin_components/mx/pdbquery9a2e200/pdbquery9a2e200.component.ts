@@ -35,7 +35,7 @@ export class Pdbquery9a2e200Component implements OnInit {
   @ViewChild(MatSort, { static: false }) sort: MatSort;
 
   constructor(
-    private rest_service: RestService,
+    private restService: RestService,
     public snackBar: MatSnackBar
   ) {}
 
@@ -97,28 +97,25 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   // Start the download of data
   public initDownload(record: any) {
-    
-    console.log('initDownload');
-    
+    console.log("initDownload");
+
     // Signal that the request has been made
     this.snackBar.open("Download request submitted", "Ok", {
       duration: 2000
     });
 
     // TODO
-    this.rest_service
-      .getDownloadByHash(record.tar.hash, record.tar.path);
-      // .subscribe(result => {}, error => {});
+    this.restService.getDownloadByHash(record.tar.hash, record.tar.path);
+    // .subscribe(result => {}, error => {});
   }
 
-  public openViewer(record:any) {
-    console.log('openViewer');
+  public openViewer(record: any) {
+    console.log("openViewer");
     console.log(record);
+
+    this.restService.getPdbByHash(record.tar.hash, record.tar.path);
   }
-  
 }
-
-
 
 function compare(a, b, isAsc) {
   if (a === undefined) {

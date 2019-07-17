@@ -149,6 +149,18 @@ export class RestService {
   //
   // UglyMol Methods
   //
+  public getPdbByHash(hash: string, filename: string) {
+
+    console.log("getPdbByHash", hash);
+
+    this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/get_pdb_by_hash/" + hash, {
+        responseType: "text",
+      }).subscribe(res => {
+        console.log(res);
+      });
+  }
+
   public getPdb(pdbFile: string) {
     console.log("getPdb", pdbFile);
 
