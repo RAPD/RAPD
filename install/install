@@ -227,9 +227,6 @@ elif [[ $PLATFORM == "Darwin" ]]; then
   if [[ $NPROC == -1 ]]; then
     NPROC=$(sysctl -n hw.ncpu)
   fi
-
-  printf "$NPROC \n"
-  exit 0
   
 fi
 
