@@ -49,6 +49,7 @@ import phaser
 
 # RAPD imports
 from utils import archive, pdb
+from utils.processes import local_subprocess
 from utils.xutils import convert_unicode, calc_ADF_map
 
 def connect_to_redis(settings):
@@ -571,10 +572,11 @@ def run_phaser(data_file,
             tncs_test = [1 for line in r.getTopSet().unparse().splitlines()
                          if line.count("+TNCS")]
             tncs = bool(len(tncs_test))
+            mtz_file = os.path.join(work_dir, r.getTopMtzFile())
             phaser_result = {"ID": name,
                              "solution": r.foundSolutions(),
                              "pdb": os.path.join(work_dir, r.getTopPdbFile()),
-                             "mtz": os.path.join(work_dir, r.getTopMtzFile()),
+                             "mtz": mtz_file,
                              "gain": float(r.getTopLLG()),
                              "rfz": rfz,
                              # "tfz": r.getTopTFZ(),
@@ -588,9 +590,21 @@ def run_phaser(data_file,
                              "peak": None,
                              }
     
-            # Calculate 2Fo-Fc map
+            # Calculate 2Fo-Fc & Fo-Fc maps
+            # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
+            
+            local_subprocess(command="phenix.mtz2map %s" % mtz_file,
+                             logfile='map.log',
+                             shell=True)
+            # Map files should exist
+            map_2_1 = mtz_file.replace(".mtz", "_2mFo-DFc.ccp4")
+            map_1_1 = mtz_file.replace(".mtz", "_mFo-DFc.ccp4")
 
-            # Calculate Fo-Fc map
+            # Make sure the maps exist
+            if os.path.exists(map_2_1):
+                phaser_result["map_2_1"] = map_2_1
+            if os.path.exists(map_1_1):
+                phaser_result["map_1_1"] = map_1_1
 
             # Calc ADF map
             if adf:
