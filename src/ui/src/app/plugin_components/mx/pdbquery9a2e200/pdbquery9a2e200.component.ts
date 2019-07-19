@@ -48,6 +48,8 @@ export class Pdbquery9a2e200Component implements OnInit {
     this.sortData({ active: "gain", direction: "desc" }, "contaminants");
     this.sortData({ active: "gain", direction: "desc" }, "searches");
     this.sortData({ active: "gain", direction: "desc" }, "customs");
+
+    console.log(this.result);
   }
 
   default_val(val: any, default_val: any, digitsInfo: string = undefined) {

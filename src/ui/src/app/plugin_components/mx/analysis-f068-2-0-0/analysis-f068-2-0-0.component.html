@@ -3,7 +3,11 @@
     <mat-tab label="Summary">
       <div fxLayout="row" fxLayoutGap="10px">
         <div fxFlex="none">
-          <div>
+          <div *ngIf="! result.results.parsed.xtriage">
+            <h3>Xtriage Failure</h3>
+          </div>
+          
+          <div *ngIf="result.results.parsed.xtriage">
             <h3>Unit Cell</h3>
             <table class="rapd-table">
               <thead>
@@ -14,7 +18,7 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>{{result.results.parsed.xtriage.spacegroup.text}} ({{result.results.parsed.xtriage.spacegroup.number}})</td>
+                  <td>{{result.results.parsed.xtriage.spacegroup?.text}} ({{result.results.parsed.xtriage.spacegroup?.number}})</td>
                   <td>
                     {{result.results.parsed.xtriage.unit_cell.a | number:'1.1-2'}} &Aring; {{result.results.parsed.xtriage.unit_cell.b | number:'1.1-2'}}
                     &Aring; {{result.results.parsed.xtriage.unit_cell.c | number:'1.1-2'}} &Aring; {{result.results.parsed.xtriage.unit_cell.alpha
@@ -37,7 +41,7 @@
                   <th>Z</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody *ngIf="result.results.parsed.xtriage">
                 <tr *ngFor="let key of objectKeys(this.result.results.parsed.xtriage['Patterson peaks'])">
                   <td>{{(result.results.parsed.xtriage["Patterson peaks"][key].peak * 100.) | number:'1.1-2'}}</td>
                   <td>{{result.results.parsed.xtriage["Patterson peaks"][key]["p-val"] | number:'1.1-4'}}</td>
@@ -69,7 +73,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let key of objectKeys(this.result.results.parsed.xtriage['Patterson peaks'])">
+                <tr *ngFor="let key of objectKeys(result.results.parsed.xtriage['Patterson peaks'])">
                 </tr>
               </tbody>
             </table>
@@ -82,7 +86,7 @@
           </div>
         </div>
         <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px" class="rapd-result">
-          <div fxFlex="none" class="rapd-plot-header">
+          <div *ngIf="result.results.parsed.xtriage" fxFlex="none" class="rapd-plot-header">
             <div class="rapd-titleselect-panel">
               <mat-select class="rapd-matselect-panel" placeholder="Select Plot" (selectionChange)="setPlot(selected_plot)" [(ngModel)]="selected_plot"
                 name="selected_plot" value="intensity" style="width:18em;">
