@@ -214,7 +214,7 @@ class Launcher_Manager(Thread):
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
 
         if message['command'].startswith('INTEGRATE'):
-            print 'type: %s'%message['preferences']['xdsinp']
+            print 'type: %s...%s' % (message['preferences']['xdsinp'][:100], message['preferences']['xdsinp'][-100:])
 
         if launcher:
             # Update preferences to be in server run mode
