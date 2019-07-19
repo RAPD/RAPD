@@ -135,8 +135,8 @@ class RapdPlugin(Process):
     """
 
     spacegroup = False
-    low_res = False
-    hi_res = False
+    #low_res = False
+    #hi_res = False
 
     # Connection to redis database
     redis = None
@@ -228,10 +228,10 @@ class RapdPlugin(Process):
         self.spacegroup = self.preferences.get('spacegroup', False)
         #if self.preferences.get('spacegroup', False):
         #    self.spacegroup = self.preferences['spacegroup']
-        self.hi_res = self.preferences.get("hi_res", False)
+        self.hi_res = self.preferences.get("hi_res", 0.9)
         #if self.preferences.get("hi_res", False):
         #    self.hi_res = self.preferences.get("hi_res")
-        self.low_res = self.preferences.get("low_res", False)
+        self.low_res = self.preferences.get("low_res", 200.0)
         #if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
 
@@ -907,18 +907,18 @@ class RapdPlugin(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        if self.low_res or self.hi_res:
-            if not self.low_res:
-                low_res = 200.0
-            else:
-                low_res = self.low_res
-            if not self.hi_res:
-                hi_res = 0.9
-            else:
-                hi_res = self.hi_res
-            xdsinp = self.change_xds_inp(
-                xdsinp,
-                "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
+        #if self.low_res or self.hi_res:
+        #    if not self.low_res:
+        #        low_res = 200.0
+        #    else:
+        #        low_res = self.low_res
+        #    if not self.hi_res:
+        #        hi_res = 0.9
+        #    else:
+        #        hi_res = self.hi_res
+        xdsinp = self.change_xds_inp(
+            xdsinp,
+            "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (self.low_res, self.hi_res))
         xdsinp = self.change_xds_inp(
             xdsinp,
             "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
@@ -1034,7 +1034,8 @@ class RapdPlugin(Process):
                 "SPACE_GROUP_NUMBER=%d\n" % sg_num_pointless)
 
         # Already have hi res cutoff
-        if self.hi_res:
+        #if self.hi_res:
+        if self.preferences.get("hi_res", False):
             new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
         else:
@@ -1049,7 +1050,7 @@ class RapdPlugin(Process):
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
                 newinp = self.change_xds_inp(
                     newinp,
-                    "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], low_res, new_rescut))
+                    "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], self.low_res, new_rescut))
                 # newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  Reintegrating with new resolution cutoff",
