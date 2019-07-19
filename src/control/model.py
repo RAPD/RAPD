@@ -632,8 +632,8 @@ class Model(object):
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
-            print 'run_id:%s'%run_id
-            print 'run: %s'%run
+            # print 'run_id:%s'%run_id
+            # print 'run: %s'%run
             #self.logger.debug('run_id:%s'%run_id)
             #self.logger.debug('run:%s'%run)
 
@@ -1033,7 +1033,7 @@ class Model(object):
 
             # Determine group_id
             if self.site.GROUP_ID:
-                print "Have self.site.GROUP_ID"
+                # print "Have self.site.GROUP_ID"
                 det_type, det_attribute, det_field = self.site.GROUP_ID
                 if det_type == "stat":
                     attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)

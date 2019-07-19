@@ -433,8 +433,8 @@ class Database(object):
                 # Open the path
                 with open(path, "r") as input_object:
                     file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
-                                                    source=input_object,
-                                                    metadata=metadata)
+                                                             source=input_object,
+                                                             metadata=metadata)
             
             return file_id
 
@@ -479,7 +479,7 @@ class Database(object):
             "for_display":add_raw_file_to_db
         }
 
-        for file_type in ("archive_files", "data_produced"):
+        for file_type in ("archive_files", "data_produced", "for_display"):
             self.logger.debug("Looking for %s", file_type)
             if plugin_result["results"].get(file_type, False):
 

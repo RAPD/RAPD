@@ -805,18 +805,15 @@ class RapdPlugin(Thread):
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
 
-            # If there is data produced
-            file_to_move = result.get("pdb_file", False)
-            if file_to_move:
-                # Move data
-                target = os.path.join(
-                    target_dir, os.path.basename(file_to_move))
-                shutil.move(file_to_move, target)
-                # Compress data
-                arch_prod_file, arch_prod_hash = archive.compress_file(target)
-                # Remove the file that was compressed
-                os.unlink(target)
+            # If there is a pdb produced -> data_produced
+            archive_dict = result.get("pdb", {})
+            archive_file = archive_dict.get("path", False)
+            if archive_file:
+                # Copy data
+                target = os.path.join(target_dir, os.path.basename(file_to_move))
+                shutil.copyfile(file_to_move, target)
                 # Store information
+<<<<<<< HEAD
                 new_data_produced = {
                     "path": arch_prod_file,
                     "hash": arch_prod_hash,
@@ -846,13 +843,29 @@ class RapdPlugin(Thread):
                     }
                     # Add the file to results.for_display array
                     self.results["results"]["for_display"].append(new_for_display)
+=======
+                archive_dict["path"] = target
+                # Add to the results.data_produced array
+                self.results["results"]["data_produced"].append(archive_dict)
+
+            # Maps & PDB
+            for my_map in ("map_1_1", "map_2_1", "pdb"):
+                archive_dict = result.get(my_map, {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Move the file
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.move(archive_file, target)
+                    # Store information
+                    archive_dict["path"] = target
+                    # Add to the results.archive_files array
+                    self.results["results"]["for_display"].append(
+                        archive_dict)
+>>>>>>> origin/jon_working
 
             # If there is an archive
-            self.logger.debug("result", result)
             archive_dict = result.get("tar", {})
-            self.logger.debug("archive_dict %s", archive_dict)
             archive_file = archive_dict.get("path", False)
-            self.logger.debug("archive_file %s", archive_file)
             if archive_file:
                 # Move the file
                 target = os.path.join(
