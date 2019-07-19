@@ -592,19 +592,55 @@ def run_phaser(data_file,
     
             # Calculate 2Fo-Fc & Fo-Fc maps
             # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
-            
             local_subprocess(command="phenix.mtz2map %s" % mtz_file,
                              logfile='map.log',
                              shell=True)
-            # Map files should exist
+            
+            # Map files should now exist
             map_2_1 = mtz_file.replace(".mtz", "_2mFo-DFc.ccp4")
             map_1_1 = mtz_file.replace(".mtz", "_mFo-DFc.ccp4")
 
-            # Make sure the maps exist
+            # Make sure the maps exist and then package them
             if os.path.exists(map_2_1):
-                phaser_result["map_2_1"] = map_2_1
+                # Compress the map
+                arch_prod_file, arch_prod_hash = archive.compress_file(map_2_1)
+                # Remove the map that was compressed
+                os.unlink(map_2_1)
+                # Store information
+                map_for_display = {
+                    "path": arch_prod_file,
+                    "hash": arch_prod_hash,
+                    "description": "map_2_1"
+                }
+                phaser_result["map_2_1"] = map_for_display
+            
             if os.path.exists(map_1_1):
-                phaser_result["map_1_1"] = map_1_1
+                # Compress the map
+                arch_prod_file, arch_prod_hash = archive.compress_file(map_1_1)
+                # Remove the map that was compressed
+                os.unlink(map_1_1)
+                # Store information
+                map_for_display = {
+                    "path": arch_prod_file,
+                    "hash": arch_prod_hash,
+                    "description": "map_1_1"
+                }
+                phaser_result["map_1_1"] = map_for_display
+                
+            # If PDB exists, package that too
+            if phaser_result.get("pdb", False):
+                if os.path.exists(phaser_result.get("pdb")):
+                    # Compress the file
+                    arch_prod_file, arch_prod_hash = archive.compress_file(phaser_result.get("pdb"))
+                    # Remove the map that was compressed
+                    os.unlink(phaser_result.get("pdb"))
+                    # Store information
+                    pdb_for_display = {
+                        "path": arch_prod_file,
+                        "hash": arch_prod_hash,
+                        "description": os.path.basename(phaser_result.get("pdb"))
+                    }
+                    phaser_result["pdb"] = pdb_for_display
 
             # Calc ADF map
             if adf:
