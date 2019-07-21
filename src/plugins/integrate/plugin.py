@@ -759,18 +759,6 @@ class RapdPlugin(Process):
                                                   logger=self.logger)
 
             self.pdbq_process.start()
-            
-            """
-            # Allow multiple returns for each part of analysis.
-            while True:
-                analysis_result = plugin_queue.get()
-                self.results["results"]["analysis"] = analysis_result
-                self.send_results(self.results)
-                if analysis_result['process']["status"] in (-1, 100):
-                    break
-            """
-            #analysis_result = plugin_queue.get()
-            #self.results["results"]["analysis"] = analysis_result
 
             # Back to where we were, in case it matters
             os.chdir(start_dir)
