@@ -813,38 +813,6 @@ class RapdPlugin(Thread):
                 target = os.path.join(target_dir, os.path.basename(file_to_move))
                 shutil.copyfile(file_to_move, target)
                 # Store information
-<<<<<<< HEAD
-<<<<<<< HEAD
-                new_data_produced = {
-                    "path": arch_prod_file,
-                    "hash": arch_prod_hash,
-                    "description": result.get("ID")
-                }
-                # Add the file to results.data_produced array
-                self.results["results"]["data_produced"].append(new_data_produced)
-
-            # If there is data to be displayed
-            to_displays = ("map_1_1", "map_2_1", "pdb_file")
-            for to_display in to_displays:
-                file_to_move = result.get(to_display, False)
-                if file_to_move:
-                    # Move data
-                    target = os.path.join(
-                        target_dir, os.path.basename(file_to_move))
-                    shutil.move(file_to_move, target)
-                    # Compress data
-                    arch_prod_file, arch_prod_hash = archive.compress_file(target)
-                    # Remove the file that was compressed
-                    os.unlink(target)
-                    # Store information
-                    new_for_display = {
-                        "path": arch_prod_file,
-                        "hash": arch_prod_hash,
-                        "description": result.get("ID")+"_"+to_display
-                    }
-                    # Add the file to results.for_display array
-                    self.results["results"]["for_display"].append(new_for_display)
-=======
                 archive_dict["path"] = target
                 # Add to the results.data_produced array
                 self.results["results"]["data_produced"].append(archive_dict)
@@ -858,7 +826,6 @@ class RapdPlugin(Thread):
                     target = os.path.join(target_dir, os.path.basename(archive_file))
                     shutil.move(archive_file, target)
                     # Store information
-=======
                 archive_dict["path"] = target
                 # Add to the results.data_produced array
                 self.results["results"]["data_produced"].append(archive_dict)
@@ -872,15 +839,10 @@ class RapdPlugin(Thread):
                     target = os.path.join(target_dir, os.path.basename(archive_file))
                     shutil.move(archive_file, target)
                     # Store information
->>>>>>> f925c550aa8ebac9382140778aa6bda76fc98ee1
                     archive_dict["path"] = target
                     # Add to the results.archive_files array
                     self.results["results"]["for_display"].append(
                         archive_dict)
-<<<<<<< HEAD
->>>>>>> origin/jon_working
-=======
->>>>>>> f925c550aa8ebac9382140778aa6bda76fc98ee1
 
             # If there is an archive
             archive_dict = result.get("tar", {})
