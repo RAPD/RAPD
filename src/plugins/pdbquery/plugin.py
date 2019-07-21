@@ -643,6 +643,7 @@ class RapdPlugin(Thread):
                 spacegroup_pdb = xutils.fix_spacegroup(get_spacegroup_info(cif_path))
                 if not spacegroup_pdb:
                     del self.cell_output[pdb_code]
+                    continue
 
                 # Now check all SG's
                 spacegroup_num = xutils.convert_spacegroup(spacegroup_pdb)
