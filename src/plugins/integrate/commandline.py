@@ -102,7 +102,7 @@ def get_commandline():
     parser.add_argument("--pdbquery",
                         action="store_true",
                         dest="pdbquery",
-                        default=True,
+                        default=False,
                         help="Run pdbquery")
 
     # Directory or files
