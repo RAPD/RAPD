@@ -200,9 +200,9 @@ class RapdPlugin(Thread):
     def run(self):
         """Execution path of the plugin"""
 
-        #self.preprocess()
-        #self.process()
-        #self.postprocess()
+        self.preprocess()
+        self.process()
+        self.postprocess()
 
     def preprocess(self):
         """Set up for plugin action"""
