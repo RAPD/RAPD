@@ -254,6 +254,9 @@ fi
 # Modules
 echo $PYTHONPATH
 
+# Allow Python to use TLS1.2
+rapd.pip install 'requests[security]'
+
 rapd.pip install redis
 rapd.pip install pymongo
 

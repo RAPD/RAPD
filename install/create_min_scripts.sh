@@ -13,7 +13,8 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Gather
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.gather
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/gather\/rapd_gather.py \"\$@\"" >>$RAPD_HOME/bin/rapd.gather
+  #echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/gather\/rapd_gather.py \"\$@\"" >>$RAPD_HOME/bin/rapd.gather
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/gather\/rapd_gather.py \"\$@\"" >>$RAPD_HOME/bin/rapd.gather
   chmod +x $RAPD_HOME/bin/rapd.gather
 
   # Launcher

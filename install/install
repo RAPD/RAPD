@@ -38,9 +38,10 @@ INSTALL_SCRIPTS=1
 INSTALL_INIT=1
 INSTALL_PYTHON=1
 PLATFORM=$(uname -s)
+NPROC=-1
 
 # Handle command line
-while getopts "bcfhimosty" x; do
+while getopts "bcfhimosty:n:" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -52,6 +53,7 @@ Installs RAPD v$RAPD_VERSION
     -f           no error if install prefix already exists
     -h           print this help message and exit
     -m           skip installed modules query
+    -n:#         number of processors to use
     -o           overwrite cctbx
 
     Install or reinstall
@@ -75,6 +77,11 @@ Installs RAPD v$RAPD_VERSION
         o)
             OVERWRITE=1
             ;;
+
+        n)
+            NPROC=$OPTARG
+            ;;
+
         # Clean up the source directories
         c)
             printf "Cleaning up!\n"
@@ -117,6 +124,10 @@ done
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
 
+  if [[ $NPROC == -1 ]]; then
+    NPROC=$(grep -c ^processor /proc/cpuinfo)
+  fi
+
   # ROOT user?
   USER=$(whoami)
   if [[ $USER == "root" ]]; then
@@ -133,7 +144,7 @@ if [[ $PLATFORM == "Linux" ]]; then
     if [ $CENTOS_VERSION_MAJOR == "6" ]; then
       MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
     elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
-      MODULES_LIST="gcc-c++ make bzip2 wget subversion git ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python bzip2-devel"
+      MODULES_LIST="gcc-c++ make bzip2 bzip2-devel wget subversion git ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python bzip2-devel"
     fi
 
     function isinstalled {
@@ -212,6 +223,11 @@ if [[ $PLATFORM == "Linux" ]]; then
 
 elif [[ $PLATFORM == "Darwin" ]]; then
   printf "\033[94mPerforming installation on Mac OS \033[0m\n"
+
+  if [[ $NPROC == -1 ]]; then
+    NPROC=$(sysctl -n hw.ncpu)
+  fi
+  
 fi
 
 if [[ $BATCH == 0 ]] # interactive mode
@@ -282,14 +298,15 @@ if [ $INSTALL_CCTBX == 1 ]; then
     cd $CCTBX_PREFIX_TGT
 
     # Get the bootstrap installer
-    cp $SRC_DIR/cctbx/bootstrap.py .
-    # printf "  Downloading CCTBX bootstrap script"
-    # wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+    # cp $SRC_DIR/cctbx/bootstrap.py .
+    printf "  Downloading CCTBX bootstrap script"
+    wget --no-check-certificate https://raw.githubusercontent.com/RAPD/cctbx_project/master/libtbx/auto_build/bootstrap.py
 
     # Install CCTBX
     printf "  Installing CCTBX"
-    python bootstrap.py --builder=cctbx --enable-shared
-    # python bootstrap.py --builder=cctbx --nproc=4 --enable-shared
+    python bootstrap.py --builder=cctbx --enable-shared --nproc=$NPROC -v
+    # Try phaser
+    python bootstrap.py --builder=phaser --nproc=$NPROC -v
 
     if [ ! $? -eq 0 ]
     then

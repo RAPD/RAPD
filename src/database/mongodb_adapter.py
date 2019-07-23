@@ -122,11 +122,19 @@ class Database(object):
         # Store passed in variables
         # Using the settings "shorthand"
         if settings:
-            self.db_host = settings["DATABASE_HOST"]
-            self.db_port = settings["DATABASE_PORT"]
-            self.db_user = settings["DATABASE_USER"]
-            self.db_password = settings["DATABASE_PASSWORD"]
-            self.db_string = settings["DATABASE_STRING"]
+            #self.db_host = settings["DATABASE_HOST"]
+            #self.db_port = settings["DATABASE_PORT"]
+            #self.db_user = settings["DATABASE_USER"]
+            #self.db_password = settings["DATABASE_PASSWORD"]
+            #elf.db_string = settings["DATABASE_STRING"]
+            #self.db_host = settings["DATABASE_HOST"]
+            #self.db_port = settings["DATABASE_PORT"]
+            self.db_host = settings.get("DATABASE_HOST", host)
+            self.db_port = settings.get("DATABASE_PORT", port)
+            self.db_user = settings.get("DATABASE_USER", user)
+            self.db_password = settings.get("DATABASE_PASSWORD", password)
+            self.db_string = settings.get("DATABASE_STRING", string)
+            
             # self.db_data_name = settings["DATABASE_NAME_DATA"]
             # self.db_users_name = settings["DATABASE_NAME_USERS"]
             # self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
@@ -425,8 +433,8 @@ class Database(object):
                 # Open the path
                 with open(path, "r") as input_object:
                     file_id = grid_bucket.upload_from_stream(filename=os.path.basename(path),
-                                                    source=input_object,
-                                                    metadata=metadata)
+                                                             source=input_object,
+                                                             metadata=metadata)
             
             return file_id
 
@@ -467,10 +475,11 @@ class Database(object):
 
         add_funcs = {
             "archive_files":add_archive_file_to_db,
-            "data_produced":add_raw_file_to_db
+            "data_produced":add_raw_file_to_db,
+            "for_display":add_raw_file_to_db
         }
 
-        for file_type in ("archive_files", "data_produced"):
+        for file_type in ("archive_files", "data_produced", "for_display"):
             self.logger.debug("Looking for %s", file_type)
             if plugin_result["results"].get(file_type, False):
 

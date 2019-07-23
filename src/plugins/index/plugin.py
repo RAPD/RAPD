@@ -328,7 +328,6 @@ class RapdPlugin(Process):
         self.time = self.image1.get("time", 0.2)
         self.wavelength = self.image1.get("wavelength")
         self.transmission = self.image1.get("transmission", 10.0)
-        #self.transmission = self.image1.get("transmission", 0.1)
         # self.aperture = str(self.image1.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
         #self.flux = str(self.image1.get("flux", '3E10'))
@@ -605,9 +604,9 @@ class RapdPlugin(Process):
         setup += "raddose << EOF\n"
         if beam_size_x and beam_size_y:
             setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
-        # Full-width-half-max of the beam (for non-uniform beams)
-        if gauss_x and gauss_y:
-            setup += "GAUSS %.2f %.2f\n" % (gauss_x, gauss_y)
+        # Full-width-half-max of the beam (for non-uniform beams) # BUG in RADDOSE
+        #if gauss_x and gauss_y:
+        #    setup += "GAUSS %.2f %.2f\n" % (gauss_x, gauss_y)
         setup += "IMAGES 1\n"
         setup += "PHOSEC %d\n" % flux
         #setup += "EXPOSURE %.2f\n" % self.time
@@ -1013,6 +1012,9 @@ class RapdPlugin(Process):
                                         self.preferences.get('shape', 2.0))
         if self.preferences.get('aimed_res') != 0.0:
             command += ' -r %.1f' % self.preferences.get('aimed_res')
+        #  Added for LS-CAT
+        if self.preferences.get('aimed_redundancy', False) and not runbefore:
+            command += ' -R %.1f' % self.preferences.get('aimed_redundancy')
         if best_version >= "3.4":
             command += ' -Trans %.1f' % self.transmission
         # Set minimum rotation width per frame. Different for PAR and CCD detectors.
@@ -1028,7 +1030,6 @@ class RapdPlugin(Process):
             command += ' -DIS_MIN %s'% self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all
         # bin.
-        #if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
         if best_detector in ('pilatus6m', 'hf4m', 'eiger9m', 'eiger16m'):
             if best_version != "3.2.0":
                 command += " -low never"
@@ -2503,7 +2504,7 @@ rerunning.\n" % new_res)
         if overrides.get("min_spots"):
             spot_count = labelit.decrease_spot_requirements(overrides.get("min_spots"))
             #self.log[iteration].extend("\nDecreasing spot requirments to %d and \
-            self.log[iteration].append("\nDecreasing spot requirments to %d and \
+            self.log[iteration].append("\nDecreasing spot requirements to %d and \
 rerunning.\n" % spot_count)
 
         # Get rid of bumpiness

@@ -10,8 +10,7 @@
       <div class="form-group">
         <p>
           <mat-form-field>
-            <mat-select [(ngModel)]="model.project_type"
-                        formControlName="project_type"
+            <mat-select formControlName="project_type"
                         placeholder="Type">
               <mat-option value="mx">MX</mat-option>
             </mat-select>
@@ -22,8 +21,7 @@
             <input matInput
                    style="text-align:center;"
                    placeholder="Title"
-                   formControlName="title"
-                   [(ngModel)]="model.title">
+                   formControlName="title">
           </mat-form-field>
         </p>
         <p>
@@ -31,21 +29,19 @@
             <input matInput
                    style="text-align:center;"
                    placeholder="Description"
-                   formControlName="description"
-                   [(ngModel)]="model.description">
+                   formControlName="description">
           </mat-form-field>
         </p>
-        <p *ngIf="user.groups.length > 1">
+        <!-- <p *ngIf="user.groups.length > 1">
           <mat-form-field>
-            <mat-select [(ngModel)]="model.group"
-                       formControlName="group"
-                       placeholder="Group">
+            <mat-select formControlName="group"
+                        placeholder="Group">
               <mat-option *ngFor="let group of user.groups" [value]="group._id">
                {{group.groupname}}
               </mat-option>
             </mat-select>
           </mat-form-field>
-        </p>
+        </p> -->
       </div>
       <p>
         <mat-progress-bar
@@ -57,7 +53,7 @@
       </p>
       <p>
         <button
-          *ngIf="model._id"
+          *ngIf="(project)?._id"
           type="button"
           mat-button
           color="warn"

@@ -381,6 +381,12 @@ td {
   text-align: center;
 }
 
+.rapd-dialog-border {
+  border:1px solid rgba(0,0,0,0.2);
+  padding:0.5em;
+  border-radius:0.2em;
+}
+
 mat-card.rapd-result {
   margin: 1px;
   overflow: scroll;

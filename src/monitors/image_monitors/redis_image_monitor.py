@@ -28,7 +28,7 @@ __status__ = "Development"
 # Standard imports
 import logging
 # import redis
-import threading
+from threading import Thread
 import time
 import importlib
 
@@ -41,7 +41,7 @@ import database.redis_adapter as redis_database
 #POLLING_REST = 0.1      # Time to rest between checks for new image
 POLLING_REST = 0.01      # Time to rest between checks for new image
 
-class Monitor(threading.Thread):
+class Monitor(Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
     # Used for stopping/starting the loop
@@ -74,7 +74,7 @@ class Monitor(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
 
         # Initialize the thread
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Passed-in variables
         self.site = site
@@ -107,7 +107,7 @@ class Monitor(threading.Thread):
         self.logger.debug("Stopping")
 
         self.running = False
-        self.redis_database.stop()
+        #self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""

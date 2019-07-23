@@ -98,6 +98,13 @@ def get_commandline():
                         default=True,
                         help="Do not run analysis")
 
+    # Don't run analysis
+    parser.add_argument("--nopdbquery",
+                        action="store_false",
+                        dest="pdbquery",
+                        default=True,
+                        help="Do not run pdbquery")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="template",
@@ -111,6 +118,9 @@ def get_commandline():
 
     # Custom check input here
     args = parser.parse_args()
+
+    # 
+    args.computer_cluster = False
 
     # Running in interactive mode if this code is being called
     if args.json:

@@ -3,15 +3,15 @@ import { RouterModule, Routes }   from '@angular/router';
 
 import { LoginGuard } from './shared/guards/login-guard';
 
-import { WelcomepanelComponent } from './welcomepanel';
 import { AdminpanelComponent } from './adminpanel';
 import { DashboardComponent } from './dashboard';
-import { SessionspanelComponent } from './sessionspanel';
-import { ProjectspanelComponent } from './projectspanel';
-import { TaskspanelComponent } from './taskspanel';
-import { UnauthorizedpanelComponent } from './unauthorizedpanel/unauthorizedpanel.component';
 import { MxSessionpanelComponent } from './mx-sessionpanel';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { ProjectspanelComponent } from './projectspanel';
+import { SessionspanelComponent } from './sessionspanel';
+import { TaskspanelComponent } from './taskspanel';
+import { UnauthorizedpanelComponent } from './unauthorizedpanel/unauthorizedpanel.component';
+import { WelcomepanelComponent } from './welcomepanel';
 
 const appRoutes: Routes = [
   { path: 'welcome',

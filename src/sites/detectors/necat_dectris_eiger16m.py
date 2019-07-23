@@ -95,7 +95,8 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     # Signal to say which beamline.
     #('CLUSTER_NODES', 'NECAT_E'),
     # Signal to say rapd2 job.
-    ('CLUSTER_NODES', 'RAPD2'),
+    #('CLUSTER_NODES', 'RAPD2'),
+    ('CLUSTER_NODES', 'general.q'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
@@ -109,7 +110,8 @@ class FileLocation():
         self.ram_prefix = '/epu/rdma'
         #self.ip = '164.54.212.219'
         #self.ram_prefix = '/epu2/rdma'
-        self.nvme_prefix = '/epu/nvme'
+        #self.nvme_prefix = '/epu/nvme'
+        self.nvme_prefix = '/lustre/fs1'
         self.ft_redis = self.redis_ft_connect()
 
     def redis_ft_connect(self):
@@ -399,7 +401,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    pprint(parameters)
+    # pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]

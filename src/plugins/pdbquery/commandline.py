@@ -46,7 +46,7 @@ def construct_command(commandline_args):
     class commandline_args(object):
         clean = True | False
         contaminants = True | False
-        datafile = ""
+        data_file = ""
         json = True | False
         no_color = True | False
         nproc = int
@@ -66,30 +66,11 @@ def construct_command(commandline_args):
         }
 
     # Work directory
-    """
-    if commandline_args.test:
-        # Don't make a new directory
-        work_dir = commandline_utils.check_work_dir(
-            os.path.join(
-                os.path.abspath(os.path.curdir),
-                "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
-            active=False,
-            up=commandline_args.dir_up)
-    else:
-        work_dir = commandline_utils.check_work_dir(
-            os.path.join(
-                os.path.abspath(os.path.curdir),
-                "rapd_pdbquery_%s" %  ".".join(
-                    os.path.basename(commandline_args.datafile).split(".")[:-1])),
-            active=True,
-            up=commandline_args.dir_up)
-    """
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_pdbquery_%s" %  ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+                os.path.basename(commandline_args.data_file).split(".")[:-1])),
         active=True,
         up=commandline_args.dir_up)
 
@@ -100,7 +81,7 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile),
+        "data_file": os.path.abspath(commandline_args.data_file),
         "pdbs": commandline_args.pdbs,
         "db_settings": commandline_args.db_settings
     }
@@ -135,10 +116,10 @@ def get_commandline():
                            help="Run in test mode")
 
     # Verbose
-    # my_parser.add_argument("-v", "--verbose",
-    #                        action="store_true",
-    #                        dest="verbose",
-    #                        help="More output")
+    my_parser.add_argument("-v", "--verbose",
+                           action="store_true",
+                           dest="verbose",
+                           help="More output")
 
     # Quiet
     my_parser.add_argument("-q", "--quiet",
@@ -209,8 +190,8 @@ def get_commandline():
                            help="PDB codes to test")
 
     # Positional argument
-    my_parser.add_argument("--datafile",
-                           dest="datafile",
+    my_parser.add_argument("--data_file",
+                           dest="data_file",
                            required=True,
                            help="Name of data file to be analyzed")
 
@@ -307,6 +288,7 @@ def main():
 
     # Construct the command
     command = construct_command(commandline_args=commandline_args)
+    #print command
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
@@ -321,7 +303,8 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Run the plugin
-    plugin.RapdPlugin(command, tprint, logger)
+    P = plugin.RapdPlugin(site=False, command=command, processed_results=False, tprint=tprint, logger=logger, verbosity=commandline_args.verbose)
+    P.run()
 
 if __name__ == "__main__":
 

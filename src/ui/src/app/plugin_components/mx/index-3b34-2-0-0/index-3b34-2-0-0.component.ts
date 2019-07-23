@@ -1,10 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from "@angular/core";
 
-import {
-  MatDialog,
-  MAT_DIALOG_DATA,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatToolbarModule } from "@angular/material/toolbar";
 
 import { ReplaySubject } from "rxjs/Rx";
 

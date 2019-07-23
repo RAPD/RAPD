@@ -15,8 +15,8 @@ import { RestService } from '../../../shared/services/rest.service';
 })
 export class MxImageComponent implements OnInit {
 
-  @ViewChild('layer1') image_canvas: ElementRef;
-  @ViewChild('layer2') drawing_canvas: ElementRef;
+  @ViewChild('layer1', { static: false }) image_canvas: ElementRef;
+  @ViewChild('layer2', { static: false }) drawing_canvas: ElementRef;
   @Input() result: any = {};
 
   error_string: string;

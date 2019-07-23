@@ -4,10 +4,8 @@ import { Component,
 import { FormGroup,
          FormControl,
          Validators } from '@angular/forms';
-import { MatDialog,
-         MatDialogRef,
-         MAT_DIALOG_DATA,
-         MatSnackBar } from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { RestService } from '../../../../shared/services/rest.service';
 import { GlobalsService } from '../../../../shared/services/globals.service';

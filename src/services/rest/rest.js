@@ -33,6 +33,7 @@ const groups_routes = require("./routes/groups");
 const images_routes = require("./routes/images");
 const jobs_routes = require("./routes/jobs");
 const overwatch_routes = require("./routes/overwatch");
+const pdb_routes = require("./routes/pdbs");
 const projects_routes = require("./routes/projects");
 const results_routes = require("./routes/results");
 const result_details_routes = require("./routes/result_details");
@@ -195,6 +196,9 @@ apiRoutes.post("/authenticate", function(req, res) {
         console.log("user:", user);
 
         // create a token
+        user.pass = undefined;
+        user.password = undefined;
+        user.salt = undefined;
         var token = jwt.sign(user.toJSON(), app.get("superSecret"), {
           expiresIn: 86400 // expires in 24 hours
         });
@@ -660,6 +664,7 @@ app.use("/api", groups_routes);
 app.use("/api", images_routes);
 app.use("/api", jobs_routes);
 app.use("/api", overwatch_routes);
+app.use("/api", pdb_routes);
 app.use("/api", projects_routes);
 app.use("/api", results_routes);
 app.use("/api", result_details_routes);
