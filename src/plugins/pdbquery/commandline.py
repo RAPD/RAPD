@@ -229,9 +229,9 @@ def get_commandline():
 def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
-------------
-RAPD Example
-------------"""
+-------------
+RAPD PDBQuery
+-------------"""
     printer(message, 50, color="blue")
 
 def main():

@@ -99,11 +99,11 @@ def get_commandline():
                         help="Do not run analysis")
 
     # Don't run analysis
-    parser.add_argument("--nopdbquery",
-                        action="store_false",
+    parser.add_argument("--pdbquery",
+                        action="store_true",
                         dest="pdbquery",
-                        default=True,
-                        help="Do not run pdbquery")
+                        default=False,
+                        help="Run pdbquery")
 
     # Directory or files
     parser.add_argument(action="store",
