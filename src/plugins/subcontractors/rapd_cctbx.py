@@ -94,7 +94,7 @@ def get_spacegroup_info(struct_file):
             for line in input_file.split('\n'):
                 if "_symmetry.space_group_name_H-M" in line:
                     cif_spacegroup = line[32:].strip()[1:-1].upper().replace(" ", "")
-                    print cif_spacegroup
+                    # print cif_spacegroup
                 if "_pdbx_database_status.pdb_format_compatible" in line:
                     if line.split()[1] == "N":
                         fail = True
