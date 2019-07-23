@@ -116,10 +116,10 @@ def get_commandline():
                            help="Run in test mode")
 
     # Verbose
-    # my_parser.add_argument("-v", "--verbose",
-    #                        action="store_true",
-    #                        dest="verbose",
-    #                        help="More output")
+    my_parser.add_argument("-v", "--verbose",
+                           action="store_true",
+                           dest="verbose",
+                           help="More output")
 
     # Quiet
     my_parser.add_argument("-q", "--quiet",
@@ -229,9 +229,9 @@ def get_commandline():
 def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
-------------
-RAPD Example
-------------"""
+-------------
+RAPD PDBQuery
+-------------"""
     printer(message, 50, color="blue")
 
 def main():
@@ -303,7 +303,8 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Run the plugin
-    plugin.RapdPlugin(command, tprint, logger)
+    P = plugin.RapdPlugin(site=False, command=command, processed_results=False, tprint=tprint, logger=logger, verbosity=commandline_args.verbose)
+    P.run()
 
 if __name__ == "__main__":
 

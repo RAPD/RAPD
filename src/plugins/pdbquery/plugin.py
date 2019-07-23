@@ -47,6 +47,7 @@ import os
 from pprint import pprint
 import random
 import shutil
+import sys
 import time
 import importlib
 import random
@@ -635,6 +636,7 @@ class RapdPlugin(Thread):
                 cif_path = os.path.join(os.getcwd(), cif_file)
             else:
                 cif_path = self.repository.download_cif(pdb_code, os.path.join(os.getcwd(), cif_file))
+            
             if not cif_path:
                 self.postprocess_invalid_code(pdb_code)
             else:
@@ -827,6 +829,19 @@ class RapdPlugin(Thread):
                     target = os.path.join(target_dir, os.path.basename(archive_file))
                     shutil.move(archive_file, target)
                     # Store information
+                archive_dict["path"] = target
+                # Add to the results.data_produced array
+                self.results["results"]["data_produced"].append(archive_dict)
+
+            # Maps & PDB
+            for my_map in ("map_1_1", "map_2_1", "pdb"):
+                archive_dict = result.get(my_map, {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Move the file
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.move(archive_file, target)
+                    # Store information
                     archive_dict["path"] = target
                     # Add to the results.archive_files array
                     self.results["results"]["for_display"].append(
@@ -894,11 +909,11 @@ class RapdPlugin(Thread):
                     #print results_json
             else:
                 results = info['result_queue'].get()
-                # pprint(results)
+                # pprint(results.get('stdout', " "))
                 # pprint(json.loads(results.get('stdout'," ")))
                 # if results["stderr"]:
                 #     print results["stderr"]
-                self.postprocess_phaser(info['name'], json.loads(results.get('stdout'," ")))
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout', " ")))
             jobs.remove(job)
             
             #results_json = self.redis.get(info['tag'])

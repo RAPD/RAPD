@@ -25,24 +25,23 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-# import json
+from functools import wraps
+import importlib
+import json
 # import multiprocessing
 from multiprocessing import Process, Queue
 #from Queue import Queue as tqueue
 import os
 from pprint import pprint
-import signal
-import subprocess
-import stat
-import json
 import random
+import re
 import shutil
-import importlib
-from functools import wraps
+import signal
+import stat
+import subprocess
 import sys
 import tarfile
 import time
-import re
 
 # Phaser import
 import phaser
@@ -259,7 +258,6 @@ def parse_phaser_output_script_OLD(phaser_log):
                              "adf": None,
                              "peak": None,
                              }
-
     pprint(phaser_result)
     return phaser_result
 
@@ -365,6 +363,7 @@ def run_phaser(data_file,
     resolution - high res limit to run MR (float)
     full - signal to run more comprehensive MR
     """
+
     phaser_log = False
     # Change to work_dir
     if not work_dir:
@@ -575,7 +574,7 @@ def run_phaser(data_file,
             mtz_file = os.path.join(work_dir, r.getTopMtzFile())
             phaser_result = {"ID": name,
                              "solution": r.foundSolutions(),
-                             "pdb": os.path.join(work_dir, r.getTopPdbFile()),
+                             "pdb_file": os.path.join(work_dir, r.getTopPdbFile()),
                              "mtz": mtz_file,
                              "gain": float(r.getTopLLG()),
                              "rfz": rfz,
@@ -589,7 +588,7 @@ def run_phaser(data_file,
                              "adf": None,
                              "peak": None,
                              }
-    
+
             # Calculate 2Fo-Fc & Fo-Fc maps
             # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
             local_subprocess(command="phenix.mtz2map %s" % mtz_file,
@@ -628,50 +627,59 @@ def run_phaser(data_file,
                 phaser_result["map_1_1"] = map_for_display
                 
             # If PDB exists, package that too
-            if phaser_result.get("pdb", False):
-                if os.path.exists(phaser_result.get("pdb")):
+            if phaser_result.get("pdb_file", False):
+                if os.path.exists(phaser_result.get("pdb_file")):
                     # Compress the file
-                    arch_prod_file, arch_prod_hash = archive.compress_file(phaser_result.get("pdb"))
+                    arch_prod_file, arch_prod_hash = archive.compress_file(phaser_result.get("pdb_file"))
                     # Remove the map that was compressed
-                    os.unlink(phaser_result.get("pdb"))
+                    # os.unlink(phaser_result.get("pdb"))
                     # Store information
                     pdb_for_display = {
                         "path": arch_prod_file,
                         "hash": arch_prod_hash,
-                        "description": os.path.basename(phaser_result.get("pdb"))
+                        "description": os.path.basename(phaser_result.get("pdb_file"))
                     }
                     phaser_result["pdb"] = pdb_for_display
 
             # Calc ADF map
             if adf:
-                if os.path.exists(phaser_result.get("pdb", False)) and os.path.exists(phaser_result.get("mtz", False)):
+                if os.path.exists(phaser_result.get("pdb_file", False)) and os.path.exists(phaser_result.get("mtz", False)):
                     adf_results = calc_ADF_map(data_file=data_file,
                                                mtz=phaser_result["mtz"],
-                                               pdb=phaser_result["pdb"])
+                                               pdb=phaser_result["pdb_file"])
                     if adf_results.get("adf"):
                         phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
                     if adf_results.get("peak"):
                         phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
                     #phaser_result.update({"adf": adf_results.get("adf", None),
                     #                      "peak": adf_results.get("peak", None),})
-    
+
+            # print "1"
+            # print name
             # New procedure for making tar of results
             # Create directory
             # Remove the run # from the name
-            new_name = name[:-2]
+            # new_name = name[:-2]  #
+            new_name = phaser_result.get("ID") #
+            # print new_name
             os.mkdir(new_name)
-            # Go through and copy files to archive directory
-            file_types = ("pdb", "mtz", "adf", "peak")
+            # # Go through and copy files to archive directory
+            file_types = ("pdb_file", "mtz", "adf", "peak")
             for file_type in file_types:
+                # print file_type
                 target_file = phaser_result.get(file_type, False)
+                # print target_file
                 if target_file:
                     if os.path.exists(target_file):
                         # Copy the file to the directory to be archived
                         shutil.copy(target_file, new_name+"/.")
-            # Create the archive
+            # # Create the archive
             archive_result = archive.create_archive(new_name)
             archive_result["description"] = '%s_files'%new_name
             phaser_result["tar"] = archive_result
+
+            # print "2"
+
         else:
             phaser_result = {"ID": name,
                              "solution": False,
@@ -681,7 +689,10 @@ def run_phaser(data_file,
         if phaser_log:
             phaser_result.update({"logs": {"phaser": phaser_log}})
     
+        # print "3"
+
         if db_settings and tag:
+            print "db_settings and tag"
             # Connect to Redis
             redis = connect_to_redis(db_settings)
             # Key should be deleted once received, but set the key to expire in 24 hours just in case.
@@ -691,7 +702,7 @@ def run_phaser(data_file,
         else:
             # print "Printing phaser_result"
             # Print the result so it can be seen thru the queue by reading stdout
-            #print phaser_result
+            # print phaser_result
             print json.dumps(phaser_result)
 
 def run_phaser_module(data_file,
@@ -778,7 +789,10 @@ def run_phaser_module(data_file,
         #print dir(r1)
         if r1.Success():
             z0 = r1.getBestZ()
-            sc0 = round(1-(1.23/r1.getBestVM()), 2)
+            try:
+                sc0 = round(1-(1.23/r1.getBestVM()), 2)
+            except ZeroDivisionError:
+                sc0 = 0
         del(r1)
         return (z0, sc0)
 
