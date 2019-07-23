@@ -47,6 +47,7 @@ import os
 from pprint import pprint
 import random
 import shutil
+import sys
 import time
 import importlib
 import random
@@ -635,6 +636,7 @@ class RapdPlugin(Thread):
                 cif_path = os.path.join(os.getcwd(), cif_file)
             else:
                 cif_path = self.repository.download_cif(pdb_code, os.path.join(os.getcwd(), cif_file))
+            
             if not cif_path:
                 self.postprocess_invalid_code(pdb_code)
             else:
@@ -907,11 +909,11 @@ class RapdPlugin(Thread):
                     #print results_json
             else:
                 results = info['result_queue'].get()
-                # pprint(results)
+                # pprint(results.get('stdout', " "))
                 # pprint(json.loads(results.get('stdout'," ")))
                 # if results["stderr"]:
                 #     print results["stderr"]
-                self.postprocess_phaser(info['name'], json.loads(results.get('stdout'," ")))
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout', " ")))
             jobs.remove(job)
             
             #results_json = self.redis.get(info['tag'])

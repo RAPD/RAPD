@@ -619,8 +619,8 @@ class RapdPlugin(Process):
         # Run analysis
         self.run_analysis_plugin()
         
-        # Run pdbquery
-        self.run_pdbquery_plugin()
+        # Run pdbquery - now at tail of analysis
+        # self.run_pdbquery_plugin()
 
         # Send back results - the final time
         #self.send_results(self.results)
@@ -666,6 +666,14 @@ class RapdPlugin(Process):
             #plugin_queue = Queue()
 
             # Construct the pdbquery plugin command
+            self.db_settings = False
+            if self.site:
+                # print "Have self.site"
+                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+            # else:
+            #     print "No self.site"
+            #     db_settings = False
+            
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
@@ -677,7 +685,7 @@ class RapdPlugin(Process):
                 run_mode = self.preferences.get("run_mode", False)
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
-                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                db_settings = self.db_settings
                 test = False
 
             analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
@@ -702,9 +710,16 @@ class RapdPlugin(Process):
             # Back to where we were, in case it matters
             os.chdir(start_dir)
 
+            # Chain on the PDBQuery
+            time.sleep(15)
+            self.run_pdbquery_plugin()
+
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
+
+            # Chain on the PDBQuery
+            self.run_pdbquery_plugin()
             
     def run_pdbquery_plugin(self):
         """Set up and run the analysis plugin"""
@@ -723,6 +738,12 @@ class RapdPlugin(Process):
             os.chdir(self.dirs["work"])
 
             # Construct the pdbquery plugin command
+            self.db_settings = False
+            if self.site:
+                # print "Have self.site"
+                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+
+            # Construct the pdbquery plugin command
             class PdbqueryArgs(object):
                 """Object for command construction"""
                 clean = self.preferences.get("clean_up", False)
@@ -732,7 +753,7 @@ class RapdPlugin(Process):
                 nproc = self.procs
                 progress = self.preferences.get("progress", False)
                 run_mode = self.preferences.get("run_mode", False)
-                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                db_settings = self.db_settings
                 exchange_dir = self.preferences.get("exchange_dir", False)
                 pdbs = False
                 contaminants = True
@@ -895,18 +916,17 @@ class RapdPlugin(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        #if self.low_res or self.hi_res:
-        #    if not self.low_res:
-        #        low_res = 200.0
-        #    else:
-        #        low_res = self.low_res
-        #    if not self.hi_res:
-        #        hi_res = 0.9
-        #    else:
-        #        hi_res = self.hi_res
+        # if self.low_res or self.hi_res:
+        if not self.low_res:
+            self.low_res = 200.0
+        low_res = self.low_res
+        if not self.hi_res:
+            self.hi_res = 0.9
+        hi_res = self.hi_res
+        # print "Setting INCLUDE_RESOLUTION_RANGE", low_res, hi_res
         xdsinp = self.change_xds_inp(
             xdsinp,
-            "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (self.low_res, self.hi_res))
+            "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
         xdsinp = self.change_xds_inp(
             xdsinp,
             "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
