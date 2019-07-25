@@ -654,13 +654,10 @@ def run_phaser(data_file,
                     #phaser_result.update({"adf": adf_results.get("adf", None),
                     #                      "peak": adf_results.get("peak", None),})
 
-            # print "1"
-            # print name
             # New procedure for making tar of results
             # Create directory
             # Remove the run # from the name
-            # new_name = name[:-2]  #
-            new_name = phaser_result.get("ID") #
+            new_name = phaser_result.get("ID")
             # print new_name
             os.mkdir(new_name)
             # # Go through and copy files to archive directory
