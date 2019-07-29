@@ -13,7 +13,6 @@ const smtpTransport = require("nodemailer-smtp-transport");
 // const path =          require('path');
 const randomstring = require("randomstring");
 const useragent = require("express-useragent");
-const multer = require("multer");
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -93,20 +92,6 @@ let app_session = session({
   saveUninitialized: true
 });
 app.use(app_session);
-
-// Middleware for uploads
-var upload = multer({
-  dest: config.upload_directory,
-  rename: function(fieldname, filename) {
-    return filename + Date.now();
-  },
-  onFileUploadStart: function(file) {
-    console.log(file.originalname + " is starting ...");
-  },
-  onFileUploadComplete: function(file) {
-    console.log(file.fieldname + " uploaded to  " + file.path);
-  }
-});
 
 // Add useragent to make some stuff simpler
 app.use(useragent.express());

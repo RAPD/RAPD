@@ -3,9 +3,14 @@ var router = express.Router();
 const jwt = require("jsonwebtoken");
 var mongoose = require("../models/mongoose");
 const multer = require("multer");
+var Grid = require("gridfs-stream");
+const shasum = require("shasum")
 
 // Configuration
 const config = require("../config"); // get our config file
+
+// Setting up gridfs
+Grid.mongo = mongoose.mongo;
 
 // MongoDB Models
 const Pdb = mongoose.ctrl_conn.model("Pdb", require("../models/pdb").PdbSchema);
@@ -19,10 +24,29 @@ var upload = multer({
     return filename + Date.now();
   },
   onFileUploadStart: function(file) {
-    console.log(file.originalname + " is starting ...");
+    console.log('Starting ' + file.name);
   },
   onFileUploadComplete: function(file) {
     console.log(file.fieldname + " uploaded to  " + file.path);
+  },
+  onFileUploadData : function (file, data) {
+    console.log('Recieving Data');
+  },
+  onFileUploadComplete : function (file) {
+    console.log('Completed file!');
+  },
+  onParseStart : function () {
+    console.log('Starting to parse request!');
+  },
+  onParseEnd : function (req, next) {
+    console.log('Done parsing!');
+    next();
+  },
+  onError : function (e, next) {
+    if (e) {
+      console.log(e.stack);
+    }
+    next();
   }
 });
 
@@ -30,9 +54,25 @@ var upload = multer({
 router
   .route("/upload_mx_raw")
   .post(upload.any(), function(req, res) {
-    
-    console.log(req.decoded);
+  // .post(function(req, res) {
+
+    // console.log(req.headers.referer);
+    // console.log(req.decoded);
     console.log(req.files);
+
+    const project_id = req.headers.referer.split("/").slice(-1)[0];
+
+    // Put the metadata together    
+    // const metadata = {
+    //   description: "Upload",
+    //   hash: shasum(req.files[0].buffer),
+    //   originalname: req.files[0].originalname,
+    //   project_id: null,
+    //   result_id: null,
+    //   file_type: null
+    // };
+
+
     
   // var token = req.headers.authorization.replace("Bearer ", "");
   // console.log(token);

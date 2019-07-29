@@ -798,8 +798,8 @@ class RapdPlugin(Thread):
 
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
+            self.logger.debug("transfer_files",
+                              self.command["directories"].get("exchange_dir" ))
 
             # Determine and validate the place to put the data
             target_dir = os.path.join(
@@ -811,6 +811,7 @@ class RapdPlugin(Thread):
             # If there is a pdb produced -> data_produced
             archive_dict = result.get("pdb", {})
             archive_file = archive_dict.get("path", False)
+            self.logger.debug(archive_dict, archive_file)
             if archive_file:
                 # Copy data
                 target = os.path.join(target_dir, os.path.basename(file_to_move))
@@ -819,19 +820,6 @@ class RapdPlugin(Thread):
                 archive_dict["path"] = target
                 # Add to the results.data_produced array
                 self.results["results"]["data_produced"].append(archive_dict)
-
-            # # Maps & PDB
-            # for my_map in ("map_1_1", "map_2_1", "pdb"):
-            #     archive_dict = result.get(my_map, {})
-            #     archive_file = archive_dict.get("path", False)
-            #     if archive_file:
-            #         # Move the file
-            #         target = os.path.join(target_dir, os.path.basename(archive_file))
-            #         shutil.move(archive_file, target)
-            #         # Store information
-            #     archive_dict["path"] = target
-            #     # Add to the results.data_produced array
-            #     self.results["results"]["data_produced"].append(archive_dict)
 
             # Maps & PDB
             for my_map in ("map_1_1", "map_2_1", "pdb"):
