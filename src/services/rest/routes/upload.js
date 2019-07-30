@@ -15,6 +15,10 @@ const config = require("../config"); // get our config file
 // Setting up gridfs
 Grid.mongo = mongoose.mongo;
 
+// Redis
+const Redis  = require('ioredis');
+var redis_client = new Redis(config.redis_connection);
+
 // For calculating hashes
 function fileHash(filename, algorithm = 'sha1') {
   return new Promise((resolve, reject) => {
@@ -104,6 +108,43 @@ router
       // Diffraction data
       if (metadata.originalname.endsWith(".mtz")) {
         console.log("DIFFRACTION DATA");
+
+        // Create request
+        const request = {
+          command: "IMPORT_MX_DATA",
+          data: req.files[0].path,
+          preferences: null,
+          process: {
+            image_id: null,
+            parent_id: null,
+            project_id: project_id,
+            repr: null,
+            run_id: null,
+            session_id: null,
+            status: 0,
+            type: "plugin",
+          },
+          site_parameters: false,
+        };
+
+        console.log("REQUEST", request);
+
+        // redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
+        //   if (err) {
+        //     console.error(err);
+        //     res.status(500).json({
+        //       success: false,
+        //       error: err
+        //     });
+        //   } else {
+        //     console.log('Job added to RAPD_JOBS queue length:', queue_length);
+        //     res.status(200).json({
+        //       success: true,
+        //       queue_length: queue_length
+        //     });
+        //   }
+        // });
+
       }
 
     });
