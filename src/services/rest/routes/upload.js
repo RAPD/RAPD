@@ -4,13 +4,38 @@ const jwt = require("jsonwebtoken");
 var mongoose = require("../models/mongoose");
 const multer = require("multer");
 var Grid = require("gridfs-stream");
-const shasum = require("shasum")
+
+const crypto = require('crypto');
+const fs = require("fs");
+// const shasum = require("shasum");
 
 // Configuration
 const config = require("../config"); // get our config file
 
 // Setting up gridfs
 Grid.mongo = mongoose.mongo;
+
+// For calculating hashes
+function fileHash(filename, algorithm = 'sha1') {
+  return new Promise((resolve, reject) => {
+    // Algorithm depends on availability of OpenSSL on platform
+    // Another algorithms: 'sha1', 'md5', 'sha256', 'sha512' ...
+    let shasum = crypto.createHash(algorithm);
+    try {
+      let s = fs.ReadStream(filename)
+      s.on('data', function (data) {
+        shasum.update(data)
+      })
+      // making digest
+      s.on('end', function () {
+        const hash = shasum.digest('hex')
+        return resolve(hash);
+      })
+    } catch (error) {
+      return reject('calc fail');
+    }
+  });
+}
 
 // MongoDB Models
 const Pdb = mongoose.ctrl_conn.model("Pdb", require("../models/pdb").PdbSchema);
@@ -62,16 +87,30 @@ router
 
     const project_id = req.headers.referer.split("/").slice(-1)[0];
 
-    // Put the metadata together    
-    // const metadata = {
-    //   description: "Upload",
-    //   hash: shasum(req.files[0].buffer),
-    //   originalname: req.files[0].originalname,
-    //   project_id: null,
-    //   result_id: null,
-    //   file_type: null
-    // };
+    fileHash(req.files[0].path).then((hash) => {
+      // Put the metadata together    
+      const metadata = {
+        description: "manual upload",
+        hash: hash,
+        originalname: req.files[0].originalname,
+        path: req.files[0].path,
+        project_id: project_id,
+        result_id: null,
+        file_type: null
+      };
 
+      console.log(metadata);
+
+      // Diffraction data
+      if (metadata.originalname.endsWith(".mtz")) {
+        console.log("DIFFRACTION DATA");
+      }
+
+    });
+
+    
+
+    
 
     
   // var token = req.headers.authorization.replace("Bearer ", "");
