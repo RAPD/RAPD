@@ -111,7 +111,7 @@ router
 
         // Create request
         const request = {
-          command: "IMPORT_MX_DATA",
+          command: "ASSESS_INTEGRATED_DATA",
           data: req.files[0].path,
           preferences: null,
           process: {
