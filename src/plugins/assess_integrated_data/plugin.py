@@ -486,8 +486,7 @@ class RapdPlugin(multiprocessing.Process):
                                (data_file, logfile))
             aimless_file.write("anomalous on\n")
             aimless_file.write("scales constant\n")
-            aimless_file.write(
-                "sdcorrection norefine full 1 0 0 partial 1 0 0\n")
+            aimless_file.write("sdcorrection norefine full 1 0 0 partial 1 0 0\n")
             aimless_file.write("cycles 0\n")
             aimless_file.write("OUTPUT NONE\n")
             aimless_file.write("eof")

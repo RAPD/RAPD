@@ -154,16 +154,16 @@ def get_commandline():
                            help="Clean up intermediate files")
 
     # Color
-    #my_parser.add_argument("--color",
-    #                       action="store_false",
-    #                       dest="no_color",
-    #                       help="Color the terminal output")
+    my_parser.add_argument("--color",
+                           action="store_false",
+                           dest="no_color",
+                           help="Color the terminal output")
 
     # No color
-    my_parser.add_argument("--nocolor",
-                           action="store_true",
-                           dest="no_color",
-                           help="Do not color the terminal output")
+    # my_parser.add_argument("--nocolor",
+    #                        action="store_true",
+    #                        dest="no_color",
+    #                        help="Do not color the terminal output")
 
     # JSON Output
     my_parser.add_argument("-j", "--json",
@@ -286,7 +286,7 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
@@ -319,8 +319,8 @@ def main():
 
     # Print plugin info
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
