@@ -7,10 +7,15 @@ if [ "$RAPD_HOME" != "" ]; then
 
   SAFE_PREFIX=$(echo "$RAPD_HOME" | sed -e 's/\//\\\//g')
 
-  # MongoDB Tool
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.mongotool
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/database\/rapd_mongotool.py \"\$@\"" >>$RAPD_HOME/bin/rapd.mongotool
-  chmod +x $RAPD_HOME/bin/rapd.mongotool
+  # X-ray Analysis
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.analyze
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/analysis\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.analyze
+  chmod +x $RAPD_HOME/bin/rapd.analyze
+
+  # Assess integrated data set (for imported data)
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.assess
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/assess_integrated_data\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.assess
+  chmod +x $RAPD_HOME/bin/rapd.assess
 
   # Control
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.control
@@ -60,16 +65,16 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/get_cif\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.get_cif
   chmod +x $RAPD_HOME/bin/rapd.get_cif
 
-  # X-ray Analysis
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.analyze
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/analysis\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.analyze
-  chmod +x $RAPD_HOME/bin/rapd.analyze
-
   # hcmerge                                                                                                    
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.hcmerge
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/hcmerge\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.hcmerge
   chmod +x $RAPD_HOME/bin/rapd.hcmerge
   
+  # MongoDB Tool
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.mongotool
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/database\/rapd_mongotool.py \"\$@\"" >>$RAPD_HOME/bin/rapd.mongotool
+  chmod +x $RAPD_HOME/bin/rapd.mongotool
+
   # Molecular Replacement                                                                                                    
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.mr
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/mr\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.mr
