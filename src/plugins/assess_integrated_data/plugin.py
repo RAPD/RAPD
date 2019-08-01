@@ -364,7 +364,9 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint("  Unit cell             %.1f %.1f %.1f  %.1f %.1f %.1f " % tuple(summary["unit_cell"][1]), 99, "white")
             self.tprint("  Overall Completeness  %.2f" % summary["completeness"][1], 99, "white")
             pprint(summary)
-            sys.exit()
+            # sys.exit()
+        
+        pprint(self.results)
 
     def print_plots(self, results):
         """Print results in the terminal"""
@@ -446,16 +448,18 @@ class RapdPlugin(multiprocessing.Process):
         programs = ["CCTBX", "AIMLESS"]
         info_string = rcredits.get_credits_text(programs, "    ")
         self.tprint(info_string, level=99, color="white")
-
+    
     def aimless(self):
         """Run aimless on the input data"""
 
         self.logger.debug("aimless")
-        self.tprint(arg="  Running Aimless", level=10, color="white")
+        self.tprint(arg="\n  Running Aimless", level=10, color="white")
 
         # Handle different types of input files
-        rapd_file_type = get_rapd_file_type(
-            self.command["input_data"]["data_file"])
+        self.rapd_file_type = get_rapd_file_type(self.command["input_data"]["data_file"])
+
+        # Save in results
+        self.results["rapd_file_type"] = self.rapd_file_type
 
         labels = {
             "mergable_mtz": "I,SIGI",
@@ -467,9 +471,9 @@ class RapdPlugin(multiprocessing.Process):
         }
 
         # Some file types cannot be run through aimless
-        if rapd_file_type in ("minimal_refl_mtz", "minimal_rfree_mtz", "rfree_mtz",):
+        if self.rapd_file_type in ("minimal_refl_mtz", "minimal_rfree_mtz", "rfree_mtz",):
             self.tprint(
-                arg="  Unable to calculate these data statistics on merged data", level=10, color="red")
+                arg="  Unable to calculate some data statistics on merged data", level=10, color="red")
             return {
                 "log": False,
                 "plots": False,
@@ -494,8 +498,7 @@ class RapdPlugin(multiprocessing.Process):
         cmd = './%s' % comfile
 
         # Run
-        p = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
 
         # Parse aimless

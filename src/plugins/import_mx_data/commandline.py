@@ -1,9 +1,9 @@
-"""Wrapper for launching assess_integrated_data"""
+"""Wrapper for launching import_mx_data"""
 
 """
 This file is part of RAPD
 
-Copyright (C) 2018, Cornell University
+Copyright (C) 2019, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2018-08-02"
+__created__ = "2019-07-31"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
@@ -50,6 +50,7 @@ import uuid
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+# import utils.credits as rcredits
 import utils.credits as rcredits
 import utils.global_vars as rglobals
 import utils.log
@@ -63,15 +64,12 @@ def construct_command(commandline_args):
 
     # The task to be carried out
     command = {
-        "command": "ASSESS_INTEGRATED_DATA",
+        "command": "IMPORT_MX_DATA",
         "process_id": uuid.uuid1().get_hex(),
         "parent_id": None,
         "source": "commandline",
         "status": 0,
         }
-
-    # The repr of this run
-    run_repr = "rapd_assess_" + os.path.basename(commandline_args.data_file).replace(".mtz", "")
 
     # Working directory
     work_dir = commandline_utils.check_work_dir(
@@ -88,18 +86,15 @@ def construct_command(commandline_args):
 
     # Information on input
     command["input_data"] = {
-        "data_file": os.path.abspath(commandline_args.data_file)
+        "datafile": os.path.abspath(commandline_args.datafile)
     }
 
     # Plugin settings
     command["preferences"] = {
-        "analysis": commandline_args.analysis,
         "clean": commandline_args.clean,
         "json": commandline_args.json,
-        "show_plots": commandline_args.show_plots,
         "no_color": commandline_args.no_color,
         "nproc": commandline_args.nproc,
-        "pdbquery": commandline_args.pdbquery,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "test": commandline_args.test,
@@ -114,7 +109,7 @@ def get_commandline():
     print "get_commandline"
 
     # Parse the commandline arguments
-    commandline_description = "Launch assess_integrated_data plugin"
+    commandline_description = "Launch import_mx_data plugin"
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # Run in test mode
@@ -122,12 +117,6 @@ def get_commandline():
                            action="store_true",
                            dest="test",
                            help="Run in test mode")
-
-    # Import data and return as a RAPD file format
-    my_parser.add_argument("-i", "--import",
-                           action="store_true",
-                           dest="import",
-                           help="Import data")
 
     # Verbose/Quiet are a pair of opposites
     # Recommend defaulting to verbose during development and to
@@ -160,16 +149,16 @@ def get_commandline():
                            help="Clean up intermediate files")
 
     # Color
-    my_parser.add_argument("--color",
-                           action="store_false",
-                           dest="no_color",
-                           help="Color the terminal output")
+    #my_parser.add_argument("--color",
+    #                       action="store_false",
+    #                       dest="no_color",
+    #                       help="Color the terminal output")
 
     # No color
-    # my_parser.add_argument("--nocolor",
-    #                        action="store_true",
-    #                        dest="no_color",
-    #                        help="Do not color the terminal output")
+    my_parser.add_argument("--nocolor",
+                           action="store_true",
+                           dest="no_color",
+                           help="Do not color the terminal output")
 
     # JSON Output
     my_parser.add_argument("-j", "--json",
@@ -177,23 +166,11 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
-    # Hide plots?
-    my_parser.add_argument("--noplot",
-                           action="store_false",
-                           dest="show_plots",
-                           help="No plotting")
-
     # Output progress
     my_parser.add_argument("--progress",
                            action="store_true",
                            dest="progress",
                            help="Output progess to terminal")
-
-    # The site
-    my_parser.add_argument("-s", "--site",
-                           action="store",
-                           dest="site",
-                           help="Define the site (ex. NECAT_C)")
 
     # Multiprocessing
     my_parser.add_argument("--nproc",
@@ -202,22 +179,9 @@ def get_commandline():
                            default=max(1, multiprocessing.cpu_count() - 1),
                            help="Number of processors to employ")
 
-    # Don't run analysis
-    my_parser.add_argument("--noanalysis",
-                           action="store_false",
-                           dest="analysis",
-                           default=True,
-                           help="Do not run analysis")
-
-    # Don't run pdbquery
-    my_parser.add_argument("--pdbquery",
-                           action="store_true",
-                           dest="pdbquery",
-                           help="Run pdbquery as part of analysis")
-
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="data_file",
+                           dest="datafile",
                            nargs="?",
                            default=False,
                            help="Name of file to be analyzed")
@@ -229,11 +193,7 @@ def get_commandline():
 
     args = my_parser.parse_args()
 
-    # Coming off the commandline
-    args.run_mode = "interactive"
-
     # Insert logic to check or modify args here
-
 
     return args
 
@@ -258,7 +218,7 @@ def main():
 
     # Set up logging
     logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_assess_integrated_data",
+                                  logfile_id="rapd_import_mx_data",
                                   level=log_level,
                                   console=commandline_args.test)
 
@@ -292,7 +252,7 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10,             color="white")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
@@ -308,25 +268,19 @@ def main():
     else:
         commandline_args.dir_up = False
 
-    # Get site - commandline wins over the environmental variable
-    site = False
-    if commandline_args.site:
-        site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
-        site = environmental_vars["RAPD_SITE"]
-
     # Construct the command
-    command = construct_command(commandline_args=commandline_args)
+    command = construct_command(commandline_args=commandline_args,
+                                logger=logger)
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
-                                 directories=["plugins.assess_integrated_data"],
+                                 directories=["plugins.import_mx_data"],
                                  logger=logger)
 
     # Print plugin info
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10,             color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10,             color="white")
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 

@@ -27,6 +27,7 @@ __status__ = "Development"
 # Standard imports
 import argparse
 import os
+from pprint import pprint
 import subprocess
 import sys
 import tempfile
@@ -79,15 +80,15 @@ XRAY_COLUMN_SYNONYMS = {
 
     # Unmerged intensities
     "I": ("I", "IOBS"),
-    "SIGI": ("SIGI", "SIGMA(IOBS)"),
+    "SIGI": ("SIGI", "SIGMA(IOBS)", "SIGIOBS"),
 
     # Merged intensities
     "IMEAN": ("IMEAN",),
     "SIGIMEAN": ("SIGIMEAN",),
 
     # Structure factors
-    "F": ("F",),
-    "SIGF": ("SIGF",),
+    "F": ("F", "FP", "FOBS"),
+    "SIGF": ("SIGF", "SIGFP", "SIGFOBS"),
 
     # Merged, but unmerged
     "I(+)": ("I(+)",),
@@ -101,8 +102,8 @@ XRAY_COLUMN_SYNONYMS = {
     "SIGF(+)": ("SIGF(+)",),
     "SIGF(-)": ("SIGF(-)",),
 
-    "DANO": ("DANO",),
-    "SIGDANO": ("SIGDANO",),
+    "DANO": ("DANO", "DP"),
+    "SIGDANO": ("SIGDANO", "SIGDP"),
 
     "ISYM": ("ISYM",),                  # merged
     "M/ISYM": ("M/ISYM",),              # unmerged
@@ -116,7 +117,7 @@ XRAY_COLUMN_SYNONYMS = {
     "ZD": ("ZD",),                      # XDS_ASCII - centroid of image numbers that recorded the
                                         #             Bragg peak
     "LP": ("LP",),          # mergable.mtz
-    "FLAG": ("FLAG",),      # mergable.mtz
+    "FLAG": ("FLAG", "FREE", "R-free-flags"),
     "PSI": ("PSI",),        # XDS_ASCII - value of Schwarzenbach and Flack's psi-angle
     "CORR": ("CORR",),      # XDS_ASCII - percentage of correlation between observed and expected
                             #             reflection profile
@@ -206,6 +207,52 @@ RAPD_FILE_SIGNATURES = {
             'SIGIMEAN',
             'F',
             'SIGF',
+        ]
+    ),
+    "pdb_cif_to_mtz": (
+        "ccp4_mtz",
+        [
+            'H',
+            'K',
+            'L',
+            'FREE',
+            'FP',
+            'SIGFP',
+            'I',
+            'SIGI',
+            'F(+)',
+            'SIGF(+)',
+            'F(-)',
+            'SIGF(-)',
+            'DP',
+            'SIGDP',
+            'I(+)',
+            'SIGI(+)',
+            'I(-)',
+            'SIGI(-)',
+        ]
+    ),
+    "pdb_cif_as_mtz": (
+        "ccp4_mtz",
+        [
+            'H',
+            'K',
+            'L',
+            'FOBS',
+            'SIGFOBS',
+            'IOBS',
+            'SIGIOBS',
+            'DANO',
+            'SIGDANO',
+            'R-free-flags',
+            'F(+)',
+            'SIGF(+)',
+            'F(-)',
+            'SIGF(-)',
+            'I(+)',
+            'SIGI(+)',
+            'I(-)',
+            'SIGI(-)',
         ]
     ),
     "rfree_mtz": (
@@ -338,6 +385,14 @@ RAPD_CONVERSIONS = {
     ("minimal_rfree_mtz", "minimal_refl_mtz"): False,
     ("minimal_rfree_mtz", "scalepack_merge"): True,
 
+    # TODO
+    ("pdb_cif_to_mtz", "minimal_refl_mtz"): True,
+    ("pdb_cif_to_mtz", "minimal_rfree_mtz"): False,
+
+    # TODO
+    ("pdb_cif_as_mtz", "minimal_refl_mtz"): False,
+    ("pdb_cif_as_mtz", "minimal_rfree_mtz"): False,
+
     ("rfree_mtz", "scalepack_anomalous"): True,
     ("rfree_mtz", "scalepack_merge"): True,
 
@@ -400,9 +455,13 @@ def main():
 
         print "  RAPD file type:", rapd_file_type
 
-        print "  Formats possible to be converted to:"
-        for conversion in get_conversions(rapd_file_type):
-            print "          %s" % conversion
+        conversions = get_conversions(rapd_file_type)
+        if conversions:
+            print "  Formats possible to be converted to:"
+            for conversion in conversions:
+                print "          %s" % conversion
+        else:
+            print "  Formats possible to be converted to: None"
 
         # Testing code
         # if rapd_file_type == "xds_corrected":
@@ -1584,6 +1643,65 @@ def convert_minimal_rfree_mtz_to_scalepack_merge(source_file_name,
                                                        dest_file_name,
                                                        overwrite,
                                                        clean)
+
+def convert_pdb_cif_to_mtz_to_minimal_refl_mtz(source_file_name,
+                                               dest_file_name,
+                                               overwrite,
+                                               clean):
+    """Convert file"""
+
+    source_format = "pdb_cif_to_mtz"
+    dest_format = "minimal_refl_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Merge the data
+    aimless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "aimless hklin %s hklout %s" % (source_file_name, aimless_file)
+    aimless_proc = subprocess.Popen([cmd, "<<eof"],
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    shell=True)
+    aimless_proc.stdin.write("ANOMALOUS OFF\n")
+    aimless_proc.stdin.write("SCALES CONSTANT\n")
+    aimless_proc.stdin.write("SDCORRECTION NOREFINE FULL 1 0 0 PARTIAL 1 0 0\n")
+    aimless_proc.stdin.write("CYCLES 0\n")
+    aimless_proc.stdin.write("END\n")
+    aimless_proc.stdin.write("eof\n")
+    _, _ = aimless_proc.communicate()
+
+    # Prune away unwanted columns
+    cmd = "cad hklin1 %s hklout %s" % (aimless_file, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            aimless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
 
 def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
                                              dest_file_name=False,
