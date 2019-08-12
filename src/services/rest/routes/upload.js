@@ -102,23 +102,36 @@ router
         result_id: null,
         file_type: null
       };
-
       console.log(metadata);
 
       // Diffraction data
       if (metadata.originalname.endsWith(".mtz")) {
+        
         console.log("DIFFRACTION DATA");
 
         // Create request
         const request = {
           command: "ASSESS_INTEGRATED_DATA",
           data: req.files[0].path,
-          preferences: null,
+          preferences: {
+            analysis: true,
+            data_file: metadata.path,
+            import: true,
+            json: true,
+            no_color: true,
+            pdbquery: false,
+            progress: false,
+            run_mode: "server",
+            show_plots: false,
+            site: null,
+            test: false,
+            verbose: false
+          },
           process: {
             image_id: null,
             parent_id: null,
             project_id: project_id,
-            repr: null,
+            repr: metadata.originalname,
             run_id: null,
             session_id: null,
             status: 0,

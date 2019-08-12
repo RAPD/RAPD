@@ -1,4 +1,4 @@
-"""Wrapper for launching assess_integrated_data"""
+"""Wrapper for launching assess_mx_data"""
 
 """
 This file is part of RAPD
@@ -63,7 +63,7 @@ def construct_command(commandline_args):
 
     # The task to be carried out
     command = {
-        "command": "ASSESS_INTEGRATED_DATA",
+        "command": "ASSESS_MX_DATA",
         "process_id": uuid.uuid1().get_hex(),
         "parent_id": None,
         "source": "commandline",
@@ -114,7 +114,7 @@ def get_commandline():
     print "get_commandline"
 
     # Parse the commandline arguments
-    commandline_description = "Launch assess_integrated_data plugin"
+    commandline_description = "Launch assess_mx_data plugin"
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # Run in test mode
@@ -233,7 +233,8 @@ def get_commandline():
     args.run_mode = "interactive"
 
     # Insert logic to check or modify args here
-
+    if args.test:
+        args.run_mode = "server"
 
     return args
 
@@ -258,7 +259,7 @@ def main():
 
     # Set up logging
     logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_assess_integrated_data",
+                                  logfile_id="rapd_assess_mx_data",
                                   level=log_level,
                                   console=commandline_args.test)
 
@@ -320,7 +321,7 @@ def main():
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
-                                 directories=["plugins.assess_integrated_data"],
+                                 directories=["plugins.assess_mx_data"],
                                  logger=logger)
 
     # Print plugin info

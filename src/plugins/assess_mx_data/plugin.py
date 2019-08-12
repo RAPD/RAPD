@@ -1,4 +1,4 @@
-"""assess_integrated_data RAPD plugin"""
+"""assess_mx_data RAPD plugin"""
 
 """
 This file is part of RAPD
@@ -29,7 +29,7 @@ RAPD_PLUGIN = True
 
 # This plugin's types
 DATA_TYPE = "MX"
-PLUGIN_TYPE = "ASSESS_INTEGRATED_DATA"
+PLUGIN_TYPE = "ASSESS_MX_DATA"
 PLUGIN_SUBTYPE = "EXPERIMENTAL"
 
 # A unique ID for this handler (uuid.uuid1().hex[:4])
@@ -41,6 +41,7 @@ VERSION = "1.0.0"
 # import from collections import OrderedDict
 # import datetime
 import glob
+import importlib
 import json
 import logging
 # import math
@@ -91,7 +92,7 @@ class RapdPlugin(multiprocessing.Process):
 
     Command format:
     {
-       "command":"assess_integrated_data",
+       "command":"assess_mx_data",
        "directories":
            {
                "work": ""                          # Where to perform the work
@@ -150,7 +151,7 @@ class RapdPlugin(multiprocessing.Process):
             "process_id": self.command.get("process_id"),
             "status": 1}
 
-        multiprocessing.Process.__init__(self, name="assess_integrated_data")
+        multiprocessing.Process.__init__(self, name="assess_mx_data")
         self.start()
 
     def run(self):
@@ -259,7 +260,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Traditional mode as at the beamline
         elif run_mode == "server":
-            pass
+            self.send_results()
         # Run and return results to launcher
         elif run_mode == "subprocess":
             return self.results
@@ -267,6 +268,31 @@ class RapdPlugin(multiprocessing.Process):
         elif run_mode == "subprocess-interactive":
             self.print_results()
             return self.results
+
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        
+        # Import adapter
+        redis_database = importlib.import_module('database.redis_adapter')
+        
+        # Create a pool connection
+        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+                                             logger=self.logger)
+
+    def send_results(self):
+        """Let everyone know we are working on this"""
+        self.logger.debug("Sending back on redis")
+        
+        # Connected to Redis?
+        if not self.redis:
+            self.connect_to_redis()
+
+        # Format results
+        json_results = json.dumps(self.results)
+        
+        # Broadcast
+        self.redis.lpush("RAPD_RESULTS", json_results)
+        self.redis.publish("RAPD_RESULTS", json_results)
 
     def write_json(self):
         """Print out JSON-formatted result"""
@@ -570,8 +596,7 @@ class RapdPlugin(multiprocessing.Process):
                 db_settings = self.db_settings
                 test = False
 
-            analysis_command = plugins.analysis.commandline.construct_command(
-                AnalysisArgs)
+            analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
 
             # The pdbquery plugin
             plugin = plugins.analysis.plugin
@@ -692,7 +717,7 @@ def get_commandline():
     print "get_commandline"
 
     # Parse the commandline arguments
-    commandline_description = "Test assess_integrated_data plugin"
+    commandline_description = "Test assess_mx_data plugin"
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # A True/False flag
