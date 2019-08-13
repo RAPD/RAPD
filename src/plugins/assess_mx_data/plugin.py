@@ -103,6 +103,9 @@ class RapdPlugin(multiprocessing.Process):
     }
     """
 
+    # Internally-used vars
+    db_settings = False
+
     # Holders for passed-in info
     command = None
     preferences = None
@@ -115,8 +118,6 @@ class RapdPlugin(multiprocessing.Process):
 
         # Keep track of start time
         self.start_time = time.time()
-
-        # pprint(command)
 
         # If the logging instance is passed in...
         if logger:
@@ -143,14 +144,7 @@ class RapdPlugin(multiprocessing.Process):
         self.command = command
         self.preferences = self.command.get("preferences", {})
 
-        # Set up the results with command and process data
-        self.results["command"] = command
-
-        # Create a process section of results with the id and a starting status of 1
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1}
-
+        # Start
         multiprocessing.Process.__init__(self, name="assess_mx_data")
         self.start()
 
@@ -170,6 +164,23 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check for dependency problems
         self.check_dependencies()
+
+        # Create a process section of results with the id and a starting status of 1
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1}
+
+        # Set up the results with command and process data
+        self.results["command"] = self.command
+
+        # Site has been passed in
+        if self.site:
+            self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+        # Not passed in
+        else:
+            # Preferences has the database settings inside it
+            if "CONTROL_DATABASE_SETTINGS" in self.preferences:
+                self.db_settings = self.preferences.get("CONTROL_DATABASE_SETTINGS")
 
         # Move to working directory
         os.chdir(self.command["directories"]["work"])
@@ -276,7 +287,7 @@ class RapdPlugin(multiprocessing.Process):
         redis_database = importlib.import_module('database.redis_adapter')
         
         # Create a pool connection
-        self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
+        self.redis = redis_database.Database(settings=self.db_settings, 
                                              logger=self.logger)
 
     def send_results(self):
@@ -576,11 +587,6 @@ class RapdPlugin(multiprocessing.Process):
             # Queue to exchange information
             #plugin_queue = Queue()
 
-            # Handle site-based var
-            self.db_settings = False
-            if self.site:
-                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
-
             # Construct the pdbquery plugin command
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
@@ -641,11 +647,6 @@ class RapdPlugin(multiprocessing.Process):
             # Make sure we are in the work directory
             start_dir = os.getcwd()
             os.chdir(self.command["directories"]["work"])
-
-            # Handle site-based var
-            self.db_settings = False
-            if self.site:
-                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
 
             # Construct the pdbquery plugin command
             class PdbqueryArgs(object):

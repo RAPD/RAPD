@@ -185,6 +185,7 @@ class Database:
         self.password =  password 
         self.sentinels = sentinels
         self.master =    master
+        self.settings =  settings
         self.logger =    logger
 
         # Use the RAPD CONTROL_DATABASE_SETTINGS object
