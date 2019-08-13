@@ -105,6 +105,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Internally-used vars
     db_settings = False
+    redis = False
 
     # Holders for passed-in info
     command = None

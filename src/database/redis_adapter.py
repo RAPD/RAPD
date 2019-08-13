@@ -191,7 +191,7 @@ class Database:
         # Use the RAPD CONTROL_DATABASE_SETTINGS object
         if settings:
             # Sentinel
-            if settings["REDIS_CONNECTION"] == "sentinel":
+            if settings.get("REDIS_CONNECTION") == "sentinel":
                 self.host =      None
                 self.port =      None
                 self.db =        None
@@ -200,9 +200,9 @@ class Database:
                 self.master =    settings["REDIS_MASTER_NAME"] 
             # Standard
             else:
-                self.host =      settings["REDIS_HOST"]
-                self.port =      settings["REDIS_PORT"]
-                self.db =        settings["REDIS_DB"]
+                self.host =      settings.get("REDIS_HOST", "127.0.0.1")
+                self.port =      settings.get("REDIS_PORT", 6379)
+                self.db =        settings.get("REDIS_DB", 1)
                 self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = None
                 self.master =    None
