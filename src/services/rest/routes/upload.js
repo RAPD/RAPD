@@ -111,10 +111,16 @@ router
 
         // Create request
         const request = {
-          command: "ASSESS_INTEGRATED_DATA",
+          command: "ASSESS_MX_DATA",
           data: req.files[0].path,
           preferences: {
             analysis: true,
+            CONTROL_DATABASE_SETTINGS: {
+              REDIS_HOST: config.redis_connection.host,
+              REDIS_PORT: config.redis_connection.port,
+              REDIS_DB: config.redis_connection.db,
+              REDIS_PASSWORD: config.redis_connection.password,
+            },
             data_file: metadata.path,
             import: true,
             json: true,
@@ -142,21 +148,21 @@ router
 
         console.log("REQUEST", request);
 
-        // redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
-        //   if (err) {
-        //     console.error(err);
-        //     res.status(500).json({
-        //       success: false,
-        //       error: err
-        //     });
-        //   } else {
-        //     console.log('Job added to RAPD_JOBS queue length:', queue_length);
-        //     res.status(200).json({
-        //       success: true,
-        //       queue_length: queue_length
-        //     });
-        //   }
-        // });
+        redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
+          if (err) {
+            console.error(err);
+            // res.status(500).json({
+            //   success: false,
+            //   error: err
+            // });
+          } else {
+            console.log('Job added to RAPD_JOBS queue length:', queue_length);
+            // res.status(200).json({
+            //   success: true,
+            //   queue_length: queue_length
+            // });
+          }
+        });
 
       }
 
@@ -194,7 +200,7 @@ router
   //     return res.end(err.toString());
   //   }
 
-  res.end("File is uploaded");
+  // res.end("File is uploaded");
   // });
 });
 

@@ -106,6 +106,13 @@ def construct_command(commandline_args):
         "verbose": commandline_args.verbose,
     }
 
+    # Developing
+    if commandline_args.test:
+        command["preferences"]["CONTROL_DATABASE_SETTINGS"] = {
+            "REDIS_HOST": "127.0.0.1",
+            "REDIS_PORT": 6379
+        }
+
     return command
 
 def get_commandline():
