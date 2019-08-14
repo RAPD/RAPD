@@ -258,7 +258,7 @@ class RapdPlugin(multiprocessing.Process):
     def handle_return(self):
         """Output data to consumer - still under construction"""
 
-        # self.tprint("handle_return")
+        self.tprint("handle_return", self.command["preferences"]["run_mode"])
 
         run_mode = self.command["preferences"]["run_mode"]
 
@@ -273,6 +273,7 @@ class RapdPlugin(multiprocessing.Process):
         # Traditional mode as at the beamline
         elif run_mode == "server":
             self.send_results()
+        
         # Run and return results to launcher
         elif run_mode == "subprocess":
             return self.results
@@ -290,6 +291,8 @@ class RapdPlugin(multiprocessing.Process):
         # Create a pool connection
         self.redis = redis_database.Database(settings=self.db_settings, 
                                              logger=self.logger)
+
+        print self.redis.keys("*")
 
     def send_results(self):
         """Let everyone know we are working on this"""

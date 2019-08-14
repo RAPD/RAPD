@@ -202,7 +202,7 @@ class Database:
             else:
                 self.host =      settings.get("REDIS_HOST", "127.0.0.1")
                 self.port =      settings.get("REDIS_PORT", 6379)
-                self.db =        settings.get("REDIS_DB", 1)
+                self.db =        settings.get("REDIS_DB", 0)
                 self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = None
                 self.master =    None
