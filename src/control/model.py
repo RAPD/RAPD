@@ -736,18 +736,10 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-<<<<<<< HEAD
-        # If the detector can determine if run or snap from the image name
-        if hasattr(detector, "is_run_from_imagename"):
-            # Make sure we have a function
-            if isinstance(detector.is_run_from_imagename, types.FunctionType):
-                self.logger.debug("Have function")
-=======
         # If the detector can determine if run or snap
         # Make sure we have a function
         if getattr(detector, "is_run_from_imagename", None):
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
->>>>>>> origin/jon_working
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
                     self.logger.debug("Could NOT be a snap")
