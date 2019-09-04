@@ -200,7 +200,7 @@ class Launcher_Manager(Thread):
         command -- command from redis
         """
         print "push_command"
-        #pprint(command)
+        pprint(command)
 
         # Split up the command
         message = command

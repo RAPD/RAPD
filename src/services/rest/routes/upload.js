@@ -112,7 +112,7 @@ router
         // Create request
         const request = {
           command: "ASSESS_MX_DATA",
-          data: req.files[0].path,
+          // data: req.files[0].path,
           preferences: {
             analysis: true,
             CONTROL_DATABASE_SETTINGS: {
