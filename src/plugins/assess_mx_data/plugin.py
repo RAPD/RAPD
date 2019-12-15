@@ -145,6 +145,9 @@ class RapdPlugin(multiprocessing.Process):
         self.command = command
         self.preferences = self.command.get("preferences", {})
 
+        pprint(self.preferences)
+        sys.exit()
+
         # Start
         multiprocessing.Process.__init__(self, name="assess_mx_data")
         self.start()
