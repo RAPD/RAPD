@@ -173,7 +173,7 @@ class Database:
                  db=0, 
                  password=None, 
                  sentinels=None,
-                 master=None,
+                 main=None,
                  settings=None,
                  logger=False):
         """Initialize the client."""
@@ -184,7 +184,7 @@ class Database:
         self.db =        db
         self.password =  password 
         self.sentinels = sentinels
-        self.master =    master
+        self.main =    main
         self.logger =    logger
 
         # Use the RAPD CONTROL_DATABASE_SETTINGS object
@@ -196,7 +196,7 @@ class Database:
                 self.db =        None
                 self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = settings["REDIS_SENTINEL_HOSTS"] 
-                self.master =    settings["REDIS_MASTER_NAME"] 
+                self.main =    settings["REDIS_MASTER_NAME"] 
             # Standard
             else:
                 self.host =      settings["REDIS_HOST"]
@@ -204,7 +204,7 @@ class Database:
                 self.db =        settings["REDIS_DB"]
                 self.password =  settings.get("REDIS_PASSWORD", None) 
                 self.sentinels = None
-                self.master =    None
+                self.main =    None
 
         self._ConnectionError_last_log_time = float("-inf")
 
@@ -228,8 +228,8 @@ class Database:
         if self.sentinels:
             self.sentinel = Sentinel(self.sentinels)
 
-            # Assign master connection to self.redis
-            self.redis = self.sentinel.master_for(self.master)
+            # Assign main connection to self.redis
+            self.redis = self.sentinel.main_for(self.main)
 
         # Standard connection
         else:
@@ -260,7 +260,7 @@ class Database:
         # # Make sure redis server is up
         # try:
         #     _ = self.redis.ping()
-        # except redis.sentinel.MasterNotFoundError as error:
+        # except redis.sentinel.MainNotFoundError as error:
         #     self._raise_ConnectionError(error)
 
     def _disconnect(self):
@@ -300,49 +300,49 @@ class Database:
 
         raise self.ConnectionError(err_msg)
 
-    def discover_master(self):
+    def discover_main(self):
         """
-        Return the master instance (host, ip)
+        Return the main instance (host, ip)
         """
 
-        if self.sentinel and self.master:
+        if self.sentinel and self.main:
             attempts = 0
             while attempts < ATTEMPT_LIMIT:
                 try:
                     attempts += 1
-                    master = self.sentinel.discover_master(self.master)
+                    main = self.sentinel.discover_main(self.main)
                     break
-                except redis.sentinel.MasterNotFoundError as e:
+                except redis.sentinel.MainNotFoundError as e:
                     # Pause for specified time
                     print "try %d" % attempts
                     time.sleep(ATTEMPT_PAUSE)
             else:
                 self._raise_ConnectionError(e)
 
-            return master 
+            return main 
         else:
             self._raise_ConnectionError("Sentinels not properly defined")
 
-    def discover_slaves(self):
+    def discover_subordinates(self):
         """
-        Return the slave instances [(host, ip),]
+        Return the subordinate instances [(host, ip),]
         """
 
-        if self.sentinel and self.master:
+        if self.sentinel and self.main:
             attempts = 0
             while attempts < ATTEMPT_LIMIT:
                 try:
                     attempts += 1
-                    master = self.sentinel.discover_slaves(self.master)
+                    main = self.sentinel.discover_subordinates(self.main)
                     break
-                except redis.sentinel.SlaveNotFoundError as e:
+                except redis.sentinel.SubordinateNotFoundError as e:
                     # Pause for specified time
                     print "try %d" % attempts
                     time.sleep(ATTEMPT_PAUSE)
             else:
                 self._raise_ConnectionError(e)
 
-            return master 
+            return main 
         else:
             self._raise_ConnectionError("Sentinels not properly defined")
     
@@ -993,15 +993,15 @@ def main():
         counter += 1
 
     """
-    RC = RedisClient(sentinels=[("164.54.212.172", 26379)], master="remote_master", logger=logger)
+    RC = RedisClient(sentinels=[("164.54.212.172", 26379)], main="remote_main", logger=logger)
     ps = RC.get_pubsub()
     RC.subscribe(id=ps, channel="foo")
     counter = 0 
     while True:
         time.sleep(1)
         
-        # print RC.discover_master()
-        # print RC.discover_slaves()
+        # print RC.discover_main()
+        # print RC.discover_subordinates()
         # print RC.set("foo", counter)
         # print RC.get("foo")
         # RC.publish("foo", "bar{}".format(counter))

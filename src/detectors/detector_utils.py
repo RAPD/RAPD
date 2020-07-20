@@ -517,10 +517,10 @@ def main(test_images):
             print_hdf5_header_info(test_image)
 
             tmp_dir = tempfile.mkdtemp()
-            #prefix = os.path.basename(test_image).replace("_master.h5", "")
+            #prefix = os.path.basename(test_image).replace("_main.h5", "")
             prefix = convert_hdf5_cbf.get_prefix(test_image)
 
-            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
+            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(main_file=test_image,
                                                                output_dir=tmp_dir,
                                                                prefix=prefix,
                                                                start_image=1,

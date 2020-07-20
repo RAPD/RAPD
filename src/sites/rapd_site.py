@@ -72,7 +72,7 @@ secret_settings_general = { #database information
                             #directory for beamline puck settings files
                             'puck_dir'               : {'C' : '/mnt/shared_drive/CONFIG/phi/',
                                                         'E' : '/mnt/shared_drive/CONFIG/phii/'},
-                            #Cutoff date in MYSQL format,yyyy-mm-dd hh:mm:ss, for creating Master Puck List
+                            #Cutoff date in MYSQL format,yyyy-mm-dd hh:mm:ss, for creating Main Puck List
                             'puck_cutoff'            : '2011-01-01 00:00:00',
                             #testing information
                             'faux_coll_dir'          : '/gpfs5/users/necat/test_rapd',
@@ -751,13 +751,13 @@ def TransferPucksToBeamline(beamline,puck_contents):
             output.write('%s\n%s\n'%(contents[i]['CrystalID'],contents[i]['PuckID']))
     output.close()
 
-def TransferMasterPuckListToBeamline(beamline,allpucks):
+def TransferMainPuckListToBeamline(beamline,allpucks):
     """
-    Make master list of all available pucks to be read by console
+    Make main list of all available pucks to be read by console
     """
     puck_dir = secret_settings_general['puck_dir'][beamline]
     output_file = puck_dir+'/allpucks.txt'
-    print 'TransferMasterPuckListToBeamline dir: %s' % output_file
+    print 'TransferMainPuckListToBeamline dir: %s' % output_file
     output = open(output_file,'w')
     for puck in allpucks:
         output.write('%s %s\n'%(puck['PuckID'],puck['select']))

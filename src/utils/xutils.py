@@ -765,7 +765,7 @@ def convert_hdf5_cbf(inp,
         os.makedirs(out)
     os.chdir(out)
 
-    if inp.count("master"):
+    if inp.count("main"):
 
         # Not really needed, unless someone collected a huge dataset.
         ncpu = multiprocessing.cpu_count()
@@ -830,7 +830,7 @@ def convert_hdf5_cbf(inp,
         header['detector'] = det
         return(header)
     else:
-        return('Not master file!!!')
+        return('Not main file!!!')
     """
     except:
         if logger:
