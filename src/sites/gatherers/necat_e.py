@@ -158,7 +158,7 @@ class Gatherer(object):
         """
         self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
                                        sentinel_port=26379,
-                                       master_name="remote_master")
+                                       main_name="remote_main")
         """
         #self.pub = BLspec.connect_redis_manager_HA()
         self.pub_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
@@ -350,7 +350,7 @@ class Gatherer(object):
                         #self.pub = redis.Redis(beamline_settings[self.beamline]['remote_redis_ip'])
                         self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
                                 sentinel_port=26379,
-                                master_name="remote_master")
+                                main_name="remote_main")
                         """
                         self.pub = BLspec.connect_redis_manager_HA()
 
@@ -492,7 +492,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         #red = redis.Redis('164.54.212.169')
         red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
                                   sentinel_port=26379,
-                                  master_name="remote_master")
+                                  main_name="remote_main")
 
         self.UpdateStatusDataserver()
         counter = 0

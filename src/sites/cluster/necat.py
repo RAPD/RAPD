@@ -40,7 +40,7 @@ def checkCluster():
     """
     Quick check run at beginning of pipelines to see if job was subitted to computer cluster node (returns True) or
     run locally (returns False). The pipelines will use this to know whether to subprocess.Process subjobs or submit to
-    compute cluster queueing system. This is the master switch for turning on or off a compute cluster.
+    compute cluster queueing system. This is the main switch for turning on or off a compute cluster.
     """
     import socket
     #Can create a list of names of your compute nodes for checking. Ours all start with 'compute-'.
@@ -57,7 +57,7 @@ def checkClusterConn(self):
   if self.verbose:
     self.logger.debug('Utilities::checkClusterConn')
   try:
-    command = 'qping -info gadolinium 536 qmaster 1'
+    command = 'qping -info gadolinium 536 qmain 1'
     job = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in job.stdout:
       self.logger.debug(line)
@@ -322,7 +322,7 @@ def process_cluster(command,
                   "stderr": '',
                   "tag": tag}
         result_queue.put(result)
-    #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
+    #Exit cleanly, otherwise main node gets event client timeout errors after 600s.
     if s:
         s.exit()
 
