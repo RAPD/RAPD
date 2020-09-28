@@ -18,8 +18,8 @@ export class WebsocketService {
   private timed_out: boolean = false;
   private connecting: boolean = false;
 
-  constructor(private globals_service: GlobalsService) {
-    this.websocketUrl = this.globals_service.site.websocketUrl;
+  constructor(private globalsService: GlobalsService) {
+    this.websocketUrl = this.globalsService.site.websocketUrl;
   }
 
   newResultsSubject() {
@@ -169,6 +169,10 @@ export class WebsocketService {
   setSession(session_id: string, session_type: string) {
     console.log("setSession", session_id);
 
+    // Share through globalsService
+    this.globalsService.currentSession = session_id;
+    console.log(this.globalsService.currentSession);
+
     let self = this;
 
     // Create a new results_subject
@@ -254,7 +258,7 @@ export class WebsocketService {
     this.results_subscribers.forEach(function(subscriber) {
       subscriber["subject"].complete();
       subscriber = null;
-    });    
+    });
 
     // Empty the array
     this.results_subscribers = [];

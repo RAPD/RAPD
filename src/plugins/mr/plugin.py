@@ -33,7 +33,7 @@ PLUGIN_TYPE = "MR"
 PLUGIN_SUBTYPE = "EXPERIMENTAL"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-ID = "9a2e"
+ID = "c33b"
 VERSION = "2.0.0"
 
 # Standard imports

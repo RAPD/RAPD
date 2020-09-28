@@ -178,6 +178,7 @@ UserSchema.statics.getAuthenticated = function(email, password, cb) {
              console.log('match');
              // Remove the password from the returned
              user.password = undefined;
+             user.pass = undefined;
              // if there's no lock or failed attempts, just return the user
              if (!user.loginAttempts && !user.lockUntil) {
                return cb(null, user);

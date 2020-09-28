@@ -3,9 +3,7 @@ import { Component,
          OnInit,
          Output,
          ViewContainerRef } from '@angular/core';
-import { MatDialog,
-         MatDialogRef,
-         MatDialogConfig } from '@angular/material';
+import { MatDialog, MatDialogRef, MatDialogConfig } from '@angular/material/dialog';
 
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';

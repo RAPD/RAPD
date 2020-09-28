@@ -138,7 +138,6 @@ def is_run_from_imagename(imagename):
         return True
     else:
         return False
-    
 
 def calculate_flux(header, site_params):
     """

@@ -1,19 +1,18 @@
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Headers, Response } from "@angular/http";
-
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import * as moment from "moment-mini";
+// import * as moment from "moment-mini";
 
 import { GlobalsService } from "./globals.service";
 
-import { User } from "../classes/user";
 import { Group } from "../classes/group";
-import { Session } from "../classes/session";
-import { Project } from "../classes/project";
 import { Image } from "../classes/image";
+import { Project } from "../classes/project";
 import { Run } from "../classes/run";
+import { Session } from "../classes/session";
+import { User } from "../classes/user";
 
 function baseName(str: string): string {
   var base = new String(str).substring(str.lastIndexOf("/") + 1);
@@ -106,18 +105,6 @@ export class RestService {
           pom.click();
         }
       });
-    //   // Tell the subscribed caller we are all good
-    //   return Observable.of({
-    //     success: true
-    //   });
-    //   // There was an error in the REST server
-    // } else {
-    //   return data;
-    // }
-    // })
-    // // There was an error
-    // .catch(error => this.handleError(error))
-    // );
   }
 
   public getDownloadByHash(hash: string, filename: string): void {
@@ -157,18 +144,45 @@ export class RestService {
           pom.click();
         }
       });
-    //   // Tell the subscribed caller we are all good
-    //   return Observable.of({
-    //     success: true
-    //   });
-    //   // There was an error in the REST server
-    // } else {
-    //   return data;
-    // }
-    // })
-    // // There was an error
-    // .catch(error => this.handleError(error))
-    // );
+  }
+
+  //
+  // UglyMol Methods
+  //
+  public getPdbByHash(hash: string, filename: string) {
+
+    console.log("getPdbByHash", hash);
+
+    this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/get_pdb_by_hash/" + hash, {
+        responseType: "text",
+      }).subscribe(res => {
+        console.log(res);
+      });
+  }
+
+  public getPdb(pdbFile: string) {
+    console.log("getPdb", pdbFile);
+
+    return (this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_pdb/" + pdbFile, {
+        responseType: "text"
+      }));
+      // .subscribe(res => {
+      //   console.log(res);
+      // });
+  }
+
+  public getMap(mapFile: string) {
+    console.log("getMap", mapFile);
+
+    return (this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/download_map/" + mapFile, {
+        responseType: "arraybuffer",
+      }));
+      // .subscribe(res => {
+      //   console.log(res);
+      // });
   }
 
   //
@@ -265,14 +279,14 @@ export class RestService {
   public submitJob(request: any): Observable<any> {
     // console.log('submitJob', request);
 
-    let header = new HttpHeaders();
+    const header = new HttpHeaders();
     header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
 
     return (
       this.authHttp
         .put(
           this.globals_service.site.restApiUrl + "/jobs/submit",
-          JSON.stringify({ request: request })
+          JSON.stringify({ request })
           // { headers: header }
         )
         // .map(res => res.json())
@@ -345,14 +359,33 @@ export class RestService {
   }
 
   //
+  // PDB Methods
+  //
+  public getUploadedPdbsBySession(id: string): Observable<any> {
+    console.log("getUploadedPdbsBySession", id);
+
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/pdbs/by_session/" + id)
+      .catch(error => this.handleError(error));
+  }
+
+  //
   // PROJECT methods
   //
-  public getProjects() {
+  public getProjects(): Observable<any> {
     // TODO :Observable<Project[]> {
     console.log("getProjects");
 
     return this.authHttp
       .get(this.globals_service.site.restApiUrl + "/projects")
+      .catch(error => this.handleError(error));
+  }
+
+  public getProjectsBySession(id: string): Observable<any> {
+    console.log("getProjectsBySession", id);
+
+    return this.authHttp
+      .get(this.globals_service.site.restApiUrl + "/projects/by_session/" + id)
       .catch(error => this.handleError(error));
   }
 
@@ -561,9 +594,18 @@ export class RestService {
 
   // Generic error handler for connection problems
   private handleError(error) {
-    return Observable.of({
-      success: false,
-      message: error.toString()
+    // return Observable.of({
+    //   message: error.toString(),
+    //   success: false,
+    // });
+
+    // console.log(error);
+
+    return Observable.create(observer => {
+      observer.next({
+        message: error.message,
+        success: false
+      });
     });
   }
 }

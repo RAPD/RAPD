@@ -274,6 +274,11 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+
+    # Not in a data_root_dir environment
+    if not "gpfs" in fullname:
+        return False
+
     path_split    = fullname.split(os.path.sep)
     data_root_dir = False
 
@@ -400,7 +405,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    pprint(parameters)
+    # pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
@@ -517,18 +522,22 @@ def main(args):
     if test_image.endswith(".h5"):
         header = read_header(hdf5_file=test_image)
     elif test_image.endswith(".cbf"):
-        header = read_header(cbf_file=test_image)
+        header = read_header(input_file=test_image)
 
     # And print it out
     pprint(header)
 
+    # Test is_run_from_imagename
+    print "is_run_from_imagename:", is_run_from_imagename(test_image)
+
 if __name__ == "__main__":
 
     # Get the commandline args
-    #commandline_args = get_commandline()
-
+    commandline_args = get_commandline()
+    
     # Execute code
-    #main(args=commandline_args)
+    main(args=commandline_args)
+    
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
 
     # header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
@@ -557,7 +566,7 @@ if __name__ == "__main__":
     # Test get_data_root_dir with new epu filenames
     #print get_data_root_dir("/epu2/rdma/gpfs2/users/stanford/feng_E_3426/images/minrui/snaps/ZH_PAIR_0_000144/ZH_PAIR_0_000144.cbf")
     #print get_data_root_dir("/gpfs1/users/ucsd/corbett_C_3425/images/Kevin/runs/2_9/0_0/2_9_1_0854.cbf")
-    fl = FileLocation()
-    fl.test()
-    print fl.get_path('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
-    fl.release_data('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
+    # fl = FileLocation()
+    # fl.test()
+    # print fl.get_path('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')
+    # fl.release_data('/gpfs2/users/mskcc/stewart_E_3436/images/yehuda/runs/m12a/m12a_1_000001.cbf')

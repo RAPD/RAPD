@@ -216,6 +216,10 @@ def get_commandline():
     args = my_parser.parse_args()
     args.queue = False
 
+    # Fixes a problem from plugin-called code
+    args.exchange_dir = False
+    args.db_settings = False
+
     # Insert logic to check or modify args here
     # Running in interactive mode if this code is being called
     if args.json:
@@ -299,7 +303,7 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin_instance = plugin.RapdPlugin(command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(command=command, processed_results=False, tprint=tprint, logger=logger)
     plugin_instance.start()
 
 if __name__ == "__main__":
