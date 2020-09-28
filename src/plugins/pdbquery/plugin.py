@@ -789,18 +789,19 @@ class RapdPlugin(Thread):
         # Passback new results to RAPD
         self.send_results()
 
-    def transfer_files(self, result):
+    def transfer_files(self, results):
         """
         Transfer files to a directory that the control can access
         """
 
         self.logger.debug("transfer_files")
-
+        self.logger.debug("1")
+        self.logger.debug(results)
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
-
+            self.logger.debug("transfer_files",
+                             self.command["directories"].get("exchange_dir" ))
+            self.logger.debug("2")
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
@@ -808,59 +809,67 @@ class RapdPlugin(Thread):
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
 
-            # If there is a pdb produced -> data_produced
-            archive_dict = result.get("pdb", {})
-            archive_file = archive_dict.get("path", False)
-            if archive_file:
-                # Copy data
-                target = os.path.join(target_dir, os.path.basename(file_to_move))
-                shutil.copyfile(file_to_move, target)
-                # Store information
-                archive_dict["path"] = target
-                # Add to the results.data_produced array
-                self.results["results"]["data_produced"].append(archive_dict)
+            self.logger.debug("3")
 
-            # # Maps & PDB
-            # for my_map in ("map_1_1", "map_2_1", "pdb"):
-            #     archive_dict = result.get(my_map, {})
-            #     archive_file = archive_dict.get("path", False)
-            #     if archive_file:
-            #         # Move the file
-            #         target = os.path.join(target_dir, os.path.basename(archive_file))
-            #         shutil.move(archive_file, target)
-            #         # Store information
-            #     archive_dict["path"] = target
-            #     # Add to the results.data_produced array
-            #     self.results["results"]["data_produced"].append(archive_dict)
+            for result in (results.get("common_contaminants", [])+results.get("search_results", [])):
 
-            # Maps & PDB
-            for my_map in ("map_1_1", "map_2_1", "pdb"):
-                archive_dict = result.get(my_map, {})
+                self.logger.debug("4")
+
+                self.logger.debug("result")
+
+                # If there is a pdb produced -> data_produced
+                archive_dict = result.get("pdb", {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Copy data
+                    target = os.path.join(target_dir, os.path.basename(file_to_move))
+                    shutil.copyfile(file_to_move, target)
+                    # Store information
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+
+                # # Maps & PDB
+                # for my_map in ("map_1_1", "map_2_1", "pdb"):
+                #     archive_dict = result.get(my_map, {})
+                #     archive_file = archive_dict.get("path", False)
+                #     if archive_file:
+                #         # Move the file
+                #         target = os.path.join(target_dir, os.path.basename(archive_file))
+                #         shutil.move(archive_file, target)
+                #         # Store information
+                #     archive_dict["path"] = target
+                #     # Add to the results.data_produced array
+                #     self.results["results"]["data_produced"].append(archive_dict)
+
+                # Maps & PDB
+                for my_map in ("map_1_1", "map_2_1", "pdb"):
+                    archive_dict = result.get(my_map, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Move the file
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        shutil.move(archive_file, target)
+                        # Store information
+                        archive_dict["path"] = target
+                        # Add to the results.archive_files array
+                        self.results["results"]["for_display"].append(
+                            archive_dict)
+
+                # If there is an archive
+                archive_dict = result.get("tar", {})
                 archive_file = archive_dict.get("path", False)
                 if archive_file:
                     # Move the file
-                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    target = os.path.join(
+                        target_dir, os.path.basename(archive_file))
+                    self.logger.debug("target %s", target)
                     shutil.move(archive_file, target)
                     # Store information
                     archive_dict["path"] = target
                     # Add to the results.archive_files array
-                    self.results["results"]["for_display"].append(
+                    self.results["results"]["archive_files"].append(
                         archive_dict)
-
-            # If there is an archive
-            archive_dict = result.get("tar", {})
-            archive_file = archive_dict.get("path", False)
-            if archive_file:
-                # Move the file
-                target = os.path.join(
-                    target_dir, os.path.basename(archive_file))
-                self.logger.debug("target %s", target)
-                shutil.move(archive_file, target)
-                # Store information
-                archive_dict["path"] = target
-                # Add to the results.archive_files array
-                self.results["results"]["archive_files"].append(
-                    archive_dict)
         
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""

@@ -134,7 +134,11 @@ class FileLocation():
             # Tell file_tracker to not remove dataset!
             #self.hold_data(dir)
             # Pass back location in RAMDISK
-            return os.path.join('%s%s'%(self.ram_prefix,dir), file_name)
+            #return os.path.join('%s%s'%(self.ram_prefix,dir), file_name)
+            
+            ### HACK to get RAPD2 to use Lustre
+            return os.path.join('%s%s'%(self.nvme_prefix,dir), file_name)
+          
         elif loc == 'nvme':
             # Tell file_tracker to not remove dataset!
             #self.hold_data(dir)

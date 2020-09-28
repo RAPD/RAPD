@@ -162,14 +162,7 @@ class RapdPlugin(Thread):
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
-        
-        #self.test = self.preferences.get("test", False)
-        self.test = self.preferences.get("test", True) # Limit number of runs on cluster
-        
-        #self.sample_type = self.preferences.get("type", "protein")
-        #self.solvent_content = self.preferences.get("solvent_content", 0.55)
-        # Number of molecules specified
-        #self.nmol = self.preferences.get('nmol', False)
+
         # Input data MTZ file
         self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Input PDB/mmCIF file or PDB code.
@@ -200,9 +193,9 @@ class RapdPlugin(Thread):
     def run(self):
         """Execution path of the plugin"""
 
-        #self.preprocess()
-        #self.process()
-        #self.postprocess()
+        self.preprocess()
+        self.process()
+        self.postprocess()
 
     def preprocess(self):
         """Set up for plugin action"""
@@ -421,8 +414,8 @@ class RapdPlugin(Thread):
         """Start Phaser for input pdb"""
 
         self.logger.debug("process_phaser")
-        self.tprint("\nStarting molecular replacement", level=30, color="blue")
 
+        self.tprint("\nStarting molecular replacement", level=30, color="blue")
         self.tprint("  Assembling Phaser runs", level=10, color="white")
 
         def launch_job(inp):
@@ -441,8 +434,7 @@ class RapdPlugin(Thread):
                 # Add result queue
                 queue = self.manager.Queue()
                 inp['result_queue'] = queue
-            #inp['result_queue'] = queue
-            #inp['result_queue_ip'] = self.manager_queue.address
+
             # Launch the job
             job, pid = run_phaser(**inp)
             self.jobs[job] = {'name': inp['name'],
@@ -481,7 +473,7 @@ class RapdPlugin(Thread):
                         "spacegroup": sg,
                         "ncopy": copy,
                         "adf": self.adf,
-                        #"test": self.test,
+                        #"test": self.preferences.get("test", False),
                         "resolution": res,
                         "launcher": self.launcher,
                         "tag": False,
@@ -532,16 +524,13 @@ class RapdPlugin(Thread):
                     os.unlink(new)
                 shutil.copy(orig, new)
                 results["tar"]["path"] = new
-        
-        #if results.get("logs", False):
-        #    results["logs"]["phaser"] = 'log'
 
         # Send back results skipping whether quick or full run.
         #self.results['results']['mr_results'][job_name[:-2]].append(results)
         self.results['results']['mr_results'].update({job_name[:-2] : results})
         # Show results in log 
-        self.logger.debug(results)
-        
+        #self.logger.debug(results)
+
         # Save results for command line
         self.phaser_results[job_name] = {"results": results}
         # Update the status number

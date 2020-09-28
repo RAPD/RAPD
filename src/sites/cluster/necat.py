@@ -99,7 +99,8 @@ def get_resources(command):
         return 4
     elif command in ('INTEGRATE'):
         #Integrate gets number of processors and number of jobs
-        return (4, 8)
+        #return (4, 8)
+        return (8, 8)
     else:
         return 1
 

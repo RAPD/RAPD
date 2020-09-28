@@ -73,7 +73,7 @@ class ControllerServer(Thread):
 
             channel, message = self.redis.brpop(["RAPD_RESULTS"])
 
-            print channel, message
+            # print channel, message
             
             # Trying to catch hanging
             try:
