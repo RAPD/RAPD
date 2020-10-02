@@ -221,7 +221,7 @@ class Model(object):
         # Shorten variable names
         site = self.site
 
-        import sites.detectors.necat_dectris_eiger16m
+        #import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
         if site.DETECTOR:
@@ -736,18 +736,13 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-<<<<<<< HEAD
         # If the detector can determine if run or snap from the image name
+        ## I don't remember which line is correct for catching th e exceptions??
+        #if getattr(detector, "is_run_from_imagename", None):
         if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
                 self.logger.debug("Have function")
-=======
-        # If the detector can determine if run or snap
-        # Make sure we have a function
-        if getattr(detector, "is_run_from_imagename", None):
-            if isinstance(detector.is_run_from_imagename, types.FunctionType):
->>>>>>> origin/jon_working
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
                     self.logger.debug("Could NOT be a snap")

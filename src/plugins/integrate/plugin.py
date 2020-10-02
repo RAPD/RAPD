@@ -620,10 +620,10 @@ class RapdPlugin(Process):
         self.run_analysis_plugin()
         
         # Run pdbquery - now at tail of analysis
-        # self.run_pdbquery_plugin()
+        self.run_pdbquery_plugin()
 
         # Send back results - the final time
-        #self.send_results(self.results)
+        self.send_results(self.results)
 
         # Save output
         self.write_json(self.results)
@@ -711,15 +711,15 @@ class RapdPlugin(Process):
             os.chdir(start_dir)
 
             # Chain on the PDBQuery
-            time.sleep(15)
-            self.run_pdbquery_plugin()
+            #time.sleep(15)
+            #self.run_pdbquery_plugin()
 
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
 
             # Chain on the PDBQuery
-            self.run_pdbquery_plugin()
+            #self.run_pdbquery_plugin()
             
     def run_pdbquery_plugin(self):
         """Set up and run the analysis plugin"""

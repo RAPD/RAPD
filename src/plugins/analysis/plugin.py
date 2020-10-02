@@ -336,7 +336,7 @@ calculation",
 
             self.logger.debug("Sending back on redis")
 
-            self.logger.debug(self.results)
+            #self.logger.debug(self.results)
 
             #if results.get('results', False):
             #    if results['results'].get('data_produced', False):

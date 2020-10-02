@@ -45,16 +45,16 @@ import threading
 
 # Dectris Pilatus 6M
 import detectors
-import detectors.dectris.dectris_eiger16m as detector
+import detectors.dectris.dectris_eiger2_16m as detector
 import detectors.detector_utils as utils
 
 # Detector information
 # The RAPD detector type
-DETECTOR = "dectris_eiger16m"
+DETECTOR = "dectris_eiger2_16m"
 # The detector vendor as it appears in the header
-VENDORTYPE = "Eiger-16M"
+VENDORTYPE = "Eiger2-16M"
 # The detector serial number as it appears in the header
-DETECTOR_SN = "Dectris Eiger 16M S/N E-32-0108"
+DETECTOR_SN = "Dectris Eiger2 16M S/N E-32-0124"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
 # Template for image name generation ? for frame number places
@@ -75,7 +75,7 @@ XDSINP0 = detector.XDSINP
 # only if there are differnces or new keywords.
 # The tuple should contain two items (key and value)
 # ie. XDSINP1 = [("SEPMIN", "4"),]
-XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
+XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '3') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '13') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '9') ,
     ('OVERLOAD', '3000000') ,
@@ -84,14 +84,6 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     ('REFINE(INTEGRATE)', 'BEAM ORIENTATION CELL! POSITION') ,
     ('TRUSTED_REGION', '0.00 1.2') ,
     ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '8000. 30000.') ,
-    ('UNTRUSTED_RECTANGLE11', '    0 4151    225  260'),
-    ('UNTRUSTED_RECTANGLE12', '    0 4151    806  811'),
-    ('UNTRUSTED_RECTANGLE13', '    0 4151   1357 1362'),
-    ('UNTRUSTED_RECTANGLE14', '    0 4151   1908 1913'),
-    ('UNTRUSTED_RECTANGLE15', '    0 4151   2459 2464'),
-    ('UNTRUSTED_RECTANGLE16', '    0 4151   3010 3015'),
-    ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
-    ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
     # Signal to say which beamline.
     #('CLUSTER_NODES', 'NECAT_E'),
     # Signal to say rapd2 job.
@@ -106,8 +98,8 @@ class FileLocation():
     def __init__(self, logger=False, verbose=False):
         #threading.Thread.__init__ (self)
         #self.logger = logger
-        self.ip = '164.54.212.218'
-        self.ram_prefix = '/epu/rdma'
+        self.ip = '164.54.212.32'
+        self.ram_prefix = '/epu2/rdma'
         #self.ip = '164.54.212.219'
         #self.ram_prefix = '/epu2/rdma'
         #self.nvme_prefix = '/epu/nvme'
@@ -383,7 +375,8 @@ def base_read_header(image,
 
     parameters = {
         "fullname": image,
-        "detector": "Eiger-16M",
+        #"detector": "Eiger2-16M",
+        "detector": VENDORTYPE,
         "directory": os.path.dirname(image),
         "image_prefix": "_".join(base.split("_")[0:-2]),
         # "run_number": int(base.split("_")[-2]),
@@ -453,7 +446,7 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
         header["collect_mode"] = "RUN"
 
     # Add tag for module to header
-    header["rapd_detector_id"] = "necat_dectris_eiger16m"
+    header["rapd_detector_id"] = "necat_dectris_eiger2_16m"
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])

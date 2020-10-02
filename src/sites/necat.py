@@ -219,7 +219,8 @@ BEAM_INFO.update({"NECAT_T": BEAM_INFO["NECAT_E"]})
 
 ################ Logging #################
 # Linux should be /var/log/
-LOGFILE_DIR = "/share/apps/necat/tmp2"
+#LOGFILE_DIR = "/share/apps/necat/tmp2"
+LOGFILE_DIR = "/gpfs6/users/necat/rapd2/logs"
 LOG_LEVEL = 50
 
 ################ Directories ################
@@ -299,7 +300,8 @@ DETECTOR = False
 #DETECTOR_SUFFIX = ".img"
 DETECTOR_SUFFIX = ".cbf"
 # Keyed to ID
-DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
+DETECTORS = {"NECAT_C":("NECAT_DECTRIS_EIGER2_16M", ""),
+             #"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
              "NECAT_E":("NECAT_DECTRIS_EIGER16M", ""),
              "NECAT_T":("NECAT_DECTRIS_EIGER16M", "")}
 

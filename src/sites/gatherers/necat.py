@@ -206,11 +206,14 @@ class Gatherer(object):
         #pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
         return_array = pipe.execute()
         # extend path with the '0_0' to path for Pilatus
+        dir = return_array[0]
+        """
         if self.tag == 'NECAT_C':
             #dir = os.path.join(return_array[0], "0_0")
             dir = '%s%s'%(return_array[0], "0_0")
         else:
             dir = return_array[0]
+        """
         # Get rid of trailing slash from beamline Redis.
         if dir[-1] == '/':
             dir = dir[:-1]

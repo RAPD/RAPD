@@ -737,7 +737,7 @@ class RapdPlugin(Thread):
         """fix Phaser results and pass back"""
         
         self.logger.debug("postprocess_phaser")
-        self.logger.debug(results)
+        #self.logger.debug(results)
 
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
@@ -799,8 +799,8 @@ class RapdPlugin(Thread):
         self.logger.debug(results)
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            self.logger.debug("transfer_files",
-                             self.command["directories"].get("exchange_dir" ))
+            #self.logger.debug("transfer_files",
+            #                 self.command["directories"].get("exchange_dir" ))
             self.logger.debug("2")
             # Determine and validate the place to put the data
             target_dir = os.path.join(
@@ -853,8 +853,7 @@ class RapdPlugin(Thread):
                         # Store information
                         archive_dict["path"] = target
                         # Add to the results.archive_files array
-                        self.results["results"]["for_display"].append(
-                            archive_dict)
+                        self.results["results"]["for_display"].append(archive_dict)
 
                 # If there is an archive
                 archive_dict = result.get("tar", {})
@@ -866,11 +865,11 @@ class RapdPlugin(Thread):
                     self.logger.debug("target %s", target)
                     shutil.move(archive_file, target)
                     # Store information
-                archive_dict["path"] = target
-                # Add to the results.data_produced array
-                self.results["results"]["data_produced"].append(archive_dict)
-
-            # Maps & PDB
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+            """
+            # Maps & PDB (IS THIS REQUIRED?? or leftover garbage???)
             for my_map in ("map_1_1", "map_2_1", "pdb"):
                 archive_dict = result.get(my_map, {})
                 archive_file = archive_dict.get("path", False)
@@ -883,7 +882,7 @@ class RapdPlugin(Thread):
                     # Add to the results.archive_files array
                     self.results["results"]["archive_files"].append(
                         archive_dict)
-        
+            """
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""
         
@@ -921,14 +920,22 @@ class RapdPlugin(Thread):
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
                 # This try/except is for when results aren't in Redis in time.
+                
+                # getting error that I cannot track down
+                # plugin.py.finish_job 929 - ERROR Error local variable 'result' referenced before assignment
+                results = json.loads(results_json)
+                self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['tag'])
+                """
                 try:
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])
                 except Exception as e:
-                    self.logger.error('Error '+ str(e))
+                    self.logger.error('Error: '+ str(e))
                     #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
                     #print results_json
+                """
             else:
                 results = info['result_queue'].get()
                 # pprint(results.get('stdout', " "))
@@ -986,8 +993,7 @@ class RapdPlugin(Thread):
                     break
         if timed_out:
             if self.verbose:
-                self.logger.debug('AutoStat timed out.')
-                print 'AutoStat timed out.'
+                self.logger.debug('PDBQuery timed out.')
             for job in self.jobs.keys():
                 if self.computer_cluster:
                     # Kill job on cluster:
@@ -997,7 +1003,6 @@ class RapdPlugin(Thread):
                     job.terminate()
                 # Get the job info
                 info = self.jobs.pop(job)
-                print 'Timeout Phaser on %s'%info['name']
                 self.logger.debug('Timeout Phaser on %s'%info['name'])
                 # Send timeout result to postprocess
                 self.postprocess_phaser(info['name'], {"solution": False,
