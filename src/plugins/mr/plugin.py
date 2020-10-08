@@ -548,19 +548,27 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
+            #print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
+                if info['name'].count('P41212'):
+                    self.logger.debug('results_json: %s'%results_json)
                 # This try/except is for when results aren't in Redis in time.
+                results = json.loads(results_json)
+                self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['tag'])
+                """
                 try:
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])
                 except Exception as e:
                     self.logger.error('Error '+ str(e))
+                    #self.logger.error('results_json: %s'%results_json)
                     #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
                     #print results_json
+                """
             else:
                 results = info['result_queue'].get()
                 self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
@@ -685,16 +693,14 @@ class RapdPlugin(Thread):
 
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
-
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-
+            
+            """
             # If there is data produced (Used for files that could be passed to another Plugin later)
             files_to_move = ("pdb", "mtz", "adf", "peak")
             for key in files_to_move:
@@ -736,7 +742,7 @@ class RapdPlugin(Thread):
                 # Add to the results.archive_files array
                 self.results["results"]["archive_files"].append(
                     archive_dict)
-        
+            """
     def postprocess_invalid_input_file(self):
         """Make a proper result for PDB that could not be downloaded"""
         self.logger.debug("postprocess_invalid_input_file")

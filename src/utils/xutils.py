@@ -243,22 +243,25 @@ def date_adsc_to_sql(datetime_in):
     #print ' '.join((date,time))
     return('T'.join((date,time)))
 
-def calc_ADF_map(data_file, mtz, pdb):
+def calc_ADF_map(data_file, phaser_mtz, phaser_pdb):
     """
     Calc an ADF from MR phases.
+    data_file - mtz file from processed data collection
+    phaser_mtz - MTZ file out of Phaser
+    phaser_pdb - PDB file out of Phaser
     """
-    adf_map = mtz.replace('.mtz', '_adf.map')
+    adf_map = phaser_mtz.replace('.mtz', '_adf.map')
     peak = adf_map.replace('.map', '_peak.pdb')
     com_file = os.path.join(os.getcwd(),"adf.com")
 
-    command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(mtz, data_file)
+    command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(phaser_mtz, data_file)
     command += "labin file 1 E1=FC  E2=PHIC E3=FOM\n"
     command += "labin file 2 all\nend\neof3\n"
     command += "fft hklin adf_input.mtz mapout map.tmp<<eof4\n"
     command += "scale F1 1.0\n"
     command += "labin DANO=DANO SIG1=SIGDANO PHI=PHIC W=FOM\n"
     command += "end\neof4\n"
-    command += "mapmask mapin map.tmp xyzin %s mapout %s<<eof5\n" % (pdb, adf_map)
+    command += "mapmask mapin map.tmp xyzin %s mapout %s<<eof5\n" % (phaser_pdb, adf_map)
     command += "border 5\nend\neof5\n"
     command += "peakmax mapin %s xyzout %s<<eof6\n" % (adf_map, peak)
     command += "numpeaks 50\nend\neof6\n\n"

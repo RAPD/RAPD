@@ -2072,6 +2072,14 @@ class RapdPlugin(Process):
         os.chdir(directory)
 
         orig_rescut = False
+        
+        # Check if XDS logs exist
+        l = ["IDXREF.LP", "INTEGRATE.LP", "CORRECT.LP"]
+        for f in l:
+            if not os.path.exists(f):
+                self.logger.debug('    XDS did not run properly!')
+                self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
+                return 'Failed'
 
         # Open up xds log files for saving
         xds_idxref_log = open("IDXREF.LP", "r").readlines()

@@ -743,6 +743,8 @@ class RapdPlugin(Thread):
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
         # Copy tar to working dir for commandline results
+        ## Have to determine when it is running in commandline mode##
+        """
         if results.get("tar", False):
             orig = results.get("tar", {"path":False}).get("path")
             if orig:
@@ -762,7 +764,7 @@ class RapdPlugin(Thread):
                 os.unlink(new)
             shutil.copy(orig, new)
             results["pdb_file"] = new
-        
+        """
          # Three result types to run through
         types = (
             ("custom_structures", self.custom_structures),
@@ -795,40 +797,49 @@ class RapdPlugin(Thread):
         """
 
         self.logger.debug("transfer_files")
-        self.logger.debug("1")
-        self.logger.debug(results)
-        #if self.preferences.get("exchange_dir", False):
+        #self.logger.debug(results)
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
-            self.logger.debug("2")
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-
-            self.logger.debug("3")
-
             for result in (results.get("common_contaminants", [])+results.get("search_results", [])):
-
-                self.logger.debug("4")
-
-                self.logger.debug("result")
-
                 # If there is a pdb produced -> data_produced
+                # Copy compressed results files to exchange dir and update path.
+                l = ["map_1_1", "map_2_1", 'pdb', 'mtz', 'tar']
+                for f in l:
+                    archive_dict = result.get(f, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Copy data
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        if f in ("map_1_1", "map_2_1", 'tar'):
+                            shutil.move(archive_file, target)
+                        else:
+                            # Once we know this works we can switch to moving files.
+                            shutil.copyfile(archive_file, target)
+                        # Store new path information
+                        archive_dict["path"] = target
+                        # Add to the results.data_produced array
+                        if f in ('pdb', 'mtz', 'tar'):
+                            self.results["results"]["data_produced"].append(archive_dict)
+                        # Also put PDB path in 'for_display' results
+                        if f in ('pdb', "map_1_1", "map_2_1"):
+                            self.results["results"]["for_display"].append(archive_dict)
+                """
                 archive_dict = result.get("pdb", {})
                 archive_file = archive_dict.get("path", False)
                 if archive_file:
                     # Copy data
-                    target = os.path.join(target_dir, os.path.basename(file_to_move))
-                    shutil.copyfile(file_to_move, target)
-                    # Store information
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.copyfile(archive_file, target)
+                    # Store new path information
                     archive_dict["path"] = target
                     # Add to the results.data_produced array
                     self.results["results"]["data_produced"].append(archive_dict)
-
+                """
                 # # Maps & PDB
                 # for my_map in ("map_1_1", "map_2_1", "pdb"):
                 #     archive_dict = result.get(my_map, {})
@@ -841,7 +852,7 @@ class RapdPlugin(Thread):
                 #     archive_dict["path"] = target
                 #     # Add to the results.data_produced array
                 #     self.results["results"]["data_produced"].append(archive_dict)
-
+                """
                 # Maps & PDB
                 for my_map in ("map_1_1", "map_2_1", "pdb"):
                     archive_dict = result.get(my_map, {})
@@ -854,7 +865,7 @@ class RapdPlugin(Thread):
                         archive_dict["path"] = target
                         # Add to the results.archive_files array
                         self.results["results"]["for_display"].append(archive_dict)
-
+                
                 # If there is an archive
                 archive_dict = result.get("tar", {})
                 archive_file = archive_dict.get("path", False)
@@ -868,6 +879,7 @@ class RapdPlugin(Thread):
                     archive_dict["path"] = target
                     # Add to the results.data_produced array
                     self.results["results"]["data_produced"].append(archive_dict)
+                """
             """
             # Maps & PDB (IS THIS REQUIRED?? or leftover garbage???)
             for my_map in ("map_1_1", "map_2_1", "pdb"):
@@ -919,20 +931,19 @@ class RapdPlugin(Thread):
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
-                # This try/except is for when results aren't in Redis in time.
-                
-                # getting error that I cannot track down
-                # plugin.py.finish_job 929 - ERROR Error local variable 'result' referenced before assignment
+                self.logger.debug('results_json: %s'%results_json)
                 results = json.loads(results_json)
                 self.postprocess_phaser(info['name'], results)
                 self.redis.delete(info['tag'])
                 """
+                # This try/except is for when results aren't in Redis in time.
                 try:
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])
                 except Exception as e:
                     self.logger.error('Error: '+ str(e))
+                    self.logger.error('results_json: %s'%results_json)
                     #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
                     #print results_json
                 """

@@ -104,17 +104,6 @@ def get_resources(command):
     else:
         return 1
 
-def get_nproc_njobs_OLD():
-    """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 8)
-  
-def determine_nproc_OLD(command):
-    """Determine how many processors to reserve on the cluster for a specific job type."""
-    nproc = 1
-    if command in ('INDEX'):
-        nproc = 4
-    return nproc
-  
 def fix_command_OLD(message):
     """
     Adjust the command passed in in install-specific ways
