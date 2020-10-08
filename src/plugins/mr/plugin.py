@@ -374,6 +374,7 @@ class RapdPlugin(Thread):
             "data_produced": [],
             "messages": [],
             "errors": [],
+            "for_display": []
         }
     
     def connect_to_redis(self):
@@ -700,6 +701,33 @@ class RapdPlugin(Thread):
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
             
+            # Copy compressed results files to exchange dir and update path.
+            l = ["map_1_1", "map_2_1", 'pdb', 'mtz', 'tar', 'adf', 'peak']
+            for f in l:
+                if result.get(f, False):
+                    archive_dict = result.get(f, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Copy data
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        # Copy files for now to make sure they are produced
+                        shutil.copyfile(archive_file, target)
+                        """
+                        if f in ("map_1_1", "map_2_1", 'tar'):
+                            shutil.move(archive_file, target)
+                        else:
+                            # Once we know this works we can switch to moving files.
+                            shutil.copyfile(archive_file, target)
+                        """
+                        # Store new path information
+                        archive_dict["path"] = target
+                        # Add to the results.data_produced array
+                        if f in ('pdb', 'mtz', 'tar', 'adf', 'peak'):
+                            self.results["results"]["data_produced"].append(archive_dict)
+                        # Also put PDB path in 'for_display' results
+                        if f in ('pdb', "map_1_1", "map_2_1", 'adf', 'peak'):
+                            self.results["results"]["for_display"].append(archive_dict)
+
             """
             # If there is data produced (Used for files that could be passed to another Plugin later)
             files_to_move = ("pdb", "mtz", "adf", "peak")
