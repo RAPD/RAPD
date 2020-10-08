@@ -5,32 +5,20 @@ import logging.handlers
 from utils.processes import local_subprocess, mp_pool
 import utils.xutils as xutils
 import utils.log
-
-# Setup cluster
 import sites.necat as site
-
 from utils.modules import load_module
-cluster_launcher = load_module(site.CLUSTER_ADAPTER)
-launcher = cluster_launcher.process_cluster
-# Setup local_subprocess
-#launcher = local_subprocess
 
 
-# Setup redis
-redis_database = importlib.import_module('database.redis_adapter')
-#redis_database = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
-redis = redis_database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
-#redis = redis_database.connect_to_redis()
-
-
-
-def run_analysis():
+def run_analysis(work_dir, logfile):
     """ RUN Analysis """
-    
     import plugins.analysis.plugin
     import plugins.analysis.commandline
     
-    logger = get_logger("/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_analysis.log")
+    if not os.path.exists(work_dir):
+        os.mkdirs(work_dir)
+    os.chdir(work_dir)
+    
+    logger = get_logger(logfile)
     
     # Construct the pdbquery plugin command
     class AnalysisArgs(object):
@@ -58,18 +46,24 @@ def run_analysis():
     
     # Run the plugin
     plugin_instance = plugin.RapdPlugin(analysis_command,
-                                        launcher=launcher,
+                                        #launcher=launcher,
                                         tprint=False,
                                         logger=logger)
     
     plugin_instance.start()
 
-def run_pdbquery():
+def run_pdbquery(work_dir, logfile):
     # RUN PDBQuery
     import plugins.pdbquery.plugin
     import plugins.pdbquery.commandline
     
-    os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
+    if not os.path.exists(work_dir):
+        os.mkdirs(work_dir)
+    os.chdir(work_dir)
+    
+    logger = get_logger(logfile)
+    
+    #os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
     #launcher = local_subprocess
     
     # Construct the pdbquery plugin command
@@ -108,12 +102,17 @@ def run_pdbquery():
                                         logger=logger)
     plugin_instance.start()
 
-def run_mr():
+def run_mr(work_dir, logfile):
     #RUN MR
     import plugins.mr.plugin
     import plugins.mr.commandline
     import uuid
     
+    if not os.path.exists(work_dir):
+        os.mkdirs(work_dir)
+    os.chdir(work_dir)
+    
+    logger = get_logger(logfile)
     os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
     #launcher = local_subprocess
     
@@ -150,13 +149,19 @@ def run_mr():
     
     # Run the plugin
     plugin_instance = plugin.RapdPlugin(site=site,
-                                        command=mr_command)
+                                        command=mr_command,
+                                        logger=logger)
     plugin_instance.start()
 
-def run_mr_local():
+def run_rapd_phaser(work_dir, logfile=False):
     """ Run MR on local machine"""
     from plugins.subcontractors.rapd_phaser import run_phaser
     
+    if not os.path.exists(work_dir):
+        os.mkdirs(work_dir)
+    os.chdir(work_dir)
+    if logfile:
+        logger = get_logger(logfile)
     # Setup local_subprocess
     launcher = local_subprocess
     pool = mp_pool(1)
@@ -200,12 +205,15 @@ def run_mr_local():
     pool.close()
     pool.join()
 
-def run_calc_ADF():
+def run_calc_ADF(work_dir, logfile=False):
     data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
     pdb = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.pdb'
     mtz = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.mtz'
     
-    os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0')
+    if not os.path.exists(work_dir):
+        os.mkdirs(work_dir)
+    os.chdir(work_dir)
+    #os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0')
     
     adf_results = xutils.calc_ADF_map(data_file=data_file,
                                mtz=mtz,
@@ -223,7 +231,14 @@ def get_logger(log_path):
                                   console=False)
     return logger
     
-    
+
+
+# To run a plugin, fill in the info:
+work_dir = '/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test'
+logfile = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr.log'
+
+#plugin to run
+run_mr(work_dir, logfile)
     
     
 
