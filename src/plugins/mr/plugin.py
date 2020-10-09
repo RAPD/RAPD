@@ -553,14 +553,12 @@ class RapdPlugin(Thread):
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
-                if info['name'].count('P41212'):
-                    self.logger.debug('results_json: %s'%results_json)
-                # This try/except is for when results aren't in Redis in time.
                 results = json.loads(results_json)
                 self.postprocess_phaser(info['name'], results)
                 self.redis.delete(info['tag'])
                 """
                 try:
+                    # This try/except is for when results aren't in Redis in time.
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])

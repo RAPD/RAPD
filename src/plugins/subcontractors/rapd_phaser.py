@@ -49,7 +49,7 @@ import phaser
 # RAPD imports
 from utils import archive, pdb
 from utils.processes import local_subprocess
-from utils.xutils import convert_unicode, calc_ADF_map
+from utils.xutils import convert_unicode, calc_ADF_map, calc_maps
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
@@ -541,7 +541,9 @@ def run_phaser(data_file,
             print r.ErrorName(), "ERROR :", r.ErrorMessage()
         
         # Save log files for debugging
+        # passesed into results
         phaser_log = r.logfile()
+        # saved to a file for viewing.
         with open('phaser.log', 'w') as log:
             log.write(r.logfile())
             log.close()
@@ -626,9 +628,11 @@ def run_phaser(data_file,
             # Calculate 2Fo-Fc & Fo-Fc maps
             # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
             ## create new function based on xutils.calc_ADF_map to calc maps##
-            local_subprocess(command="phenix.mtz2map %s %s" % (phaser_result.get("mtz_file"), phaser_result.get("pdb_file")),
-                             logfile='map.log',
-                             shell=True)
+            #local_subprocess(command="phenix.mtz2map %s %s" % (phaser_result.get("mtz_file"), phaser_result.get("pdb_file")),
+            #                 logfile='map.log',
+            #                 shell=True)
+            calc_maps(mtz_file=phaser_result.get("mtz_file"), 
+                      pdb_file=phaser_result.get("pdb_file"))
 
             d = {'map_2_1': phaser_result.get("mtz_file").replace(".mtz", "_2mFo-DFc.ccp4"),
                  'map_1_1': phaser_result.get("mtz_file").replace(".mtz", "_mFo-DFc.ccp4"),
@@ -703,7 +707,8 @@ def run_phaser(data_file,
                              "solution": False,
                              "message": "No solution",
                              "spacegroup": spacegroup,
-                             "nmol": str(ncopy)}
+                             #"nmol": str(ncopy)
+                             }
         # Add the phaser log
         if phaser_log:
             phaser_result.update({"logs": {"phaser": phaser_log}})

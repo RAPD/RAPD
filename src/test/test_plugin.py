@@ -9,7 +9,7 @@ import sites.necat as site
 from utils.modules import load_module
 
 
-def run_analysis(work_dir, logfile):
+def run_analysis(work_dir, logfile=False):
     """ RUN Analysis """
     import plugins.analysis.plugin
     import plugins.analysis.commandline
@@ -18,7 +18,10 @@ def run_analysis(work_dir, logfile):
         os.mkdirs(work_dir)
     os.chdir(work_dir)
     
-    logger = get_logger(logfile)
+    if logfile:
+        logger = get_logger(logfile)
+    else:
+        logger = False
     
     # Construct the pdbquery plugin command
     class AnalysisArgs(object):
@@ -60,8 +63,11 @@ def run_pdbquery(work_dir, logfile):
     if not os.path.exists(work_dir):
         os.mkdirs(work_dir)
     os.chdir(work_dir)
-    
-    logger = get_logger(logfile)
+    # Setup logger if logfile is given
+    if logfile:
+        logger = get_logger(logfile)
+    else:
+        logger = False
     
     #os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
     #launcher = local_subprocess
@@ -111,11 +117,11 @@ def run_mr(work_dir, logfile):
     if not os.path.exists(work_dir):
         os.mkdirs(work_dir)
     os.chdir(work_dir)
-    
-    logger = get_logger(logfile)
-    os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test')
     #launcher = local_subprocess
-    
+    if logfile:
+        logger = get_logger(logfile)
+    else:
+        logger = False
     
     # Construct the pdbquery plugin command
     class MRArgs(object):
@@ -160,8 +166,8 @@ def run_rapd_phaser(work_dir, logfile=False):
     if not os.path.exists(work_dir):
         os.mkdirs(work_dir)
     os.chdir(work_dir)
-    if logfile:
-        logger = get_logger(logfile)
+    # logfile is always phaser.log
+    
     # Setup local_subprocess
     launcher = local_subprocess
     pool = mp_pool(1)

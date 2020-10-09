@@ -139,9 +139,13 @@ MR_results1 = {"pdb_file": "/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/
               "pdb": {"path": "/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.pdb.tar.bz2", "hash": "39312381fd225d35b846c8b6c906ef8648801e6e", "description": "pdb"}, 
               "dir": "/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/rapd_mr_thau_free/P41212_all_0", "peak": None}
 
-log_path = "/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr.log"
-dir, log_name = os.path.split(log_path)
-print log_name[:log_name.rfind(".")]
+#log_path = "/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr.log"
+#dir, log_name = os.path.split(log_path)
+#print log_name[:log_name.rfind(".")]
+
+from mmtbx.command_line import mtz2map
+os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/rapd_mr_thau_free/P41212_all_0/P41212_all_0')
+mtz2map.run(['P41212_all_0.1.mtz', 'P41212_all_0.1.pdb'])
 
 
 """

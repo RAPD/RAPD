@@ -326,6 +326,11 @@ def calcADF_OLD(self, inp):
         # self.logger.exception('**Error in Utils.calcADF**')
         pass
     """
+def calc_maps(mtz_file, pdb_file):
+  """Calculates 2fofc and fofc maps from Phaser MTZ file."""
+  from mmtbx.command_line import mtz2map
+  mtz2map.run([mtz_file, pdb_file])
+
 def calcResNumber(self,sg,se=False,vol=False):
   """
   Calculates total number of residues or number of Se in AU.

@@ -1016,7 +1016,9 @@ class RapdPlugin(Thread):
                 info = self.jobs.pop(job)
                 self.logger.debug('Timeout Phaser on %s'%info['name'])
                 # Send timeout result to postprocess
-                self.postprocess_phaser(info['name'], {"solution": False,
+                self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                       "solution": False,
+                                                       "spacegroup": info['spacegroup'],
                                                        "message": "Timed out"})
                 # Delete the Redis key
                 self.redis.delete(info['tag'])
