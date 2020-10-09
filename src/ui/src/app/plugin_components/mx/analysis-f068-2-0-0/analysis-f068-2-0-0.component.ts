@@ -1,4 +1,6 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component,
+         Input,
+         OnInit } from "@angular/core";
 
 import { GlobalsService } from "../../../shared/services/globals.service";
 
@@ -56,30 +58,32 @@ export class AnalysisF068200Component implements OnInit {
 
   constructor(private globals_service: GlobalsService) {}
 
-  ngOnInit() {
+  public ngOnInit() {
+
     console.log(this.result);
 
-    if ("Intensity plots" in this.result.results.parsed.xtriage.plots) {
-      this.selected_plot = "Intensity plots";
-      this.setPlot("Intensity plots");
+    if (this.result.results.parsed.xtriage.plots) {
+      if ("Intensity plots" in this.result.results.parsed.xtriage.plots) {
+        this.selected_plot = "Intensity plots";
+        this.setPlot("Intensity plots");
+      }
     }
   }
 
-  setPlot(plot_key: string) {
-    console.log("setPlot", plot_key);
+  public setPlot(plotKey: string) {
 
     // Simplify
-    let plot_data = this.result.results.parsed.xtriage.plots[plot_key];
+    let plotData = this.result.results.parsed.xtriage.plots[plotKey];
 
     // Common vars
-    this.data.xs = plot_data.x_data;
-    this.data.ys = plot_data.y_data;
+    this.data.xs = plotData.x_data;
+    this.data.ys = plotData.y_data;
     this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-      plot_data.parameters.xlabel;
+      plotData.parameters.xlabel;
     this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-      plot_data.parameters.ylabel;
+      plotData.parameters.ylabel;
 
-    switch (plot_key) {
+    switch (plotKey) {
       case "Intensity plots":
         // Make sure the x labels are only 2 places...
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
@@ -98,6 +102,16 @@ export class AnalysisF068200Component implements OnInit {
         break;
 
       case "Measurability of Anomalous signal":
+
+        // Create the minimum signal line
+        const dataLen = this.data.ys[0].data.length;
+        const minLineData = {
+          data: new Array(dataLen).fill(0.05),
+          label: "Min Level",
+          pointRadius: 0,
+        };
+        this.data.ys.push(minLineData);
+
         // Change x label
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
           "Resolution (\u00C5)";

@@ -6,15 +6,11 @@ import {
   ViewContainerRef
 } from "@angular/core";
 
-import { Router, ActivatedRoute, ParamMap } from "@angular/router";
+import { ActivatedRoute, ParamMap, Router } from "@angular/router";
 
-import {
-  MatDialog,
-  MatDialogRef,
-  MAT_DIALOG_DATA,
-  MatSnackBar,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatToolbarModule } from "@angular/material/toolbar";
 
 import "rxjs/add/operator/switchMap";
 // import { Observable } from 'rxjs/Observable';
@@ -38,6 +34,7 @@ import * as mx from "../../plugin_components/mx";
 var mx_values = [];
 var mx_components = {};
 for (let key in mx) {
+  // console.log(mx[key]);
   mx_values.push(mx[key]);
   mx_components[key.toLowerCase()] = mx[key];
 }
@@ -73,7 +70,7 @@ export class ProjectMxComponent implements OnInit {
   private selected_indexed_data: string[] = [];
 
   // Where results got
-  @ViewChild("output_outlet", { read: ViewContainerRef })
+  @ViewChild("output_outlet", { read: ViewContainerRef, static: false })
 outlet;
 
   constructor(
@@ -94,14 +91,28 @@ outlet;
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
       authToken: localStorage.getItem("access_token"),
-      autoUpload: true
+      autoUpload: true,
+      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
     });
+
+    // Add form fields
+    this.uploader.onBuildItemForm = (item, form) => {
+      console.log("onBuildItemForm");
+      console.log(item);
+      console.log(form);
+      form.append("foo", "bar");
+    };
+
     // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
-    this.uploader.onAfterAddingFile = file => {
+    this.uploader.onAfterAddingFile = (file) => {
       file.withCredentials = false;
     };
+
+    this.uploader.onBeforeUploadItem = (item) => {
+      console.log("onBeforeUploadItem");
+    };
+
     // overide the onCompleteItem property of the uploader so we are
     // able to deal with the server response.
     this.uploader.onCompleteItem = (
@@ -114,7 +125,7 @@ outlet;
     };
   }
 
-  getProject(id: string) {
+  public getProject(id: string) {
     this.rest_service.getProject(id).subscribe(parameters => {
       console.log(parameters);
       if (parameters.success === true) {
@@ -123,7 +134,7 @@ outlet;
     });
   }
 
-  toggleSourceDataIntegrateSelection(id: string) {
+  public toggleSourceDataIntegrateSelection(id: string) {
     // console.log('toggleSourceDataSelection', id);
 
     // Clear the result display?
@@ -140,7 +151,7 @@ outlet;
     }
   }
 
-  toggleSourceDataIndexSelection(id: string) {
+  public toggleSourceDataIndexSelection(id: string) {
     let index = this.selected_indexed_data.indexOf(id);
 
     // Clear the result display?
@@ -156,7 +167,14 @@ outlet;
     }
   }
 
-  selectSingleIntgrationAction(action: string) {
+  public toggleResultSelection(id:string) {
+
+    console.log("toggleResultSelection", id);
+
+    this.displayResult(id);
+  }
+
+  public selectSingleIntgrationAction(action: string) {
     console.log("selectSingleIntgrationAction", action);
 
     switch (action) {
@@ -176,7 +194,7 @@ outlet;
     }
   }
 
-  selectMultipleIntgrationAction(action: string) {
+  public selectMultipleIntgrationAction(action: string) {
     console.log("selectMultipleIntgrationAction", action);
 
     switch (action) {
@@ -196,7 +214,7 @@ outlet;
     }
   }
 
-  selectSingleIndexAction(action: string) {
+  public selectSingleIndexAction(action: string) {
     console.log("selectSingleIndexAction", action);
 
     switch (action) {
@@ -212,10 +230,11 @@ outlet;
     }
   }
 
-  displayResult(result_id: string) {
-    console.log("displayResult", result_id);
+  public displayResult(resultId: string) {
 
-    this.rest_service.getResult(result_id).subscribe(
+    console.log("displayResult", resultId);
+
+    this.rest_service.getResult(resultId).subscribe(
       parameters => {
         console.log(parameters);
         if (parameters.success === true) {

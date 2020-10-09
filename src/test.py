@@ -35,7 +35,16 @@ def connect_redis_manager_HA(name="remote_master"):
     sentinel = Sentinel(hosts)
     # Get the master redis instance
     return(sentinel.master_for(name))
-    
+
+def connect_remote_redis():
+
+    red = redis.Redis(host="164.54.212.169",
+            port=6379,
+            db=0)
+    # Save the pool for a clean exit.
+    return red
+
+
 def connect_sercat_redis():
 
     pool = redis.ConnectionPool(host="164.54.208.142",
@@ -99,11 +108,14 @@ def clear_cluster():
     myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in myoutput.stdout:
         split = line.split()
+        #print split
         if len(split) == 8:
-            if split[2].split('_')[0] in ['INDEX', 'INTEGRATE_', 'shelxd']:
-              l.append(split[0])
+            #if split[2].split('-')[0] in ['INTE']:
+              #l.append(split[0])
+            if split[2].count('INDEX-'):
+                l.append(split[0])
             #if split[4] == 'qw':
-                #l.append(split[0])
+            #    l.append(split[0])
             
     for pid in l:
         print pid
@@ -112,22 +124,45 @@ def clear_cluster():
 
 #clear_cluster()
 
-dat_dirs =  ['/gpfs5/users/necat/phii_dfa_1/in',
-                                           '/gpfs5/users/necat/phii_dfa_2/in',
-                                           '/gpfs5/users/necat/phii_raster_snap/in',
-                                           '/gpfs5/users/necat/phii_rastersnap_scan_data',
-                                           '/gpfs5/users/necat/phii_dfa_scan_data',
-                                           '/gpfs5/users/necat/phii_ova_scan_data',
-                                           '/gpfs5/users/necat/rapd/uranium/trunk/test_data']
+
+"""
+f = open('/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_index_CD546A_1_1_2_S.005_CD546A_1_1_2_S.004/result.json', 'r').read()
+d = json.loads(f)
+print d['results']['mosflm_results_norm']['strategy']['sweeps']
 
 
-#image = '/ramdisk/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011/G11_10-JUL-18_21-03-32_1_000011.cbf'
-#dir = os.path.dirname(image)
-#image = '/gpfs5/users/necat/phi_dfa_scan_data/G11_10-JUL-18_21-03-32_1_000011.cbf'
-#_E_RAMDISK_PREFIX = '/ramdisk'
 
-#print os.path.join('%s%s'%(_E_RAMDISK_PREFIX, image[:image.rfind('.')]), os.path.basename(image))
+# smartie.py is a python script for parsing log files from CCP4
+sys.path.append(os.path.join(os.environ["CCP4"],'share','smartie'))
+import smartie
 
+#aimless_log = '/gpfs5/users/necat/rapd/uranium/trunk/integrate/2018-08-01/Alex_2140_1_7000eV_1/Alex_2140_1_7000eV_1/Alex_2140_1_7000eV_1_aimless.log'
+aimless_log = '/gpfs5/users/necat/rapd/uranium/trunk/integrate/2018-08-01/Alex_2140_1_7000eV_3/Alex_2140_1_7000eV_3/Alex_2140_1_7000eV_3_aimless.log'
+#aimlog = open(aimless_log, 'r').readlines()
+#print aimlog
+log = smartie.parselog(aimless_log)
+# The program expect there to be 10 tables in the aimless log file.
+ntables = log.ntables()
+if ntables != 10:
+    #raise RuntimeError, '%s tables found in aimless output, program expected 10.' %ntables
+    print '%s tables found in aimless output, program exepected 10.'
+
+tables = []
+for i in range(0,ntables):
+    data = []
+    # Ignore the Anisotropy analysis table (it's not always present
+    # and if you don't ignore it, it causes problems when it is not
+    # there.)
+    if 'Anisotropy analysis' in log.tables()[i].title():
+        pass
+    else:
+        for line in log.tables()[i].data().split('\n'):
+            if line != '':
+                data.append(line.split())
+        tables.append(data)
+
+print len(tables)
+"""
 """
 for line in dat_dirs:
     #print line
@@ -167,7 +202,7 @@ run_data = command.get("data", {}).get("run_data")
 image_data["start"] = run_data.get("start_image_number")
 print image_data["start"]
 """
-#clear_cluster()
+
 
 """
 input = ['DATA_RANGE = 1 1200\n']
@@ -621,7 +656,7 @@ while True:
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-red = connect_redis_manager_HA()
+red = connect_remote_redis()
 
 #red = connect_sercat_redis()
 #connection = connect_beamline()
@@ -653,7 +688,7 @@ for d in l:
     #   red.srem('working', d)
 print red.smembers('working')
 """
-#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_3080/images/hui/runs/hy_640_9/hy_640_9_1_000002.cbf')
@@ -669,7 +704,7 @@ print red.smembers('working')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/cornell/heninglin_E_3589/images/ian/runs/P113_11/P113_11_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/yale/konigsberg_C_3608/images/aristidis/runs/CPS4580_C1r1/0_0/CPS4580_C1r1_1_0001.cbf'),
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/necat_C_3303/images/Igor/runs/thaum5_05s_05d/0_0/thaum5_05s-05d_1_0001.cbf'),
-#red.lpush('images_collected:NECAT_C', ''),
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/columbia/hendrickson_C_4084/images/liu/runs/BNL138_8/0_0/BNL138_8_1_0937.cbf'),
 
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
@@ -699,7 +734,7 @@ print red.smembers('working')
 
 #print red.llen('current_run_C')
 
-print red.llen('RAPD_QSUB_JOBS_0')
+print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('images_collected:NECAT_E')
 #red.delete("images_collected:NECAT_E")
@@ -714,10 +749,10 @@ print red.llen('runs_data:NECAT_E')
 #red.delete("runs_data:NECAT_E")
 print red.llen('runs_data:NECAT_C')
 #red.delete("runs_data:NECAT_C")
-print red.lrange('runs_data:NECAT_C', 0, -1)
+#print red.lrange('runs_data:NECAT_C', 0, -1)
 #red.delete("runs_data:NECAT_C")
 print red.llen('RAPD_JOBS_WAITING')
-red.delete('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
 print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_2')
 

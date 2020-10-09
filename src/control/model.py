@@ -632,8 +632,10 @@ class Model(object):
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
-            print 'run_id:%s'%run_id
-            print 'run: %s'%run
+            # print 'run_id:%s'%run_id
+            # print 'run: %s'%run
+            #self.logger.debug('run_id:%s'%run_id)
+            #self.logger.debug('run:%s'%run)
 
             #self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
@@ -660,6 +662,7 @@ class Model(object):
                                                      minutes=minutes,
                                                      return_type=return_type)
 
+        self.logger.debug('identified_runs:%s'%identified_runs)
         # If boolean, just return
         if return_type == "boolean":
             return identified_runs
@@ -733,11 +736,10 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-        # If the detector can determine if run or snap from the image name
-        if hasattr(detector, "is_run_from_imagename"):
-            # Make sure we have a function
+        # If the detector can determine if run or snap
+        # Make sure we have a function
+        if getattr(detector, "is_run_from_imagename", None):
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
-                self.logger.debug("Have function")
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
                     self.logger.debug("Could NOT be a snap")
@@ -748,12 +750,12 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
-        # self.logger.debug("%s %s %s %s %s",
-        #                   directory,
-        #                   basename,
-        #                   image_prefix,
-        #                   run_number,
-        #                   image_number)        
+        self.logger.debug("%s %s %s %s %s",
+                           directory,
+                           basename,
+                           image_prefix,
+                           run_number,
+                           image_number)
 
         # Look for run information for this image
         run_info = self.query_in_run(site_tag=site_tag,
@@ -1023,7 +1025,7 @@ class Model(object):
 
             # Determine group_id
             if self.site.GROUP_ID:
-                print "Have self.site.GROUP_ID"
+                # print "Have self.site.GROUP_ID"
                 det_type, det_attribute, det_field = self.site.GROUP_ID
                 if det_type == "stat":
                     attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)

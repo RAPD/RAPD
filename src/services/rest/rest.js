@@ -13,7 +13,6 @@ const smtpTransport = require("nodemailer-smtp-transport");
 // const path =          require('path');
 const randomstring = require("randomstring");
 const useragent = require("express-useragent");
-const multer = require("multer");
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -33,6 +32,7 @@ const groups_routes = require("./routes/groups");
 const images_routes = require("./routes/images");
 const jobs_routes = require("./routes/jobs");
 const overwatch_routes = require("./routes/overwatch");
+const pdb_routes = require("./routes/pdbs");
 const projects_routes = require("./routes/projects");
 const results_routes = require("./routes/results");
 const result_details_routes = require("./routes/result_details");
@@ -92,20 +92,6 @@ let app_session = session({
   saveUninitialized: true
 });
 app.use(app_session);
-
-// Middleware for uploads
-var upload = multer({
-  dest: config.upload_directory,
-  rename: function(fieldname, filename) {
-    return filename + Date.now();
-  },
-  onFileUploadStart: function(file) {
-    console.log(file.originalname + " is starting ...");
-  },
-  onFileUploadComplete: function(file) {
-    console.log(file.fieldname + " uploaded to  " + file.path);
-  }
-});
 
 // Add useragent to make some stuff simpler
 app.use(useragent.express());
@@ -195,6 +181,9 @@ apiRoutes.post("/authenticate", function(req, res) {
         console.log("user:", user);
 
         // create a token
+        user.pass = undefined;
+        user.password = undefined;
+        user.salt = undefined;
         var token = jwt.sign(user.toJSON(), app.get("superSecret"), {
           expiresIn: 86400 // expires in 24 hours
         });
@@ -660,6 +649,7 @@ app.use("/api", groups_routes);
 app.use("/api", images_routes);
 app.use("/api", jobs_routes);
 app.use("/api", overwatch_routes);
+app.use("/api", pdb_routes);
 app.use("/api", projects_routes);
 app.use("/api", results_routes);
 app.use("/api", result_details_routes);

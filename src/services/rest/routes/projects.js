@@ -96,27 +96,36 @@ router.route('/projects/:project_id')
 
       project.creator = req.decoded._id;
 
-      // Save the project
-      Project.findOneAndUpdate(
-        {_id:mongoose.Types.ObjectId()},
-        project,
-        {new:true, upsert:true}
-      )
-      .exec(function(err, return_project) {
-        if (err) {
-          console.error(err);
-          res.status(500).json({
-            success:false,
-            error:err
-          });
-        } else {
-          console.log('Project created successfully', return_project);
-          res.status(200).json({
-            success: true,
-            operation: 'create',
-            project: return_project
-          });
-        }
+      console.log("Looking for session", project.session);
+
+      // Fing the group that belongs to the session
+      Session.findOne({_id:project.session}, function(err, session){
+
+        // Set the project group from the session being used
+        project.group = session.group;
+
+        // Save the project
+        Project.findOneAndUpdate(
+          {_id:mongoose.Types.ObjectId()},
+          project,
+          {new:true, upsert:true}
+        )
+        .exec(function(err, return_project) {
+          if (err) {
+            console.error(err);
+            res.status(500).json({
+              success:false,
+              error:err
+            });
+          } else {
+            console.log('Project created successfully', return_project);
+            res.status(200).json({
+              success: true,
+              operation: 'create',
+              project: return_project
+            });
+          }
+        });
       });
     }
   })
@@ -139,6 +148,30 @@ router.route('/projects/:project_id')
         });
       }
     });
+  });
+
+//
+router.route('/projects/by_session/:session_id')
+  .get(function(req, res) {
+
+    Session.findOne({_id:req.params.session_id}, function(err, session) {
+
+      Project.find({group:session.group}, function(err, projects) {
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          console.log('Returning projects:', projects.length);
+          res.status(200).json({
+            success: true,
+            result: projects
+          });
+        }
+      })
+    })
   });
 
 // Add a result to a project

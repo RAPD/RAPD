@@ -28,23 +28,19 @@ __status__ = "Development"
 
 # Standard imports
 import logging
-import sys
-import threading
+from threading import Thread
 import time
-
-#import redis
 import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
 from utils.text import json
-#import json
 from bson.objectid import ObjectId
 
 # Constants
 POLLING_REST = 1      # Time to rest between checks for new run data
 
-class Monitor(threading.Thread):
+class Monitor(Thread):
     """Monitor for new data collection run to be submitted to a redis instance"""
 
     # For stopping/starting
@@ -76,7 +72,7 @@ class Monitor(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
 
         # Initialize the thread
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Passed-in variables
         self.site = site
@@ -114,14 +110,11 @@ class Monitor(threading.Thread):
         self.logger.debug("Stopping")
 
         self.running = False
-        self.redis_database.stop()
+        #self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
-
-        #self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
-        #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
 
     def run(self):

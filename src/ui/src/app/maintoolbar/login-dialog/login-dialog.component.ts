@@ -3,7 +3,7 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MatDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material/dialog';
 //          MdDialog,
 //          MdDialogConfig
 import { Router } from '@angular/router';

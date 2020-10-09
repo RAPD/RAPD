@@ -33,7 +33,7 @@ export class MxResultContainerComponent implements OnInit {
   @Input() session_id: string;
   @Input() result_type: string;
 
-  @ViewChild('target', { read: ViewContainerRef }) target;
+  @ViewChild('target', { read: ViewContainerRef, static: true }) target;
 
   constructor(private componentfactoryResolver: ComponentFactoryResolver) { }
 

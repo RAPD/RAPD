@@ -34,25 +34,23 @@ import importlib
 from pprint import pprint
 import redis.exceptions
 import time
-import threading
-from collections import OrderedDict
-
+from threading import Thread
 
 # RAPD imports
 import utils.launch_tools as launch_tools
 from utils.commandline import base_parser
-from utils.lock import file_lock
+#from utils.lock import file_lock
 import utils.site
 import utils.log
 from utils.overwatch import Registrar
 from utils.text import json
 #import json
-from bson.objectid import ObjectId
+#from bson.objectid import ObjectId
 
 # Timer (s) for checking which launchers are alive.
 TIMER = 5
 
-class Launcher_Manager(threading.Thread):
+class Launcher_Manager(Thread):
     """
     Listens to the 'RAPD_JOBS'list and sends jobs to proper
     launcher.
@@ -75,7 +73,7 @@ class Launcher_Manager(threading.Thread):
             self.logger = logging.getLogger("RAPDLogger")
 
         # Initialize the thread
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Save passed-in variables
         self.site = site
@@ -105,10 +103,6 @@ class Launcher_Manager(threading.Thread):
         try:
             # This is the server portion of the code
             while self.running:
-                # Have Registrar update status
-                #if self.overwatch_id:
-                #    self.ow_registrar.update()
-
                 # Get updated job list by checking which launchers are running
                 # Reassign jobs if launcher(s) status changes
                 if round(self.timer%TIMER,1) == 1.0:
@@ -151,7 +145,6 @@ class Launcher_Manager(threading.Thread):
                         command = self.redis.rpop("RAPD_JOBS")
                         # Handle the message
                         if command:
-                            #self.push_command(json.loads(command))
                             self.push_command(json.loads(command))
                             # Only run 1 command
                             # self.running = False
@@ -173,7 +166,6 @@ class Launcher_Manager(threading.Thread):
         self.running = False
         if self.overwatch_id:
             self.ow_registrar.stop()
-        self.redis_db.stop()
 
     def set_launcher(self, command=False, site_tag=False):
         """Find the correct running launcher to launch a specific job COMMAND"""
@@ -208,7 +200,7 @@ class Launcher_Manager(threading.Thread):
         command -- command from redis
         """
         print "push_command"
-        #pprint(command)
+        pprint(command)
 
         # Split up the command
         message = command
@@ -222,7 +214,7 @@ class Launcher_Manager(threading.Thread):
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
 
         if message['command'].startswith('INTEGRATE'):
-            print 'type: %s'%message['preferences']['xdsinp']
+            print 'type: %s...%s' % (message['preferences']['xdsinp'][:100], message['preferences']['xdsinp'][-100:])
 
         if launcher:
             # Update preferences to be in server run mode
@@ -254,12 +246,14 @@ class Launcher_Manager(threading.Thread):
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
+"""
+# NOT LAUNCHED FROM COMMANDLINE AND NOT NEEDED
 def get_commandline():
-    """Get the commandline variables and handle them"""
+    #Get the commandline variables and handle them
 
     # Parse the commandline arguments
-    commandline_description = """The Launch process for handling calls for
-    computation"""
+    #commandline_description = 
+    #The Launch process for handling calls for computation
     parser = argparse.ArgumentParser(parents=[base_parser],
                                      description=commandline_description,
                                      conflict_handler='resolve')
@@ -267,7 +261,7 @@ def get_commandline():
     return parser.parse_args()
 
 def main():
-    """Run the main process"""
+    #Run the main process
 
     # Get the commandline args
     commandline_args = get_commandline()
@@ -315,3 +309,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""

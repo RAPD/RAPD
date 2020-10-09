@@ -3,23 +3,24 @@ import { Injectable } from "@angular/core";
 //          Http } from '@angular/http';
 import { CanActivate, Router } from "@angular/router";
 
-import { Observable } from "rxjs/Observable";
-import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import { JwtHelperService } from "@auth0/angular-jwt";
+import { Observable } from "rxjs/Observable";
 
 import { GlobalsService } from "./globals.service";
 
 @Injectable()
 export class AuthService implements CanActivate {
-  helper = new JwtHelperService();
+
+  private helper = new JwtHelperService();
 
   constructor(
-    private globals_service: GlobalsService,
-    private auth_http: HttpClient,
+    private globalsService: GlobalsService,
+    private authHttp: HttpClient,
     private router: Router
   ) {}
 
-  canActivate() {
+  public canActivate() {
     return this.authenticated();
   }
 
@@ -32,14 +33,14 @@ export class AuthService implements CanActivate {
     // const headers = new HttpHeaders()
     //         .set('Content-Type', 'application/application/json');
 
-    return this.auth_http
-      .post(this.globals_service.site.restApiUrl + "authenticate", {
+    return this.authHttp
+      .post(this.globalsService.site.restApiUrl + "authenticate", {
         email: credentials.email,
         password: credentials.password,
         uid: credentials.uid
       })
-      .map(res => this.handleAuth(res))
-      .catch(error => this.handleError(error));
+      .map((res) => this.handleAuth(res))
+      .catch((error) => this.handleError(error));
   }
 
   public requestPass(credentials): Observable<any> {
@@ -51,12 +52,12 @@ export class AuthService implements CanActivate {
     // const headers = new HttpHeaders()
     //   .set('Content-Type', 'application/application/json');
 
-    return this.auth_http
-      .post(this.globals_service.site.restApiUrl + "requestpass", {
+    return this.authHttp
+      .post(this.globalsService.site.restApiUrl + "requestpass", {
         email: credentials.email
       })
-      .map(res => this.handlePassReq(res))
-      .catch(error => this.handleError(error));
+      .map((res) => this.handlePassReq(res))
+      .catch((error) => this.handleError(error));
   }
 
   public changePass(credentials): Observable<any> {
@@ -74,16 +75,50 @@ export class AuthService implements CanActivate {
     //   .set("email", profile.email)
     //   .set("password", credentials.password);
 
-    return this.auth_http
-      .post(this.globals_service.site.restApiUrl + "changepass", {
+    return this.authHttp
+      .post(this.globalsService.site.restApiUrl + "changepass", {
         email: profile.email,
         password: credentials.password1
       })
-      .map(res => this.handleChangePassReq(res))
-      .catch(error => this.handleError(error));
+      .map((res) => this.handleChangePassReq(res))
+      .catch((error) => this.handleError(error));
   }
 
-  handleAuth(res) {
+  public authenticated() {
+    // console.log('authenticated');
+
+    // Check if there's an unexpired JWT
+    // This searches for an item in localStorage with key == 'access_token'
+    let token = localStorage.getItem("access_token");
+    // console.log(token);
+
+    if (token === null) {
+      return false;
+    } else {
+      // console.log(
+      //   this.jwtHelper.decodeToken(token),
+      //   this.jwtHelper.getTokenExpirationDate(token),
+      //   ! this.jwtHelper.isTokenExpired(token)
+      // );
+      return !this.helper.isTokenExpired(token);
+    }
+  }
+
+  public logout() {
+    // console.log('logout');
+
+    // Remove token from localStorage
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("profile");
+
+    // this.userProfile = undefined;
+    // Redirect to home
+    // window.location.href = 'http://localhost:4200';
+    //window.location.href = 'http://'+window.location.host;
+    this.router.navigate(["/"]);
+  }
+
+  private handleAuth(res) {
     console.log("handleAuth");
     console.log(res);
 
@@ -119,28 +154,8 @@ export class AuthService implements CanActivate {
     }
   }
 
-  handlePassReq(res) {
-    // Convert to JSON
-    // let res_json = res.json();
-    // console.log(res_json);
-
+  private handlePassReq(res) {
     if (res.success === true) {
-      // Decode token
-      // let token = res_json.token;
-
-      // Save raw token
-      // localStorage.setItem('access_token', token);
-
-      // console.log(
-      //   this.jwtHelper.decodeToken(token),
-      //   this.jwtHelper.getTokenExpirationDate(token),
-      //   this.jwtHelper.isTokenExpired(token)
-      // );
-
-      // Save user information
-      // let profile = this.jwtHelper.decodeToken(token)._doc;
-      // localStorage.setItem('profile', JSON.stringify(profile));
-
       // Return for consumer
       return res;
     } else {
@@ -149,28 +164,12 @@ export class AuthService implements CanActivate {
     }
   }
 
-  handleChangePassReq(res) {
+  private handleChangePassReq(res) {
     // Convert to JSON
     let res_json = res.json();
     console.log(res_json);
 
     if (res_json.success === true) {
-      // Decode token
-      // let token = res_json.token;
-
-      // Save raw token
-      // localStorage.setItem('access_token', token);
-
-      // console.log(
-      //   this.jwtHelper.decodeToken(token),
-      //   this.jwtHelper.getTokenExpirationDate(token),
-      //   this.jwtHelper.isTokenExpired(token)
-      // );
-
-      // Save user information
-      // let profile = this.jwtHelper.decodeToken(token)._doc;
-      // localStorage.setItem('profile', JSON.stringify(profile));
-
       // Return for consumer
       return res_json;
     } else {
@@ -185,39 +184,5 @@ export class AuthService implements CanActivate {
       success: false,
       message: error.toString()
     });
-  }
-
-  public authenticated() {
-    // console.log('authenticated');
-
-    // Check if there's an unexpired JWT
-    // This searches for an item in localStorage with key == 'access_token'
-    let token = localStorage.getItem("access_token");
-    // console.log(token);
-
-    if (token === null) {
-      return false;
-    } else {
-      // console.log(
-      //   this.jwtHelper.decodeToken(token),
-      //   this.jwtHelper.getTokenExpirationDate(token),
-      //   ! this.jwtHelper.isTokenExpired(token)
-      // );
-      return !this.helper.isTokenExpired(token);
-    }
-  }
-
-  public logout() {
-    // console.log('logout');
-
-    // Remove token from localStorage
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("profile");
-
-    // this.userProfile = undefined;
-    // Redirect to home
-    // window.location.href = 'http://localhost:4200';
-    //window.location.href = 'http://'+window.location.host;
-    this.router.navigate(["/"]);
   }
 }

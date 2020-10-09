@@ -1,11 +1,13 @@
 import { Component, Input, OnInit } from "@angular/core";
 
-import { FormGroup, FormControl } from "@angular/forms";
+import { FormControl, FormGroup } from "@angular/forms";
 
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 
 import { Project } from "../../classes/project";
 import { User } from "../../classes/user";
+
+import { GlobalsService } from "../../../shared/services/globals.service";
 import { RestService } from "../../services/rest.service";
 
 @Component({
@@ -19,45 +21,38 @@ export class DialogNewProjectComponent implements OnInit {
   public submit_error: string;
   public submitted: boolean = false;
   @Input() project: Project;
-  @Input() dialog_title: string;
+  @Input() public dialog_title: string;
   public model: Project;
   public project_form: FormGroup;
 
   constructor(
-    private rest_service: RestService,
+    private globalsService: GlobalsService,
+    private restService: RestService,
     public dialogRef: MatDialogRef<DialogNewProjectComponent>
   ) {}
 
-  ngOnInit() {
+  public ngOnInit() {
+
     // Get the user profile
     this.user = JSON.parse(localStorage.getItem("profile"));
 
     // Load the model with project
-    this.model = Object.assign({}, this.project);
+    // this.model = Object.assign({}, this.project);
+    // console.log(this.project);
 
     // Create the form group
     this.project_form = new FormGroup({
-      project_type: new FormControl(),
-      title: new FormControl(),
       description: new FormControl(),
-      group: new FormControl()
+      // group: new FormControl(),
+      project_type: new FormControl(),
+      session: new FormControl(this.globalsService.currentSession),
+      title: new FormControl(),
     });
-    console.log(this.model);
   }
 
-  submitProject() {
-    let form_value = this.project_form.value;
-
-    // Control for groups
-    if (!form_value.group) {
-      form_value.group = this.user.groups[0]._id;
-    }
-    // form_value._id = undefined;
-    // console.log(form_value);
-    // console.log(this.model);
-
+  private submitProject() {
     this.submitted = true;
-    this.rest_service.submitProject(this.model).subscribe(params => {
+    this.restService.submitProject(this.project_form.value).subscribe((params) => {
       console.log(params);
       // A problem connecting to REST server
       // Submitted is over
@@ -71,11 +66,11 @@ export class DialogNewProjectComponent implements OnInit {
     });
   }
 
-  deleteProject() {
+  private deleteProject() {
     this.submitted = true;
 
     // Use REST service
-    this.rest_service.deleteProject(this.project._id).subscribe(params => {
+    this.restService.deleteProject(this.project._id).subscribe(params => {
       // console.log(params);
       this.submitted = false;
       if (params.success === true) {

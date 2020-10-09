@@ -68,6 +68,14 @@ def get_commandline():
                         type=int,
                         help="Last image")
 
+    # Exclude frames
+    parser.add_argument("--exclude",
+                        action="store",
+                        dest="exclude",
+                        default=False,
+                        nargs="*",
+                        help="Exclude images format: N N-N")
+
     # Number of rounds of polishing
     parser.add_argument("--rounds",
                         action="store",
@@ -98,10 +106,18 @@ def get_commandline():
                         default=True,
                         help="Do not run analysis")
 
+    # Don't run analysis
+    parser.add_argument("--pdbquery",
+                        action="store_true",
+                        dest="pdbquery",
+                        default=False,
+                        help="Run pdbquery")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="template",
                         default=False,
+                        nargs=1,
                         help="Template for image files")
 
     # No args? print help
@@ -112,6 +128,18 @@ def get_commandline():
     # Custom check input here
     args = parser.parse_args()
 
+    # Handle the manual exclude - parse to usable format
+    if args.exclude:
+        new_exclude = []
+        for exclude in args.exclude:
+            if "-" in exclude:
+                new_exclude.append(tuple([int(x) for x in "1-2".split("-")]))
+            else:
+                new_exclude.append((int(exclude), int(exclude)))
+        args.exclude = new_exclude
+
+    args.computer_cluster = False
+
     # Running in interactive mode if this code is being called
     if args.json:
         args.run_mode = "json"
@@ -121,6 +149,9 @@ def get_commandline():
     # Regularize spacegroup
     if args.spacegroup:
         args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
+
+    # Template
+    args.template = args.template[0]
 
     return args
 
@@ -231,6 +262,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
+        "exclude": commandline_args.exclude,
         "flip_beam": detector_module.XDS_FLIP_BEAM,
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
