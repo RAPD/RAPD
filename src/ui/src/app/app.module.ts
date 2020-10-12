@@ -12,8 +12,6 @@ import { AppComponent } from "./app.component";
 import { FlexLayoutModule } from "@angular/flex-layout";
 
 import { AppRoutingModule, appRoutingProviders } from "./app.routing";
-
-import "hammerjs";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RapdMaterialModule } from "./material.module";
 import { NgxDatatableModule } from "@swimlane/ngx-datatable";
