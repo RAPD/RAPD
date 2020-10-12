@@ -70,7 +70,7 @@ export class ProjectMxComponent implements OnInit {
   private selected_indexed_data: string[] = [];
 
   // Where results got
-  @ViewChild("output_outlet", { read: ViewContainerRef, static: false })
+  @ViewChild("output_outlet", { read: ViewContainerRef })
 outlet;
 
   constructor(
