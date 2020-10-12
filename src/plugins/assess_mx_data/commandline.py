@@ -95,6 +95,7 @@ def construct_command(commandline_args):
     command["preferences"] = {
         "analysis": commandline_args.analysis,
         "clean": commandline_args.clean,
+        "import": commandline_args._import,
         "json": commandline_args.json,
         "show_plots": commandline_args.show_plots,
         "no_color": commandline_args.no_color,
@@ -133,7 +134,7 @@ def get_commandline():
     # Import data and return as a RAPD file format
     my_parser.add_argument("-i", "--import",
                            action="store_true",
-                           dest="import",
+                           dest="_import",
                            help="Import data")
 
     # Verbose/Quiet are a pair of opposites

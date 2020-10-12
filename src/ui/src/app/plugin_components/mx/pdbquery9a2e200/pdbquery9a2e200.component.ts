@@ -32,7 +32,7 @@ export class Pdbquery9a2e200Component implements OnInit {
     "actions"
   ];
 
-  @ViewChild(MatSort, { static: false }) sort: MatSort;
+  @ViewChild(MatSort) sort: MatSort;
 
   constructor(
     private restService: RestService,
