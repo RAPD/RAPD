@@ -33,6 +33,7 @@ import subprocess
 import sys
 import stat
 import shlex
+import time
 
 from utils.text import json
 from utils.processes import local_subprocess
@@ -329,7 +330,13 @@ def calcADF_OLD(self, inp):
 def calc_maps(mtz_file, pdb_file):
   """Calculates 2fofc and fofc maps from Phaser MTZ file."""
   from mmtbx.command_line import mtz2map
-  mtz2map.run([mtz_file, pdb_file])
+  # I get a c++ error occasionally. Rerun to see if it goes through.
+  for i in range(2):
+      try:
+          mtz2map.run([mtz_file, pdb_file])
+          break
+      except:
+          time.sleep(2)
 
 def calcResNumber(self,sg,se=False,vol=False):
   """

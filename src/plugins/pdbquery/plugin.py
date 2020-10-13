@@ -932,8 +932,14 @@ class RapdPlugin(Thread):
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
                 self.logger.debug('results_json: %s'%results_json)
-                results = json.loads(results_json)
-                self.postprocess_phaser(info['name'], results)
+                if results_json in (None):
+                    self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                           "solution": False,
+                                                           "spacegroup": info['spacegroup'],
+                                                           "message": "Error launching job"})
+                else:
+                    results = json.loads(results_json)
+                    self.postprocess_phaser(info['name'], results)
                 self.redis.delete(info['tag'])
                 """
                 # This try/except is for when results aren't in Redis in time.
@@ -955,25 +961,6 @@ class RapdPlugin(Thread):
                 #     print results["stderr"]
                 self.postprocess_phaser(info['name'], json.loads(results.get('stdout', " ")))
             jobs.remove(job)
-            
-            #results_json = self.redis.get(info['tag'])
-            # This try/except is for when results aren't in Redis in time.
-            #try:
-            #    results = json.loads(results_json)
-            #    self.postprocess_phaser(info['name'], results)
-            #    self.redis.delete(info['tag'])
-            #except Exception as e:
-            #    self.logger.error('Error'+ str(e))
-                # print 'PROBLEM: %s %s'%(info['name'], info['tag'])
-                # print results_json
-                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['tag']))
-                # self.logger.debug(results_json)
-            
-            #results = json.loads(results_json)
-            #print results
-            #self.postprocess_phaser(info['name'], results)
-            #self.redis.delete(info['tag'])
-            #jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
         if self.pool:

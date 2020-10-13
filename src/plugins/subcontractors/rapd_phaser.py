@@ -631,7 +631,7 @@ def run_phaser(data_file,
             #local_subprocess(command="phenix.mtz2map %s %s" % (phaser_result.get("mtz_file"), phaser_result.get("pdb_file")),
             #                 logfile='map.log',
             #                 shell=True)
-            calc_maps(mtz_file=phaser_result.get("mtz_file"), 
+            calc_maps(mtz_file=phaser_result.get("mtz_file"),
                       pdb_file=phaser_result.get("pdb_file"))
 
             d = {'map_2_1': phaser_result.get("mtz_file").replace(".mtz", "_2mFo-DFc.ccp4"),

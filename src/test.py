@@ -143,10 +143,11 @@ MR_results1 = {"pdb_file": "/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/
 #dir, log_name = os.path.split(log_path)
 #print log_name[:log_name.rfind(".")]
 
-from mmtbx.command_line import mtz2map
-os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test/rapd_mr_thau_free/P41212_all_0/P41212_all_0')
-mtz2map.run(['P41212_all_0.1.mtz', 'P41212_all_0.1.pdb'])
-
+#from mmtbx.command_line import mtz2map
+from utils.xutils import calc_maps
+os.chdir('/gpfs6/users/necat/rapd2/integrate/2020-10-10/2010100103_2/rapd_pdbquery_2010100103_2_1_free/Phaser_4QEQ')
+#mtz2map.run(['4QEQ.1.mtz', '4QEQ.1.pdb'])
+utils.xutils.calc_maps(mtz_file='4QEQ.1.mtz', pdb_file='4QEQ.1.pdb')
 
 """
 #result = json.loads(MR_results1)
