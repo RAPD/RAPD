@@ -1,4 +1,4 @@
-<div *ngIf="! submit_error">
+<div *ngIf="! submitError">
     <div MatDialogTitle>
       <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
         <mat-icon>close</mat-icon>
@@ -74,10 +74,10 @@
       </form>
     </mat-dialog-content>
   </div>
-  <div *ngIf="submit_error">
+  <div *ngIf="submitError">
     <mat-dialog-content>
       <h2>Error</h2>
-      {{submit_error}}
+      {{submitError}}
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-raised-button color="primary" mat-dialog-close>Ok</button>

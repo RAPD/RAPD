@@ -13,6 +13,8 @@ export class SequenceDialogComponent implements OnInit {
   // Inputs
   @Input() public dialogTitle: string;
 
+  public submitError: string = "";
+
   public sequenceForm: FormGroup;
   // @ViewChild("autosize") public autosize: CdkTextareaAutosize;
 
