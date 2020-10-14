@@ -446,8 +446,9 @@ class Model(object):
 
         # Image is in a run
         if isinstance(place_in_run, int):
-
-            # self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
+            # Save the current place_in_run in Redis so integration has reliable signal of whether an image exists.
+            # This is a problem on some filesystems (ie. NFS) caching the file attributes.
+            self.redis.set('place_in_run:%s'%site_tag, str(place_in_run))
 
             # Save some typing
             current_run = self.recent_runs[str(run_id)]
