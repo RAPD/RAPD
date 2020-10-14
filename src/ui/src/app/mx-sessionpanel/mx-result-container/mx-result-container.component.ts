@@ -27,7 +27,7 @@ for (let key in mx) {
 })
 export class MxResultContainerComponent implements OnInit {
 
-  current_result: any = 'none';
+  currentResult: any = 'none';
   current_displayed_component: string = 'empty';
 
   @Input() session_id: string;
@@ -48,10 +48,10 @@ export class MxResultContainerComponent implements OnInit {
     this.target.clear();
 
     // Save the current displayed result
-    this.current_result = event.value;
+    this.currentResult = event.value;
 
     // Construct the component name from the result
-    const component_name = (this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    const component_name = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
 
     console.log(component_name);
     console.log(mx_components);
@@ -62,8 +62,8 @@ export class MxResultContainerComponent implements OnInit {
     // Create the component
     let component = this.target.createComponent(factory);
 
-    // Set the component current_result value
-    component.instance.current_result = event.value;
+    // Set the component currentResult value
+    component.instance.currentResult = event.value;
   }
 
 }

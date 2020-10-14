@@ -1,9 +1,11 @@
 import { Component, Input, OnInit, ViewChild } from "@angular/core";
 import { formatNumber } from "@angular/common";
+import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { MatSort } from "@angular/material/sort";
 import { MatTableDataSource } from "@angular/material/table";
 // import { MatSortModule } from '@angular/material/sort';
+import { DialogUglymolComponent } from "../../../shared/components/dialog-uglymol/dialog-uglymol.component";
 import { RestService } from "../../../shared/services/rest.service";
 
 @Component({
@@ -36,7 +38,8 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   constructor(
     private restService: RestService,
-    public snackBar: MatSnackBar
+    public snackBar: MatSnackBar,
+    public dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -113,9 +116,15 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   public openViewer(record: any) {
     console.log("openViewer");
-    console.log(record);
+    // console.log(record);
 
-    this.restService.getPdbByHash(record.tar.hash, record.tar.path);
+    // Open a new uglymol dialog
+    const dialogRef = this.dialog.open(DialogUglymolComponent, {
+      height: window.innerHeight,
+      width: window.innerWidth,
+    });
+
+    // this.restService.getPdbByHash(record.tar.hash, record.tar.path);
   }
 }
 

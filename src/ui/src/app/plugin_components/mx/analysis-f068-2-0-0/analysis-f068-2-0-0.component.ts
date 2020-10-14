@@ -60,7 +60,7 @@ export class AnalysisF068200Component implements OnInit {
 
   public ngOnInit() {
 
-    console.log(this.result);
+    // console.log(this.result);
 
     if (this.result.results.parsed.xtriage.plots) {
       if ("Intensity plots" in this.result.results.parsed.xtriage.plots) {
