@@ -47,7 +47,7 @@ var redis_client = new Redis(config.redis_connection);
 
 // MongoDB connection
 var mongoose = require("./models/mongoose");
-mongoose.set("debug", true);
+// mongoose.set("debug", true);
 
 // Connect to ctrl_conn
 const Activity = mongoose.ctrl_conn.model(
@@ -537,7 +537,6 @@ apiRoutes.post("/requestpass", function(req, res) {
   if (config.authenticate_mode === "mongo") {
     User.findOne({ email: req.body.email }).exec(function(err, user) {
       if (err) {
-        console.error(err);
         console.error(err);
         res.send({
           success: false,

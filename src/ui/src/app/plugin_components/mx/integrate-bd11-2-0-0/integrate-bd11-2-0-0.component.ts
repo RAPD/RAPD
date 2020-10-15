@@ -28,17 +28,18 @@ import { SadDialogComponent } from "../sad-dialog/sad-dialog.component";
 
 // Import encapsulated plugin components here
 import * as mx from "../";
-const analysis_components = {};
-const pdbquery_components = {};
-for (let key in mx) {
-  // console.log(key);
+const ANALYSIS_COMPONENTS = {};
+const PDBQUERY_COMPONENTS = {};
+// tslint:disable-next-line: forin
+for (const KEY in mx) {
+  // console.log(KEY);
   // Analysis
-  if (key.match("Analysis")) {
-    analysis_components[key.toLowerCase()] = mx[key];
+  if (KEY.match("Analysis")) {
+    ANALYSIS_COMPONENTS[KEY.toLowerCase()] = mx[KEY];
   }
   // PDBQuery
-  if (key.match("Pdbquery")) {
-    pdbquery_components[key.toLowerCase()] = mx[key];
+  if (KEY.match("Pdbquery")) {
+    PDBQUERY_COMPONENTS[KEY.toLowerCase()] = mx[KEY];
   }
 }
 
@@ -48,9 +49,9 @@ for (let key in mx) {
   styleUrls: ["./integrate-bd11-2-0-0.component.css"]
 })
 export class IntegrateBd11200Component implements OnInit, OnDestroy {
-  @Input() public current_result: any;
+  @Input() public currentResult: any;
 
-  public full_result: any = { process: { status: 0 }, results: {} };
+  public fullResult: any = { process: { status: 0 }, results: {} };
 
   // viewModeForm: FormControl;
   public view_mode: string = "summary";
@@ -117,7 +118,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   @ViewChild("analysistarget", { read: ViewContainerRef }) public analysistarget;
   @ViewChild("pdbquerytarget", { read: ViewContainerRef }) public pdbquerytarget;
 
-  public analysis_component: any;
+  public analysisComponent: any;
   public pdbquery_component: any;
 
   public objectKeys = Object.keys;
@@ -136,10 +137,10 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   public ngOnInit() {
     // Subscribe to results for the displayed result
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
-      this.current_result.data_type,
-      this.current_result.plugin_type,
-      this.current_result.result_id,
-      this.current_result._id
+      this.currentResult.data_type,
+      this.currentResult.plugin_type,
+      this.currentResult.result_id,
+      this.currentResult._id
     );
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
@@ -152,7 +153,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
     console.log("handleIncomingData", data);
 
-    this.full_result = data;
+    this.fullResult = data;
 
     // Select the default plot to show
     if (data.results) {
@@ -170,8 +171,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   public displayRunInfo() {
     const config = {
       data: {
-        run_id: this.full_result.process.run_id,
-        image_id: this.full_result.process.image_id
+        run_id: this.fullResult.process.run_id,
+        image_id: this.fullResult.process.image_id
       }
     };
 
@@ -190,8 +191,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
         // console.log(self.full_result.results.analysis);
 
         // If there is analysis data, determine the component to use
-        if (self.full_result.results.analysis) {
-          let plugin = self.full_result.results.analysis.plugin;
+        if (self.fullResult.results.analysis) {
+          let plugin = self.fullResult.results.analysis.plugin;
           const component_name = (
             plugin.type +
             plugin.id +
@@ -201,24 +202,24 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(
-            analysis_components[component_name]
+            ANALYSIS_COMPONENTS[component_name]
           );
 
           // Create the component
-          self.analysis_component = self.analysistarget.createComponent(
+          self.analysisComponent = self.analysistarget.createComponent(
             factory
           );
 
-          // Set the component current_result value
-          self.analysis_component.instance.result =
-            self.full_result.results.analysis;
+          // Set the component currentResult value
+          self.analysisComponent.instance.result =
+            self.fullResult.results.analysis;
         }
 
         // PDBQuery
       } else if (event.value === "pdbquery") {
         // If there is analysis data, determine the component to use
-        if (self.full_result.results.pdbquery) {
-          let plugin = self.full_result.results.pdbquery.plugin;
+        if (self.fullResult.results.pdbquery) {
+          let plugin = self.fullResult.results.pdbquery.plugin;
 
           const component_name = (
             plugin.type +
@@ -231,7 +232,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(
-            pdbquery_components[component_name]
+            PDBQUERY_COMPONENTS[component_name]
           );
 
           // Create the component
@@ -239,9 +240,9 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
             factory
           );
 
-          // Set the component current_result value
+          // Set the component currentResult value
           self.pdbquery_component.instance.result =
-            self.full_result.results.pdbquery;
+            self.fullResult.results.pdbquery;
         }
       }
     }, 200);
@@ -256,7 +257,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   public setPlot(plot_key: string) {
     console.log("setPlot", plot_key);
 
-    let plot_result = this.full_result.results.plots[plot_key];
+    let plot_result = this.fullResult.results.plots[plot_key];
 
     // Consistent features
     this.data.xs = plot_result.x_data;
@@ -377,7 +378,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   public openReintegrateDialog() {
     const config = {
-      data: this.full_result,
+      data: this.fullResult,
     };
 
     const dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
@@ -385,7 +386,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   public openMrDialog() {
     const config = {
-      data: this.full_result,
+      data: this.fullResult,
     };
 
     const dialogRef = this.dialog.open(MrDialogComponent, config);
@@ -393,14 +394,14 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   public openSadDialog() {
     const config = {
-      data: this.full_result,
+      data: this.fullResult,
     };
 
     const dialogRef = this.dialog.open(SadDialogComponent, config);
   }
 
   public openProjectDialog() {
-    const config = { data: this.current_result };
+    const config = { data: this.currentResult };
 
     const dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
