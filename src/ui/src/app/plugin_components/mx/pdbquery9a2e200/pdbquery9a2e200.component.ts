@@ -120,8 +120,8 @@ export class Pdbquery9a2e200Component implements OnInit {
 
     // Open a new uglymol dialog
     const dialogRef = this.dialog.open(DialogUglymolComponent, {
-      height: window.innerHeight,
-      width: window.innerWidth,
+      height: window.innerHeight.toString(),
+      width: window.innerWidth.toString(),
     });
 
     // this.restService.getPdbByHash(record.tar.hash, record.tar.path);

@@ -1,10 +1,10 @@
 <div *ngIf="! submitError">
   <div MatDialogTitle>
-    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <!-- <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
       <mat-icon>close</mat-icon>
-    </button>
-    <h2>MR</h2>
-    <h3>{{data.process.repr}}</h3>
+    </button> -->
+    <h2>Perform MR</h2>
+    <h4>On {{data.process.repr}}</h4>
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <div class="rapd-dialog-border">
@@ -17,9 +17,9 @@
                 <td>
                   <mat-form-field style="width:10em;">
                     <input matInput
-                          style="text-align:center;"
-                          placeholder=""
-                          formControlName="description">
+                           style="text-align:center;"
+                           placeholder=""
+                           formControlName="description">
                   </mat-form-field>
                 </td>
               </tr>
@@ -27,12 +27,12 @@
                 <td class="rapd-form-table-rj">Project</td>
                 <td class="rapd-form-table-select">
                   <mat-select formControlName="project"
-                            class="table-mat-select"
-                            style="margin-top:1em">
+                              class="table-mat-select"
+                              style="margin-top:1em">
                     <mat-option *ngFor="let project of projects" [value]="project._id">
                       {{project.title}}
                     </mat-option>
-                    <mat-option [value]="-1">New Project</mat-option>
+                    <mat-option [value]="-1">Create New Project</mat-option>
                   </mat-select>
                   <mat-error *ngIf="mrForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
                 </td>
