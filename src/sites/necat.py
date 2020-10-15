@@ -215,7 +215,7 @@ BEAM_INFO = {
                 },
              }
 # Copy E to T for testing
-BEAM_INFO.update({"NECAT_T": BEAM_INFO["NECAT_E"]})
+#BEAM_INFO.update({"NECAT_T": BEAM_INFO["NECAT_E"]})
 
 ################ Logging #################
 # Linux should be /var/log/

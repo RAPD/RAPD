@@ -168,8 +168,6 @@ class Model(object):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 

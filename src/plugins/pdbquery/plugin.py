@@ -815,11 +815,14 @@ class RapdPlugin(Thread):
                     if archive_file:
                         # Copy data
                         target = os.path.join(target_dir, os.path.basename(archive_file))
+                        #shutil.move(archive_file, target)
+                        
                         if f in ("map_1_1", "map_2_1", 'tar'):
                             shutil.move(archive_file, target)
                         else:
                             # Once we know this works we can switch to moving files.
                             shutil.copyfile(archive_file, target)
+                        
                         # Store new path information
                         archive_dict["path"] = target
                         # Add to the results.data_produced array
@@ -931,8 +934,8 @@ class RapdPlugin(Thread):
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
-                self.logger.debug('results_json: %s'%results_json)
-                if results_json in (None):
+                #self.logger.debug('results_json_type: %s results_json: %s'%(type(results_json), results_json))
+                if not results_json:
                     self.postprocess_phaser(info['name'], {"ID": info['name'],
                                                            "solution": False,
                                                            "spacegroup": info['spacegroup'],
@@ -1055,12 +1058,12 @@ class RapdPlugin(Thread):
 
             # Change to work dir
             os.chdir(self.working_dir)
-            """
+            
             # Gather targets and remove
             files_to_clean = glob.glob("Phaser_*")
             for target in files_to_clean:
                 shutil.rmtree(target)
-            """
+            
     def print_results(self):
         """Print the results to the commandline"""
 
