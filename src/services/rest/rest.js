@@ -538,7 +538,6 @@ apiRoutes.post("/requestpass", function(req, res) {
     User.findOne({ email: req.body.email }).exec(function(err, user) {
       if (err) {
         console.error(err);
-        console.error(err);
         res.send({
           success: false,
           message: err
