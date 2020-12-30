@@ -62,7 +62,13 @@ RAPD uses environmental variables for setting some defaults:
 
 # Databases
 Running a full site installation requires both Redis and MongoDB. To understand why these are necessary and how to set them up, please see the documentation.
-### Docker
+
+## MongoDB
+MongoDB is a NoSQL database that RAPD uses to store user information and results. It will use a lot of disk space for busy installations, so take care where you install.
+
+
+
+### Docker install of databases
 Using Docker to install the required databases is a workable approach.
 To install and run the databases using Docker:  
 1. Check if Docker is working `sudo docker run hello-world`  
