@@ -45,9 +45,11 @@ export class MaintoolbarComponent implements OnInit {
     this.loginDialogRef = this.dialog.open(LoginDialogComponent, dialogConfig);
 
     this.loginDialogRef.afterClosed().subscribe(result => {
+      console.log(result);
       this.loginDialogRef = null;
       if (result) {
         if (result.pass_force_change === true) {
+          console.log("Pop open the change password dialog");
           const changeDialogConfig = new MatDialogConfig();
           changeDialogConfig.viewContainerRef = this.viewContainerRef;
           changeDialogConfig.disableClose = true;

@@ -41,7 +41,6 @@ export class MxResultContainerComponent implements OnInit {
 
   // A result has been selected - implement the agent interface
   selectResult(event) {
-
     console.log('selectResult', event);
 
     // Destroy the current component in the target view
@@ -52,9 +51,6 @@ export class MxResultContainerComponent implements OnInit {
 
     // Construct the component name from the result
     const component_name = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
-
-    console.log(component_name);
-    console.log(mx_components);
 
     // Create a componentfactoryResolver instance
     const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);

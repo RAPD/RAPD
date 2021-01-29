@@ -1,6 +1,6 @@
 <div *ngIf="! submit_error">
   <div MatDialogTitle>
-    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <button mat-icon-button (click)="exitLogin()" class="button-dialog-top-right">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -10,7 +10,7 @@
     </h2>
     <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
       <table>
-        <tr><td *ngIf="globals_service.site.auth_user_type === 'email'">
+        <tr><td *ngIf="globalsService.site.auth_user_type === 'email'">
           <mat-form-field>
             <input matInput
               formControlName='email'
@@ -26,7 +26,7 @@
               Email is invalid
             </div>
           </div>
-        </td><td *ngIf="globals_service.site.auth_user_type === 'uid'">
+        </td><td *ngIf="globalsService.site.auth_user_type === 'uid'">
           <mat-form-field>
             <input
               matInput

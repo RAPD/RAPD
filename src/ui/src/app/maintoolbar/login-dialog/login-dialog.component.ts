@@ -22,12 +22,13 @@ export class LoginDialogComponent implements OnInit {
   lostpass_form: FormGroup;
   submitted: boolean;
   show_request_success: boolean;
+  returnedParams: any;
   public submit_error = '';
 
-  constructor(private globals_service: GlobalsService,
-              private auth_service: AuthService,
+  constructor(private auth_service: AuthService,
               private websocket_service: WebsocketService,
               private router: Router,
+              public globalsService: GlobalsService,
               public dialogRef: MatDialogRef<LoginDialogComponent>) { }
 
   ngOnInit() {
@@ -47,14 +48,15 @@ export class LoginDialogComponent implements OnInit {
 
   onSubmitLogin() {
 
-    var self = this;
+    const self = this;
 
     this.submitted = true;
 
-    console.log('this.login_form.value:', this.login_form.value);
+    // console.log('this.login_form.value:', this.login_form.value);
 
     this.auth_service.login(this.login_form.value).subscribe(params => {
-      console.log('onSubmit >>', params);
+      // console.log('onSubmit >>', params);
+      self.returnedParams = params;
       if (params.success === true) {
         // Initialize the websocket connection
         this.websocket_service.initializeWebsocket();
@@ -62,7 +64,7 @@ export class LoginDialogComponent implements OnInit {
         this.router.navigate(['dashboard']);
         this.mode = 'show_login_success';
         // Close dialog
-        setTimeout(function() {
+        setTimeout(() => {
           self.dialogRef.close(params)
         }, 5000);
       } else {
@@ -74,25 +76,26 @@ export class LoginDialogComponent implements OnInit {
 
   onSubmitLostpass() {
 
-    var self = this;
+    const self = this;
 
     this.submitted = true;
 
     this.auth_service.requestPass(this.lostpass_form.value).subscribe(params => {
-
-      this.submitted = false;
+      self.returnedParams = params;
+      self.submitted = false;
 
       if (params.success === true) {
-        this.mode = 'show_request_success';
-        setTimeout(function() {self.dialogRef.close(undefined)}, 5000);
+        self.mode = 'show_request_success';
+        setTimeout(() => {self.dialogRef.close(params)}, 5000);
       } else {
-        this.submit_error = params.message;
+        self.submit_error = params.message;
       }
     });
   }
 
   exitLogin() {
-    this.dialogRef.close(undefined);
+    console.log("exitLogin");
+    this.dialogRef.close(this.returnedParams);
   }
 
 }
