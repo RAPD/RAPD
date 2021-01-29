@@ -4,11 +4,8 @@ import { Component,
 import { FormGroup,
          FormControl } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-//          MdDialog,
-//          MdDialogConfig
 import { Router } from '@angular/router';
 
-// import { CommunicateDialogComponent } from '../../shared/dialogs/communicate-dialog/communicate-dialog.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { WebsocketService } from '../../shared/services/websocket.service';
 import { GlobalsService } from '../../shared/services/globals.service';
@@ -20,7 +17,7 @@ import { GlobalsService } from '../../shared/services/globals.service';
 })
 export class LoginDialogComponent implements OnInit {
 
-  mode: String;
+  mode: string;
   login_form: FormGroup;
   lostpass_form: FormGroup;
   submitted: boolean;
@@ -40,11 +37,11 @@ export class LoginDialogComponent implements OnInit {
     this.login_form = new FormGroup({
        email: new FormControl(),
        uid: new FormControl(),
-       password: new FormControl()
+       password: new FormControl(),
     });
 
     this.lostpass_form= new FormGroup({
-      email: new FormControl()
+      email: new FormControl(),
     });
   }
 

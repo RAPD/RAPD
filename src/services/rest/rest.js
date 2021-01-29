@@ -11,8 +11,9 @@ const morgan = require("morgan");
 const nodemailer = require("nodemailer");
 const smtpTransport = require("nodemailer-smtp-transport");
 // const path =          require('path');
-const randomstring = require("randomstring");
+// const randomstring = require("randomstring");
 const useragent = require("express-useragent");
+const bcrypt = require('bcryptjs');
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -544,9 +545,10 @@ apiRoutes.post("/requestpass", function(req, res) {
           message: err
         });
       } else if (user) {
-        let new_pass_raw = randomstring.generate(12);
-        // console.log('new_pass_raw', new_pass_raw);
-        user.pass = new_pass_raw;
+        const new_pass = randomString(24),
+          salt = bcrypt.genSaltSync(10),
+          new_hash = bcrypt.hashSync(new_pass, salt) ;
+          user.pass = new_hash;
         // Expire in 60 minutes
         user.pass_expire = Date.now() + 3600;
         user.pass_force_change = true;
@@ -566,13 +568,13 @@ apiRoutes.post("/requestpass", function(req, res) {
               subject: "RAPD password recovery",
               text:
                 "Your new temporary password is " +
-                new_pass_raw +
+                new_pass +
                 "\nIt is authorized for 60 minutes."
             };
             // Send the email
             smtp_transport.sendMail(mailOptions);
             // Reply to client
-            console.log(`Reset password for ${user.email} to ${new_pass_raw}`);
+            console.log(`Reset password for ${user.email} to ${new_pass}`);
             res.json({ success: true });
           }
         });
@@ -721,4 +723,14 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
+}
+
+function randomString(length) {
+  var s = [];
+    var allDigits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_'; //_!@#$%^&*()-+=';
+    for (var i = 0; i < length; i++) {
+    s[i] = allDigits.substr(Math.floor(Math.random() * 76), 1);
+    }
+    var ss = s.join('');
+    return ss;
 }
