@@ -3,6 +3,7 @@ const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
 var mongoose = require('../models/mongoose');
+var bcrypt = require('bcryptjs');
 
 const config = require('../config');
 const User = mongoose.auth_conn.model('User', require('../models/user').UserSchema);
@@ -202,8 +203,10 @@ router.post('/changepass', function(req, res) {
       });
     } else {
       if (user) {
-        let new_pass_raw = req.body.password;
-        user.password =  new_pass_raw;
+        const password = req.body.password,
+          salt = bcrypt.genSaltSync(10),
+          new_hash = bcrypt.hashSync(password, salt)
+        user.pass =  new_hash;
         // Expire in 1 year
         user.pass_expire = Date.now() + 31622240;
         user.pass_force_change = false;

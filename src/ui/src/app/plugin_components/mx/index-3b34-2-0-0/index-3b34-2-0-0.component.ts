@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from "@angular/core";
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
 import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { MatToolbarModule } from "@angular/material/toolbar";
@@ -18,7 +18,7 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
   templateUrl: "./index-3b34-2-0-0.component.html",
   styleUrls: ["./index-3b34-2-0-0.component.css"]
 })
-export class Index3b34200Component implements OnInit, OnDestroy {
+export class Index3b34200Component implements OnInit, OnChanges, OnDestroy {
   @Input() current_result: any;
 
   incomingData$: ReplaySubject<string>;
@@ -88,7 +88,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   objectToArray(input: any): [any] {
     return [].concat.apply(
       [],
-      Object.keys(input).map(function(key, index) {
+      Object.keys(input).map((key, index) => {
         return input[key];
       })
     );
@@ -102,6 +102,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    console.log(this.current_result);
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.data_type,
       this.current_result.plugin_type,
@@ -109,14 +110,35 @@ export class Index3b34200Component implements OnInit, OnDestroy {
       this.current_result._id
     );
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
+    this.current_result
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+  //   //Called before any other lifecycle hook. Use it to inject dependencies, but avoid any serious work here.
+  //   //Add '${implements OnChanges}' to the class.
+  //   console.log("ngOnChanges");
+  //   if (changes.current_result) {
+  //     console.log(this.current_result);
+  //     this.incomingData$ = this.websocket_service.subscribeResultDetails(
+  //       this.current_result.data_type,
+  //       this.current_result.plugin_type,
+  //       this.current_result.result_id,
+  //       this.current_result._id
+  //     );
+  //     this.incomingData$.subscribe(x => this.handleIncomingData(x));
+  //   }
   }
 
   ngOnDestroy() {
     this.websocket_service.unsubscribeResultDetails(this.incomingData$);
   }
 
+  public testerfunction(data:string){
+    console.log("testerfunction", data);
+  }
+
   public handleIncomingData(data: any) {
-    console.log("handleIncomingData", data);
+    // console.log("handleIncomingData", data);
 
     // Set full_result to incoming data
     this.full_result = data;
@@ -134,7 +156,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
 
   // Display the header information
   displayHeader(image_data) {
-    console.log("displayHeader", image_data);
+    // console.log("displayHeader", image_data);
 
     let config = {
       data: {
@@ -148,7 +170,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
 
   // Set up the plot
   setPlot(plot_key: string) {
-    console.log('setPlot', plot_key, this.selected_plot);
+    // console.log('setPlot', plot_key, this.selected_plot);
 
     // Load the result for convenience
     let plot_result = this.full_result.results.plots[plot_key];

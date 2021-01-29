@@ -87,7 +87,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Look for index of result
-        var data_results_index = this.data_results.findIndex(function(elem) {
+        var data_results_index = this.data_results.findIndex((elem) => {
           if (elem._id === result._id) {
             return true;
           } else {
@@ -113,7 +113,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
             // console.log('parent_result:', parent_result);
             // Look for index of result
             if (parent_result.children) {
-              var my_index = parent_result.children.findIndex(function(elem) {
+              var my_index = parent_result.children.findIndex((elem) => {
                 if (elem._id === result._id) {
                   return true;
                 } else {
@@ -160,9 +160,9 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     if (this.new_result_timeout) {
       clearTimeout(this.new_result_timeout);
     }
-    this.new_result_timeout = setTimeout(function() {
+    this.new_result_timeout = setTimeout(() => {
       // Sort the data array
-      self.data_results.sort(function(a, b) {
+      self.data_results.sort((a, b) => {
         if (a.timestamp > b.timestamp) {
           return -1;
         } else if (a.timestamp < b.timestamp) {
@@ -175,7 +175,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   private getResult(id: string) {
-    return this.data_results.find(function(elem) {
+    return this.data_results.find((elem) => {
       if (elem._id === id) {
         return true;
       } else {
@@ -185,14 +185,14 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   private onClick(id: string) {
-    console.log("onClick", id);
+    // console.log("onClick", id);
 
     // Save the current result as the active result
     this.active_result = id;
 
     // Use the result to call for full results
     this.resultSelect.emit({
-      value: this.getResult(id)
+      value: this.getResult(id),
     });
   }
 }
