@@ -546,7 +546,7 @@ apiRoutes.post("/requestpass", function(req, res) {
       } else if (user) {
         let new_pass_raw = randomstring.generate(12);
         // console.log('new_pass_raw', new_pass_raw);
-        user.password = new_pass_raw;
+        user.pass = new_pass_raw;
         // Expire in 60 minutes
         user.pass_expire = Date.now() + 3600;
         user.pass_force_change = true;
