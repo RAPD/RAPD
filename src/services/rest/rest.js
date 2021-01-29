@@ -168,6 +168,7 @@ apiRoutes.post("/authenticate", function(req, res) {
   console.log(req.body);
 
   if (config.authenticate_mode === "mongo") {
+    // console.log("Using Mongo to authenticate");
     User.getAuthenticated(req.body.email, req.body.password, function(
       err,
       user,
