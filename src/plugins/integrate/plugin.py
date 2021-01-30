@@ -717,7 +717,9 @@ class RapdPlugin(Process):
         # Housekeeping
         self.clean_up()
 
+        # Say plugin is finished
         self.tprint(100, "progress")
+        self.logger.debug("Integration Complete")
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""

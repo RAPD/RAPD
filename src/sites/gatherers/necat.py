@@ -122,6 +122,7 @@ class Gatherer(object):
                 current_run_raw = self.redis.rpop('run_info_%s'%self.tag[-1])
                 if current_run_raw not in (None, ""):
                     current_run = json.loads(current_run_raw)
+                    self.logger.debug('run_info: %s'%current_run)
                     # get the additional beamline params and put into nice dict.
                     run_data = self.get_run_data(current_run)
                     if self.ignored(run_data['directory']):
@@ -197,10 +198,13 @@ class Gatherer(object):
         #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
         pipe = self.bl_redis.pipeline()
         #pipe.get("DETECTOR_SV")
+        pipe.get("EIGER_DIRECTORY_SV")
+        """
         if self.tag == 'NECAT_C':
             pipe.get("ADX_DIRECTORY_SV")
         else:
             pipe.get("EIGER_DIRECTORY_SV")
+        """
         pipe.get("RUN_PREFIX_SV")
         #pipe.get("DET_THETA_SV")        #two theta
         #pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
