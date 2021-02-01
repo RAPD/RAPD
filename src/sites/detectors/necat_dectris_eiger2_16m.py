@@ -103,7 +103,7 @@ class FileLocation():
         #self.ip = '164.54.212.219'
         #self.ram_prefix = '/epu2/rdma'
         #self.nvme_prefix = '/epu/nvme'
-        self.nvme_prefix = '/lustre/fs1'
+        self.nvme_prefix = '/lustre/fs_c'
         self.ft_redis = self.redis_ft_connect()
 
     def redis_ft_connect(self):
@@ -398,7 +398,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    # pprint(parameters)
+    pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
