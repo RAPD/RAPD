@@ -4,6 +4,7 @@ const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
 var mongoose = require('../models/mongoose');
 var bcrypt = require('bcryptjs');
+const moment = require("moment");
 
 const config = require('../config');
 const User = mongoose.auth_conn.model('User', require('../models/user').UserSchema);
@@ -208,7 +209,8 @@ router.post('/changepass', function(req, res) {
           new_hash = bcrypt.hashSync(password, salt)
         user.pass =  new_hash;
         // Expire in 1 year
-        user.pass_expire = Date.now() + 31622240;
+        user.pass_expire = moment().utc().add(1,"y").toDate()
+        // user.pass_expire = Date.now() + 31622240;
         user.pass_force_change = false;
         user.save(function(err, saved_user) {
           if (err) {

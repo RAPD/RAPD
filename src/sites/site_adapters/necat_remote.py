@@ -106,6 +106,7 @@ class Adapter(object):
                                                    json.dumps(image_metadata)))
             self.redis.publish(image_metadata["fullname"],
                                json.dumps(image_metadata))
+
         except:
             self.logger.exception("Error publishing image metadata to Redis")
 
