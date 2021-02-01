@@ -122,7 +122,7 @@ class RapdPlugin(Process):
 
     command format
     {
-        "command":"INDTEGRATE",
+        "command":"INTEGRATE",
         "directories":
             {
                 "data_root_dir":""                  # Root directory for the data session
@@ -528,7 +528,92 @@ class RapdPlugin(Process):
 
         return first_frame, last_frame
 
+    def get_place_in_run(self):
+        """
+        Get the current image number (place_in_run) detected by rapd.model.add_image
+        """
+        # Get redis instance
+        if not self.redis:
+            self.connect_to_redis()
+        
+        return int(self.redis.get('place_in_run:%s'%self.image_data.get('site_tag',self.run_data.get("site_tag"))))
+
+    def wait_for_image_redis(self, image_number):
+        """
+        Watch for an image to be recorded. Return True if is does, False if timed out
+        """
+        #self.logger.debug("wait_for_image  image_number:%d", image_number)
+
+        # Get a bead on where we are now (Last image may not be accurate!!)
+        #first, last = self.get_current_images()
+        # Get first frame from run_data
+        first = self.run_data.get('start_image_number')
+        # Check Redis for current frame number
+        last = self.get_place_in_run()
+        self.logger.debug('first: %s last: %s'%(first, last))
+        if image_number <= last:
+            self.logger.debug("Image %d already present", image_number)
+            return True
+
+        # Estimate max time to get to target_image
+        max_time = (image_number - last) * (self.image_data["time"]) * 4
+        self.logger.debug('max_time: %s'%str(max_time))
+        
+        # Look for images in cycle
+        start_time = time.time()
+        self.tprint("  Watching for image number %s " % image_number, level=10, color="white", newline=False)
+        while (time.time() - start_time) < max_time:
+            self.tprint(".", level=10, color="white", newline=False)
+            if self.get_place_in_run() >= image_number:
+                self.tprint(".", level=10, color="white")
+                return True
+            time.sleep(1)
+
+        self.tprint(".", level=10, color="white")
+        self.logger.debug('Timed out waiting for image to appear')
+        return False
+    
     def wait_for_image(self, image_number):
+        """
+        Watch for an image to be recorded. Return True if is does, False if timed out
+        """
+        self.logger.debug("wait_for_image  image_number:%d", image_number)
+        
+        if self.preferences.get("run_mode") == "server":
+            # To get a more reliable existence of image...
+            return self.wait_for_image_redis(image_number)
+        else:
+            # Determine image to look for
+            target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+    
+            # Get a bead on where we are now
+            first, last = self.get_current_images()
+            self.logger.debug('first: %s last: %s'%(first, last))
+    
+            if image_number <= last:
+                self.logger.debug("Image %d already present", image_number)
+                return True
+    
+            # Estimate max time to get to target_image
+            max_time = (image_number - last) * (self.image_data["time"]) * 4
+            self.logger.debug('max_time: %s'%str(max_time))
+    
+            # Look for images in cycle
+            start_time = time.time()
+            self.tprint("  Watching for %s " % target_image, level=10, color="white", newline=False)
+            while (time.time() - start_time) < max_time:
+                self.tprint(".", level=10, color="white", newline=False)
+                #if os.path.exists(target_image):
+                if os.path.isfile(target_image):
+                    self.tprint(".", level=10, color="white")
+                    return True
+                time.sleep(1)
+    
+            self.tprint(".", level=10, color="white")
+            self.logger.debug('Timed out waiting for image to appear')
+            return False
+    
+    def wait_for_image_OLD(self, image_number):
         """
         Watch for an image to be recorded. Return True if is does, False if timed out
         """
@@ -539,6 +624,7 @@ class RapdPlugin(Process):
 
         # Get a bead on where we are now
         first, last = self.get_current_images()
+        self.logger.debug('first: %s last: %s'%(first, last))
 
         if image_number <= last:
             self.logger.debug("Image %d already present", image_number)
@@ -546,6 +632,7 @@ class RapdPlugin(Process):
 
         # Estimate max time to get to target_image
         max_time = (image_number - last) * (self.image_data["time"]) * 4
+        self.logger.debug('max_time: %s'%str(max_time))
 
         # Look for images in cycle
         start_time = time.time()
@@ -559,15 +646,14 @@ class RapdPlugin(Process):
             time.sleep(1)
 
         self.tprint(".", level=10, color="white")
+        self.logger.debug('Timed out waiting for image to appear')
         return False
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = redis_database.connect_to_redis()
-        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
@@ -619,10 +705,10 @@ class RapdPlugin(Process):
         self.run_analysis_plugin()
         
         # Run pdbquery - now at tail of analysis
-        # self.run_pdbquery_plugin()
+        self.run_pdbquery_plugin()
 
         # Send back results - the final time
-        #self.send_results(self.results)
+        self.send_results(self.results)
 
         # Save output
         self.write_json(self.results)
@@ -630,7 +716,9 @@ class RapdPlugin(Process):
         # Housekeeping
         self.clean_up()
 
+        # Say plugin is finished
         self.tprint(100, "progress")
+        self.logger.debug("Integration Complete")
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
@@ -710,15 +798,15 @@ class RapdPlugin(Process):
             os.chdir(start_dir)
 
             # Chain on the PDBQuery
-            time.sleep(15)
-            self.run_pdbquery_plugin()
+            #time.sleep(15)
+            #self.run_pdbquery_plugin()
 
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
 
             # Chain on the PDBQuery
-            self.run_pdbquery_plugin()
+            #self.run_pdbquery_plugin()
             
     def run_pdbquery_plugin(self):
         """Set up and run the analysis plugin"""
@@ -2085,6 +2173,14 @@ class RapdPlugin(Process):
         os.chdir(directory)
 
         orig_rescut = False
+        
+        # Check if XDS logs exist
+        l = ["IDXREF.LP", "INTEGRATE.LP", "CORRECT.LP"]
+        for f in l:
+            if not os.path.exists(f):
+                self.logger.debug('    XDS did not run properly!')
+                self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
+                return 'Failed'
 
         # Open up xds log files for saving
         xds_idxref_log = open("IDXREF.LP", "r").readlines()

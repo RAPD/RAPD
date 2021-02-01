@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2018 Cornell University
+Copyright (C) 2016-2021 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -71,7 +71,7 @@ def check_queue(inp):
     """
     d = {"ECHO"           : 'phase1.q,general.q',
          #"INDEX"          : 'phase2.q,phase3.q,index.q',
-         "INDEX"          : 'phase1.q,general.q',
+         "INDEX"          : 'index.q,phase2.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
          #"XDS"            : 'phase2.q,phase1.q,fibre.q',
@@ -79,14 +79,14 @@ def check_queue(inp):
          #"INTEGRATE"      : 'integrate.q',
          #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
          #"INTEGRATE"      : 'phase3.q',
-         "INTEGRATE"      : 'phase1.q,general.q',
+         "INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
          #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
          #"PDBQUERY"       : 'phase3.q',
          "PDBQUERY"      : 'phase1.q,general.q',
          #"ANALYSIS"       : 'phase2.q,phase1.q,general.q',
          #"ANALYSIS"       : 'phase3.q',
          "ANALYSIS"       : 'phase1.q,general.q',
-         "MR"             : 'phase1.q,general.q',
+         "MR"             : 'phase2.q',
          }
     if d.get(inp, False):
         return(d[inp])
@@ -99,21 +99,12 @@ def get_resources(command):
         return 4
     elif command in ('INTEGRATE'):
         #Integrate gets number of processors and number of jobs
-        return (4, 8)
+        #return (4, 8)
+        #return (8, 8)
+        return (8, 12)
     else:
         return 1
 
-def get_nproc_njobs_OLD():
-    """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 8)
-  
-def determine_nproc_OLD(command):
-    """Determine how many processors to reserve on the cluster for a specific job type."""
-    nproc = 1
-    if command in ('INDEX'):
-        nproc = 4
-    return nproc
-  
 def fix_command_OLD(message):
     """
     Adjust the command passed in in install-specific ways

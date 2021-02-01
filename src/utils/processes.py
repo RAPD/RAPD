@@ -180,7 +180,7 @@ class QueueManager(BaseManager):
         queue = manager.get_queue()
         return queue
 
-def mp_manager():
+def mp_manager_TEST():
     # This is a way to get a queue across different machines. 
     # DID NOT WORK because you cannot close the manager server?!?
 

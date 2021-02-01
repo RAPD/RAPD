@@ -126,6 +126,8 @@ def parse_output(labelit_output, iteration=0):
                 return "failed"
             if line.startswith("Exception:"):
                 return "failed"
+            
+            # Labelit errors
             if line.startswith("Labelit finds no reasonable solution"):
                 # if self.multiproc:
                 return "failed"
@@ -141,14 +143,7 @@ def parse_output(labelit_output, iteration=0):
                 return "failed"
                 # else:
                 #     return "no index"
-            if line.startswith("MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR"):
-                # if self.multiproc:
-                return "failed"
-                # else:
-                #     return "no index"
-            if line.startswith("MOSFLM_Warning: MOSFLM logfile overflow"):
-                # if self.multiproc:
-                return "failed"
+            
             if line.startswith("ValueError: min()"):
                 # if self.multiproc:
                 return "failed"
@@ -176,9 +171,24 @@ def parse_output(labelit_output, iteration=0):
                 error_lg = line.split()[11]
             if line.startswith("No_Lattice_Selection: The known_symmetry"):
                 return "bad_input"
-            
             if line.count("TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'"):
                 return "eiger_cbf_error"
+            
+            # Mosflm errors
+            """
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR"):
+                # if self.multiproc:
+                return "failed"
+                # else:
+                #     return "no index"
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile overflow"):
+                # if self.multiproc:
+                return "failed"
+            """
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile"):
+                # if self.multiproc:
+                return "failed"
+            
             if line.startswith("MosflmVersionError:"):
                 return "mosflm_version_error"
             if line.count("MOSFLM logfile declares FATAL ERROR"):

@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2018 Cornell University
+Copyright (C) 2016-2021 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -288,7 +288,10 @@ class Adapter(object):
         # Scrub out problems with offest
         #vertical_offset = float(connection.get("SEGMENT_OFFSET_SV"))
         # Add all additional info not in header
-        if tag == 'NECAT_C':
+        
+        #should have all info in header now!
+        #if tag == 'NECAT_C':
+        if False:
             pipe = connection.pipeline()
             pipe.get("ENERGY_SV")
             pipe.get("RING_CUR_SV")

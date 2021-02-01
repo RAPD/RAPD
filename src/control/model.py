@@ -168,8 +168,6 @@ class Model(object):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
@@ -221,7 +219,7 @@ class Model(object):
         # Shorten variable names
         site = self.site
 
-        import sites.detectors.necat_dectris_eiger16m
+        #import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
         if site.DETECTOR:
@@ -446,8 +444,9 @@ class Model(object):
 
         # Image is in a run
         if isinstance(place_in_run, int):
-
-            # self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
+            # Save the current place_in_run in Redis so integration has reliable signal of whether an image exists.
+            # This is a problem on some filesystems (ie. NFS) caching the file attributes.
+            self.redis.set('place_in_run:%s'%site_tag, str(place_in_run))
 
             # Save some typing
             current_run = self.recent_runs[str(run_id)]
@@ -736,10 +735,20 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
+<<<<<<< HEAD
         # If the detector can determine if run or snap
         # Make sure we have a function
         if getattr(detector, "is_run_from_imagename", None):
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
+=======
+        # If the detector can determine if run or snap from the image name
+        ## I don't remember which line is correct for catching th e exceptions??
+        #if getattr(detector, "is_run_from_imagename", None):
+        if hasattr(detector, "is_run_from_imagename"):
+            # Make sure we have a function
+            if isinstance(detector.is_run_from_imagename, types.FunctionType):
+                self.logger.debug("Have function")
+>>>>>>> jon_working
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
                     self.logger.debug("Could NOT be a snap")

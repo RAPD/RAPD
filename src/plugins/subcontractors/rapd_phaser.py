@@ -49,7 +49,7 @@ import phaser
 # RAPD imports
 from utils import archive, pdb
 from utils.processes import local_subprocess
-from utils.xutils import convert_unicode, calc_ADF_map
+from utils.xutils import convert_unicode, calc_ADF_map, calc_maps
 
 def connect_to_redis(settings):
     redis_database = importlib.import_module('database.redis_adapter')
@@ -311,6 +311,7 @@ def mp_job(func):
                 return (proc, 'junk')
             else:
                 # If running on computer cluster. Launcher will be sites.cluster.(site_name).process_cluster
+                # Results will be sent via Redis
                 f = write_script(kwargs)
                 pid_queue = Queue()
                 proc = Process(target=launcher,
@@ -540,7 +541,9 @@ def run_phaser(data_file,
             print r.ErrorName(), "ERROR :", r.ErrorMessage()
         
         # Save log files for debugging
+        # passesed into results
         phaser_log = r.logfile()
+        # saved to a file for viewing.
         with open('phaser.log', 'w') as log:
             log.write(r.logfile())
             log.close()
@@ -575,7 +578,7 @@ def run_phaser(data_file,
             phaser_result = {"ID": name,
                              "solution": r.foundSolutions(),
                              "pdb_file": os.path.join(work_dir, r.getTopPdbFile()),
-                             "mtz": mtz_file,
+                             "mtz_file": mtz_file,
                              "gain": float(r.getTopLLG()),
                              "rfz": rfz,
                              # "tfz": r.getTopTFZ(),
@@ -589,16 +592,74 @@ def run_phaser(data_file,
                              "peak": None,
                              }
 
+            # Calc ADF map
+            if adf:
+                if os.path.exists(phaser_result.get("pdb_file", False)) and os.path.exists(phaser_result.get("mtz", False)):
+                    adf_results = calc_ADF_map(data_file=data_file,
+                                               phaser_mtz=phaser_result["mtz"],
+                                               phaser_pdb=phaser_result["pdb_file"])
+                    if adf_results.get("adf", False):
+                        phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
+                    if adf_results.get("peak", False):
+                        phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
+
+            # New procedure for making tar of results
+            # Create directory
+            # Remove the run # from the name
+            # new_name = name[:-2]  #
+            new_name = phaser_result.get("ID") #
+            # print new_name
+            os.mkdir(new_name)
+            # # Go through and copy files to archive directory
+            file_types = ("pdb_file", "mtz_file", "adf", "peak")
+            for file_type in file_types:
+                # print file_type
+                target_file = phaser_result.get(file_type, False)
+                # print target_file
+                if target_file:
+                    if os.path.exists(target_file):
+                        # Copy the file to the directory to be archived
+                        shutil.copy(target_file, new_name+"/.")
+            # # Create the archive
+            archive_result = archive.create_archive(new_name)
+            archive_result["description"] = '%s_files'%new_name
+            phaser_result["tar"] = archive_result
+            
             # Calculate 2Fo-Fc & Fo-Fc maps
             # foo.mtz begets foo_2mFo-DFc.ccp4 & foo__mFo-DFc.ccp4
-            local_subprocess(command="phenix.mtz2map %s" % mtz_file,
-                             logfile='map.log',
-                             shell=True)
-            
-            # Map files should now exist
-            map_2_1 = mtz_file.replace(".mtz", "_2mFo-DFc.ccp4")
-            map_1_1 = mtz_file.replace(".mtz", "_mFo-DFc.ccp4")
+            ## create new function based on xutils.calc_ADF_map to calc maps##
+            #local_subprocess(command="phenix.mtz2map %s %s" % (phaser_result.get("mtz_file"), phaser_result.get("pdb_file")),
+            #                 logfile='map.log',
+            #                 shell=True)
+            calc_maps(mtz_file=phaser_result.get("mtz_file"),
+                      pdb_file=phaser_result.get("pdb_file"))
 
+            d = {'map_2_1': phaser_result.get("mtz_file").replace(".mtz", "_2mFo-DFc.ccp4"),
+                 'map_1_1': phaser_result.get("mtz_file").replace(".mtz", "_mFo-DFc.ccp4"),
+                 'pdb': phaser_result.get("pdb_file", False),
+                 'mtz': phaser_result.get("mtz_file", False),
+                 'adf': phaser_result.get("adf", False),
+                 'peak': phaser_result.get("peak", False),
+                 }
+            # Create compressed archives of these files to pass back
+            for k in d:
+                if d[k] not in (None, False) and os.path.exists(d[k]):
+                    # Compress the map
+                    arch_prod_file, arch_prod_hash = archive.compress_file(d[k])
+                    # Remove the original uncompressed file
+                    os.unlink(d[k])
+                    # Store information
+                    file_for_display = {
+                        "path": arch_prod_file,
+                        "hash": arch_prod_hash,
+                        "description": k}
+                    phaser_result[k] = file_for_display
+            
+            """
+            # Map files should now exist
+            #map_2_1 = mtz_file.replace(".mtz", "_2mFo-DFc.ccp4")
+            #map_1_1 = mtz_file.replace(".mtz", "_mFo-DFc.ccp4")
+            
             # Make sure the maps exist and then package them
             if os.path.exists(map_2_1):
                 # Compress the map
@@ -625,7 +686,7 @@ def run_phaser(data_file,
                     "description": "map_1_1"
                 }
                 phaser_result["map_1_1"] = map_for_display
-                
+            
             # If PDB exists, package that too
             if phaser_result.get("pdb_file", False):
                 if os.path.exists(phaser_result.get("pdb_file")):
@@ -640,48 +701,14 @@ def run_phaser(data_file,
                         "description": os.path.basename(phaser_result.get("pdb_file"))
                     }
                     phaser_result["pdb"] = pdb_for_display
-
-            # Calc ADF map
-            if adf:
-                if os.path.exists(phaser_result.get("pdb_file", False)) and os.path.exists(phaser_result.get("mtz", False)):
-                    adf_results = calc_ADF_map(data_file=data_file,
-                                               mtz=phaser_result["mtz"],
-                                               pdb=phaser_result["pdb_file"])
-                    if adf_results.get("adf"):
-                        phaser_result.update({"adf": os.path.join(work_dir, adf_results.get("adf"))})
-                    if adf_results.get("peak"):
-                        phaser_result.update({"peak": os.path.join(work_dir, adf_results.get("peak"))})
-                    #phaser_result.update({"adf": adf_results.get("adf", None),
-                    #                      "peak": adf_results.get("peak", None),})
-
-            # New procedure for making tar of results
-            # Create directory
-            # Remove the run # from the name
-            new_name = phaser_result.get("ID")
-            # print new_name
-            os.mkdir(new_name)
-            # # Go through and copy files to archive directory
-            file_types = ("pdb_file", "mtz", "adf", "peak")
-            for file_type in file_types:
-                # print file_type
-                target_file = phaser_result.get(file_type, False)
-                # print target_file
-                if target_file:
-                    if os.path.exists(target_file):
-                        # Copy the file to the directory to be archived
-                        shutil.copy(target_file, new_name+"/.")
-            # # Create the archive
-            archive_result = archive.create_archive(new_name)
-            archive_result["description"] = '%s_files'%new_name
-            phaser_result["tar"] = archive_result
-
-            # print "2"
-
+            """
         else:
             phaser_result = {"ID": name,
                              "solution": False,
                              "message": "No solution",
-                             "spacegroup": spacegroup}
+                             "spacegroup": spacegroup,
+                             #"nmol": str(ncopy)
+                             }
         # Add the phaser log
         if phaser_log:
             phaser_result.update({"logs": {"phaser": phaser_log}})
@@ -695,7 +722,7 @@ def run_phaser(data_file,
             # Key should be deleted once received, but set the key to expire in 24 hours just in case.
             redis.setex(tag, 86400, json.dumps(phaser_result))
             # Do a little sleep to make sure results are in Redis for postprocess_phaser
-            time.sleep(0.1)
+            time.sleep(0.5)
         else:
             # print "Printing phaser_result"
             # Print the result so it can be seen thru the queue by reading stdout

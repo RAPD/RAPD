@@ -183,4 +183,5 @@ DETECTOR_TO_BEST = {
     "Dectris Eiger 9M": "eiger9m",
     "Eiger-9M": "eiger9m",
     "Eiger-16M": "eiger16m",
+    "Eiger2-16M": "eiger2-16m",
     }

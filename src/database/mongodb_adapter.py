@@ -352,7 +352,8 @@ class Database(object):
         self.logger.debug("save_plugin_result %s:%s", plugin_result["plugin"]["type"], plugin_result["process"])
 
         if plugin_result["plugin"]["type"] in ("PDBQUERY",):
-            self.logger.debug(plugin_result)
+            #self.logger.debug(plugin_result)
+            pass
 
         # Connect to the database
         db = self.get_db_connection()

@@ -1,4 +1,4 @@
-"""Detector description for Dectris Eiger 16M"""
+"""Detector description for Dectris Eiger2 16M"""
 
 """
 This file is part of RAPD
@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-02-13"
+__created__ = "2020-09-28"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
@@ -37,7 +37,7 @@ import tempfile
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 
-DETECTOR = "dectris_eiger16m"
+DETECTOR = "dectris_eiger2-16m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
@@ -58,8 +58,8 @@ XDSINP = [
     ('MIN_RFL_Rmeas', ' 50') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '21') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '21') ,
-    ('NX', '4150') ,
-    ('NY', '4371') ,
+    ('NX', '4148') ,
+    ('NY', '4362') ,
     ('OVERLOAD', '19405') ,
     ('POLARIZATION_PLANE_NORMAL', '0 1 0') ,
     ('QX', '0.075') ,
@@ -73,16 +73,16 @@ XDSINP = [
     ('SEPMIN', '4') ,
     ('TEST_RESOLUTION_RANGE', '8.0 4.5') ,
     ('TRUSTED_REGION', '0.0 1.41') ,
-    ('UNTRUSTED_RECTANGLE1', ' 1030 1041      0 4372') ,
-    ('UNTRUSTED_RECTANGLE10', '    0 4151   3820 3858') ,
-    ('UNTRUSTED_RECTANGLE2', ' 2070 2081      0 4372') ,
-    ('UNTRUSTED_RECTANGLE3', ' 3110 3121      0 4372') ,
-    ('UNTRUSTED_RECTANGLE4', '    0 4151    514  552') ,
-    ('UNTRUSTED_RECTANGLE5', '    0 4151   1065 1103') ,
-    ('UNTRUSTED_RECTANGLE6', '    0 4151   1616 1654') ,
-    ('UNTRUSTED_RECTANGLE7', '    0 4151   2167 2205') ,
-    ('UNTRUSTED_RECTANGLE8', '    0 4151   2718 2756') ,
-    ('UNTRUSTED_RECTANGLE9', '    0 4151   3269 3307') ,
+    ('UNTRUSTED_RECTANGLE1', ' 1027 1040      0 4363'),
+    ('UNTRUSTED_RECTANGLE2', ' 2067 2080      0 4363') ,
+    ('UNTRUSTED_RECTANGLE3', ' 3107 3120      0 4363') ,
+    ('UNTRUSTED_RECTANGLE4', '    0 4149    511  550') ,
+    ('UNTRUSTED_RECTANGLE5', '    0 4149   1061 1100') ,
+    ('UNTRUSTED_RECTANGLE6', '    0 4149   1611 1650') ,
+    ('UNTRUSTED_RECTANGLE7', '    0 4149   2161 2200') ,
+    ('UNTRUSTED_RECTANGLE8', '    0 4149   2711 2750') ,
+    ('UNTRUSTED_RECTANGLE9', '    0 4149   3261 3300') ,
+    ('UNTRUSTED_RECTANGLE10', '    0 4149   3811 3850') ,
     ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '6000 30000') ,
     ]
 
