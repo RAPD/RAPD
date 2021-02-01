@@ -14,6 +14,7 @@ const smtpTransport = require("nodemailer-smtp-transport");
 // const randomstring = require("randomstring");
 const useragent = require("express-useragent");
 const bcrypt = require('bcryptjs');
+const moment = require("moment");
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -550,7 +551,8 @@ apiRoutes.post("/requestpass", function(req, res) {
           new_hash = bcrypt.hashSync(new_pass, salt) ;
           user.pass = new_hash;
         // Expire in 60 minutes
-        user.pass_expire = Date.now() + 3600;
+        user.pass_expire = moment().utc().add(1,"h").toDate();
+        // user.pass_expire = Date.now() + 3600;
         user.pass_force_change = true;
         user.save(function(err, saved_user) {
           if (err) {

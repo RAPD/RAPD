@@ -737,12 +737,14 @@ class RapdPlugin(Thread):
         """fix Phaser results and pass back"""
         
         self.logger.debug("postprocess_phaser")
-        self.logger.debug(results)
+        #self.logger.debug(results)
 
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
         # Copy tar to working dir for commandline results
+        ## Have to determine when it is running in commandline mode##
+        """
         if results.get("tar", False):
             orig = results.get("tar", {"path":False}).get("path")
             if orig:
@@ -762,7 +764,7 @@ class RapdPlugin(Thread):
                 os.unlink(new)
             shutil.copy(orig, new)
             results["pdb_file"] = new
-        
+        """
          # Three result types to run through
         types = (
             ("custom_structures", self.custom_structures),
@@ -789,24 +791,27 @@ class RapdPlugin(Thread):
         # Passback new results to RAPD
         self.send_results()
 
-    def transfer_files(self, result):
+    def transfer_files(self, results):
         """
         Transfer files to a directory that the control can access
         """
 
         self.logger.debug("transfer_files")
-
-        #if self.preferences.get("exchange_dir", False):
+        #self.logger.debug(results)
         if self.command["directories"].get("exchange_dir", False):
+<<<<<<< HEAD
             self.logger.debug("transfer_files",
                               self.command["directories"].get("exchange_dir" ))
 
+=======
+>>>>>>> jon_working
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
+<<<<<<< HEAD
 
             # If there is a pdb produced -> data_produced
             archive_dict = result.get("pdb", {})
@@ -824,6 +829,90 @@ class RapdPlugin(Thread):
             # Maps & PDB
             for my_map in ("map_1_1", "map_2_1", "pdb"):
                 archive_dict = result.get(my_map, {})
+=======
+            for result in (results.get("common_contaminants", [])+results.get("search_results", [])):
+                # If there is a pdb produced -> data_produced
+                # Copy compressed results files to exchange dir and update path.
+                l = ["map_1_1", "map_2_1", 'pdb', 'mtz', 'tar']
+                for f in l:
+                    archive_dict = result.get(f, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Copy data
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        #shutil.move(archive_file, target)
+                        
+                        if f in ("map_1_1", "map_2_1", 'tar'):
+                            shutil.move(archive_file, target)
+                        else:
+                            # Once we know this works we can switch to moving files.
+                            shutil.copyfile(archive_file, target)
+                        
+                        # Store new path information
+                        archive_dict["path"] = target
+                        # Add to the results.data_produced array
+                        if f in ('pdb', 'mtz', 'tar'):
+                            self.results["results"]["data_produced"].append(archive_dict)
+                        # Also put PDB path in 'for_display' results
+                        if f in ('pdb', "map_1_1", "map_2_1"):
+                            self.results["results"]["for_display"].append(archive_dict)
+                """
+                archive_dict = result.get("pdb", {})
+>>>>>>> jon_working
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Copy data
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.copyfile(archive_file, target)
+                    # Store new path information
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+                """
+                # # Maps & PDB
+                # for my_map in ("map_1_1", "map_2_1", "pdb"):
+                #     archive_dict = result.get(my_map, {})
+                #     archive_file = archive_dict.get("path", False)
+                #     if archive_file:
+                #         # Move the file
+                #         target = os.path.join(target_dir, os.path.basename(archive_file))
+                #         shutil.move(archive_file, target)
+                #         # Store information
+                #     archive_dict["path"] = target
+                #     # Add to the results.data_produced array
+                #     self.results["results"]["data_produced"].append(archive_dict)
+                """
+                # Maps & PDB
+                for my_map in ("map_1_1", "map_2_1", "pdb"):
+                    archive_dict = result.get(my_map, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Move the file
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        shutil.move(archive_file, target)
+                        # Store information
+                        archive_dict["path"] = target
+                        # Add to the results.archive_files array
+                        self.results["results"]["for_display"].append(archive_dict)
+                
+                # If there is an archive
+                archive_dict = result.get("tar", {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Move the file
+                    target = os.path.join(
+                        target_dir, os.path.basename(archive_file))
+                    self.logger.debug("target %s", target)
+                    shutil.move(archive_file, target)
+                    # Store information
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+                """
+            """
+            # Maps & PDB (IS THIS REQUIRED?? or leftover garbage???)
+            for my_map in ("map_1_1", "map_2_1", "pdb"):
+                archive_dict = result.get(my_map, {})
                 archive_file = archive_dict.get("path", False)
                 if archive_file:
                     # Move the file
@@ -832,24 +921,9 @@ class RapdPlugin(Thread):
                     # Store information
                     archive_dict["path"] = target
                     # Add to the results.archive_files array
-                    self.results["results"]["for_display"].append(
+                    self.results["results"]["archive_files"].append(
                         archive_dict)
-
-            # If there is an archive
-            archive_dict = result.get("tar", {})
-            archive_file = archive_dict.get("path", False)
-            if archive_file:
-                # Move the file
-                target = os.path.join(
-                    target_dir, os.path.basename(archive_file))
-                self.logger.debug("target %s", target)
-                shutil.move(archive_file, target)
-                # Store information
-                archive_dict["path"] = target
-                # Add to the results.archive_files array
-                self.results["results"]["archive_files"].append(
-                    archive_dict)
-        
+            """
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""
         
@@ -886,15 +960,28 @@ class RapdPlugin(Thread):
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
+                #self.logger.debug('results_json_type: %s results_json: %s'%(type(results_json), results_json))
+                if not results_json:
+                    self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                           "solution": False,
+                                                           "spacegroup": info['spacegroup'],
+                                                           "message": "Error launching job"})
+                else:
+                    results = json.loads(results_json)
+                    self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['tag'])
+                """
                 # This try/except is for when results aren't in Redis in time.
                 try:
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])
                 except Exception as e:
-                    self.logger.error('Error '+ str(e))
+                    self.logger.error('Error: '+ str(e))
+                    self.logger.error('results_json: %s'%results_json)
                     #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
                     #print results_json
+                """
             else:
                 results = info['result_queue'].get()
                 # pprint(results.get('stdout', " "))
@@ -903,25 +990,6 @@ class RapdPlugin(Thread):
                 #     print results["stderr"]
                 self.postprocess_phaser(info['name'], json.loads(results.get('stdout', " ")))
             jobs.remove(job)
-            
-            #results_json = self.redis.get(info['tag'])
-            # This try/except is for when results aren't in Redis in time.
-            #try:
-            #    results = json.loads(results_json)
-            #    self.postprocess_phaser(info['name'], results)
-            #    self.redis.delete(info['tag'])
-            #except Exception as e:
-            #    self.logger.error('Error'+ str(e))
-                # print 'PROBLEM: %s %s'%(info['name'], info['tag'])
-                # print results_json
-                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['tag']))
-                # self.logger.debug(results_json)
-            
-            #results = json.loads(results_json)
-            #print results
-            #self.postprocess_phaser(info['name'], results)
-            #self.redis.delete(info['tag'])
-            #jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
         if self.pool:
@@ -952,8 +1020,7 @@ class RapdPlugin(Thread):
                     break
         if timed_out:
             if self.verbose:
-                self.logger.debug('AutoStat timed out.')
-                print 'AutoStat timed out.'
+                self.logger.debug('PDBQuery timed out.')
             for job in self.jobs.keys():
                 if self.computer_cluster:
                     # Kill job on cluster:
@@ -963,10 +1030,11 @@ class RapdPlugin(Thread):
                     job.terminate()
                 # Get the job info
                 info = self.jobs.pop(job)
-                print 'Timeout Phaser on %s'%info['name']
                 self.logger.debug('Timeout Phaser on %s'%info['name'])
                 # Send timeout result to postprocess
-                self.postprocess_phaser(info['name'], {"solution": False,
+                self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                       "solution": False,
+                                                       "spacegroup": info['spacegroup'],
                                                        "message": "Timed out"})
                 # Delete the Redis key
                 self.redis.delete(info['tag'])
@@ -1016,12 +1084,12 @@ class RapdPlugin(Thread):
 
             # Change to work dir
             os.chdir(self.working_dir)
-            """
+            
             # Gather targets and remove
             files_to_clean = glob.glob("Phaser_*")
             for target in files_to_clean:
                 shutil.rmtree(target)
-            """
+            
     def print_results(self):
         """Print the results to the commandline"""
 

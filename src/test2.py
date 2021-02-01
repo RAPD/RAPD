@@ -105,6 +105,7 @@ input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
 print xutils.get_sub_groups(input_spacegroup_num, "simple")
 """
 """
+# RUN Analysis
 import plugins.analysis.plugin
 import plugins.analysis.commandline
 # Construct the pdbquery plugin command
@@ -128,7 +129,7 @@ class AnalysisArgs(object):
 
 analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
 
-# The pdbquery plugin
+# The analysis plugin
 plugin = plugins.analysis.plugin
 
 # Run the plugin
@@ -142,7 +143,8 @@ plugin_instance.start()
 #analysis_result = plugin_queue.get()
 #print analysis_result
 """
-
+"""
+# RUN PDBQuery
 import plugins.pdbquery.plugin
 import plugins.pdbquery.commandline
 
@@ -184,7 +186,7 @@ plugin_instance = plugin.RapdPlugin(site=site,
                                     command=pdbquery_command,
                                     logger=logger)
 plugin_instance.start()
-
+"""
 """
 data_file = '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz'
 pdb = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_mr_thau_free/P41212_all_0/P41212_all_0.1.pdb'
@@ -197,8 +199,8 @@ adf_results = xutils.calc_ADF_map(data_file=data_file,
                            pdb=pdb)
 print adf_results
 """
-
 """
+#RUN MR
 import plugins.mr.plugin
 import plugins.mr.commandline
 import uuid
@@ -239,12 +241,11 @@ plugin = plugins.mr.plugin
 
 # Run the plugin
 plugin_instance = plugin.RapdPlugin(site=site,
-                                    command=mr_command,
-                                    logger=logger)
+                                    command=mr_command)
 plugin_instance.start()
 """
 
-"""
+
 from plugins.subcontractors.rapd_phaser import run_phaser
 
 # Setup local_subprocess
@@ -254,12 +255,18 @@ pool = mp_pool(1)
 os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
 
 job_description = {
-                    "work_dir": '/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test',
-                    "datafile": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
+                    #"work_dir": '/gpfs6/users/necat/Jon/RAPD_test/Output/Phaser_test',
+                    "work_dir": '/gpfs6/users/necat/rapd2/integrate/2020-10-14/SAD020_16_1/rapd_pdbquery_SAD020_16_1_free/Phaser_4NPR',
+                    "data_file": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
+                    "data_file": '',
                     #"cif": "/gpfs5/users/necat/rapd/pdbq/pdb/th/1thw.cif",
+                    #"pdb": "/gpfs6/users/necat/Jon/RAPD_test/Pdb/thau.pdb",
                     "pdb": "/gpfs6/users/necat/Jon/RAPD_test/Pdb/thau.pdb",
-                    "name": 'junk',
-                    "spacegroup": 'P422',
+                    "struct_file": '/gpfs6/users/necat/rapd2/integrate/2020-10-14/SAD020_16_1/rapd_pdbquery_SAD020_16_1_free/Phaser_4NPR/4npr.cif',
+                    #"name": 'junk',
+                    "name": '4NPR',
+                    #"spacegroup": 'P422',
+                    "spacegroup": 'P222',
                     "ncopy": 1,
                     "test": False,
                     "cell_analysis": True,
@@ -289,4 +296,4 @@ print job.successful()
 #print output_id
 pool.close()
 pool.join()
-"""
+

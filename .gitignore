@@ -28,6 +28,8 @@ test_data
 ramdisk 
 test.py
 junk.sh
+/src/test.py
+/src/test2.py
 
 # Just there for local reference
 

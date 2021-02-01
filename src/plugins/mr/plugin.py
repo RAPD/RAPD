@@ -162,14 +162,7 @@ class RapdPlugin(Thread):
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
-        
-        #self.test = self.preferences.get("test", False)
-        self.test = self.preferences.get("test", True) # Limit number of runs on cluster
-        
-        #self.sample_type = self.preferences.get("type", "protein")
-        #self.solvent_content = self.preferences.get("solvent_content", 0.55)
-        # Number of molecules specified
-        #self.nmol = self.preferences.get('nmol', False)
+
         # Input data MTZ file
         self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Input PDB/mmCIF file or PDB code.
@@ -381,6 +374,7 @@ class RapdPlugin(Thread):
             "data_produced": [],
             "messages": [],
             "errors": [],
+            "for_display": []
         }
     
     def connect_to_redis(self):
@@ -421,8 +415,8 @@ class RapdPlugin(Thread):
         """Start Phaser for input pdb"""
 
         self.logger.debug("process_phaser")
-        self.tprint("\nStarting molecular replacement", level=30, color="blue")
 
+        self.tprint("\nStarting molecular replacement", level=30, color="blue")
         self.tprint("  Assembling Phaser runs", level=10, color="white")
 
         def launch_job(inp):
@@ -441,8 +435,7 @@ class RapdPlugin(Thread):
                 # Add result queue
                 queue = self.manager.Queue()
                 inp['result_queue'] = queue
-            #inp['result_queue'] = queue
-            #inp['result_queue_ip'] = self.manager_queue.address
+
             # Launch the job
             job, pid = run_phaser(**inp)
             self.jobs[job] = {'name': inp['name'],
@@ -481,7 +474,7 @@ class RapdPlugin(Thread):
                         "spacegroup": sg,
                         "ncopy": copy,
                         "adf": self.adf,
-                        #"test": self.test,
+                        #"test": self.preferences.get("test", False),
                         "resolution": res,
                         "launcher": self.launcher,
                         "tag": False,
@@ -532,16 +525,13 @@ class RapdPlugin(Thread):
                     os.unlink(new)
                 shutil.copy(orig, new)
                 results["tar"]["path"] = new
-        
-        #if results.get("logs", False):
-        #    results["logs"]["phaser"] = 'log'
 
         # Send back results skipping whether quick or full run.
         #self.results['results']['mr_results'][job_name[:-2]].append(results)
         self.results['results']['mr_results'].update({job_name[:-2] : results})
         # Show results in log 
-        self.logger.debug(results)
-        
+        #self.logger.debug(results)
+
         # Save results for command line
         self.phaser_results[job_name] = {"results": results}
         # Update the status number
@@ -559,19 +549,25 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
+            #print 'Finished Phaser on %s with id: %s'%(info['name'], info['tag'])
             self.logger.debug('Finished Phaser on %s'%info['name'])
             if self.computer_cluster:
                 results_json = self.redis.get(info['tag'])
-                # This try/except is for when results aren't in Redis in time.
+                results = json.loads(results_json)
+                self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['tag'])
+                """
                 try:
+                    # This try/except is for when results aren't in Redis in time.
                     results = json.loads(results_json)
                     self.postprocess_phaser(info['name'], results)
                     self.redis.delete(info['tag'])
                 except Exception as e:
                     self.logger.error('Error '+ str(e))
+                    #self.logger.error('results_json: %s'%results_json)
                     #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
                     #print results_json
+                """
             else:
                 results = info['result_queue'].get()
                 self.postprocess_phaser(info['name'], json.loads(results.get('stdout')))
@@ -696,16 +692,41 @@ class RapdPlugin(Thread):
 
         #if self.preferences.get("exchange_dir", False):
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
-
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
+            
+            # Copy compressed results files to exchange dir and update path.
+            l = ["map_1_1", "map_2_1", 'pdb', 'mtz', 'tar', 'adf', 'peak']
+            for f in l:
+                if result.get(f, False):
+                    archive_dict = result.get(f, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Copy data
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        # Copy files for now to make sure they are produced
+                        shutil.copyfile(archive_file, target)
+                        """
+                        if f in ("map_1_1", "map_2_1", 'tar'):
+                            shutil.move(archive_file, target)
+                        else:
+                            # Once we know this works we can switch to moving files.
+                            shutil.copyfile(archive_file, target)
+                        """
+                        # Store new path information
+                        archive_dict["path"] = target
+                        # Add to the results.data_produced array
+                        if f in ('pdb', 'mtz', 'tar', 'adf', 'peak'):
+                            self.results["results"]["data_produced"].append(archive_dict)
+                        # Also put PDB path in 'for_display' results
+                        if f in ('pdb', "map_1_1", "map_2_1", 'adf', 'peak'):
+                            self.results["results"]["for_display"].append(archive_dict)
 
+            """
             # If there is data produced (Used for files that could be passed to another Plugin later)
             files_to_move = ("pdb", "mtz", "adf", "peak")
             for key in files_to_move:
@@ -747,7 +768,7 @@ class RapdPlugin(Thread):
                 # Add to the results.archive_files array
                 self.results["results"]["archive_files"].append(
                     archive_dict)
-        
+            """
     def postprocess_invalid_input_file(self):
         """Make a proper result for PDB that could not be downloaded"""
         self.logger.debug("postprocess_invalid_input_file")
