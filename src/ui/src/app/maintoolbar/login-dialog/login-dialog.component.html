@@ -6,7 +6,7 @@
   </div>
   <div *ngIf="mode === 'login'">
     <h2>
-      Login
+      RAPD2 Login
     </h2>
     <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
       <table>
@@ -20,7 +20,7 @@
           </mat-form-field>
           <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
             <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
-              Email is required
+              {{globalsService.site.loginLabel}}
             </div>
             <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
               Email is invalid
