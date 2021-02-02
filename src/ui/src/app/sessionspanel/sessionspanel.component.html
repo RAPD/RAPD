@@ -1,4 +1,5 @@
 <div class="rapd-main-panel">
+
   <article class="c-content">
     <ngx-datatable
       class="material"
@@ -39,6 +40,45 @@
       </ngx-datatable-column>
     </ngx-datatable>
   </article>
+
+  <article class="c-content">
+    <mat-paginator
+      [length]="dataSettings.length"
+      [pageSize]="dataSettings.pageSize"
+      [pageSizeOptions]="[10, 20, 50, 100, 1000, 10000]"
+      (page)="handlePaginator($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+    <table mat-table
+      [dataSource]="filteredSessions"
+      matSort
+      matSortStart="desc"
+      (matSortChange)="handleSort($event)">
+
+      <ng-container *ngFor="let myColumn of asIsColumns" matColumnDef="{{myColumn}}">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels[myColumn]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record[myColumn]}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="group_name">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["group_name"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record.group?.groupname}} </td>
+      </ng-container>
+      <ng-container matColumnDef="timestamp">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["timestamp"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record.timestamp | date:'y-MM-dd HH:mm'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="last_process">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["last_process"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record.last_process | date:'y-MM-dd HH:mm'}} </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let record; columns: displayedColumns;"
+          (click)="recordClick(record, $event)"></tr>
+    </table>
+  </article>
+
   <mat-toolbar class="rapd-main-panel-action-bar" style="height:4em;">
     <form class="session-filter-form">
       <mat-form-field
