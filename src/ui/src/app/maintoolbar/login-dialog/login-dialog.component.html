@@ -83,7 +83,7 @@
         </mat-form-field>
         <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
           <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.required">
-            Email is required
+            {{globalsService.site.loginLabel}}
           </div>
           <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.pattern">
             Email is invalid
