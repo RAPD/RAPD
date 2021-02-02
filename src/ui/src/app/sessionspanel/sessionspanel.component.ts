@@ -16,11 +16,11 @@ import { Session } from '../shared/classes/session';
 export class SessionspanelComponent implements OnInit {
 
   sessions: Session[] = [];
-  filtered_sessions: Session[] = [];
+  filteredSessions: Session[] = [];
   errorMessage: string;
 
   constructor(private globalsService: GlobalsService,
-              private rest_service: RestService,
+              private restService: RestService,
               private router: Router) { }
 
   ngOnInit() {
@@ -28,19 +28,19 @@ export class SessionspanelComponent implements OnInit {
   }
 
   getSessions() {
-    this.rest_service.getSessions()
+    this.restService.getSessions()
       .subscribe(
        sessions => {
-         this.filtered_sessions = [...sessions];
+         this.filteredSessions = [...sessions];
          this.sessions = sessions;
        },
-       error => this.errorMessage = <any>error);
+       error => this.errorMessage = (error as any));
   }
 
   // Handle a click on the session
   selectSession(event) {
 
-    let id = event.selected[0]._id;
+    const id = event.selected[0]._id;
 
     // Share through globalsService
     this.globalsService.currentSession = id;
@@ -52,9 +52,9 @@ export class SessionspanelComponent implements OnInit {
   updateSessionFilter(event) {
     const val = event.target.value.toLowerCase();
     // console.log(val);
-    // console.log(this.filtered_sessions);
+    // console.log(this.filteredSessions);
     // filter our data
-    const temp = this.filtered_sessions.filter(function(d) {
+    const temp = this.filteredSessions.filter((d) => {
       // console.log(d);
       try {
         return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
