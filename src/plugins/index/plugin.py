@@ -2675,12 +2675,18 @@ rerunning.\n" % spot_count)
             command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
         if inp:
             command += '%s ' % inp
-        command += '%s ' % self.image1.get('fullname')
-
+        #command += '%s ' % self.image1.get('fullname')
+        if self.image1.get('fast_fullname', None) not in (None, False):
+            command += '%s ' % self.image1.get('fast_fullname')
+        else:
+            command += '%s ' % self.image1.get('fullname')
         # If pair of images
         if self.image2:
-            command += "%s " % self.image2.get("fullname")
-
+            #command += "%s " % self.image2.get("fullname")
+            if self.image2.get('fast_fullname', None) not in (None, False):
+                command += '%s ' % self.image2.get('fast_fullname')
+            else:
+                command += '%s ' % self.image2.get('fullname')
         # Save the command to the top of log file, before running job.
         self.log[iteration].extend([command])
         #print '\n%s'%command

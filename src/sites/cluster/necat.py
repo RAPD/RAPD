@@ -71,7 +71,7 @@ def check_queue(inp):
     """
     d = {"ECHO"           : 'phase1.q,general.q',
          #"INDEX"          : 'phase2.q,phase3.q,index.q',
-         "INDEX"          : 'index.q,phase2.q',
+         "INDEX"          : 'integrate_c.q,integrate_e.q,phase3.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
          #"XDS"            : 'phase2.q,phase1.q,fibre.q',
@@ -82,11 +82,11 @@ def check_queue(inp):
          "INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
          #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
          #"PDBQUERY"       : 'phase3.q',
-         "PDBQUERY"      : 'phase1.q,general.q',
+         "PDBQUERY"      : 'phase1.q,general.q,all.q',
          #"ANALYSIS"       : 'phase2.q,phase1.q,general.q',
          #"ANALYSIS"       : 'phase3.q',
-         "ANALYSIS"       : 'phase1.q,general.q',
-         "MR"             : 'phase2.q',
+         "ANALYSIS"       : 'phase1.q,general.q,all.q',
+         "MR"             : 'phase2.q,all.q',
          }
     if d.get(inp, False):
         return(d[inp])

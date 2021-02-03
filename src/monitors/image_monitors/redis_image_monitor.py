@@ -31,6 +31,7 @@ import logging
 from threading import Thread
 import time
 import importlib
+import json
 
 # RAPD imports
 from utils.overwatch import Registrar
@@ -149,17 +150,35 @@ class Monitor(Thread):
 
                     # Try to pop the oldest image off the list
                     new_image = self.redis.rpop("images_collected:%s" % tag)
-                    #new_image = self.redis.rpop("images_collected_%s" % tag)
-
+                    #new_image = json.loads(self.redis.rpop("images_collected:%s" % tag))
+                    
+                        
                     # Have a new_image
                     if new_image:
                         # self.logger.debug("New image %s - %s", tag, new_image)
-
-                        # Notify core thread that an image has been collected
                         self.notify({"message_type":"NEWIMAGE",
                                      "fullname":new_image,
                                      "site_tag":tag})
+                         # Notify core thread that an image has been collected
+                        """
+                        if self.site.HIDDEN_FAST_STORAGE and isinstance(new_image, list):
 
+                            # Same image in two locations: 
+                            #    First is fast path (RAM disk) hidden from user, 
+                            #    Second is slow path (long-term storage). 
+                            # Data will be processed from fast path, but results will only
+                            # show long-term path.
+                            # If only single path, then send string!
+                            self.notify({"message_type":"NEWIMAGE",
+                                         "ram_fullname": new_image[0],
+                                         "fullname":new_image[1],
+                                         "site_tag":tag})
+
+                        else:
+                            self.notify({"message_type":"NEWIMAGE",
+                                         "fullname":new_image,
+                                         "site_tag":tag})
+                        """
                         # self.logger.debug("New image data %s", new_image)
 
                     # Slow it down a little

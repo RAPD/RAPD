@@ -414,16 +414,12 @@ class Model(object):
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
+        fast_fullname = image_data.get("fast_fullname", None)
 
         self.logger.debug("Received new image %s", fullname)
 
         # Shortcut to detector
         detector = self.detectors[site_tag]
-
-        # Check if it exists. May have been deleted from RAMDISK
-        #if os.path.isfile(fullname) in (False, None):
-        #    if self.site.ALT_IMAGE_LOCATION:
-        #        fullname = detector.get_alt_path(fullname)
 
         # Save some typing
         dirname = os.path.dirname(fullname)
@@ -493,7 +489,13 @@ class Model(object):
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
-
+                    """
+                    # Save path info for hidden fast storage, if present
+                    header["fast_fullname"] = fast_fullname
+                    if fast_fullname not in (None):
+                        header["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                        header["run"]["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                    """
                     # Add to the database
                     image_id = self.database.add_image(data=header, return_type="id")
 
@@ -560,7 +562,9 @@ class Model(object):
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
-
+            """
+            header["fast_fullname"] = fast_fullname
+            """
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
             if image_id:

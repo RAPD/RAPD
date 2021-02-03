@@ -88,7 +88,7 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '3') ,
     #('CLUSTER_NODES', 'NECAT_E'),
     # Signal to say rapd2 job.
     #('CLUSTER_NODES', 'RAPD2'),
-    ('CLUSTER_NODES', 'general.q'),
+    ('CLUSTER_NODES', 'integrate_e.q,phase3.q'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)

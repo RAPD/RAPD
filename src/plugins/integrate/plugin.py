@@ -505,8 +505,13 @@ class RapdPlugin(Process):
         Look for images that match the input
         """
         # self.tprint('get_current_images')
-
-        glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
+        # Why is this using run data and not image data???
+        #glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
+        if self.run_data.get("fast_directory", None) not in (None, False):
+            glob_pattern = os.path.join(self.run_data["fast_directory"], self.run_data["image_template"]).replace("?", "*")
+        else:
+            glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
+        
         # self.tprint(glob_pattern)
         files = glob.glob(glob_pattern)
         files.sort()
@@ -585,8 +590,12 @@ class RapdPlugin(Process):
             return self.wait_for_image_redis(image_number)
         else:
             # Determine image to look for
-            target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
-    
+            #target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+            if self.run_data.get("fast_directory", None) not in (None, False):
+                target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["fast_directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+            else:
+                target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+           
             # Get a bead on where we are now
             first, last = self.get_current_images()
             self.logger.debug('first: %s last: %s'%(first, last))
@@ -1225,7 +1234,11 @@ class RapdPlugin(Process):
         last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
         frame_count = first_frame + 1
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
+        #file_template = os.path.join(self.image_data['directory'], self.image_template)
+        if self.image_data.get('fast_directory', None) not in (None, False):
+            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
+        else:
+            file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1329,7 +1342,11 @@ class RapdPlugin(Process):
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
+        #file_template = os.path.join(self.image_data['directory'], self.image_template)
+        if self.image_data.get('fast_directory', None) not in (None, False):
+            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
+        else:
+            file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1532,7 +1549,11 @@ class RapdPlugin(Process):
         else:
             raise RuntimeError, '"image_template" not defined in input data.'
 
-        file_template = os.path.join(self.image_data['directory'], self.image_template)
+        #file_template = os.path.join(self.image_data['directory'], self.image_template)
+        if self.image_data.get('fast_directory', None) not in (None, False):
+            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
+        else:
+            file_template = os.path.join(self.image_data['directory'], self.image_template)
     	# Count the number of '?' that need to be padded in a image filename.
         pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number
