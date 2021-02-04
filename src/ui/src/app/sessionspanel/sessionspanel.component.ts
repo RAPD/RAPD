@@ -1,6 +1,9 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { PageEvent } from '@angular/material/paginator';
+import { Sort } from '@angular/material/sort';
+
 import { Highlight } from '../shared/directives/highlight.directive';
 import { RestService } from '../shared/services/rest.service';
 import { GlobalsService } from '../shared/services/globals.service';
@@ -16,11 +19,57 @@ import { Session } from '../shared/classes/session';
 export class SessionspanelComponent implements OnInit {
 
   sessions: Session[] = [];
-  filtered_sessions: Session[] = [];
+  filteredSessions: Session[] = [];
   errorMessage: string;
 
+  // Data source for material design table
+  public dataSource = [];
+  // Data settings for material design table
+  public dataSettings: any = {
+    pageIndex: 0,
+    pageSize: 20,
+    query: {},
+    searchKey: undefined,
+    searchOrder: "asc",
+  };
+  // Default displayed columns
+  public displayedColumns: string[] = [
+    // "_id",
+    "site",
+    "group_name",
+    "timestamp",
+    "last_process",
+    "data_root_dir",
+  ];
+  // Order for column display
+  public columnOrder = [
+    "_id",
+    "site",
+    "group_name",
+    "timestamp",
+    "last_process",
+    "data_root_dir",
+  ];
+  // Clone to use
+  public allColumns = Object.assign([], this.columnOrder);
+  // Columns that do not need to be modified to display
+  public asIsColumns = [
+    "_id",
+    "data_root_dir",
+    "site",
+  ]
+  // Labels to use
+  public columnLabels:any = {
+    "_id":"_id",
+    "group_name":"Group",
+    "timestamp":"Created",
+    "data_root_dir":"Directory",
+    "last_process":"Last Process",
+    "site":"Beamline",
+  };
+
   constructor(private globalsService: GlobalsService,
-              private rest_service: RestService,
+              private restService: RestService,
               private router: Router) { }
 
   ngOnInit() {
@@ -28,19 +77,20 @@ export class SessionspanelComponent implements OnInit {
   }
 
   getSessions() {
-    this.rest_service.getSessions()
+    this.restService.getSessions()
       .subscribe(
        sessions => {
-         this.filtered_sessions = [...sessions];
+         this.filteredSessions = [...sessions];
          this.sessions = sessions;
+         console.log(sessions[3]);
        },
-       error => this.errorMessage = <any>error);
+       error => this.errorMessage = (error as any));
   }
 
   // Handle a click on the session
   selectSession(event) {
 
-    let id = event.selected[0]._id;
+    const id = event.selected[0]._id;
 
     // Share through globalsService
     this.globalsService.currentSession = id;
@@ -52,9 +102,9 @@ export class SessionspanelComponent implements OnInit {
   updateSessionFilter(event) {
     const val = event.target.value.toLowerCase();
     // console.log(val);
-    // console.log(this.filtered_sessions);
+    // console.log(this.filteredSessions);
     // filter our data
-    const temp = this.filtered_sessions.filter(function(d) {
+    const temp = this.filteredSessions.filter((d) => {
       // console.log(d);
       try {
         return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
@@ -69,6 +119,20 @@ export class SessionspanelComponent implements OnInit {
 
     // update the rows
     this.sessions = temp;
+  }
+
+  //
+  // Methods for MaterialDesign table
+  //
+  public handlePaginator(page:PageEvent) {}
+
+  public handleSort(sort:Sort) {}
+
+  // Handle a click on a record
+  public recordClick(record:any, event:any) {
+    const id = record._id;
+    this.globalsService.currentSession = id;
+    this.router.navigate(['/mx', id]);
   }
 
 }

@@ -199,52 +199,52 @@
             <div class="chart-container" style="position: relative;">
               <div *ngIf="selected_plot=='Rmerge vs Frame'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Imean/RMS scatter'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='RMS correlation ratio'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='rs_vs_res'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Completeness'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Redundancy'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
               <div *ngIf="selected_plot=='Radiation Damage'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
-                  [colors]="globals_service.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
+                  [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
             </div>

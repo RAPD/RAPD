@@ -103,6 +103,95 @@ router
       });
   });
 
+router
+.route("/sessions2")
+
+// get all the sessions (accessed at GET api/sessions)
+.get(function(req, res) {
+  console.log('In /sessions2');
+  console.log(req);
+
+  // Sessions for the user's groups
+  var query_params;
+  // Site admins get all sessions
+  if (req.decoded.role === "site_admin") {
+    query_params = {};
+  } else {
+    query_params = { group: { $in: req.decoded.groups } };
+  }
+
+  // console.log(query_params);
+
+  Session.find(query_params)
+    // populate('group', 'groupname').
+    .sort({ last_process: -1 })
+    .exec(function(err, sessions) {
+      if (err) {
+        console.error(err);
+        res.status(500).json({
+          success: false,
+          message: err
+        });
+      } else {
+        // console.log(sessions);
+        const session_count = sessions.length;
+        let return_sessions = [],
+          counter = 0;
+        sessions.forEach(function(session) {
+          session._doc.group = {
+            _id: session._doc.group
+          };
+          if (session._doc.group._id) {
+            // console.log(counter, session._doc.group._id);
+            Group.findOne(
+              { _id: session._doc.group._id },
+              { groupname: 1 }
+            ).exec(function(error, group) {
+              counter += 1;
+              // console.log(group);
+              // Have a group
+              if (group) {
+                session._doc.group.groupname = group.groupname;
+                return_sessions.push(session);
+                if (counter === session_count) {
+                  // console.log(return_sessions);
+                  // console.log('Returning', return_sessions.length, 'sessions');
+                  res.status(200).json({
+                    success: true,
+                    sessions: return_sessions
+                  });
+                }
+                // No group
+              } else {
+                session._doc.group.groupname = "Unknown";
+                return_sessions.push(session);
+                if (counter === session_count) {
+                  // console.log(return_sessions);
+                  // console.log('Returning', return_sessions.length, 'sessions');
+                  res.status(200).json({
+                    success: true,
+                    sessions: return_sessions
+                  });
+                }
+              }
+            });
+          } else {
+            counter += 1;
+            return_sessions.push(session);
+            if (counter === session_count) {
+              // console.log(return_sessions);
+              // console.log('Returning', return_sessions.length, 'sessions');
+              res.status(200).json({
+                success: true,
+                sessions: return_sessions
+              });
+            }
+          }
+        });
+      }
+    });
+});
+
 // on routes that end in /sessions/:session_id
 // ----------------------------------------------------
 router

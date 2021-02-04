@@ -50,13 +50,14 @@ export class MxResultContainerComponent implements OnInit {
     this.currentResult = event.value;
 
     // Construct the component name from the result
-    const component_name = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    const componentName = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    console.log(componentName);
 
     // Create a componentfactoryResolver instance
-    const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
+    const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[componentName]);
 
     // Create the component
-    let component = this.target.createComponent(factory);
+    const component = this.target.createComponent(factory);
 
     // Set the component currentResult value
     component.instance.currentResult = event.value;

@@ -127,16 +127,16 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   constructor(
     private componentfactoryResolver: ComponentFactoryResolver,
-    private rest_service: RestService,
-    private websocket_service: WebsocketService,
-    private globals_service: GlobalsService,
+    private restService: RestService,
+    private websocketService: WebsocketService,
+    public globalsService: GlobalsService,
     public dialog: MatDialog,
     public snackBar: MatSnackBar
   ) {}
 
   public ngOnInit() {
     // Subscribe to results for the displayed result
-    this.incomingData$ = this.websocket_service.subscribeResultDetails(
+    this.incomingData$ = this.websocketService.subscribeResultDetails(
       this.currentResult.data_type,
       this.currentResult.plugin_type,
       this.currentResult.result_id,
@@ -146,7 +146,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   public ngOnDestroy() {
-    this.websocket_service.unsubscribeResultDetails(this.incomingData$);
+    this.websocketService.unsubscribeResultDetails(this.incomingData$);
   }
 
   public handleIncomingData(data: any) {
@@ -409,24 +409,25 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   // Change the current result's display to 'pinned'
   public pinResult(result) {
     result.display = "pinned";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // Change the current result's display to undefined
   public undefResult(result) {
     result.display = "";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
   public junkResult(result) {
     result.display = "junked";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // Start the download of data
   public initDownload(record: any) {
-    console.log(record);
+
+    console.log("initDownload", record);
 
     // Signal that the request has been made
     let snackBarRef = this.snackBar.open("Download request submitted", "Ok", {
@@ -434,8 +435,12 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     });
 
     // Make the request
-    this.rest_service
-      .getDownloadById(record._id, record.path);
-      // .subscribe(result => {}, error => {});
+    this.restService
+      .getDownloadByHash(record.hash, record.path);
+
+    // // Make the request
+    // this.restService
+    //   .getDownloadById(record._id, record.path);
+    //   // .subscribe(result => {}, error => {});
   }
 }
