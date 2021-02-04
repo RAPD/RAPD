@@ -38,6 +38,8 @@ import sys
 import time
 import uuid
 import redis
+from threading import Thread, Event
+import redis
 
 # RAPD imports
 import utils.commandline
@@ -84,6 +86,17 @@ class Gatherer(object):
 
         # Running conditions
         self.go = True
+        
+ 
+        #ow updater
+        self.event = Event()
+        self.event.set()
+        self.ow = Thread(target=ow, 
+                         kwargs={"event":self.event,
+                                "tag":self.tag,
+                                "site":self.site,
+                                "overwatch_id":self.overwatch_id})
+        self.ow.start()
 
         # Now run
         self.run()
@@ -92,39 +105,23 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
-        self.logger.info("NecatGatherer.run")
-
-        # Set up overwatcher
-        self.ow_registrar = Registrar(site=self.site,
-                                      ow_type="gatherer",
-                                      ow_id=self.overwatch_id)
-        #self.ow_registrar.register({"site_id":self.site.ID})
-        self.ow_registrar.register({"site_id":self.tag})
-
         #self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
         self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
         self.logger.debug("  Will push new datasets onto runs_data:%s" % self.tag)
-        
-        # path prefix for RDMA folder location with Eiger
-        #if self.tag == 'NECAT_E':
-        #    path_prefix = '/epu/rdma'
-        #else:
-        #    path_prefix = ''
 
         try:
-            while self.go:
-                # Check if the run info changed in beamline Redis DB.
-                #current_run = self.pipe.get("RUN_INFO_SV").set("RUN_INFO_SV", "").execute()
-                # get run info passed from RAPD
-                #current_run = self.redis.rpop('run_info_T')
-                #current_run = self.redis.rpop('run_info_%s'%self.tag[-1])
-                current_run_raw = self.redis.rpop('run_info_%s'%self.tag[-1])
-                if current_run_raw not in (None, ""):
-                    current_run = json.loads(current_run_raw)
-                    self.logger.debug('run_info: %s'%current_run)
-                    # get the additional beamline params and put into nice dict.
-                    run_data = self.get_run_data(current_run)
+            pubsub = self.bl_redis.pubsub()
+            pubsub.subscribe('RUN_INFO_SV2')
+            
+            for __ in pubsub.listen():
+                # Signal can be any string
+                signal = __['data']
+                if type(signal) == str:
+                        
+                    self.logger.debug('run_info_%s: %s'%(self.tag[-1], signal))
+                        
+                    run_data = self.get_run_data(signal)
                     if self.ignored(run_data['directory']):
                         self.logger.debug("Directory %s is marked to be ignored - skipping", run_data['directory'])
                     else:
@@ -138,10 +135,6 @@ class Gatherer(object):
                         # Push onto redis list in case no one is currently listening
                         self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
                         #self.redis.lpush("runs_data:%s" % self.tag, run_data)
-
-                time.sleep(0.2)
-                # Have Registrar update status
-                self.ow_registrar.update({"site_id":self.tag})
         except KeyboardInterrupt:
             self.stop()
 
@@ -151,7 +144,8 @@ class Gatherer(object):
         """
         self.logger.debug("NecatGatherer.stop")
 
-        self.go = False
+        #self.go = False
+        self.event.clear()
         # Close the lock file
         close_lock_file()
 
@@ -162,7 +156,12 @@ class Gatherer(object):
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
         # Connect to beamline Redis to monitor if run is launched
-        self.bl_redis = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        #self.bl_redis = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS[self.tag])
+        
+        self.bl_redis = redis.Redis(host=self.site.SITE_ADAPTER_SETTINGS[self.tag]["REDIS_HOST"],
+                                    port=self.site.SITE_ADAPTER_SETTINGS[self.tag]["REDIS_PORT"],
+                                    db=self.site.SITE_ADAPTER_SETTINGS[self.tag]["REDIS_DB"])
+        self.logger.debug('BL Redis IP: %s'%str(self.site.SITE_ADAPTER_SETTINGS[self.tag]["REDIS_HOST"]))
 
     def set_host(self):
         """
@@ -197,27 +196,13 @@ class Gatherer(object):
         cur_run = run_info.split("_") #runnumber,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
         #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
         pipe = self.bl_redis.pipeline()
-        #pipe.get("DETECTOR_SV")
         pipe.get("EIGER_DIRECTORY_SV")
-        """
-        if self.tag == 'NECAT_C':
-            pipe.get("ADX_DIRECTORY_SV")
-        else:
-            pipe.get("EIGER_DIRECTORY_SV")
-        """
         pipe.get("RUN_PREFIX_SV")
         #pipe.get("DET_THETA_SV")        #two theta
         #pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
         return_array = pipe.execute()
         # extend path with the '0_0' to path for Pilatus
         dir = return_array[0]
-        """
-        if self.tag == 'NECAT_C':
-            #dir = os.path.join(return_array[0], "0_0")
-            dir = '%s%s'%(return_array[0], "0_0")
-        else:
-            dir = return_array[0]
-        """
         # Get rid of trailing slash from beamline Redis.
         if dir[-1] == '/':
             dir = dir[:-1]
@@ -249,6 +234,19 @@ class Gatherer(object):
         }
 
         return run_data
+
+def ow(event, tag, site, overwatch_id):
+        """Start OW function and run"""
+        # Set up overwatcher
+        ow_registrar = Registrar(site=site,
+                                ow_type="gatherer",
+                                ow_id=overwatch_id)
+        #self.ow_registrar.register({"site_id":self.site.ID})
+        ow_registrar.register({"site_id": tag})
+        
+        while event.is_set():
+            ow_registrar.update({"site_id":tag})
+            time.sleep(0.2)
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -306,6 +304,8 @@ def main():
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
+
+    #Thread(target=ow, args=(site, commandline_args.overwatch_id)).start()
 
     # Instantiate the Gatherer
     GATHERER = Gatherer(site=SITE,

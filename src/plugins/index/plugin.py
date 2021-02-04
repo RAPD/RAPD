@@ -485,9 +485,12 @@ class RapdPlugin(Process):
         # Check if pair are in different folders, then make symlink for Labelit.
         if self.image2:
           if os.path.dirname(self.image1['fullname']) != os.path.dirname(self.image2['fullname']):
-            os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
+            try:
+                os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
+                os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
+            except OSError:
+                self.logger.debug("symlinks are already present")
             self.image1['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image1['fullname']))
-            os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
             self.image2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image2['fullname']))
 
         # Setup event for job control on cluster
