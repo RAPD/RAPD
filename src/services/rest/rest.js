@@ -532,11 +532,11 @@ apiRoutes.post("/authenticate", function(req, res) {
 
 // route to authenticate a user (POST api/requestpass)
 apiRoutes.post("/requestpass", function(req, res) {
-  console.log(">>2<<");
-  console.log('requestpass');
-  console.log(">>3<<");
-  console.log(req.body);
-  console.log(">>4<<");
+  // console.log(">>2<<");
+  // console.log('requestpass');
+  // console.log(">>3<<");
+  // console.log(req.body);
+  // console.log(">>4<<");
   if (config.authenticate_mode === "mongo") {
     User.findOne({ email: req.body.email }).exec(function(err, user) {
       if (err) {

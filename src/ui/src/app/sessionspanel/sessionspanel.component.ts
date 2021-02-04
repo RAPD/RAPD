@@ -128,6 +128,11 @@ export class SessionspanelComponent implements OnInit {
 
   public handleSort(sort:Sort) {}
 
-  public recordClick(record:any, event:any) {}
+  // Handle a click on a record
+  public recordClick(record:any, event:any) {
+    const id = record._id;
+    this.globalsService.currentSession = id;
+    this.router.navigate(['/mx', id]);
+  }
 
 }

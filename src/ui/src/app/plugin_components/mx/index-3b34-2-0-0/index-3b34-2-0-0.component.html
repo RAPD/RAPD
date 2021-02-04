@@ -227,7 +227,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
+                    [colors]="globalsService.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -238,7 +238,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
+                    [colors]="globalsService.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -249,7 +249,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors">
+                    [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='osc_range'">
@@ -258,7 +258,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors">
+                    [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='osc_range_anom'">
@@ -267,7 +267,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors">
+                    [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='rad_damage'">
@@ -276,7 +276,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors">
+                    [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='wilson'">
@@ -285,7 +285,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors">
+                    [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
               </div>
@@ -680,10 +680,10 @@
     <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
       <button mat-button color="primary" (click)="openReindexDialog()"><mat-icon>refresh</mat-icon>Reindex</button>
       <button mat-button color="primary" (click)="openProjectDialog()"><mat-icon>add</mat-icon>Project</button>
-      <button mat-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><mat-icon>arrow_upward</mat-icon>Pin</button>
-      <button mat-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnPin</button>
-      <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><mat-icon>delete</mat-icon>Junk</button>
-      <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnJunk</button>
+      <button mat-button *ngIf="currentResult.display !== 'pinned'" color="primary" (click)="pinResult(currentResult)"><mat-icon>arrow_upward</mat-icon>Pin</button>
+      <button mat-button *ngIf="currentResult.display == 'pinned'" color="primary" (click)="undefResult(currentResult)"><mat-icon>undo</mat-icon>UnPin</button>
+      <button mat-button *ngIf="currentResult.display !== 'junked'" color="primary" (click)="junkResult(currentResult)"><mat-icon>delete</mat-icon>Junk</button>
+      <button mat-button *ngIf="currentResult.display == 'junked'" color="primary" (click)="undefResult(currentResult)"><mat-icon>undo</mat-icon>UnJunk</button>
       <!-- <button mat-button (click)="printPage()">Print</button> -->
     </mat-toolbar>
   </mat-card>

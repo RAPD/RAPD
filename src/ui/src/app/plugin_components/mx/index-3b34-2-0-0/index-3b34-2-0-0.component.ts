@@ -19,7 +19,8 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
   styleUrls: ["./index-3b34-2-0-0.component.css"]
 })
 export class Index3b34200Component implements OnInit, OnChanges, OnDestroy {
-  @Input() current_result: any;
+
+  @Input() currentResult: any;
 
   incomingData$: ReplaySubject<string>;
 
@@ -95,42 +96,26 @@ export class Index3b34200Component implements OnInit, OnChanges, OnDestroy {
   }
 
   constructor(
-    private websocket_service: WebsocketService,
-    private rest_service: RestService,
-    private globals_service: GlobalsService,
+    private websocketService: WebsocketService,
+    private restService: RestService,
+    public globalsService: GlobalsService,
     public dialog: MatDialog
   ) {}
 
   ngOnInit() {
-    console.log(this.current_result);
-    this.incomingData$ = this.websocket_service.subscribeResultDetails(
-      this.current_result.data_type,
-      this.current_result.plugin_type,
-      this.current_result.result_id,
-      this.current_result._id
+    // console.log("ngOnInit");
+    // console.log(this.currentResult);
+    this.incomingData$ = this.websocketService.subscribeResultDetails(
+      this.currentResult.data_type,
+      this.currentResult.plugin_type,
+      this.currentResult.result_id,
+      this.currentResult._id
     );
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
-    this.current_result
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-  //   //Called before any other lifecycle hook. Use it to inject dependencies, but avoid any serious work here.
-  //   //Add '${implements OnChanges}' to the class.
-  //   console.log("ngOnChanges");
-  //   if (changes.current_result) {
-  //     console.log(this.current_result);
-  //     this.incomingData$ = this.websocket_service.subscribeResultDetails(
-  //       this.current_result.data_type,
-  //       this.current_result.plugin_type,
-  //       this.current_result.result_id,
-  //       this.current_result._id
-  //     );
-  //     this.incomingData$.subscribe(x => this.handleIncomingData(x));
-  //   }
   }
 
   ngOnDestroy() {
-    this.websocket_service.unsubscribeResultDetails(this.incomingData$);
+    this.websocketService.unsubscribeResultDetails(this.incomingData$);
   }
 
   public testerfunction(data:string){
@@ -369,26 +354,26 @@ export class Index3b34200Component implements OnInit, OnChanges, OnDestroy {
 
   // Open the add to project dialog
   openProjectDialog() {
-    let config = { data: this.current_result };
+    let config = { data: this.currentResult };
     let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'
   pinResult(result) {
     result.display = "pinned";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // Change the current result's display to undefined
   undefResult(result) {
     result.display = "";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
   junkResult(result) {
     result.display = "junked";
-    this.websocket_service.updateResult(result);
+    this.websocketService.updateResult(result);
   }
 
   // signal upstream that a result's display status has changed
