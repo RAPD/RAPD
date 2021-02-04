@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
 import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { MatToolbarModule } from "@angular/material/toolbar";
@@ -18,7 +18,7 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
   templateUrl: "./index-3b34-2-0-0.component.html",
   styleUrls: ["./index-3b34-2-0-0.component.css"]
 })
-export class Index3b34200Component implements OnInit, OnChanges, OnDestroy {
+export class Index3b34200Component implements OnInit, OnDestroy {
 
   @Input() currentResult: any;
 
