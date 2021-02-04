@@ -1,7 +1,6 @@
 const { MongoClient } = require("mongodb");
 
 const uri =
-  "mongodb://rapd:shallowkillerbeg@164.54.212.169,164.54.212.172,164.54.212.170/rapd?replicaSet=rs0";
 const client = new MongoClient(uri, {useUnifiedTopology: true});
 
 async function run() {
