@@ -5,7 +5,7 @@
       <mat-list-item
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
         [ngClass]="data_result._id == active_result ? 'active-result': ''">
         {{data_result.repr}}
@@ -15,7 +15,7 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
           Reprocess {{data_result.children.length-i+1}}
@@ -32,7 +32,7 @@
         *ngIf="! data_result.parent_id"
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
         [ngClass]="data_result._id == active_result ? 'active-result': ''">
         <table style="width:100%;">
@@ -59,7 +59,7 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
           <table style="width:100%;">
@@ -91,7 +91,7 @@
       <mat-list-item
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
         [ngClass]="data_result._id == active_result ? 'active-result': ''">
         {{data_result.repr}}
@@ -101,7 +101,7 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
           [ngClass]="child._id == active_result ? 'active-result': ''">
           Reprocess {{data_result.children.length-i+1}}

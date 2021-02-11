@@ -18,7 +18,7 @@ import { WebsocketService } from "../../../shared/services/websocket.service";
   styleUrls: ["./mx-resultslist-panel.component.css"]
 })
 export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
-  highlight_color = "white";
+  highlightColor = "white";
   message: string;
 
   // The currently active result
@@ -47,10 +47,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   @Input() result_type: string;
   @Output() resultSelect = new EventEmitter();
 
-  constructor(private websocket_service: WebsocketService) {}
+  constructor(private websocketService: WebsocketService) {}
 
   ngOnInit() {
-    this.incomingData$ = this.websocket_service.subscribeResults(
+    this.incomingData$ = this.websocketService.subscribeResults(
       this.session_id
     );
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
@@ -58,13 +58,13 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   ngOnDestroy() {
     // this.websocket_service.unsubscribeResults(this.incomingData$);
-    this.websocket_service.unsubscribeResults();
+    this.websocketService.unsubscribeResults();
   }
 
   private handleIncomingData(data: any) {
-    let self = this;
+    const self = this;
 
-    // console.log(data);
+    console.log(data);
 
     for (let result of data) {
       // console.log(result);
