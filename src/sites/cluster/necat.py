@@ -70,8 +70,8 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'phase1.q,general.q',
-         #"INDEX"          : 'phase2.q,phase3.q,index.q',
-         "INDEX"          : 'integrate_c.q,integrate_e.q,phase3.q',
+         "INDEX"          : 'phase2.q,index.q', # read off gpfs so need FC
+         #"INDEX"          : 'integrate_c.q,integrate_e.q,phase3.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
          #"XDS"            : 'phase2.q,phase1.q,fibre.q',

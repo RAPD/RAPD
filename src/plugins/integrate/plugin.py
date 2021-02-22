@@ -243,7 +243,8 @@ class RapdPlugin(Process):
         # Setup initial shell_launcher
         # Load the subprocess adapter
         self.launcher = local_subprocess
-        self.batch_queue = {}
+        #self.batch_queue = {}
+        self.batch_queue = False
         self.jobs = 1
         self.procs = 4
 
@@ -253,17 +254,19 @@ class RapdPlugin(Process):
             computer_cluster = xutils.load_cluster_adapter(self)
             # If it cannot load, then the shell launcher is kept
             if computer_cluster:
-                self.launcher = computer_cluster.process_cluster
-                # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-                self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
                 self.computer_cluster = computer_cluster
+                self.launcher = self.computer_cluster.process_cluster
+                # Based on the command, pick a batch queue on the cluster. Added to input kwargs
+                #self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
+                self.batch_queue = self.computer_cluster.check_queue(self.command["command"])
+                
+                
                 if self.ram_use == True:
                     self.jobs = len(self.ram_nodes[0])
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
-                    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
+                    self.procs, self.jobs = self.computer_cluster.get_resources(self.command["command"])
                     #self.jobs = 20
                     #self.procs = 8
             else:
@@ -1678,12 +1681,22 @@ class RapdPlugin(Process):
 
         os.chdir(directory)
         # TODO skip processing for now
+        
+        kw = {"command": xds_command,
+              "logfile": "XDS.LOG"}
 
+        # Pass batch queue info to cluster job
+        if self.batch_queue:
+            kw['batch_queue'] = self.batch_queue
+            
+        xds_proc = Process(target=self.launcher,
+                           kwargs=kw)
+        
+        """
         xds_proc = Process(target=self.launcher,
                            kwargs={"command": xds_command,
-                                   "logfile": "XDS.LOG"})
+                                   "logfile": "XDS.LOG",})
 
-        """
         if self.cluster_use == True:
             xds_proc = Process(target=BLspec.process_cluster,
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))

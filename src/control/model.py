@@ -417,6 +417,9 @@ class Model(object):
         fast_fullname = image_data.get("fast_fullname", None)
 
         self.logger.debug("Received new image %s", fullname)
+        #if not os.path.exists(fullname):
+        #    self.logger.debug("This image does NOT exist:%s"%fullname)
+        #    return False
 
         # Shortcut to detector
         detector = self.detectors[site_tag]
@@ -465,10 +468,12 @@ class Model(object):
                         site_header = site_data
 
                     # Get all the image information
+                    self.logger.debug("First image in run: %s"%fullname)
                     attempt_counter = 0
                     while attempt_counter < 5:
                         try:
                             attempt_counter += 1
+                            self.logger.debug("Attempt to read image: %s"%str(attempt_counter))
                             if os.path.exists(fullname):
                                 header = detector.read_header(
                                     fullname,

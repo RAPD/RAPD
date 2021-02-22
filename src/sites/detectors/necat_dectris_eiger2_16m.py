@@ -371,7 +371,7 @@ def base_read_header(image,
             count +=1
             if logger:
                 logger.exception('Error opening %s' % image)
-            time.sleep(0.1)
+            time.sleep(0.2)
 
     parameters = {
         "fullname": image,

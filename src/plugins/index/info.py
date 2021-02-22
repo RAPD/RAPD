@@ -125,6 +125,10 @@ DEFAULT_PREFERENCES = {
     #"y_beam": commandline_args.beamcenter[1],
     "beam_search": 0.2,
 
+    # DISTL
+    "distl_res_inner" : 30.0,
+    "distl_res_outer" : 3.0,
+    
     # Mosflm
     "mosflm_rot": 0.0,
     "mosflm_seg": 1,
@@ -162,6 +166,7 @@ DEFAULT_PREFERENCES = {
     #                     'junk2',
     #                     'P3']
     #                   ],#MOSFLM
+    
 
 
     }

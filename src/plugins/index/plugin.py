@@ -58,6 +58,7 @@ import sys
 import time
 import importlib
 import stat
+import urllib2
 
 # RAPD imports
 import info
@@ -322,6 +323,9 @@ class RapdPlugin(Process):
         else:
             self.multicrystalstrat = True
             self.strategy = "mosflm"
+        
+        # Check if DISTL server is present
+        self.distl_server = self.site.DISTL_SERVER
 
         # Settings for all programs
         #self.beamline = self.image1.get("beamline")
@@ -418,10 +422,19 @@ class RapdPlugin(Process):
             self.process_xoalign()
         else:
             # Run Distl
-            self.process_distl()
+            #if self.distl_server:
+            #    self.process_distl_server()
+            #else:
+            #    self.process_distl()
 
             # Run Labelit
             self.start_labelit()
+            
+            # Run Distl
+            if self.distl_server:
+                self.process_distl_server()
+            else:
+                self.process_distl()
 
             # Sorts labelit results by highest symmetry.
             self.labelit_sort()
@@ -862,6 +875,38 @@ class RapdPlugin(Process):
 
         except:
             self.logger.exception("**Error in process_xds_bg.**")
+
+    def process_distl_server(self):
+        """
+        Setup Distl for running on Distl server, if enabled.
+        """
+        if self.verbose and self.logger:
+            self.logger.debug('AutoindexingStrategy::process_distl_server')
+
+        l = [self.image1]
+        if self.image2:
+            l.append(self.image2)
+        for i in range(len(l)):
+            if self.test:
+                job = Thread(target=local_subprocess,
+                             kwargs={"command": 'ls'})
+            else:
+                url = "http://%s:%d/spotfinder/distl.signal_strength?distl.image=%s&distl.bins.verbose=False&distl.res.outer=%.1f&distl.res.inner=%.1f" \
+                    %(self.distl_server[0], 
+                      self.distl_server[1], 
+                      l[i].get("fast_fullname", l[i].get("fullname")), 
+                      self.preferences.get("distl_res_outer", 3.0), 
+                      self.preferences.get("distl_res_inner", 50.0))
+                # Pass "+" signs correctly
+                url = url.replace("+", "%2b")
+                Response = urllib2.urlopen(url)
+                raw = Response.read()
+                Response.close()
+                # Write response to distl_queue
+                self.distl_queue.put({'stdout': raw})
+                # Save out as logfile
+                with open(os.path.join(os.getcwd(),"distl%s.log" % i), 'w') as out_file:
+                    out_file.write(raw)
 
     def process_distl(self):
         """
@@ -1316,9 +1361,10 @@ class RapdPlugin(Process):
             self.distl_log.extend(log)
             # Parse and put the distl results into storage
             self.distl_results.append(Parse.ParseOutputDistl(self, log))
+            
 
         # Debugging
-        # pprint(self.distl_results)
+        #pprint(self.distl_results)
 
         # Print DISTL results to commandline - verbose only
         self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
@@ -2132,7 +2178,7 @@ Distance | % Transmission", level=98, color="white")
         if self.labelit_results.get("status") == "FAILED":
             self.results["process"]["status"] = -1
 
-        self.logger.debug(self.results)
+        #self.logger.debug(self.results)
 
         # Print results to screen in JSON format
         # json_output = json.dumps(self.results).replace("\\n", "")

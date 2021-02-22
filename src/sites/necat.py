@@ -350,6 +350,9 @@ IMAGE_IGNORE_STRINGS = ("ignore",
                         "priming_shot",
                         )
 
+# IP and port of DISTL server (Apache or Python). Set to False to run on local node. 
+DISTL_SERVER = (DISTL_IP, DISTL_PORT)
+
 # If image is not present, look in long term storage location.
 # Runs function detector.get_alt_path() to get new path
 # Set to False if not using.

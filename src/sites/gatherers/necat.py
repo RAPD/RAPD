@@ -112,7 +112,8 @@ class Gatherer(object):
 
         try:
             pubsub = self.bl_redis.pubsub()
-            pubsub.subscribe('RUN_INFO_SV2')
+            #pubsub.subscribe('RUN_INFO_SV2')
+            pubsub.subscribe('RUN_INFO_PV')
             
             for __ in pubsub.listen():
                 # Signal can be any string
