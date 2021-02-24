@@ -66,6 +66,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
 import plugins.subcontractors.mosflm as mosflm
+import plugins.subcontractors.distl as distl
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
 from utils.r_numbers import try_int, try_float
@@ -421,20 +422,11 @@ class RapdPlugin(Process):
         if self.minikappa:
             self.process_xoalign()
         else:
-            # Run Distl
-            #if self.distl_server:
-            #    self.process_distl_server()
-            #else:
-            #    self.process_distl()
-
             # Run Labelit
             self.start_labelit()
             
             # Run Distl
-            if self.distl_server:
-                self.process_distl_server()
-            else:
-                self.process_distl()
+            self.preprocess_distl()
 
             # Sorts labelit results by highest symmetry.
             self.labelit_sort()
@@ -585,6 +577,40 @@ class RapdPlugin(Process):
                 self.tprint("  Executable for raddose is not present - will continue",
                         level=30,
                         color="red")
+
+    def preprocess_distl(self):
+        """
+        Setup Distl
+        """
+        if self.verbose and self.logger:
+            self.logger.debug('AutoindexingStrategy::preprocess_distl')
+
+        l = [self.image1]
+        if self.image2:
+            l.append(self.image2)
+        
+        for i in range(len(l)):
+            if not self.test:
+                if self.distl_server:
+                    # Send job to a DISTL server (Apache or Python) for fast results
+                    distl.process_distl_server(IP = self.distl_server[0],
+                                               port = self.distl_server[1],
+                                               image = l[i].get("fast_fullname", l[i].get("fullname")),
+                                               res_inner = self.preferences.get("distl_res_inner", 50.0),
+                                               res_outer = self.preferences.get("distl_res_outer", 3.0),
+                                               queue = self.distl_queue,
+                                               logfile = os.path.join(os.getcwd(),"distl%s.log" % i),
+                                               logger = self.logger)
+                else:
+                    # Launch the job locally from commandline
+                    job = distl.process_distl_local(image = l[i].get("fast_fullname", l[i].get("fullname")),
+                                                    res_inner = self.preferences.get("distl_res_inner", 50.0),
+                                                    res_outer = self.preferences.get("distl_res_outer", 3.0),
+                                                    queue = self.distl_queue,
+                                                    logfile = os.path.join(os.getcwd(),"distl%s.log" % i),
+                                                    logger = self.logger)
+                    # Save job so postprocess_distl will wait for it.
+                    self.distl_output.append(job)
 
     def preprocess_raddose(self):
         """
@@ -875,64 +901,6 @@ class RapdPlugin(Process):
 
         except:
             self.logger.exception("**Error in process_xds_bg.**")
-
-    def process_distl_server(self):
-        """
-        Setup Distl for running on Distl server, if enabled.
-        """
-        if self.verbose and self.logger:
-            self.logger.debug('AutoindexingStrategy::process_distl_server')
-
-        l = [self.image1]
-        if self.image2:
-            l.append(self.image2)
-        for i in range(len(l)):
-            if self.test:
-                job = Thread(target=local_subprocess,
-                             kwargs={"command": 'ls'})
-            else:
-                url = "http://%s:%d/spotfinder/distl.signal_strength?distl.image=%s&distl.bins.verbose=False&distl.res.outer=%.1f&distl.res.inner=%.1f" \
-                    %(self.distl_server[0], 
-                      self.distl_server[1], 
-                      l[i].get("fast_fullname", l[i].get("fullname")), 
-                      self.preferences.get("distl_res_outer", 3.0), 
-                      self.preferences.get("distl_res_inner", 50.0))
-                # Pass "+" signs correctly
-                url = url.replace("+", "%2b")
-                Response = urllib2.urlopen(url)
-                raw = Response.read()
-                Response.close()
-                # Write response to distl_queue
-                self.distl_queue.put({'stdout': raw})
-                # Save out as logfile
-                with open(os.path.join(os.getcwd(),"distl%s.log" % i), 'w') as out_file:
-                    out_file.write(raw)
-
-    def process_distl(self):
-        """
-        Setup Distl for multiprocessing if enabled.
-        """
-        if self.verbose and self.logger:
-            self.logger.debug('AutoindexingStrategy::process_distl')
-
-        l = ["1", "2"]
-        f = 1
-        if self.image2:
-            f = 2
-        for i in range(0, f):
-            if self.test:
-                job = Thread(target=local_subprocess,
-                             kwargs={"command": 'ls'})
-            else:
-                command = "distl.signal_strength %s" % eval("self.image%s" % l[i]).get("fullname")
-                #job = Thread(target=local_subprocess,
-                job = Process(target=local_subprocess,
-                             kwargs={"command": command,
-                                     "result_queue": self.distl_queue,
-                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
-                                   },)
-            job.start()
-            self.distl_output.append(job)
 
     def process_raddose(self):
         """
@@ -1364,7 +1332,7 @@ class RapdPlugin(Process):
             
 
         # Debugging
-        #pprint(self.distl_results)
+        pprint(self.distl_results)
 
         # Print DISTL results to commandline - verbose only
         self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
