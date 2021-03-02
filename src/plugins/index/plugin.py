@@ -593,6 +593,7 @@ class RapdPlugin(Process):
             if not self.test:
                 if self.distl_server:
                     # Send job to a DISTL server (Apache or Python) for fast results
+                    # Job is not saved because it takes less tha 1s to complete
                     distl.process_distl_server(IP = self.distl_server[0],
                                                port = self.distl_server[1],
                                                image = l[i].get("fast_fullname", l[i].get("fullname")),
@@ -1332,7 +1333,7 @@ class RapdPlugin(Process):
             
 
         # Debugging
-        pprint(self.distl_results)
+        #pprint(self.distl_results)
 
         # Print DISTL results to commandline - verbose only
         self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
@@ -2088,6 +2089,8 @@ Distance | % Transmission", level=98, color="white")
                     output["STAC file%s" % str(index+1)] = "None"
             """
         else:
+            # If Labelit did fail, set status to 101  FM 20200302
+            self.results["process"]["status"] = 101
             #output["STAC file1"] = "None"
             #output["STAC file2"] = "None"
             output["STAC file1"] = None
