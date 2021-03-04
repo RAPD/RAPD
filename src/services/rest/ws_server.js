@@ -299,17 +299,19 @@ var populate_child_result = function(result_id, mode) {
   return deferred.promise;
 };
 
+// Retrieve and populate a detailed result from a plugin
 function get_detailed_result(data_type, plugin_type, result_id, ws) {
   
-  console.log('get_detailed_result', data_type, plugin_type, result_id);
+  // console.log('get_detailed_result', data_type, plugin_type, result_id);
   
   var deferred = Q.defer();
 
   // Create a mongoose model for the result
   let name = (data_type + "_" + plugin_type + "_result").toLowerCase();
   let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
-  console.log(name, collection_name);
-  var ResultModel;
+  
+  // Retrieve or make a model for this request
+  let ResultModel;
   try {
     if (mongoose.ctrl_conn.model(collection_name)) {
       ResultModel = mongoose.ctrl_conn.model(collection_name);
@@ -333,115 +335,86 @@ function get_detailed_result(data_type, plugin_type, result_id, ws) {
 
   // Now get the result
   ResultModel.findOne(
-    {"process.result_id": mongoose.Types.ObjectId(result_id)},
-    ).exec(function(err, detailed_result) {
-    // Error
-    if (err) {
-      console.error(err);
-      deferred.resolve({
-        msg_type: "result_details",
-        success: false,
-        results: err
-      });
+    {"process.result_id": mongoose.Types.ObjectId(result_id)},)
+    .exec(function(err, detailed_result) {
+      // Error
+      if (err) {
+        console.error(err);
+        deferred.resolve({
+          msg_type: "result_details",
+          success: false,
+          results: err
+        });
 
-    // No error
-    } else {
-      if (detailed_result) {
+      // No error
+      } else {
+        if (detailed_result) {
 
-        console.log(detailed_result);
-        // Send it back immediately before populating = faster
-        if (ws) {
-          ws.send(JSON.stringify({
-            msg_type: "result_details",
-            success: true,
-            results: {
-              process:detailed_result._doc.process,
-              results:{
-                plots:detailed_result._doc.results.plots,
-                summary:detailed_result._doc.results.summary,
-              }
-            }
-          }));
-        }  
-        // console.log(Object.keys(detailed_result));
-        // console.log(detailed_result._doc);
-        // console.log(detailed_result._doc.process);
-
-        // Make sure there is a process
-        if ("process" in detailed_result._doc) {
-          Q.all([
-            // Image 1
-            populate_image(detailed_result._doc.process.image1_id),
-            // Image 2
-            populate_image(detailed_result._doc.process.image2_id)
-          ]).then((results) => {
-            // Assign results to detailed results
-            detailed_result._doc.image1 = results[0];
-            detailed_result._doc.image2 = results[1];
-
-            // Send back
-            const firstResponse = {
+          // Send part of the ressult back immediately before populating = faster
+          if (ws) {
+            ws.send(JSON.stringify({
               msg_type: "result_details",
               success: true,
-              results: detailed_result
-            };
-            
-            // if (ws) {
-            //   ws.send(JSON.stringify(firstResponse));
-            // }
-            
-            // Further population
+              results: {
+                process:detailed_result._doc.process,
+                results:{
+                  plots:detailed_result._doc.results.plots,
+                  summary:detailed_result._doc.results.summary,
+                }
+              }
+            }));
+          }  
+
+          // If there is a process then we add to the result
+          if ("process" in detailed_result._doc) {
             Q.all([
-              // Analysis
+              populate_image(detailed_result._doc.process.image1_id),
+              populate_image(detailed_result._doc.process.image2_id),
               populate_child_result(
                 detailed_result._doc.results.analysis,
                 "analysis"
               ),
-              // PDBQuery
               populate_child_result(
                 detailed_result._doc.results.pdbquery,
                 "pdbquery"
-              )
-            ]).then((furtherResults) => {
-            
-              // Put further results in data for return
-              detailed_result._doc.results.analysis = furtherResults[0];
-              detailed_result._doc.results.pdbquery = furtherResults[1];
-            
-              // Send back
-              const secondResponse = {
-                msg_type: "result_details",
-                success: true,
-                results: detailed_result
-              };
-              if (ws) {
-                ws.send(JSON.stringify(secondResponse));
-              }
-              deferred.resolve(secondResponse);
-            });
-          });
+              ),
+              ]).then((results) => {
+                // Assign results to detailed results
+                detailed_result._doc.image1 = results[0];
+                detailed_result._doc.image2 = results[1];
+                detailed_result._doc.results.analysis = results[2];
+                detailed_result._doc.results.pdbquery = results[3];
+              
+                // Send back
+                const secondResponse = {
+                  msg_type: "result_details",
+                  success: true,
+                  results: detailed_result
+                };
+                if (ws) {
+                  ws.send(JSON.stringify(secondResponse));
+                }
+                deferred.resolve(secondResponse);
+              });
 
-        // No 'process' in detailed_result._doc
-        } else {
-          // Send back
-          const response = {
-            msg_type: "result_details",
-            success: true,
-            results: detailed_result
+          // No 'process' in detailed_result._doc
+          } else {
+            // Send back
+            const response = {
+              msg_type: "result_details",
+              success: true,
+              results: detailed_result
+            }
+            if (ws) {
+              ws.send(response);
+            }
+            deferred.resolve(response);
           }
-          if (ws) {
-            ws.send(response);
-          }
-          deferred.resolve({
-            msg_type: "result_details",
-            success: true,
-            results: detailed_result
-          });
-        }
       }
     }
   });
 
+  // Return the promise to caller
   return deferred.promise;
 }
 
