@@ -192,6 +192,68 @@ router
     });
 });
 
+
+router
+.route("/sessions/search")
+  .post(function(req, res) {
+
+    console.log("search");
+    console.log(req.body); 
+
+    // Sessions for the user's groups
+    let queryParams;
+    // Site admins get all sessions
+    if (req.decoded.role === 'site_admin') {
+      queryParams = {};
+    } else {
+      queryParams = { group: { $in: req.decoded.groups } };
+    }
+
+    // Just counting
+    if (req.body.count) {
+      Session.countDocuments(queryParams)
+      .exec(function(err, numberSessions) {
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          res.status(200).json(numberSessions);
+        }
+      });
+    // Search & return documents
+    } else {
+
+      // Sorting
+      let sortParams = {};
+      if (req.body.sortKey && req.body.sortOrder) {
+        sortParams[req.body.sortKey] = req.body.sortOrder;
+      } else {
+        sortParams = {last_process:'desc'};
+      }
+
+      Session
+      .find(queryParams)
+      .sort(sortParams)
+      .skip(req.body.skip)
+      .limit(req.body.limit)
+      .populate({path:'group', model:Group})
+      .exec(function(err, sessions) {
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          res.status(200).json(sessions);
+        }
+      });
+    }
+  });
+
 // on routes that end in /sessions/:session_id
 // ----------------------------------------------------
 router

@@ -49,7 +49,7 @@ var redis_client = new Redis(config.redis_connection);
 
 // MongoDB connection
 var mongoose = require("./models/mongoose");
-// mongoose.set("debug", true);
+mongoose.set("debug", true);
 
 // Connect to ctrl_conn
 const Activity = mongoose.ctrl_conn.model(

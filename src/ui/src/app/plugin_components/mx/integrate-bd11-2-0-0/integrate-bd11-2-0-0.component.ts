@@ -49,14 +49,20 @@ for (const KEY in mx) {
   styleUrls: ["./integrate-bd11-2-0-0.component.css"]
 })
 export class IntegrateBd11200Component implements OnInit, OnDestroy {
-  @Input() public currentResult: any;
+
+  @Input() set incomingResult(currentResult: any) {
+    this.setCurrentResult(currentResult);
+  }
+  public currentResult;
 
   public fullResult: any = { process: { status: 0 }, results: {} };
+
+  naive: boolean = true;
 
   // viewModeForm: FormControl;
   public view_mode: string = "summary";
 
-  public selected_plot: string;
+  public selectedPlot: string;
   public selected_plot_label: string;
   public plot_select_labels: any = {
     "Rmerge vs Frame": "Rmerge vs Batch",
@@ -135,7 +141,36 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   ) {}
 
   public ngOnInit() {
-    // Subscribe to results for the displayed result
+    // // Subscribe to results for the displayed result
+    // this.incomingData$ = this.websocketService.subscribeResultDetails(
+    //   this.currentResult.data_type,
+    //   this.currentResult.plugin_type,
+    //   this.currentResult.result_id,
+    //   this.currentResult._id
+    // );
+    // this.incomingData$.subscribe(x => this.handleIncomingData(x));
+  }
+
+  public ngOnDestroy() {
+    this.websocketService.unsubscribeResultDetails(this.incomingData$);
+  }
+
+  private setCurrentResult(data:any):void {
+    // console.log('setCurrentResult');
+
+    // Unsubscribe to changes of previously displayed result
+    if (this.currentResult !== undefined) {
+      this.currentResult = undefined;
+      this.fullResult = { process: { status: 0 }, results: {} };
+      this.naive = true;
+      this.websocketService.unsubscribeResultDetails(this.incomingData$);
+      this.incomingData$.unsubscribe();
+    }
+
+    // Save data
+    this.currentResult = data;
+
+    // Connect to websocket results for this result
     this.incomingData$ = this.websocketService.subscribeResultDetails(
       this.currentResult.data_type,
       this.currentResult.plugin_type,
@@ -145,10 +180,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  public ngOnDestroy() {
-    this.websocketService.unsubscribeResultDetails(this.incomingData$);
-  }
-
   public handleIncomingData(data: any) {
 
     console.log("handleIncomingData", data);
@@ -156,14 +187,15 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.fullResult = data;
 
     // Select the default plot to show
-    if (data.results) {
+    if (this.naive && data.results) {
       // Plots
       if (data.results.plots) {
         if ("Rmerge vs Frame" in data.results.plots) {
-          this.selected_plot = "Rmerge vs Frame";
+          this.selectedPlot = "Rmerge vs Frame";
           this.setPlot("Rmerge vs Frame");
         }
       }
+      this.naive = false;
     }
   }
 
@@ -248,24 +280,19 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     }, 200);
   }
 
-  // public onPlotSelect(plot_key: string) {
-  //   console.log("onPlotSelect", plot_key);
-  //   this.setPlot(plot_key);
-  // }
-
   // Set up the plot
   public setPlot(plot_key: string) {
-    console.log("setPlot", plot_key);
+    // console.log("setPlot", plot_key);
 
-    let plot_result = this.fullResult.results.plots[plot_key];
+    let plotResult = this.fullResult.results.plots[plot_key];
 
     // Consistent features
-    this.data.xs = plot_result.x_data;
-    this.data.ys = plot_result.y_data;
+    this.data.xs = plotResult.x_data;
+    this.data.ys = plotResult.y_data;
     this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-      plot_result.parameters.ylabel;
+      plotResult.parameters.ylabel;
     this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-      plot_result.parameters.xlabel;
+      plotResult.parameters.xlabel;
 
     switch (plot_key) {
       case "Rmerge vs Frame":
@@ -339,11 +366,11 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
         break;
 
       case "Completeness":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (
           data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        ) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels, i) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
@@ -353,11 +380,11 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
         break;
 
       case "Redundancy":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (
           data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        ) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels, i) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
@@ -427,11 +454,11 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   // Start the download of data
   public initDownload(record: any) {
 
-    console.log("initDownload", record);
+    // console.log("initDownload", record);
 
     // Signal that the request has been made
-    let snackBarRef = this.snackBar.open("Download request submitted", "Ok", {
-      duration: 2000
+    const snackBarRef = this.snackBar.open("Download request submitted", "Ok", {
+      duration: 2000,
     });
 
     // Make the request

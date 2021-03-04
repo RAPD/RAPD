@@ -1,7 +1,10 @@
-import { Component, Input, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Component,
+         Input,
+         OnDestroy,
+         OnInit } from "@angular/core";
 
 import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
-import { MatToolbarModule } from "@angular/material/toolbar";
+// import { MatToolbarModule } from "@angular/material/toolbar";
 
 import { ReplaySubject } from "rxjs/Rx";
 
@@ -20,11 +23,17 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
 })
 export class Index3b34200Component implements OnInit, OnDestroy {
 
-  @Input() currentResult: any;
+  // @Input() currentResult: any;
+
+  @Input() set incomingResult(currentResult: any) {
+    this.setCurrentResult(currentResult);
+  }
+  public currentResult;
+
 
   incomingData$: ReplaySubject<string>;
 
-  full_result: any = { process: { status: 0 }, results: {} };
+  fullResult: any = { process: { status: 0 }, results: {} };
 
   view_mode: string = "summary";
 
@@ -102,9 +111,26 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     public dialog: MatDialog
   ) {}
 
-  ngOnInit() {
-    // console.log("ngOnInit");
-    // console.log(this.currentResult);
+  ngOnInit() { }
+
+  ngOnDestroy() {
+    this.websocketService.unsubscribeResultDetails(this.incomingData$);
+  }
+
+  private setCurrentResult(data:any):void {
+    // console.log('setCurrentResult');
+
+    // Unsubscribe to changes of previously displayed result
+    if (this.currentResult !== undefined) {
+      this.currentResult = undefined;
+      this.fullResult = { process: { status: 0 }, results: {} };
+      this.websocketService.unsubscribeResultDetails(this.incomingData$);
+      this.incomingData$.unsubscribe();
+    }
+    // Save data
+    this.currentResult = data;
+
+    // Connect to websocket results for this result
     this.incomingData$ = this.websocketService.subscribeResultDetails(
       this.currentResult.data_type,
       this.currentResult.plugin_type,
@@ -114,24 +140,20 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  ngOnDestroy() {
-    this.websocketService.unsubscribeResultDetails(this.incomingData$);
-  }
-
-  public testerfunction(data:string){
-    console.log("testerfunction", data);
-  }
+  // public testerfunction(data:string){
+  //   console.log("testerfunction", data);
+  // }
 
   public handleIncomingData(data: any) {
-    // console.log("handleIncomingData", data);
+    console.log("handleIncomingData", data);
 
     // Set full_result to incoming data
-    this.full_result = data;
+    this.fullResult = data;
 
     // Load default plot
-    if ("results" in this.full_result) {
-      if ("plots" in this.full_result.results) {
-        if ("osc_range" in this.full_result.results.plots) {
+    if ("results" in this.fullResult) {
+      if ("plots" in this.fullResult.results) {
+        if ("osc_range" in this.fullResult.results.plots) {
           this.selected_plot = "osc_range";
           this.setPlot("osc_range");
         }
@@ -140,17 +162,14 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   // Display the header information
-  displayHeader(image_data) {
-    // console.log("displayHeader", image_data);
-
-    let config = {
+  displayHeader(imageData) {
+    const config = {
       data: {
-        image_data: image_data,
-        image_id: false
-      }
+        image_data: imageData,
+        image_id: false,
+      },
     };
-
-    let dialogRef = this.dialog.open(HeaderDialogComponent, config);
+    const dialogRef = this.dialog.open(HeaderDialogComponent, config);
   }
 
   // Set up the plot
@@ -158,7 +177,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     // console.log('setPlot', plot_key, this.selected_plot);
 
     // Load the result for convenience
-    let plot_result = this.full_result.results.plots[plot_key];
+    let plot_result = this.fullResult.results.plots[plot_key];
     console.log(plot_result);
 
     // Set the label in the UI
@@ -346,7 +365,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     let config = {
       // height: '600px',
       // width: '500px',
-      data: this.full_result
+      data: this.fullResult
     };
 
     let dialogRef = this.dialog.open(ReindexDialogComponent, config);

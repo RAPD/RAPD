@@ -16,9 +16,9 @@ import { WebsocketService } from '../shared/services/websocket.service';
 })
 export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
-  public session_id: string;
+  public sessionId: string;
   public sub: any;
-  public tabs_indexes = [
+  public tabsIndexes = [
     'snaps',
     'sweeps',
     'merge',
@@ -29,20 +29,20 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
   constructor(private router: Router,
               private route: ActivatedRoute,
-              private websocket_service: WebsocketService) { }
+              private websocketService: WebsocketService) { }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
       // console.log('ngOnInit >>', params);
-      this.session_id = params['session_id'];
-      this.websocket_service.setSession(this.session_id, 'mx');
+      this.sessionId = params['session_id'];
+      this.websocketService.setSession(this.sessionId, 'mx');
     });
   }
 
   ngOnDestroy() {
     this.sub.unsubscribe();
-    this.websocket_service.unsetSession();
-    this.websocket_service.unsubscribeResults();
+    this.websocketService.unsetSession();
+    this.websocketService.unsubscribeResults();
   }
 
   tabSelected(event) {

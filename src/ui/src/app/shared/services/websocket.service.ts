@@ -166,37 +166,38 @@ export class WebsocketService {
   }
 
   // Inform the server what session this client is interested in
-  setSession(session_id: string, session_type: string) {
-    console.log("setSession", session_id);
+  setSession(sessionId: string, sessionType: string) {
+
+    console.log("setSession", sessionId, sessionType);
 
     // Share through globalsService
-    this.globalsService.currentSession = session_id;
+    this.globalsService.currentSession = sessionId;
     console.log(this.globalsService.currentSession);
 
-    let self = this;
+    const self = this;
 
     // Create a new results_subject
     this.newResultsSubject();
 
-    // Request the data, but protected for connection
-    this.waitForSocketConnection(function() {
+    // Set session, but protected for connection
+    this.waitForSocketConnection(() => {
       // Set the session
       self.ws.send(
         JSON.stringify({
           request_type: "set_session",
-          session_id: session_id
+          session_id: sessionId,
         })
       );
     });
 
     // Request the data, but protected for connection
-    this.waitForSocketConnection(function() {
+    this.waitForSocketConnection(() => {
       // Request all results
       self.ws.send(
         JSON.stringify({
           request_type: "get_results",
-          data_type: session_type + ":all",
-          session_id: session_id
+          data_type: sessionType + ":all",
+          session_id: sessionId,
         })
       );
     });
@@ -204,9 +205,10 @@ export class WebsocketService {
 
   // Inform the server that we are no longer interested in the session
   unsetSession() {
+
     console.log("unsetSession");
 
-    let self = this;
+    const self = this;
 
     // Request the data, but protected for connection
     this.waitForSocketConnection(function() {
@@ -234,19 +236,20 @@ export class WebsocketService {
 
   // Get all results for a session
   subscribeResults(session_id: string): ReplaySubject<string> {
+
     console.log("subscribeResults session_id:", session_id);
 
-    let results_subject = new ReplaySubject<string>(1),
-        self = this;
+    const resultsSubject = new ReplaySubject<string>(1);
+    const self = this;
 
     // Store the observable
     this.results_subscribers.push({
-      subject: results_subject,
-      session_id: session_id
+      subject: resultsSubject,
+      session_id,
     });
 
     // Return the observable
-    return results_subject;
+    return resultsSubject;
   }
 
   // Unsubscribe from result details
@@ -277,54 +280,54 @@ export class WebsocketService {
 
   // Get details for a result
   subscribeResultDetails(
-    data_type: string,
-    plugin_type: string,
-    result_id: string,
+    dataType: string,
+    pluginType: string,
+    resultId: string,
     _id: string
   ): ReplaySubject<string> {
-    console.log(
-      "subscribeResultDetails  data_type =",
-      data_type,
-      "plugin_type = ",
-      plugin_type,
-      "result_id =",
-      result_id,
-      "_id =",
-      _id
-    );
+    // console.log(
+    //   "subscribeResultDetails  data_type =",
+    //   dataType,
+    //   "plugin_type = ",
+    //   pluginType,
+    //   "result_id =",
+    //   resultId,
+    //   "_id =",
+    //   _id
+    // );
 
-    let self = this;
+    const self = this;
 
     this.result_details_subject = new ReplaySubject<string>(1);
 
-    let result_details_subject = new ReplaySubject<string>(1);
+    const resultDetailsSubject = new ReplaySubject<string>(1);
 
     this.details_subscribers.push({
-      subject: result_details_subject,
-      result_type: data_type + ":" + plugin_type,
-      data_type: data_type,
-      plugin_type: plugin_type,
-      result_id: result_id,
-      _id: _id
+      subject: resultDetailsSubject,
+      result_type: dataType + ":" + pluginType,
+      data_type: dataType,
+      plugin_type: pluginType,
+      result_id: resultId,
+      _id,
     });
 
     // Ask for result details, but protected for connection
-    this.waitForSocketConnection(function() {
+    this.waitForSocketConnection(() => {
       // Request all results
       self.ws.send(
         JSON.stringify({
           request_type: "get_result_details",
-          result_type: data_type + ":" + plugin_type,
-          data_type: data_type,
-          plugin_type: plugin_type,
-          result_id: result_id,
-          _id: _id
+          result_type: dataType + ":" + pluginType,
+          data_type: dataType,
+          plugin_type: pluginType,
+          result_id: resultId,
+          _id,
         })
       );
     });
 
     // Return the ReplaySubject
-    return result_details_subject;
+    return resultDetailsSubject;
   }
 
   // Unsubscribe from result details

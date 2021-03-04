@@ -187,62 +187,61 @@
           <div fxFlex="none" class="rapd-plot-header">
 
             <div class="rapd-titleselect-panel">
-              <mat-select class="rapd-matselect-panel" placeholder="Select plot" (selectionChange)="setPlot(selected_plot)" [(ngModel)]="selected_plot" name="plot">
+              <mat-select class="rapd-matselect-panel" placeholder="Select plot" (selectionChange)="setPlot(selectedPlot)" [(ngModel)]="selectedPlot" name="plot">
                 <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
               </mat-select>
             </div>
             <div class="rapd-chart-select-panel">
-              <!-- <h3>{{selected_plot}}</h3> -->
             </div>
           </div>
           <div fxFlex="grow">
             <div class="chart-container" style="position: relative;">
-              <div *ngIf="selected_plot=='Rmerge vs Frame'">
+              <div *ngIf="selectedPlot=='Rmerge vs Frame'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Imean/RMS scatter'">
+              <div *ngIf="selectedPlot=='Imean/RMS scatter'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
+              <div *ngIf="selectedPlot=='Anomalous & Imean CCs vs Resolution'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='RMS correlation ratio'">
+              <div *ngIf="selectedPlot=='RMS correlation ratio'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
+              <div *ngIf="selectedPlot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='rs_vs_res'">
+              <div *ngIf="selectedPlot=='rs_vs_res'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
+              <div *ngIf="selectedPlot=='Average I, RMS deviation, and Sd'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Completeness'">
+              <div *ngIf="selectedPlot=='Completeness'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Redundancy'">
+              <div *ngIf="selectedPlot=='Redundancy'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>
               </div>
-              <div *ngIf="selected_plot=='Radiation Damage'">
+              <div *ngIf="selectedPlot=='Radiation Damage'">
                 <canvas *ngIf="data" baseChart [datasets]="data.ys" [labels]="data.xs" [options]="data.lineChartOptions" [chartType]="data.lineChartType"
                   [colors]="globalsService.LineChartColors" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)">
                 </canvas>

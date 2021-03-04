@@ -5,7 +5,6 @@ const config = require("./config");
 var http = require("http");
 var url = require("url");
 var WebSocketServer = require("ws").Server;
-// var SocketIo = require('socket.io');
 var mongoose = require("./models/mongoose");
 Q = require("q");
 // Fix the promise issue in Mongoose
@@ -32,6 +31,8 @@ const Result = mongoose.ctrl_conn.model(
   "Result",
   require("./models/result").ResultSchema
 );
+
+console.debug(Result);
 
 // Definitions of result types
 var result_type_trans = {
@@ -298,7 +299,7 @@ var populate_child_result = function(result_id, mode) {
   return deferred.promise;
 };
 
-function get_detailed_result(data_type, plugin_type, result_id) {
+function get_detailed_result(data_type, plugin_type, result_id, ws) {
   
   console.log('get_detailed_result', data_type, plugin_type, result_id);
   
@@ -331,9 +332,9 @@ function get_detailed_result(data_type, plugin_type, result_id) {
   }
 
   // Now get the result
-  ResultModel.findOne({
-    "process.result_id": mongoose.Types.ObjectId(result_id)
-  }).exec(function(err, detailed_result) {
+  ResultModel.findOne(
+    {"process.result_id": mongoose.Types.ObjectId(result_id)},
+    ).exec(function(err, detailed_result) {
     // Error
     if (err) {
       console.error(err);
@@ -345,8 +346,23 @@ function get_detailed_result(data_type, plugin_type, result_id) {
 
     // No error
     } else {
-      console.log(detailed_result);
       if (detailed_result) {
+
+        console.log(detailed_result);
+        // Send it back immediately before populating = faster
+        if (ws) {
+          ws.send(JSON.stringify({
+            msg_type: "result_details",
+            success: true,
+            results: {
+              process:detailed_result._doc.process,
+              results:{
+                plots:detailed_result._doc.results.plots,
+                summary:detailed_result._doc.results.summary,
+              }
+            }
+          }));
+        }  
         // console.log(Object.keys(detailed_result));
         // console.log(detailed_result._doc);
         // console.log(detailed_result._doc.process);
@@ -357,37 +373,65 @@ function get_detailed_result(data_type, plugin_type, result_id) {
             // Image 1
             populate_image(detailed_result._doc.process.image1_id),
             // Image 2
-            populate_image(detailed_result._doc.process.image2_id),
-            // Analysis
-            populate_child_result(
-              detailed_result._doc.results.analysis,
-              "analysis"
-            ),
-            // PDBQuery
-            populate_child_result(
-              detailed_result._doc.results.pdbquery,
-              "pdbquery"
-            )
-          ]).then(function(results) {
+            populate_image(detailed_result._doc.process.image2_id)
+          ]).then((results) => {
             // Assign results to detailed results
             detailed_result._doc.image1 = results[0];
             detailed_result._doc.image2 = results[1];
-            detailed_result._doc.results.analysis = results[2];
-            detailed_result._doc.results.pdbquery = results[3];
-
-            console.log('result_details', detailed_result);
 
             // Send back
-            deferred.resolve({
+            const firstResponse = {
               msg_type: "result_details",
               success: true,
               results: detailed_result
+            };
+            
+            // if (ws) {
+            //   ws.send(JSON.stringify(firstResponse));
+            // }
+            
+            // Further population
+            Q.all([
+              // Analysis
+              populate_child_result(
+                detailed_result._doc.results.analysis,
+                "analysis"
+              ),
+              // PDBQuery
+              populate_child_result(
+                detailed_result._doc.results.pdbquery,
+                "pdbquery"
+              )
+            ]).then((furtherResults) => {
+            
+              // Put further results in data for return
+              detailed_result._doc.results.analysis = furtherResults[0];
+              detailed_result._doc.results.pdbquery = furtherResults[1];
+            
+              // Send back
+              const secondResponse = {
+                msg_type: "result_details",
+                success: true,
+                results: detailed_result
+              };
+              if (ws) {
+                ws.send(JSON.stringify(secondResponse));
+              }
+              deferred.resolve(secondResponse);
             });
           });
 
-          // No 'process' in detailed_result._doc
+        // No 'process' in detailed_result._doc
         } else {
           // Send back
+          const response = {
+            msg_type: "result_details",
+            success: true,
+            results: detailed_result
+          }
+          if (ws) {
+            ws.send(response);
+          }
           deferred.resolve({
             msg_type: "result_details",
             success: true,
@@ -486,6 +530,7 @@ function Wss(opt, callback) {
         switch (data.request_type) {
           // Get results
           case "get_results":
+            
             console.log("get_results");
 
             var data_type, data_class;
@@ -493,6 +538,7 @@ function Wss(opt, callback) {
             [data_type, data_class] = data.data_type.split(":");
 
             if (data_type === "mx") {
+              
               if (data_class === "data") {
                 Result.find({
                   session_id: mongoose.Types.ObjectId(data.session_id)
@@ -556,11 +602,14 @@ function Wss(opt, callback) {
                       })
                     );
                   });
+              
               } else if (data_class === "all") {
                 console.log("data.session_id", data.session_id);
 
+                // Change to indexings first - load will be faster in UI appearance
                 Result.find({
-                  session_id: mongoose.Types.ObjectId(data.session_id)
+                  session_id: mongoose.Types.ObjectId(data.session_id),
+                  plugin_type : "INDEX",
                 })
                   // populate('children').
                   .sort("-timestamp")
@@ -575,6 +624,25 @@ function Wss(opt, callback) {
                       })
                     );
                   });
+                  
+                  // And now the integrations
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "INTEGRATE",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
               }
             }
 
@@ -592,14 +660,15 @@ function Wss(opt, callback) {
 
           // Get result details
           case "get_result_details":
+            
             console.log("get_result_details", data);
 
             // Get the response to send to the websocket
-            get_detailed_result(data.data_type, data.plugin_type, data._id)
+            get_detailed_result(data.data_type, data.plugin_type, data._id, ws)
             .then(function(response) {
               // Send response over the wire
               console.log('response', response);
-              ws.send(JSON.stringify(response));
+              // ws.send(JSON.stringify(response));
 
               // Register activity
               var grd_activity = new Activity({

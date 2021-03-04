@@ -28,7 +28,9 @@ for (let key in mx) {
 export class MxResultContainerComponent implements OnInit {
 
   currentResult: any = 'none';
-  current_displayed_component: string = 'empty';
+  currentComponentName: string = 'empty';
+  currentComponent = undefined;
+  currentFactory = undefined;
 
   @Input() session_id: string;
   @Input() result_type: string;
@@ -41,26 +43,49 @@ export class MxResultContainerComponent implements OnInit {
 
   // A result has been selected - implement the agent interface
   selectResult(event) {
-    // console.log('selectResult', event);
 
-    // Destroy the current component in the target view
-    this.target.clear();
+    console.log('selectResult', event);
+    console.log('currentResult', this.currentResult);
+    console.log('currentDisplayedComponentName', this.currentComponentName);
+
+    // // Destroy the current component in the target view
+    // this.target.clear();
 
     // Save the current displayed result
     this.currentResult = event.value;
 
     // Construct the component name from the result
     const componentName = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
-    // console.log(componentName);
 
-    // Create a componentfactoryResolver instance
-    const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[componentName]);
+    if (componentName !== this.currentComponentName) {
 
-    // Create the component
-    const component = this.target.createComponent(factory);
+      // Create a componentfactoryResolver instance
+      const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[componentName]);
 
-    // Set the component currentResult value
-    component.instance.currentResult = event.value;
+      // Destroy the current component in the target view
+      this.target.clear();
+
+      // Create the component
+      const component = this.target.createComponent(factory);
+
+      component.instance.incomingResult = event.value;
+
+      // Save
+      this.currentFactory = factory;
+      this.currentComponentName = componentName;
+      this.currentComponent = component;
+    } else {
+
+      // Destroy the current component in the target view
+      // this.target.clear();
+
+      // Create the component
+      // const component = this.target.createComponent(this.currentFactory);
+
+      this.currentComponent.instance.incomingResult = event.value;
+
+      // Save
+      // this.currentComponent = component;
+    }
   }
-
 }
