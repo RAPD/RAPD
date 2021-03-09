@@ -49,7 +49,7 @@ var redis_client = new Redis(config.redis_connection);
 
 // MongoDB connection
 var mongoose = require("./models/mongoose");
-mongoose.set("debug", true);
+mongoose.set("debug", false);
 
 // Connect to ctrl_conn
 const Activity = mongoose.ctrl_conn.model(
@@ -139,8 +139,8 @@ var apiRoutes = express.Router(); // get an instance of the express Router
 
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
-  console.log(req.method);
-  console.log(">>1<<");
+  // console.log(req.method);
+  // console.log(">>1<<");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
@@ -167,7 +167,7 @@ apiRoutes.post("/authenticate", function(req, res) {
   // Get useragent data
   let ua = req.useragent;
 
-  console.log(req.body);
+  // console.log(req.body);
 
   if (config.authenticate_mode === "mongo") {
     // console.log("Using Mongo to authenticate");
@@ -605,9 +605,9 @@ apiRoutes.get("/", function(req, res) {
 // if (! process.env.NODE_ENV === 'development') {
 // route middleware to verify a token
 apiRoutes.use(function(req, res, next) {
-  console.log(req.body);
-  console.log(req.query);
-  console.log(req.headers);
+  // console.log(req.body);
+  // console.log(req.query);
+  // console.log(req.headers);
 
   // check header or url parameters or post parameters for token
   var token = req.headers.authorization.replace("Bearer ", "");

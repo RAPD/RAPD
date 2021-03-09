@@ -60,10 +60,23 @@ try {
 // Handle new message passed from Redis
 sub.on("message", function(channel, message) {
   console.log("sub channel " + channel);
+  console.log(message);
 
   // Decode into oject
-  let message_object = JSON.parse(message);
-
+  let message_object;
+  try {
+    message_object = JSON.parse(message);
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      console.error("Failure in parsing message");
+    } else {
+      console.error("Unknown error parsing message");
+      console.error(e);
+    }
+    // Break out of message handling
+    return false;
+  }
+  
   // Grab out the session_id
   let session_id = false;
   try {
@@ -75,33 +88,35 @@ sub.on("message", function(channel, message) {
     } else {
       console.error(e);
     }
+    // Break out of message handling
+    return false;
   }
 
   // Any connections?
   if (Object.keys(ws_connections).length > 0) {
     // Turn message into messages to send to clients
-    parse_message(channel, message_object).then(function(messages_to_send) {
-      console.log("messages_to_send", messages_to_send);
-      //
-      // console.log('Will send', messages_to_send.length, 'messages');
-      //
-      // Look for websockets that are watching the same session
-      if (session_id) {
-        Object.keys(ws_connections).forEach(function(socket_id) {
-          console.log(ws_connections[socket_id].session);
-          if (ws_connections[socket_id].session.session_id === session_id) {
-            console.log("Have a live one!");
-            messages_to_send.forEach(function(message) {
-              console.log(message);
-              ws_connections[socket_id].send(
-                JSON.stringify({
-                  msg_type: message[0],
-                  results: message[1]
-                })
-              );
-            });
-          }
-        });
+    parse_message(channel, message_object).then((messagesToSend) => {
+      if (messagesToSend) {
+        // console.log("messages_to_send", messagesToSend);
+        console.log('Will send', messages_to_send.length, 'messages');
+        // Look for websockets that are watching the same session
+        if (session_id) {
+          Object.keys(ws_connections).forEach(function(socket_id) {
+            console.log(ws_connections[socket_id].session);
+            if (ws_connections[socket_id].session.session_id === session_id) {
+              console.log("Have a live one!");
+              messagesToSend.forEach(function(message) {
+                console.log(message);
+                ws_connections[socket_id].send(
+                  JSON.stringify({
+                    msg_type: message[0],
+                    results: message[1]
+                  })
+                );
+              });
+            }
+          });
+        }
       }
     });
   }
@@ -150,57 +165,66 @@ var parse_message = function(channel, message) {
         //   result_id: '5b3a97f1b77af848335f6ccd' }
 
         // Create a result
-        let result = {
-          _id: message.process.result_id,
-          data_type: message.plugin.data_type.toLowerCase(),
-          parent_id: message.process.parent_id,
-          plugin_id: message.plugin.id,
-          plugin_type: message.plugin.type.toLowerCase(),
-          plugin_version: message.plugin.version,
-          projects: [],
-          repr: message.process.repr,
-          result_id: message._id,
-          session_id: message.process.session_id,
-          status: message.process.status,
-          timestamp: new Date().toISOString()
-        };
-        return_array.push(["results", [result]]);
-        // console.log('  Pushed results object onto return array');
+        let result;
+        try {
+          result = {
+            _id: message.process.result_id,
+            data_type: message.plugin.data_type.toLowerCase(),
+            parent_id: message.process.parent_id,
+            plugin_id: message.plugin.id,
+            plugin_type: message.plugin.type.toLowerCase(),
+            plugin_version: message.plugin.version,
+            projects: [],
+            repr: message.process.repr,
+            result_id: message._id,
+            session_id: message.process.session_id,
+            status: message.process.status,
+            timestamp: new Date().toISOString()
+          };
+          
+          // console.log('  Pushed results object onto return array');
+          return_array.push(["results", [result]]);
 
-        // Create a detailed result
-        Q.all([
-          // Image 1
-          populate_image(message.process.image1_id),
-          // Image 2
-          populate_image(message.process.image2_id),
-          // Analysis
-          populate_child_result(message.results.analysis, "analysis"),
-          // PDBQuery
-          populate_child_result(message.results.pdbquery, "pdbquery")
-        ]).then(function(results) {
-          // Assign results to detailed results
-          message.image1 = results[0];
-          message.image2 = results[1];
-          message.results.analysis = results[2];
-          message.results.pdbquery = results[3];
+          // Create a detailed result
+          Q.all([
+            // Image 1
+            populate_image(message.process.image1_id),
+            // Image 2
+            populate_image(message.process.image2_id),
+            // Analysis
+            populate_child_result(message.results.analysis, "analysis"),
+            // PDBQuery
+            populate_child_result(message.results.pdbquery, "pdbquery")
+          ]).then(function(results) {
+            // Assign results to detailed results
+            message.image1 = results[0];
+            message.image2 = results[1];
+            message.results.analysis = results[2];
+            message.results.pdbquery = results[3];
 
-          return_array.push(["result_details", message]);
+            return_array.push(["result_details", message]);
 
-          // If result has a parent create a detailed result
-          if (message.process.parent_id) {
-            // Get the response to send to the websocket
-            get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id)
-            .then(function(response) {
-              return_array.push(["result_details", response]);
-            });
-          }
+            // If result has a parent create a detailed result
+            if (message.process.parent_id) {
+              // Get the response to send to the websocket
+              get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id)
+              .then(function(response) {
+                return_array.push(["result_details", response]);
+              });
+            }
 
-          // console.log('return_array now has length', return_array.length);
-          // console.log('return_array', return_array);
-          deferred.resolve(return_array);
-        });
+            // console.log('return_array now has length', return_array.length);
+            // console.log('return_array', return_array);
+            deferred.resolve(return_array);
+          });
+
+        } catch (e) {
+          console.error("Unable to construct result from RAPD_RESULT");
+          console.error(e);
+          deferred.resolve(false);
+        }
       }
-
+      
       break;
 
     default:
@@ -355,13 +379,13 @@ function get_detailed_result(data_type, plugin_type, result_id, ws) {
             ws.send(JSON.stringify({
               msg_type: "result_details",
               success: true,
-              results: {
-                process:detailed_result._doc.process,
-                results:{
-                  plots:detailed_result._doc.results.plots,
-                  summary:detailed_result._doc.results.summary,
-                }
-              }
+              results: detailed_result,
+              // results: {
+              //   process:detailed_result._doc.process,
+              //   results:{
+              //     plots:detailed_result._doc.results.plots,
+              //     summary:detailed_result._doc.results.summary,
+              //   }
             }));
           }  
 
@@ -440,7 +464,7 @@ function Wss(opt, callback) {
     // Create a session object
     ws.session = {};
 
-    // Mark the ws and save to list
+    // Mark the ws and save to ws_connections object
     ws.id = uuid.v1();
     ws_connections[ws.id] = ws;
 
@@ -619,7 +643,7 @@ function Wss(opt, callback) {
               }
             }
 
-            console.log(ws.session.token);
+            // console.log(ws.session.token);
 
             // Register activity
             let new_activity = new Activity({
@@ -640,7 +664,7 @@ function Wss(opt, callback) {
             get_detailed_result(data.data_type, data.plugin_type, data._id, ws)
             .then(function(response) {
               // Send response over the wire
-              console.log('response', response);
+              // console.log('response', response);
               // ws.send(JSON.stringify(response));
 
               // Register activity
