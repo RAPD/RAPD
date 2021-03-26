@@ -61,10 +61,10 @@ export class MrDialogComponent implements OnInit {
     this.initUploader();
 
     // Get the uploads for the current group
-    this.getUploads(this.globalsService.currentSession);
+    this.getUploads(this.globalsService.currentSessionId);
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSession);
+    this.getProjects(this.globalsService.currentSessionId);
   }
 
   private onChanges(): void {
@@ -144,7 +144,7 @@ export class MrDialogComponent implements OnInit {
     let self = this;
 
     this.uploader = new FileUploader({
-      additionalParameter: {session_id:this.globalsService.currentSession},
+      additionalParameter: {session_id:this.globalsService.currentSessionId},
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
       url: this.globalsService.site.restApiUrl + "/upload_pdb",

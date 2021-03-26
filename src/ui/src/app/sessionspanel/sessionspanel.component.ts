@@ -156,7 +156,8 @@ export class SessionspanelComponent implements AfterViewInit, OnInit  {
     const id = event.selected[0]._id;
 
     // Share through globalsService
-    this.globalsService.currentSession = id;
+    this.globalsService.currentSessionId = id;
+    this.globalsService.currentSessionType = "mx";
 
     this.router.navigate(['/mx', id]);
   }
@@ -238,7 +239,7 @@ export class SessionspanelComponent implements AfterViewInit, OnInit  {
   // Handle a click on a record
   public recordClick(record:any, event:any) {
     const id = record._id;
-    this.globalsService.currentSession = id;
+    this.globalsService.currentSessionId = id;
     this.router.navigate(['/mx', id]);
   }
 

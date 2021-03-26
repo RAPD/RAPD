@@ -92,7 +92,8 @@ router.route('/overwatches')
                     // If we are done, send back the data
                     if (key_counter === num_keys) {
                       // Return the components
-                      console.log('Returning found components', return_hash);
+                      // console.log('Returning found components', return_hash);
+                      console.log('Returning found components');
                       res.status(200).json({
                         success:true,
                         overwatches:Object.values(return_hash)

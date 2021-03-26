@@ -1,4 +1,5 @@
-import { Injectable } from "@angular/core";
+import { Injectable, SkipSelf, ɵɵtrustConstantResourceUrl } from "@angular/core";
+import { WebSocketSubject } from "rxjs/internal-compatibility";
 
 import { ReplaySubject } from "rxjs/Rx";
 
@@ -9,13 +10,13 @@ export class WebsocketService {
   private websocketUrl: string;
   private ws: WebSocket;
 
-  public results_subscribers = [];
-  public details_subscribers = [];
+  public resultsSubscribers = [];
+  public detailsSubscribers = [];
 
-  public results_subject: ReplaySubject<string>;
-  public result_details_subject: ReplaySubject<string>;
+  public resultsSubject: ReplaySubject<string>;
+  // public resultDetailsSubject: ReplaySubject<string>;
 
-  private timed_out: boolean = false;
+  private timedOut: boolean = false;
   private connecting: boolean = false;
 
   constructor(private globalsService: GlobalsService) {
@@ -24,13 +25,13 @@ export class WebsocketService {
 
   newResultsSubject() {
     // Create a new one
-    this.results_subject = new ReplaySubject<string>(100);
+    this.resultsSubject = new ReplaySubject<string>(100);
   }
 
   // Initialize
   initializeWebsocket() {
-    let token = localStorage.getItem("access_token");
-    let self = this;
+    const token = localStorage.getItem("access_token");
+    const self = this;
 
     // Track state
     this.connecting = true;
@@ -38,51 +39,67 @@ export class WebsocketService {
     // Connect the websocket
     this.ws = new WebSocket(this.websocketUrl);
 
-    var connection_timeout = setTimeout(function() {
-      self.timed_out = true;
+    const connectionTimeout = setTimeout(() => {
+      self.timedOut = true;
       self.ws.close();
-      self.timed_out = false;
+      self.timedOut = false;
     }, 2000);
 
-    this.ws.onopen = function(e: MessageEvent) {
+    this.ws.onopen = (e: MessageEvent) => {
       console.log("Websocket onopen");
 
       // Track state
       self.connecting = false;
 
       // Clear the connection timeout
-      clearTimeout(connection_timeout);
+      clearTimeout(connectionTimeout);
 
       // Connected - now ask for all available results
       self.ws.send(
         JSON.stringify({
           request_type: "initialize",
-          token: token
+          token,
         })
       );
+
+      //
+      // This is a reconnection
+      //
+      if (this.globalsService.currentSessionId) {
+        // console.log("Resending session data");
+        this.setSession(this.globalsService.currentSessionId, this.globalsService.currentSessionType);
+      }
+
+      if (this.detailsSubscribers.length) {
+        console.log("Will resubsscribe to", this.detailsSubscribers.length, "result details");
+        this.detailsSubscribers.forEach((subject) => {
+          self.requestResultDetails(subject);
+        })
+      }
+
     };
 
     // What to do with the message
-    this.ws.onmessage = function(message: MessageEvent) {
+    this.ws.onmessage = (message: MessageEvent) => {
       console.log(message);
       self.handleWebsocketMessage(message.data);
     };
 
-    this.ws.onerror = function(ev: MessageEvent) {
+    this.ws.onerror = (ev: MessageEvent) => {
       console.error(ev);
     };
 
-    this.ws.onclose = function(ev: CloseEvent) {
+    this.ws.onclose = (ev: CloseEvent) => {
       console.log("Websocket connection closed");
       console.error(ev);
 
       // Clear the connection timeout
-      clearTimeout(connection_timeout);
+      clearTimeout(connectionTimeout);
 
       // Delete the websocket
       self.ws = null;
 
-      setTimeout(function() {
+      setTimeout(() => {
         self.reconnect();
       }, 2000);
     };
@@ -114,10 +131,11 @@ export class WebsocketService {
     switch (data.msg_type) {
       // A result has arrived
       case "results":
-        data.results.forEach(function(result) {
-          // console.log(result);
+        console.log(data);
+        data.results.forEach((result) => {
+          console.log(result);
           // Send the data to the subscribers
-          self.results_subscribers.forEach(function(subscriber) {
+          self.resultsSubscribers.forEach((subscriber) => {
             if (subscriber.session_id === result.session_id) {
               subscriber.subject.next([result]);
             }
@@ -128,8 +146,8 @@ export class WebsocketService {
       // A detailed result
       case "result_details":
         if (data.results) {
-          self.details_subscribers.forEach(function(subscriber) {
-            if (subscriber._id == data.results.process.result_id) {
+          self.detailsSubscribers.forEach((subscriber) => {
+            if (subscriber._id === data.results.process.result_id) {
               subscriber.subject.next(data.results);
             }
           });
@@ -138,7 +156,7 @@ export class WebsocketService {
 
       case "RAPD_RESULTS":
         // Send the data to the subscribers
-        self.results_subject.next(data);
+        self.resultsSubject.next(data);
         break;
 
       default:
@@ -170,11 +188,11 @@ export class WebsocketService {
 
     console.log("setSession", sessionId, sessionType);
 
-    // Share through globalsService
-    this.globalsService.currentSession = sessionId;
-    console.log(this.globalsService.currentSession);
-
     const self = this;
+
+    // Share current session through globalsService
+    this.globalsService.currentSessionId = sessionId;
+    this.globalsService.currentSessionType = sessionType;
 
     // Create a new results_subject
     this.newResultsSubject();
@@ -211,7 +229,7 @@ export class WebsocketService {
     const self = this;
 
     // Request the data, but protected for connection
-    this.waitForSocketConnection(function() {
+    this.waitForSocketConnection(() => {
       // Set the session
       self.ws.send(
         JSON.stringify({
@@ -236,14 +254,12 @@ export class WebsocketService {
 
   // Get all results for a session
   subscribeResults(session_id: string): ReplaySubject<string> {
-
     console.log("subscribeResults session_id:", session_id);
 
     const resultsSubject = new ReplaySubject<string>(1);
-    const self = this;
 
     // Store the observable
-    this.results_subscribers.push({
+    this.resultsSubscribers.push({
       subject: resultsSubject,
       session_id,
     });
@@ -252,57 +268,33 @@ export class WebsocketService {
     return resultsSubject;
   }
 
-  // Unsubscribe from result details
+  // Unsubscribe from all result details
   unsubscribeResults() {
     console.log("unsubscribeResultDetails");
+    console.log(this.resultsSubscribers);
 
-    console.log(this.results_subscribers);
-
-    this.results_subscribers.forEach(function(subscriber) {
-      subscriber["subject"].complete();
+    this.resultsSubscribers.forEach((subscriber) => {
+      subscriber.subject.complete();
       subscriber = null;
     });
 
     // Empty the array
-    this.results_subscribers = [];
-
-    // Look through and remove
-    // let index = this.results_subscribers.findIndex(function(element) {
-    //   return element.subject === subject;
-    // });
-    // console.log(index);
-    // if (index !== -1) {
-    //   let subscriber = this.details_subscribers.splice(index, 1)[0];
-    //   subscriber["subject"].complete();
-    //   subscriber = null;
-    // }
+    this.resultsSubscribers = [];
   }
 
-  // Get details for a result
+  // Subscribe to and request details for a result
   subscribeResultDetails(
     dataType: string,
     pluginType: string,
     resultId: string,
     _id: string
   ): ReplaySubject<string> {
-    // console.log(
-    //   "subscribeResultDetails  data_type =",
-    //   dataType,
-    //   "plugin_type = ",
-    //   pluginType,
-    //   "result_id =",
-    //   resultId,
-    //   "_id =",
-    //   _id
-    // );
 
     const self = this;
 
-    this.result_details_subject = new ReplaySubject<string>(1);
-
+    // Create ReplaySubject & preserve
     const resultDetailsSubject = new ReplaySubject<string>(1);
-
-    this.details_subscribers.push({
+    this.detailsSubscribers.push({
       subject: resultDetailsSubject,
       result_type: dataType + ":" + pluginType,
       data_type: dataType,
@@ -330,15 +322,32 @@ export class WebsocketService {
     return resultDetailsSubject;
   }
 
+  requestResultDetails(subject: any):void {
+    const self = this;
+    // Ask for result details, but protected for connection
+    this.waitForSocketConnection(() => {
+      // Request all results
+      self.ws.send(
+        JSON.stringify({
+          request_type: "get_result_details",
+          result_type: subject.result_type,
+          data_type: subject.data_type,
+          plugin_type: subject.plugin_type,
+          result_id: subject.result_id,
+          _id: subject._id,
+        })
+      );
+    });
+  }
+
   // Unsubscribe from result details
   unsubscribeResultDetails(subject: ReplaySubject<string>) {
-    console.log("unsubscribeResultDetails");
-
-    let index = this.details_subscribers.findIndex(function(element) {
+    // console.log("unsubscribeResultDetails");
+    const index = this.detailsSubscribers.findIndex((element) => {
       return element.subject === subject;
     });
-    let subscriber = this.details_subscribers.splice(index, 1)[0];
-    subscriber["subject"].complete();
+    let subscriber = this.detailsSubscribers.splice(index, 1)[0];
+    subscriber.subject.complete();
     subscriber = null;
   }
 }

@@ -33,8 +33,9 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
-      // console.log('ngOnInit >>', params);
-      this.sessionId = params['session_id'];
+      console.log('MxSessionpanelComponent.ngOnInit >>', params);
+      this.sessionId = params.session_id;
+      // Set the session in the websocket >> get current results and subscribe to future results
       this.websocketService.setSession(this.sessionId, 'mx');
     });
   }
