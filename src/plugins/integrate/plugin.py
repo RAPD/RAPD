@@ -2407,21 +2407,20 @@ class RapdPlugin(Process):
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
-        #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
-        #print "Copy %s to %s" % (src_file, tgt_file)
+        # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
-        #print "Copy %s to %s" % (src_file, prod_file)
+        # print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"unmerged"
+            "description":"unmerged_mtz"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Move to archive
         src_file = os.path.abspath("freer.mtz")
@@ -2438,9 +2437,23 @@ class RapdPlugin(Process):
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"rfree"
+            "description":"rfree_mtz"
         })
         #pprint(self.results["results"]["data_produced"])
+
+        # Add XDS.ASCII to data_produced
+        src_file = os.path.abspath("XDS.ASCII")
+        tgt_file = "%s_XDS.ASCII" % archive_files_prefix
+        shutil.copyfile(src_file, tgt_file)
+        results["xds_ascii"] = tgt_file
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
+        self.results["results"]["data_produced"].append({
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
+            "description":"xds_ascii"
+        })
 
         if scalepack:
             # Create the merged scalepack format file.
