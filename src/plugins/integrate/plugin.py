@@ -2442,17 +2442,17 @@ class RapdPlugin(Process):
         #pprint(self.results["results"]["data_produced"])
 
         # Add XDS.ASCII to data_produced
-        src_file = os.path.abspath("XDS.ASCII")
-        tgt_file = "%s_XDS.ASCII" % archive_files_prefix
+        src_file = os.path.abspath("XDS_ASCII.HKL")
+        tgt_file = "%s_XDS_ASCII.HKL" % archive_files_prefix
         shutil.copyfile(src_file, tgt_file)
-        results["xds_ascii"] = tgt_file
+        results["xdsascii_hkl"] = tgt_file
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"xds_ascii"
+            "description":"xdsascii_hkl"
         })
 
         if scalepack:
