@@ -243,8 +243,7 @@ class RapdPlugin(Process):
         # Setup initial shell_launcher
         # Load the subprocess adapter
         self.launcher = local_subprocess
-        #self.batch_queue = {}
-        self.batch_queue = False
+        self.batch_queue = {}
         self.jobs = 1
         self.procs = 4
 
@@ -254,19 +253,17 @@ class RapdPlugin(Process):
             computer_cluster = xutils.load_cluster_adapter(self)
             # If it cannot load, then the shell launcher is kept
             if computer_cluster:
-                self.computer_cluster = computer_cluster
-                self.launcher = self.computer_cluster.process_cluster
+                self.launcher = computer_cluster.process_cluster
                 # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-                #self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
-                self.batch_queue = self.computer_cluster.check_queue(self.command["command"])
-                
-                
+                self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
+                self.computer_cluster = computer_cluster
                 if self.ram_use == True:
                     self.jobs = len(self.ram_nodes[0])
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    self.procs, self.jobs = self.computer_cluster.get_resources(self.command["command"])
+                    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
                     #self.jobs = 20
                     #self.procs = 8
             else:
@@ -508,13 +505,8 @@ class RapdPlugin(Process):
         Look for images that match the input
         """
         # self.tprint('get_current_images')
-        # Why is this using run data and not image data???
-        #glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
-        if self.run_data.get("fast_directory", None) not in (None, False):
-            glob_pattern = os.path.join(self.run_data["fast_directory"], self.run_data["image_template"]).replace("?", "*")
-        else:
-            glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
-        
+
+        glob_pattern = os.path.join(self.run_data["directory"], self.run_data["image_template"]).replace("?", "*")
         # self.tprint(glob_pattern)
         files = glob.glob(glob_pattern)
         files.sort()
@@ -593,12 +585,8 @@ class RapdPlugin(Process):
             return self.wait_for_image_redis(image_number)
         else:
             # Determine image to look for
-            #target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
-            if self.run_data.get("fast_directory", None) not in (None, False):
-                target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["fast_directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
-            else:
-                target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
-           
+            target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+    
             # Get a bead on where we are now
             first, last = self.get_current_images()
             self.logger.debug('first: %s last: %s'%(first, last))
@@ -1237,11 +1225,7 @@ class RapdPlugin(Process):
         last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
         frame_count = first_frame + 1
 
-        #file_template = os.path.join(self.image_data['directory'], self.image_template)
-        if self.image_data.get('fast_directory', None) not in (None, False):
-            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
-        else:
-            file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1345,11 +1329,7 @@ class RapdPlugin(Process):
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
 
-        #file_template = os.path.join(self.image_data['directory'], self.image_template)
-        if self.image_data.get('fast_directory', None) not in (None, False):
-            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
-        else:
-            file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -1552,11 +1532,7 @@ class RapdPlugin(Process):
         else:
             raise RuntimeError, '"image_template" not defined in input data.'
 
-        #file_template = os.path.join(self.image_data['directory'], self.image_template)
-        if self.image_data.get('fast_directory', None) not in (None, False):
-            file_template = os.path.join(self.image_data['fast_directory'], self.image_template)
-        else:
-            file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
     	# Count the number of '?' that need to be padded in a image filename.
         pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number
@@ -1681,22 +1657,12 @@ class RapdPlugin(Process):
 
         os.chdir(directory)
         # TODO skip processing for now
-        
-        kw = {"command": xds_command,
-              "logfile": "XDS.LOG"}
 
-        # Pass batch queue info to cluster job
-        if self.batch_queue:
-            kw['batch_queue'] = self.batch_queue
-            
-        xds_proc = Process(target=self.launcher,
-                           kwargs=kw)
-        
-        """
         xds_proc = Process(target=self.launcher,
                            kwargs={"command": xds_command,
-                                   "logfile": "XDS.LOG",})
+                                   "logfile": "XDS.LOG"})
 
+        """
         if self.cluster_use == True:
             xds_proc = Process(target=BLspec.process_cluster,
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
@@ -2441,21 +2407,20 @@ class RapdPlugin(Process):
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
-        #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
-        #print "Copy %s to %s" % (src_file, tgt_file)
+        # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
-        #print "Copy %s to %s" % (src_file, prod_file)
+        # print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"unmerged"
+            "description":"unmerged_mtz"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Move to archive
         src_file = os.path.abspath("freer.mtz")
@@ -2472,9 +2437,23 @@ class RapdPlugin(Process):
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"rfree"
+            "description":"rfree_mtz"
         })
         #pprint(self.results["results"]["data_produced"])
+
+        # Add XDS.ASCII to data_produced
+        src_file = os.path.abspath("XDS_ASCII.HKL")
+        tgt_file = "%s_XDS_ASCII.HKL" % archive_files_prefix
+        shutil.copyfile(src_file, tgt_file)
+        results["xdsascii_hkl"] = tgt_file
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
+        self.results["results"]["data_produced"].append({
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
+            "description":"xdsascii_hkl"
+        })
 
         if scalepack:
             # Create the merged scalepack format file.
