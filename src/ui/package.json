@@ -20,7 +20,6 @@
     "@angular/core": "^11.0.4",
     "@angular/flex-layout": "11.0.0-beta.33",
     "@angular/forms": "^11.0.4",
-    "@angular/http": "^7.2.13",
     "@angular/material": "11.2.6",
     "@angular/platform-browser": "^11.0.4",
     "@angular/platform-browser-dynamic": "^11.0.4",
@@ -46,8 +45,8 @@
     "zone.js": "~0.10.3"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.1100.5",
-    "@angular/cli": "^11.0.4",
+    "@angular-devkit/build-angular": "~0.1102.6",
+    "@angular/cli": "^11.2.6",
     "@angular/compiler-cli": "^11.0.4",
     "@angular/language-service": "^11.0.4",
     "@types/hammerjs": "^2.0.36",
@@ -58,7 +57,7 @@
     "html-webpack-plugin": "^4.3.0",
     "jasmine-core": "~3.6.0",
     "jasmine-spec-reporter": "~6.0.0",
-    "karma": "~5.1.0",
+    "karma": "~6.3.2",
     "karma-chrome-launcher": "~3.1.0",
     "karma-cli": "~2.0.0",
     "karma-coverage-istanbul-reporter": "~3.0.3",
