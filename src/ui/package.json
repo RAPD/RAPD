@@ -38,7 +38,7 @@
     "ng2-file-upload": "^1.4.0",
     "reflect-metadata": "0.1.13",
     "roboto-fontface": "^0.10.0",
-    "rxjs": "^6.6.3",
+    "rxjs": "^6.6.7",
     "rxjs-compat": "^6.6.3",
     "tslib": "^2.0.3",
     "uglymol": "^0.6.4",
