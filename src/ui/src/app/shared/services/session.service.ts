@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Response } from '@angular/http';
+// import { Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
 import { HttpClient,
-         HttpParams,
-         HttpHeaders } from '@angular/common/http';
+         HttpHeaders,
+         HttpParams, } from '@angular/common/http';
 
 import { GlobalsService } from './globals.service';
 
@@ -81,7 +81,7 @@ export class SessionService {
       {headers});
   }
 
-  private extractData(res: Response, error) {
+  private extractData(res: any, error) {
     // console.log('error', error);
     const body = res.json();
     // for (let session of body) {
