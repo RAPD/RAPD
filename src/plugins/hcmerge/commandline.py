@@ -195,11 +195,11 @@ def get_commandline():
                         automatically forces strict mode.")
 
     # Correlation Coefficient mode
-    parser.add_argument("--cc_mode",
-                        action="store",
-                        dest="cc_mode",
-                        default="cctbx",
-                        help="Input CC calculation method [cctbx | aimless]")    
+    #parser.add_argument("--cc_mode",
+    #                    action="store",
+    #                    dest="cc_mode",
+    #                    default="cctbx",
+    #                    help="Input CC calculation method [cctbx | aimless]")    
 
     # Run in test mode
     parser.add_argument("-t", "--test",

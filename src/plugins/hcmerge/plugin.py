@@ -260,47 +260,6 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE).communicate()
 
-def get_cc_aimless(in_file):
-    """
-    Calculate correlation coefficient (CC) between two datasets which have been combined
-    by pointless.  Uses aimless.  Reads in an mtz file.
-    """
-
-    # print 'HCMerge::get_cc_aimless::Obtain correlation coefficient from %s' % in_file
-
-    # Read in mtz file
-    # mtz_file = reflection_file_reader.any_reflection_file(
-    #     file_name=in_file+'_pointless.mtz')
-    mtz_file = in_file+'_pointless.mtz'
-    log_file = in_file+"_aimless.log"
-    com_file = in_file+"_aimless.sh"
-    # Create aimless command file
-    aimless_lines = ['#!/bin/tcsh\n',
-                        'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "foo.mtz", log_file),
-                        'anomalous on\n',
-                        'scales constant\n',
-                        'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
-                        'cycles 0\n']
-    with open(com_file, "w") as command_file:
-        for line in aimless_lines:
-            command_file.write(line)
-    os.chmod(com_file, stat.S_IRWXU)
-
-    # Run aimless
-    cmd = './%s' % com_file
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.wait()
-    stdout, stderr = p.communicate()
-
-    # Parse the file
-    # graphs, summary = aimless.parse_aimless(log_file)
-    cc_results = aimless.get_cc(log_file)
-    # print graphs
-    # print cc_results
-
-    # Return CC
-    return (in_file, cc_results.get("cc", {}).get((1, 2), 0))
-
 
 class RapdPlugin(multiprocessing.Process):
     """
@@ -669,13 +628,9 @@ class RapdPlugin(multiprocessing.Process):
                 # Second, check if both datasets made it into the final mtz
                 if len(batches) >= 2:
                     # Third, calculate the linear correlation coefficient if there are two datasets
-                    if self.settings.get("cc_mode", "cctbx") == "cctbx":
-                        self.results[pair]['CC'] = self.get_cc_pointless(
-                            pair, batches)  # results are a dict with pair as key
-                    else:
-                        # self.results[pair]['CC'] = self.get_cc_aimless(
-                        #     pair, batches)  # results are a dict with pair as key
-                        pairs_to_calculate_cc.append(pair)
+                    self.results[pair]['CC'] = self.get_cc_pointless(
+                        pair, batches)  # results are a dict with pair as key
+                    pairs_to_calculate_cc.append(pair)
                 else:
                     # If only one dataset in mtz, default to no correlation.
                     self.logger.error(
@@ -685,13 +640,10 @@ class RapdPlugin(multiprocessing.Process):
                 self.results[pair]['CC'] = 0
 
         # aimless for CC calculation
-        if self.settings.get("cc_mode", "cctbx") == "aimless":
-            r = pool.map(get_cc_aimless, pairs_to_calculate_cc)
-            # print ">>>>"
-            # pprint(r)
-            for key, val in r:
-                self.results[key]['CC'] = val
-            # print "<<<<"
+        #if self.settings.get("cc_mode", "cctbx") == "aimless":
+        #    r = pool.map(get_cc_aimless, pairs_to_calculate_cc)
+        #    for key, val in r:
+        #        self.results[key]['CC'] = val
 
         #TODO
         # pprint(self.data_files)
@@ -825,6 +777,36 @@ class RapdPlugin(multiprocessing.Process):
             group = list(map(itemgetter(1), g))
             batches.append((group[0], group[-1]))
         return(batches)
+
+    def get_cc (self, in_files):
+        """
+        Calculate correlation coefficient (CC) between two datasets.  Uses cctbx.
+        """
+        
+        self.logger.debug('MergeMany::getCC of %s' % str(in_files))
+        
+        # Read in reflection files
+        
+        file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
+        file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
+        
+        # Convert to miller arrays
+        # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
+        ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        ma2 = file2.as_miller_arrays(merge_equivalents=False)
+        
+        # Given a non-anomalous array, expand to generate anomalous pairs.
+
+        ma1_ext=ma1[0].generate_bijvoet_mates()
+        ma2_ext=ma2[0].generate_bijvoet_mates()
+        
+        # Determine common sets and calculate correlation between the two datasets.
+        try:
+            I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=True)
+            cc = I_ma1.correlation(I_ma2, assert_is_similar_symmetry=False).coefficient()
+        except:
+            cc=0
+        return(cc)                                      
 
     def get_cc_aimless(self, in_file):
         """
