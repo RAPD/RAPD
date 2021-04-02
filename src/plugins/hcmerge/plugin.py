@@ -638,17 +638,6 @@ class RapdPlugin(multiprocessing.Process):
                     self.results[pair]['CC'] = 0
             else:
                 self.results[pair]['CC'] = 0
-
-        # aimless for CC calculation
-        #if self.settings.get("cc_mode", "cctbx") == "aimless":
-        #    r = pool.map(get_cc_aimless, pairs_to_calculate_cc)
-        #    for key, val in r:
-        #        self.results[key]['CC'] = val
-
-        #TODO
-        # pprint(self.data_files)
-        # pprint(self.results)
-        # pprint(self.id_list)
         
         # Make chart of CC by pairs of files (and a CSV file)
         self.make_cc_chart()
@@ -778,15 +767,14 @@ class RapdPlugin(multiprocessing.Process):
             batches.append((group[0], group[-1]))
         return(batches)
 
-    def get_cc (self, in_files):
+    def get_cc (self, arrays):
         """
-        Calculate correlation coefficient (CC) between two datasets.  Uses cctbx.
+        Calculate correlation coefficient (CC) between two datasets that are given as XDS_ASCII.HKL files.  Need
+        to convert to reading in intensity arrays.  
+        Uses cctbx.
         """
         
-        self.logger.debug('MergeMany::getCC of %s' % str(in_files))
-        
-        # Read in reflection files
-        
+        # Read in reflection files    
         file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
         file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
         
@@ -795,60 +783,20 @@ class RapdPlugin(multiprocessing.Process):
         ma1 = file1.as_miller_arrays(merge_equivalents=False)
         ma2 = file2.as_miller_arrays(merge_equivalents=False)
         
-        # Given a non-anomalous array, expand to generate anomalous pairs.
+        # Given a non-anomalous array, expand to generate anomalous pairs. Though all data from RAPD2 
+        # should be FRIEDEL'S_LAW=FALSE and this is an extraneous step.
 
         ma1_ext=ma1[0].generate_bijvoet_mates()
         ma2_ext=ma2[0].generate_bijvoet_mates()
         
-        # Determine common sets and calculate correlation between the two datasets.
+        # Determine common sets and calculate correlation between the two datasets. assert_is_similar_symmetry=True
+        # means that the two datasets must be in the same spacegroup and unit cell.
         try:
             I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=True)
             cc = I_ma1.correlation(I_ma2, assert_is_similar_symmetry=False).coefficient()
         except:
             cc=0
         return(cc)                                      
-
-    def get_cc_aimless(self, in_file):
-        """
-        Calculate correlation coefficient (CC) between two datasets which have been combined
-        by pointless.  Uses aimless.  Reads in an mtz file.
-        """
-
-        self.logger.debug('HCMerge::get_cc_aimless::Obtain correlation coefficient from %s with batches %s' % (
-            str(in_file)))
-
-        # Read in mtz file
-        # mtz_file = reflection_file_reader.any_reflection_file(
-        #     file_name=in_file+'_pointless.mtz')
-        mtz_file = in_file+'_pointless.mtz'
-        log_file = in_file+"_aimless.log"
-        com_file = in_file+"_aimless.sh"
-        # Create aimless command file
-        aimless_lines = ['#!/bin/tcsh\n',
-                         'aimless hklin %s hklout %s << eof > %s \n' % (mtz_file, "_aimless.mtz", log_file),
-                         'anomalous on\n',
-                         'scales constant\n',
-                         'sdcorrection norefine full 1 0 0 partial 1 0 0\n',
-                         'cycles 0\n']
-        with open(com_file, "w") as command_file:
-            for line in aimless_lines:
-                command_file.write(line)
-        os.chmod(com_file, stat.S_IRWXU)
-
-        # Run aimless
-        cmd = './%s' % com_file
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
-        stdout, stderr = p.communicate()
-
-        # Parse the file
-        # graphs, summary = aimless.parse_aimless(log_file)
-        cc_results = aimless.get_cc(log_file)
-        # print graphs
-        # print cc_results
-
-        # Return CC
-        return cc_results.get("cc", {}).get((1, 2), 0)
 
     def get_cc_pointless(self, in_file, batches):
         """
