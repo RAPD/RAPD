@@ -44,7 +44,7 @@ export class SessionspanelComponent implements AfterViewInit, OnInit  {
     pageSize: 20,
     query: {},
     sortKey: "last_process",
-    sortDirection: "asc",
+    sortDirection: "desc",
   };
   // Default displayed columns
   public displayedColumns: string[] = [
@@ -93,7 +93,7 @@ export class SessionspanelComponent implements AfterViewInit, OnInit  {
 
   ngOnInit() {
 
-    // Set up grant table pages
+    // Set up session table pages
     this.initPagintor();
     this.initSorting();
 
@@ -123,7 +123,7 @@ export class SessionspanelComponent implements AfterViewInit, OnInit  {
       .pipe(
         tap((event) => {
           this.loadSessionsPage();
-          localStorage.setItem("sortKeyGrants", JSON.stringify(event.active));
+          localStorage.setItem("sortKeySessions", JSON.stringify(event.active));
           localStorage.setItem("sortDirectionSessions", JSON.stringify(event.direction));
         })
       )

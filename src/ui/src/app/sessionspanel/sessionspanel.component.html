@@ -23,7 +23,7 @@
         <td mat-cell class="normal" *matCellDef="let record"> {{record[myColumn]}} </td>
       </ng-container>
 
-      <!-- Special Columns-->
+      <!-- Custom Columns-->
       <ng-container matColumnDef="timestamp">
         <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["timestamp"]}}</th>
         <td mat-cell class="normal" *matCellDef="let record"> {{record["timestamp"] | date:"short"}} </td>
