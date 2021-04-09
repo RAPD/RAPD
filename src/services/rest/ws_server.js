@@ -64,10 +64,10 @@ try {
 
 // Register connection to Redis database
 const redis_client = new Redis(config.redis_connection);
-redis_client.set("R2:WS:"+myId, myHost, 'EX', 31);
+redis_client.set("R2:WSS:"+myId, myHost, 'EX', 31);
 setInterval(function() {
   // console.log("Updating connection tag on Redis");
-  redis_client.set("R2:WS:"+myId, myHost, 'EX', 31);
+  redis_client.set("R2:WSS:"+myId, myHost, 'EX', 31);
 }, 30000);
 
 // Handle new message passed from Redis
@@ -155,61 +155,6 @@ sub.on("message", function(channel, message) {
 
   }
 });
-
-//   // Any connections?
-//   if (Object.keys(ws_connections).length > 0) {
-//     // Turn message into messages to send to clients
-//     parseMessage(channel, message_object).then((messagesToSend) => {
-//       if (messagesToSend) {
-//         // console.log("messages_to_send", messagesToSend);
-//         // console.log('Will send', messages_to_send.length, 'messages');
-        
-//         // Look for websockets that are watching the same session
-//         if (session_id) {
-//           Object.keys(ws_connections).forEach((socket_id) => {
-            
-//             let session = ws_connections[socket_id].session;
-//             // console.log(session);
-            
-//             if (session.session_id === session_id) {
-//               // console.log("Have a session!");
-              
-//               // Any client on the session gets minimal
-//               ws_connections[socket_id].send(
-//                 JSON.stringify({
-//                   msg_type: "results",
-//                   results: [messagesToSend.minimal]
-//                 })
-//               );
-
-//               // Any client subscribed to the result gets full details
-//               if (session.current_result.result_id === messagesToSend.full._id) {
-//                 console.log("Have a subscriber to full result")
-//                 ws_connections[socket_id].send(
-//                   JSON.stringify({
-//                     msg_type: "result_details",
-//                     results: messagesToSend.full
-//                   })
-//                 );
-//               }
-
-//               // messagesToSend.forEach(function(message) {
-//               //   console.log(message);
-//               //   ws_connections[socket_id].send(
-//               //     JSON.stringify({
-//               //       msg_type: message[0],
-//               //       results: message[1]
-//               //     })
-//               //   );
-//               // });
-
-//             }
-//           });
-//         }
-//       }
-//     });
-//   }
-// });
 
 // Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
@@ -596,13 +541,11 @@ function Wss(opt, callback) {
     server: opt.server
   });
 
-  // const wss = new WebSocketServer({ port: 8080 });
-
   console.log('Wss up!');
 
   wss.on("connection", function connection(ws) {
     
-    console.log("Connected");
+    console.log("WS Connected");
 
     // Create a session object
     ws.session = {
@@ -619,6 +562,14 @@ function Wss(opt, callback) {
     let ping_timer = setInterval(function() {
       ws.send("ping");
     }, 45000);
+
+    // Register the existencce of this WS cclient connection in Redis
+    redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
+    setInterval(function() {
+      // console.log("Updating connection tag on Redis");
+      redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
+    }, 30000);
+
 
     // Websocket has closed
     ws.on("close", function() {

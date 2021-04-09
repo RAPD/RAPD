@@ -189,7 +189,11 @@ apiRoutes.post("/authenticate", function(req, res) {
     ) {
       if (err) {
         console.error(err);
-        res.json({ success: false, message: err });
+        // res.json({ success: false, message: err });
+        res.status(500).json({
+          success: false,
+          message: err
+        });
         // login was successful if we have a user
       } else if (user) {
         console.log("user:", user);
