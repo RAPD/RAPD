@@ -1,5 +1,4 @@
 const bodyParser = require("body-parser");
-// const cookieParser =  require('cookie-parser');
 const debug = require("debug")("backend:server");
 const express = require("express");
 const session = require("express-session");
@@ -103,7 +102,7 @@ let app_session = session({
   store: new RedisStore({ client: redis_client }),
   secret: "keyboard cat",
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: false
 });
 app.use(app_session);
 

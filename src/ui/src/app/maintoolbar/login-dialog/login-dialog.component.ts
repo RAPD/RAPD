@@ -68,7 +68,8 @@ export class LoginDialogComponent implements OnInit {
           self.dialogRef.close(params)
         }, 5000);
       } else {
-        this.submit_error = params.message;
+        console.log('Error', params);
+        self.submit_error = params.message;
       }
       this.submitted = false;
     });

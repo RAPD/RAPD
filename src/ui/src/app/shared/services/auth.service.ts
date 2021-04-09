@@ -182,7 +182,7 @@ export class AuthService implements CanActivate {
     console.error("An error occurred", error);
     return Observable.of({
       success: false,
-      message: error.toString()
+      message: error,
     });
   }
 }
