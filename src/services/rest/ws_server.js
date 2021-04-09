@@ -3,6 +3,7 @@ const config = require("./config");
 
 // Core modules
 var http = require("http");
+const os = require('os');
 var url = require("url");
 var WebSocketServer = require("ws").Server;
 var mongoose = require("./models/mongoose");
@@ -11,11 +12,14 @@ Q = require("q");
 // mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
-var jwt = require("jsonwebtoken");
-var uuid = require("node-uuid");
+const jwt = require("jsonwebtoken");
+const uuid = require("node-uuid");
 
-// Redis
-var Redis = require("ioredis");
+const Redis = require("ioredis");
+
+// Identifying data
+const myId = uuid.v1();
+const myHost = os.hostname();
 
 // Import models
 var mongoose = require("./models/mongoose");
@@ -57,6 +61,14 @@ try {
   console.error("Cannot connect to redis", config.redis_connection);
   throw e;
 }
+
+// Register connection to Redis database
+const redis_client = new Redis(config.redis_connection);
+redis_client.set("R2:WS:"+myId, myHost, 'EX', 31);
+setInterval(function() {
+  // console.log("Updating connection tag on Redis");
+  redis_client.set("R2:WS:"+myId, myHost, 'EX', 31);
+}, 30000);
 
 // Handle new message passed from Redis
 sub.on("message", function(channel, message) {

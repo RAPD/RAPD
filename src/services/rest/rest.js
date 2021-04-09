@@ -9,12 +9,18 @@ const http = require("http");
 const jwt = require("jsonwebtoken");
 const morgan = require("morgan");
 const nodemailer = require("nodemailer");
+const os = require('os');
 const smtpTransport = require("nodemailer-smtp-transport");
 // const path =          require('path');
 // const randomstring = require("randomstring");
 const useragent = require("express-useragent");
 const bcrypt = require('bcryptjs');
 const moment = require("moment");
+const uuid = require("node-uuid");
+
+// Identifying data
+const myId = uuid.v1();
+const myHost = os.hostname();
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -46,6 +52,12 @@ const users_routes = require("./routes/users");
 // Redis
 var Redis = require("ioredis");
 var redis_client = new Redis(config.redis_connection);
+
+// Register connection to Redis database
+redis_client.set("R2:REST:"+myId, myHost, 'EX', 31);
+setInterval(function() {
+  redis_client.set("R2:REST:"+myId, myHost, 'EX', 31);
+}, 30000);
 
 // MongoDB connection
 var mongoose = require("./models/mongoose");
