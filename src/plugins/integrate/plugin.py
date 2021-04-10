@@ -680,7 +680,7 @@ class RapdPlugin(Process):
 
             # Send results back
             self.redis.lpush("RAPD_RESULTS", json_results)
-            #self.redis.publish("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
 
     def postprocess(self):
         """After it's all done"""
