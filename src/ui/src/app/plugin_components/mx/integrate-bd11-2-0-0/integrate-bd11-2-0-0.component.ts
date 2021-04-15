@@ -11,7 +11,7 @@ import {
 
 import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
-import { MatToolbarModule } from "@angular/material/toolbar";
+// import { MatToolbarModule } from "@angular/material/toolbar";
 
 import { ReplaySubject } from "rxjs/Rx";
 
@@ -60,7 +60,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   naive: boolean = true;
 
   // viewModeForm: FormControl;
-  public view_mode: string = "summary";
+  public viewMode: string = "summary";
 
   public selectedPlot: string;
   public selected_plot_label: string;
@@ -79,18 +79,18 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     lineChartType: "line",
     lineChartOptions: {
       animation: {
-        duration: 500
+        duration: 500,
       },
       elements: {
         line: {
-          tension: 0 // disables bezier curves
+          tension: 0, // disables bezier curves
         }
       },
       legend: {
         display: true,
         position: "right",
         labels: {
-          boxWidth: 3
+          boxWidth: 3,
         }
       },
       responsive: true,
@@ -99,23 +99,23 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
           {
             scaleLabel: {
               display: true,
-              labelString: ""
+              labelString: "",
             },
-            ticks: {}
+            ticks: {},
           }
         ],
         xAxes: [
           {
             scaleLabel: {
               display: true,
-              labelString: ""
+              labelString: "",
             },
-            ticks: {}
+            ticks: {},
           }
-        ]
+        ],
       },
       tooltips: {
-        callbacks: {}
+        callbacks: {},
       }
     }
   };

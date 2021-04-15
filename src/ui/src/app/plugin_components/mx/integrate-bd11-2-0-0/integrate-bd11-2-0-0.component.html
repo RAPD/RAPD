@@ -46,7 +46,7 @@
             placeholder="View mode"
             floatPlaceholder="auto"
             (selectionChange)="onViewModeSelect($event)"
-            [(value)]="view_mode"
+            [(value)]="viewMode"
             style="display:initial;"
             name="view_mode"
             value="summary">
@@ -58,7 +58,7 @@
         </div>
       </div>
     </mat-card-header>
-    <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+    <mat-card-content *ngIf="viewMode === 'summary'" class="rapd-result">
       <div fxLayout="row" fxLayoutGap="10px">
         <div fxFlex="none">
           <div>
@@ -254,13 +254,13 @@
         </div>
       </div>
     </mat-card-content>
-    <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
+    <mat-card-content *ngIf="viewMode === 'analysis'" class="rapd-result">
       <div #analysistarget></div>
     </mat-card-content>
-    <mat-card-content *ngIf="view_mode === 'pdbquery'" class="rapd-result">
+    <mat-card-content *ngIf="viewMode === 'pdbquery'" class="rapd-result">
       <div #pdbquerytarget></div>
     </mat-card-content>
-    <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+    <mat-card-content *ngIf="viewMode === 'logs'" class="rapd-result">
       <app-log-card *ngIf="(fullResult.results)?.logs.xds_idxref" [log]="fullResult.results.logs.xds_idxref" header="XDS Idxref">
       </app-log-card>
       <app-log-card *ngIf="(fullResult.results)?.logs.xds_integrate" [log]="fullResult.results.logs.xds_integrate" header="XDS Integrate">

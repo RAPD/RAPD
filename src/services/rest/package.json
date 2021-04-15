@@ -19,7 +19,7 @@
     "express-jwt": "^6.0.0",
     "express-session": "^1.17.1",
     "express-useragent": "^1.0.15",
-    "find-remove": "^3.0.0",
+    "find-remove": "^3.0.1",
     "gridfs-stream": "^1.1.1",
     "hbs": "~4.1.1",
     "ioredis": "~4.26.0",

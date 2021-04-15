@@ -72,8 +72,9 @@ setInterval(function() {
 
 // Handle new message passed from Redis
 sub.on("message", function(channel, message) {
+  
   console.log("sub channel " + channel);
-  console.log(message);
+  // console.log(message);
 
   // Decode into oject
   let message_object;
@@ -106,15 +107,16 @@ sub.on("message", function(channel, message) {
   }
     
   // Only publish result if we have a session_id for the result
-  console.log(session_id);
-  console.log(activeSessions);
+  // console.log(session_id);
+  // console.log(activeSessions);
   if (activeSessions.includes(session_id)) {
     
-    console.log("HAVE A SESSION");
+    console.log("Have a subscribed session");
     
     // Create minimal result
     const minimalResult = getMinimalResult(message_object);
     console.log(minimalResult);
+    
     let detailedResult = false;
     // Any webssocket with the session_id gets the minimal result
     Object.keys(ws_connections).forEach((socket_id) => {
@@ -172,6 +174,7 @@ const getMinimalResult = function(message) {
     repr: message.process.repr,
     result_id: message._id,
     session_id: message.process.session_id,
+    spoof: message.process.spoof,
     status: message.process.status,
     timestamp: new Date().toISOString()
   };
@@ -559,13 +562,13 @@ function Wss(opt, callback) {
     ws_connections[ws.id] = ws;
 
     // Create a ping interval to keep websocket connection alive
-    let ping_timer = setInterval(function() {
+    const ping_timer = setInterval(function() {
       ws.send("ping");
     }, 45000);
 
     // Register the existencce of this WS cclient connection in Redis
     redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
-    setInterval(function() {
+    const register_interval = setInterval(function() {
       // console.log("Updating connection tag on Redis");
       redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
     }, 30000);
@@ -577,6 +580,7 @@ function Wss(opt, callback) {
 
       // Cancel the ping interval
       clearInterval(ping_timer);
+      clearInterval(register_interval)
 
       // Remove the session from activeSessions
       activeSessions.splice(activeSessions.indexOf(ws.session.session_id), 1);
@@ -594,8 +598,7 @@ function Wss(opt, callback) {
 
     // Message incoming from the client
     ws.on("message", function(message) {
-      var data = JSON.parse(message);
-      // console.log(data);
+      const data = JSON.parse(message);
 
       // Initializing the websocket
       if (data.request_type === "initialize") {
