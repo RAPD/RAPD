@@ -1,5 +1,7 @@
 # RAPD
 
+NB - This project is under development and is bleeding edge. Code should stabilize significantly June 2021.
+
 A package for automated indexing, strategy, integration, analysis, & structure solution of macromolecular crystallographic data.
 
 Currently we are building out capabilities to the commandline and adding detectors to the software.
