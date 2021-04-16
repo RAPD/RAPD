@@ -147,8 +147,8 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         command.append('hklin '+hklin+' \n')
         # Add ability to do batches
     # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
-    if strict == False:
-        command.append('tolerance 1000.0 \n')
+#    if strict == False:
+#        command.append('tolerance 1000.0 \n')
     # Add LAUEGROUP if user has chosen a spacegroup
     if user_spacegroup:
         command.append('lauegroup %s \n' % space_group_symbols(
@@ -402,7 +402,7 @@ class RapdPlugin(multiprocessing.Process):
         if self.settings.has_key('precheck'):
             self.precheck = self.settings['precheck']
         else:
-            self.precheck = True
+            self.precheck = False
 
         # Set resolution for dendrogram image
         if self.settings.has_key('dpi'):
@@ -411,14 +411,8 @@ class RapdPlugin(multiprocessing.Process):
             self.dpi = 100
 
         # Set running in strict or sloppy mode
-        if self.settings.has_key('strict'):
-            if self.settings.has_key('spacegroup') or self.settings.has_key('unitcell'):
-                self.strict = True
-            else:
-                self.strict = self.settings['strict']
-        else:
-            self.strict = False
-
+        self.strict = self.settings['strict']
+        
         # Check on number of processors
         if self.settings.has_key('nproc'):
             self.nproc = self.settings['nproc']
@@ -528,7 +522,7 @@ class RapdPlugin(multiprocessing.Process):
                     self.logger.error(
                         'HCMerge::Scalepack Merged format. Strict Mode On. Aborted.')
                     raise ValueError(
-                        "Scalepack Format. Unmerged reflections required in Strict Mode.")
+                        'Scalepack Format. Unmerged reflections required in Strict Mode.')
 
             # Test reflection files to make sure there are no duplicates
             combos_temp = self.make_combinations(self.datasets, 2)
@@ -542,43 +536,48 @@ class RapdPlugin(multiprocessing.Process):
         # Make and move to the work directory
         os.chdir(self.dirs['work'])
 
-        # convert all files to mtz format
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
-            hkl_filename = str(count)+'_'+dataset.rsplit("/",
-                                                         1)[1].rsplit(".", 1)[0]+'.mtz'
-            if self.user_spacegroup != 0:
-                sg = space_group_symbols(
-                    self.user_spacegroup).universal_hermann_mauguin()
-                self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (
-                    str(hkl_filename), str(sg)))
-                out_file = hkl_filename.rsplit(".", 1)[0]
-                command = []
-                command.append('pointless hklout '+hkl_filename +
-                               '> '+out_file+'_import.log <<eof \n')
-                command.append('xdsin '+dataset+' \n')
-                command.append('lauegroup %s \n' % sg)
-                command.append('choose spacegroup %s \n' % sg)
-                if 'scalepack_no_merge_original_index' in set(types):
-                    command.append('cell ' + str(self.unitcell[0]) + ' ' + str(self.unitcell[1]) + ' ' + str(self.unitcell[2]) +
-                                   ' ' + str(self.unitcell[3]) + ' ' + str(self.unitcell[4]) + ' ' + str(self.unitcell[5]) + '\n')
-                command.append('eof\n')
-                comfile = open(out_file+'_import.sh', 'w')
-                comfile.writelines(command)
-                comfile.close()
-                os.chmod('./'+out_file+'_import.sh', 0755)
+            hkl_filename = str(count)+'_'+dataset.rsplit('/',1)[1]
+            shutil.copy(dataset,hkl_filename)
 
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE).wait()
-            else:
-                self.logger.debug(
-                    'HCMerge::Copying %s to Working Directory.' % str(dataset))
-                p = subprocess.Popen('pointless -copy xdsin ' + dataset + ' hklout ' + hkl_filename,
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE).wait()
+        # convert all files to mtz format
+        # copy the files to be merged to the work directory
+        # for count, dataset in enumerate(self.datasets):
+        #     hkl_filename = str(count)+'_'+dataset.rsplit("/",
+        #                                                  1)[1].rsplit(".", 1)[0]+'.mtz'
+        #     if self.user_spacegroup != 0:
+        #         sg = space_group_symbols(
+        #             self.user_spacegroup).universal_hermann_mauguin()
+        #         self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (
+        #             str(hkl_filename), str(sg)))
+        #         out_file = hkl_filename.rsplit(".", 1)[0]
+        #         command = []
+        #         command.append('pointless hklout '+hkl_filename +
+        #                        '> '+out_file+'_import.log <<eof \n')
+        #         command.append('xdsin '+dataset+' \n')
+        #         command.append('lauegroup %s \n' % sg)
+        #         command.append('choose spacegroup %s \n' % sg)
+        #         if 'scalepack_no_merge_original_index' in set(types):
+        #             command.append('cell ' + str(self.unitcell[0]) + ' ' + str(self.unitcell[1]) + ' ' + str(self.unitcell[2]) +
+        #                            ' ' + str(self.unitcell[3]) + ' ' + str(self.unitcell[4]) + ' ' + str(self.unitcell[5]) + '\n')
+        #         command.append('eof\n')
+        #         comfile = open(out_file+'_import.sh', 'w')
+        #         comfile.writelines(command)
+        #         comfile.close()
+        #         os.chmod('./'+out_file+'_import.sh', 0755)
+
+        #         p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
+        #                              shell=True,
+        #                              stdout=subprocess.PIPE,
+        #                              stderr=subprocess.PIPE).wait()
+        #     else:
+        #         self.logger.debug(
+        #             'HCMerge::Copying %s to Working Directory.' % str(dataset))
+        #         p = subprocess.Popen('pointless -copy xdsin ' + dataset + ' hklout ' + hkl_filename,
+        #                              shell=True,
+        #                              stdout=subprocess.PIPE,
+        #                              stderr=subprocess.PIPE).wait()
             # Make a list of filenames
             self.data_files.append(hkl_filename)
 
@@ -598,46 +597,71 @@ class RapdPlugin(multiprocessing.Process):
 
         pool = multiprocessing.Pool(self.nproc)
 
-        # combine the files with POINTLESS
         pool_arguments = []
         for pair in combos:
-            # print pair
             outfile_prefix = str(pair[0].split('_')[0]) + \
                 'x'+str(pair[1].split('_')[0])
             self.id_list[outfile_prefix] = pair
             #in_files, out_file, logger, cmd_prefix, strict, user_spacegroup
             pool_arguments.append(
                 (pair, outfile_prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
-#            combine = pool.map(self.merge,id_list)
-            # combine = Process(target=self.combine, args=(pair, outfile_prefix))
-            # jobs.append(combine)
-#            combine.start()
-#                combine = self.combine(pair,outfile_prefix)
+#           combine = pool.map(self.merge,id_list)
+#           combine.start()
+#               combine = self.combine(pair,outfile_prefix)
 
-        r = pool.map(combine_wrapper, pool_arguments)
-        # print r
+        # combine the files with POINTLESS to ensure spacegroup is the same in strict mode
+        if self.strict:
+            r = pool.map(combine_wrapper, pool_arguments)
 
-        # When POINTLESS is complete, calculate correlation coefficient
-        self.tprint("Process: Calculating CCs.")
+        # calculate correlation coefficient
         pairs_to_calculate_cc = []
-        for pair in self.id_list.keys():
-            self.results[pair] = {}
-            if os.path.isfile(pair+'_pointless.mtz'):
-                # First, get batch information from pointless mtz file
-                batches = self.get_batch(pair+'_pointless.mtz')
-                # Second, check if both datasets made it into the final mtz
-                if len(batches) >= 2:
-                    # Third, calculate the linear correlation coefficient if there are two datasets
-                    self.results[pair]['CC'] = self.get_cc_pointless(
-                        pair, batches)  # results are a dict with pair as key
-                    pairs_to_calculate_cc.append(pair)
+        self.tprint("Process: Calculating CCs.")
+        # grab intensity arrays from either combined mtz in strict mode or individual HKL pairs in sloppy
+        if self.strict:
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                if os.path.isfile(pair+'_pointless.mtz'):
+                    # First, get batch information from pointless mtz file
+                    batches = self.get_batch(pair+'_pointless.mtz')
+                    # Second, check if both datasets made it into the final mtz
+                    if len(batches) >= 2:
+                        # Third, calculate the linear correlation coefficient if there are two datasets
+                        self.results[pair]['CC'] = self.get_cc_pointless(
+                            pair, batches)  # results are a dict with pair as key
+                        pairs_to_calculate_cc.append(pair)
+                    else:
+                        # If only one dataset in mtz, default to no correlation.
+                        self.logger.error(
+                            'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
+                        self.results[pair]['CC'] = 0
                 else:
-                    # If only one dataset in mtz, default to no correlation.
-                    self.logger.error(
-                        'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
                     self.results[pair]['CC'] = 0
-            else:
-                self.results[pair]['CC'] = 0
+
+        else:
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                int_array1,int_array2 = self.get_int(self.id_list[pair])
+                self.results[pair]['CC'] = self.get_cc(int_array1, int_array2)
+                self.logger.debug('Correlation Coefficient of %s: %s' % (pair, str(self.results[pair]['CC'])))
+
+        # for pair in self.id_list.keys():
+        #     self.results[pair] = {}
+        #     if os.path.isfile(pair+'_pointless.mtz'):
+        #         # First, get batch information from pointless mtz file
+        #         batches = self.get_batch(pair+'_pointless.mtz')
+        #         # Second, check if both datasets made it into the final mtz
+        #         if len(batches) >= 2:
+        #             # Third, calculate the linear correlation coefficient if there are two datasets
+        #             self.results[pair]['CC'] = self.get_cc_pointless(
+        #                 pair, batches)  # results are a dict with pair as key
+        #             pairs_to_calculate_cc.append(pair)
+        #         else:
+        #             # If only one dataset in mtz, default to no correlation.
+        #             self.logger.error(
+        #                 'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
+        #             self.results[pair]['CC'] = 0
+        #     else:
+        #         self.results[pair]['CC'] = 0
         
         # Make chart of CC by pairs of files (and a CSV file)
         self.make_cc_chart()
@@ -767,7 +791,7 @@ class RapdPlugin(multiprocessing.Process):
             batches.append((group[0], group[-1]))
         return(batches)
 
-    def get_cc (self, arrays):
+    def get_cc (self, array1, array2):
         """
         Calculate correlation coefficient (CC) between two datasets that are given as XDS_ASCII.HKL files.  Need
         to convert to reading in intensity arrays.  
@@ -775,14 +799,16 @@ class RapdPlugin(multiprocessing.Process):
         """
         
         # Read in reflection files    
-        file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
-        file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
+        #file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
+        #file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
         
         # Convert to miller arrays
         # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
-        ma1 = file1.as_miller_arrays(merge_equivalents=False)
-        ma2 = file2.as_miller_arrays(merge_equivalents=False)
+        #ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        #ma2 = file2.as_miller_arrays(merge_equivalents=False)
         
+        ma1 = array1
+        ma2 = array2
         # Given a non-anomalous array, expand to generate anomalous pairs. Though all data from RAPD2 
         # should be FRIEDEL'S_LAW=FALSE and this is an extraneous step.
 
@@ -792,21 +818,33 @@ class RapdPlugin(multiprocessing.Process):
         # Determine common sets and calculate correlation between the two datasets. assert_is_similar_symmetry=True
         # means that the two datasets must be in the same spacegroup and unit cell.
         try:
-            I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=True)
+            if self.strict:
+                I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=True)
+            else:
+                I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=False)
             cc = I_ma1.correlation(I_ma2, assert_is_similar_symmetry=False).coefficient()
         except:
             cc=0
         return(cc)                                      
 
+    def get_int(self, pair):
+        # Read in reflection files    
+        file1 = reflection_file_reader.any_reflection_file(file_name=pair[0])
+        file2 = reflection_file_reader.any_reflection_file(file_name=pair[1])
+        
+        # Convert to miller arrays
+        # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
+        ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        ma2 = file2.as_miller_arrays(merge_equivalents=False)
+
+        # return the intensity arrays
+        return(ma1, ma2)
+
     def get_cc_pointless(self, in_file, batches):
         """
-        Calculate correlation coefficient (CC) between two datasets which have been combined
-        by pointless.  Uses cctbx.  Reads in an mtz file.
+        Get intensity arrays from pointless-combined mtz file with 2 batches.
         """
-
-        self.logger.debug('HCMerge::get_cc_pointless::Obtain correlation coefficient from %s with batches %s' % (
-            str(in_file), str(batches)))
-
+        
         # Read in mtz file
         mtz_file = reflection_file_reader.any_reflection_file(
             file_name=in_file+'_pointless.mtz')
@@ -836,20 +874,16 @@ class RapdPlugin(multiprocessing.Process):
                 indices2.append(ma[2].indices()[cnt])
 
         crystal_symmetry = ma[1].crystal_symmetry()
-
-        # Create miller arrays for each dataset and merge symmetry-related reflections
+        
+        # Create miller arrays for each dataset
         my_millerset1 = miller.set(crystal_symmetry, indices=indices1)
         my_miller1 = miller.array(my_millerset1, data=data1)
-        merged1 = my_miller1.merge_equivalents().array()
-
+        
         my_millerset2 = miller.set(crystal_symmetry, indices=indices2)
         my_miller2 = miller.array(my_millerset2, data=data2)
-        merged2 = my_miller2.merge_equivalents().array()
-
+        
         # Obtain common set of reflections
-        common1 = merged1.common_set(merged2)
-        common2 = merged2.common_set(merged1)
-#        common1, common2 = my_miller1.common_sets(my_miller2)
+        common1, common2 = my_miller1.common_sets(my_miller2)
         # Deal with only 1 or 2 common reflections in small wedges
         if (len(common1.indices()) == 1 or len(common1.indices()) == 2):
             return(0)

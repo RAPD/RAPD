@@ -62,7 +62,6 @@ def construct_command(commandline_args, logger):
         nproc = int
         progress = True | False
         run_mode = "interactive" | "json" | "server" | "subprocess"
-        cc_mode = "cctbx" | "aimless"
         test = True | False
         verbose = True | False
     """
@@ -97,7 +96,6 @@ def construct_command(commandline_args, logger):
         "nproc": commandline_args.nproc,
         "run_mode": commandline_args.run_mode,
         "method": commandline_args.method,
-        "cc_mode": commandline_args.cc_mode,
         "test": commandline_args.test,
     }
     for setting in commandline_args._get_kwargs():
@@ -154,7 +152,7 @@ def get_commandline():
                         default="merged",
                         help="set a prefix for output files. Used in rerun as the name of the .pkl file")
     parser.add_argument("-p", "--precheck",
-                        action="store_false",  # Automatic default of True
+                        action="store_true",  # Automatic default of True
                         dest="precheck",
                         help="precheck for duplicate or incorrect data files, default=True")
 
@@ -193,13 +191,6 @@ def get_commandline():
                         dest="strict",
                         help="Have clustering run with strict parameters. Setting spacegroup or unitcell \
                         automatically forces strict mode.")
-
-    # Correlation Coefficient mode
-    #parser.add_argument("--cc_mode",
-    #                    action="store",
-    #                    dest="cc_mode",
-    #                    default="cctbx",
-    #                    help="Input CC calculation method [cctbx | aimless]")    
 
     # Run in test mode
     parser.add_argument("-t", "--test",
