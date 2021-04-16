@@ -366,9 +366,9 @@ ALT_IMAGE_LOCATION = True
 ALT_IMAGE_SERVER_NAME = 'FileLocation'
 
 # If using tiered storage where image data is located on "hidden" fast storage
-# as well as long-term storage, we can process data from fast storage location to 
+# as well as long-term storage, RAPD can process data from fast storage location to 
 # minimize data processing times. In this case, the "hidden" fast storage is 
-# NOT presented to the user (ie. They only see data from long-term storage location).
+# NOT presented to the user (ie. User presented data from long-term storage location).
 # In this instance, results will show image data as long-term storage path presented 
 # in UI results. When enabled, image paths sent to "redis_image_monitor.py" are expected
 # to be json.dumps([fast path, slow path]). THIS IS NOT A COMMON OPTION.

@@ -110,9 +110,44 @@ class Gatherer(object):
         self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
         self.logger.debug("  Will push new datasets onto runs_data:%s" % self.tag)
 
+        
+        while True:
+            try:
+                pubsub = self.bl_redis.pubsub()
+                pubsub.subscribe('RUN_INFO_PV')
+                
+                for __ in pubsub.listen():
+                    # Signal can be any string
+                    signal = __['data']
+                    if type(signal) == str:
+                            
+                        self.logger.debug('run_info_%s: %s'%(self.tag[-1], signal))
+                            
+                        run_data = self.get_run_data(signal)
+                        if self.ignored(run_data['directory']):
+                            self.logger.debug("Directory %s is marked to be ignored - skipping", run_data['directory'])
+                        else:
+                            #run_data['directory'] = dir
+                            self.logger.debug("runs_data:%s %s", self.tag, run_data)
+                            # Put into exchangable format
+                            run_data_json = json.dumps(run_data)
+                            # Publish to Redis
+                            self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                            #self.redis.publish("run_data:%s" % self.tag, run_data)
+                            # Push onto redis list in case no one is currently listening
+                            self.redis.lpush("runs_data:%s" % self.tag, run_data_json)
+                            #self.redis.lpush("runs_data:%s" % self.tag, run_data)
+            except redis.exceptions.ConnectionError:
+                self.logger.debug("Gatherer on %s: Redis Connection error to beamline Redis"%self.tag)
+                time.sleep(1)
+            except KeyboardInterrupt:
+                self.stop()
+                break
+            
+        
+        """
         try:
             pubsub = self.bl_redis.pubsub()
-            #pubsub.subscribe('RUN_INFO_SV2')
             pubsub.subscribe('RUN_INFO_PV')
             
             for __ in pubsub.listen():
@@ -138,6 +173,7 @@ class Gatherer(object):
                         #self.redis.lpush("runs_data:%s" % self.tag, run_data)
         except KeyboardInterrupt:
             self.stop()
+        """
 
     def stop(self):
         """

@@ -178,7 +178,9 @@ class RapdPlugin(Thread):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences", {})
+        #self.preferences = self.command.get("preferences", {})
+        self.preferences = info.DEFAULT_PREFERENCES
+        self.preferences.update(self.command.get("preferences", {}))
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
@@ -478,19 +480,24 @@ class RapdPlugin(Thread):
         no_limit = False
         if self.computer_cluster:
             if self.large_cell:
-                limit = 10
+                #limit = 10
+                limit = int(round(self.preferences.get("pdb_limit", 20) / 2))
             elif permute:
-                limit = 60
+                #limit = 60
+                limit = int(round(self.preferences.get("pdb_limit", 20) * 1.5))
             else:
                 no_limit = True
-                limit = 40
+                #limit = 40
+                limit = self.preferences.get("pdb_limit", 20)
         else:
-            limit = 8
+            #limit = 8
+            limit = self.preferences.get("pdb_limit", 20)
 
         # Limit the unit cell difference to 25%. Also stops it if errors are received.
         pdbq_results = {}
         counter = 0
-        while counter < 25:
+        #while counter < 25:
+        while counter < self.preferences.get("cell_limit", 25):
             self.tprint("  Querying server at %s" % PDBQ_SERVER,
                         level=20,
                         color="white")

@@ -78,8 +78,8 @@ def check_queue(inp):
          "XDS"            : 'phase1.q,general.q',
          #"INTEGRATE"      : 'integrate.q',
          #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
-         #"INTEGRATE"      : 'phase3.q',
-         "INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
+         "INTEGRATE"      : 'phase3.q,phase2.q',
+         #"INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
          #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
          #"PDBQUERY"       : 'phase3.q',
          "PDBQUERY"      : 'phase1.q,general.q,all.q',
@@ -100,8 +100,8 @@ def get_resources(command):
     elif command in ('INTEGRATE'):
         #Integrate gets number of processors and number of jobs
         #return (4, 8)
-        #return (8, 8)
-        return (8, 12)
+        return (8, 8)
+        #return (8, 12)
     else:
         return 1
 

@@ -2605,15 +2605,16 @@ rerunning.\n" % spot_count)
                     self.log[iteration] = ['\nSetting spot picking level to 3.\n']
                     area = 3
                 elif "Eiger" in self.vendortype:
-                    preferences.write('distl.minimum_spot_area=3\n')
-                    self.log[iteration] = ['\nSetting spot picking level to 3.\n']
-                    area = 3
+                    preferences.write('distl.minimum_spot_area=24\n')
+                    preferences.write('distl.spot_area_maximum_factor=7.5\n')
+                    self.log[iteration] = ['\nLooking for more diffuse spots.\n']
+                    area = 15
                 else:
                     preferences.write('distl.minimum_spot_area=8\n')
                     self.log[iteration] = ['\nSetting spot picking level to 8.\n']
                     area = 8
-                self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
-                self.logger.debug('Setting spot picking level to 3 or 8.')
+                self.tprint("\n    Looking for more diffuse spots.", level=30, color="white", newline=False)
+                self.logger.debug('Looking for more diffuse spots.')
 
             elif iteration == 5:
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
