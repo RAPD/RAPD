@@ -1,9 +1,9 @@
 <mat-tab-group class="session-tab-group" (focusChange)="tabSelected($event);">
   <mat-tab label="Snaps">
-    <app-mx-result-container result_type="snap" [session_id]="sessionId"></app-mx-result-container>
+    <app-mx-result-container resultType="snap" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
   <mat-tab label="Runs">
-    <app-mx-result-container result_type="sweep" [session_id]="sessionId"></app-mx-result-container>
+    <app-mx-result-container resultType="sweep" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
   <!-- <mat-tab label="Merge">
     <app-mx-result-container result_type="merge" [session_id]="sessionId"></app-mx-result-container>

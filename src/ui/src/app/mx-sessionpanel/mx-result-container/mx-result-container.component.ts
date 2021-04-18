@@ -25,24 +25,24 @@ for (let key in mx) {
                MxResultPanelComponent ],
   entryComponents: mx_values
 })
-export class MxResultContainerComponent implements OnInit {
+export class MxResultContainerComponent {
 
-  currentResult: any = 'none';
+  currentResult: any = {};
   currentComponentName: string = 'empty';
-  currentComponent = undefined;
-  currentFactory = undefined;
+  currentComponent: any = undefined;
+  currentFactory: any = undefined;
 
-  @Input() session_id: string;
-  @Input() result_type: string;
+  @Input() sessionId: string = "";
+  @Input() resultType: string = "";
 
   @ViewChild('target', { read: ViewContainerRef, static: true }) target;
 
   constructor(private componentfactoryResolver: ComponentFactoryResolver) { }
 
-  ngOnInit() {}
+  // ngOnInit() {}
 
   // A result has been selected - implement the agent interface
-  selectResult(event) {
+  selectResult(event: any) {
 
     console.log('selectResult', event);
     console.log('currentResult', this.currentResult);
@@ -53,9 +53,11 @@ export class MxResultContainerComponent implements OnInit {
 
     // Save the current displayed result
     this.currentResult = event.value;
+    console.log('currentResult', this.currentResult);
 
     // Construct the component name from the result
     const componentName = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    console.log('componentName', componentName);
 
     if (componentName !== this.currentComponentName) {
 

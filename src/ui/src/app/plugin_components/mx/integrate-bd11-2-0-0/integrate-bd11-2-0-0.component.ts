@@ -1,6 +1,6 @@
 import {
   Component,
-  ComponentFactory,
+  // ComponentFactory,
   ComponentFactoryResolver,
   Input,
   OnDestroy,
@@ -28,11 +28,10 @@ import { SadDialogComponent } from "../sad-dialog/sad-dialog.component";
 
 // Import encapsulated plugin components here
 import * as mx from "../";
-const ANALYSIS_COMPONENTS = {};
-const PDBQUERY_COMPONENTS = {};
+const ANALYSIS_COMPONENTS: any = {};
+const PDBQUERY_COMPONENTS: any = {};
 // tslint:disable-next-line: forin
 for (const KEY in mx) {
-  // console.log(KEY);
   // Analysis
   if (KEY.match("Analysis")) {
     ANALYSIS_COMPONENTS[KEY.toLowerCase()] = mx[KEY];
@@ -46,25 +45,26 @@ for (const KEY in mx) {
 @Component({
   selector: "app-integrate-bd11-2-0-0",
   templateUrl: "./integrate-bd11-2-0-0.component.html",
-  styleUrls: ["./integrate-bd11-2-0-0.component.css"]
+  styleUrls: ["./integrate-bd11-2-0-0.component.css"],
 })
-export class IntegrateBd11200Component implements OnInit, OnDestroy {
+export class IntegrateBd11200Component implements OnDestroy {
 
   @Input() set incomingResult(currentResult: any) {
     this.setCurrentResult(currentResult);
   }
-  public currentResult;
+  public currentResult: any = undefined;
+
+  private incomingData$: ReplaySubject<string>;
 
   public fullResult: any = { process: { status: 0 }, results: {} };
 
   naive: boolean = true;
 
-  // viewModeForm: FormControl;
   public viewMode: string = "summary";
 
-  public selectedPlot: string;
-  public selected_plot_label: string;
-  public plot_select_labels: any = {
+  public selectedPlot: string = "Rmerge vs Frame";
+  public selectedPlotLabel: string = "";
+  public plotSelectLabels: any = {
     "Rmerge vs Frame": "Rmerge vs Batch",
     "I/sigma, Mean Mn(I)/sd(Mn(I))": "I / sigma I",
     "Average I, RMS deviation, and Sd": "I vs Resolution",
@@ -72,7 +72,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     rs_vs_res: "R Factors",
     Redundancy: "Redundancy",
     Completeness: "Completeness",
-    "Radiation Damage": "Radiation Damage"
+    "Radiation Damage": "Radiation Damage",
   };
 
   data: any = {
@@ -84,14 +84,14 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       elements: {
         line: {
           tension: 0, // disables bezier curves
-        }
+        },
       },
       legend: {
         display: true,
         position: "right",
         labels: {
           boxWidth: 3,
-        }
+        },
       },
       responsive: true,
       scales: {
@@ -102,7 +102,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
               labelString: "",
             },
             ticks: {},
-          }
+          },
         ],
         xAxes: [
           {
@@ -111,25 +111,24 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
               labelString: "",
             },
             ticks: {},
-          }
+          },
         ],
       },
       tooltips: {
         callbacks: {},
-      }
-    }
+      },
+    },
   };
 
   // @ViewChild(BaseChartDirective) private _chart;
-  @ViewChild("analysistarget", { read: ViewContainerRef }) public analysistarget;
-  @ViewChild("pdbquerytarget", { read: ViewContainerRef }) public pdbquerytarget;
+  @ViewChild("analysistarget", { read: ViewContainerRef }) public analysisTarget: any;
+  @ViewChild("pdbquerytarget", { read: ViewContainerRef }) public pdbqueryTarget: any;
 
   public analysisComponent: any;
-  public pdbquery_component: any;
+  public pdbqueryComponent: any;
 
   public objectKeys = Object.keys;
 
-  private incomingData$: ReplaySubject<string>;
 
   constructor(
     private componentfactoryResolver: ComponentFactoryResolver,
@@ -140,22 +139,14 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     public snackBar: MatSnackBar
   ) {}
 
-  public ngOnInit() {
-    // // Subscribe to results for the displayed result
-    // this.incomingData$ = this.websocketService.subscribeResultDetails(
-    //   this.currentResult.data_type,
-    //   this.currentResult.plugin_type,
-    //   this.currentResult.result_id,
-    //   this.currentResult._id
-    // );
-    // this.incomingData$.subscribe(x => this.handleIncomingData(x));
-  }
+  // public ngOnInit() {}
 
   public ngOnDestroy() {
     this.websocketService.unsubscribeResultDetails(this.incomingData$);
   }
 
-  private setCurrentResult(data:any):void {
+  private setCurrentResult(data: any):void {
+
     // console.log('setCurrentResult');
 
     // Unsubscribe to changes of previously displayed result
@@ -204,28 +195,28 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     const config = {
       data: {
         run_id: this.fullResult.process.run_id,
-        image_id: this.fullResult.process.image_id
-      }
+        image_id: this.fullResult.process.image_id,
+      },
     };
 
     const dialogRef = this.dialog.open(RunDialogComponent, config);
   }
 
-  public onViewModeSelect(event) {
+  public onViewModeSelect(event: any) {
     // console.log('onViewModeSelect', event.value);
 
-    var self = this;
+    const self = this;
 
     // Wait 100ms and then load up the interface
-    setTimeout(function() {
+    setTimeout(() => {
       // Looking at an analysis
       if (event.value === "analysis") {
         // console.log(self.full_result.results.analysis);
 
         // If there is analysis data, determine the component to use
         if (self.fullResult.results.analysis) {
-          let plugin = self.fullResult.results.analysis.plugin;
-          const component_name = (
+          const plugin = self.fullResult.results.analysis.plugin;
+          const componentName = (
             plugin.type +
             plugin.id +
             plugin.version.replace(/\./g, "") +
@@ -234,11 +225,11 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(
-            ANALYSIS_COMPONENTS[component_name]
+            ANALYSIS_COMPONENTS[componentName]
           );
 
           // Create the component
-          self.analysisComponent = self.analysistarget.createComponent(
+          self.analysisComponent = self.analysisTarget.createComponent(
             factory
           );
 
@@ -251,29 +242,27 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       } else if (event.value === "pdbquery") {
         // If there is analysis data, determine the component to use
         if (self.fullResult.results.pdbquery) {
-          let plugin = self.fullResult.results.pdbquery.plugin;
+          const plugin = self.fullResult.results.pdbquery.plugin;
 
-          const component_name = (
+          const componentName = (
             plugin.type +
             plugin.id +
             plugin.version.replace(/\./g, "") +
             "component"
           ).toLowerCase();
-          // console.log('component_name', component_name);
-          // const component_name = 'pdbquery9a2e200component';
 
           // Create a componentfactoryResolver instance
           const factory = self.componentfactoryResolver.resolveComponentFactory(
-            PDBQUERY_COMPONENTS[component_name]
+            PDBQUERY_COMPONENTS[componentName]
           );
 
           // Create the component
-          self.pdbquery_component = self.pdbquerytarget.createComponent(
+          self.pdbqueryComponent = self.pdbqueryTarget.createComponent(
             factory
           );
 
           // Set the component currentResult value
-          self.pdbquery_component.instance.result =
+          self.pdbqueryComponent.instance.result =
             self.fullResult.results.pdbquery;
         }
       }
@@ -281,10 +270,10 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   // Set up the plot
-  public setPlot(plot_key: string) {
+  public setPlot(plotKey: string) {
     // console.log("setPlot", plot_key);
 
-    let plotResult = this.fullResult.results.plots[plot_key];
+    const plotResult = this.fullResult.results.plots[plotKey];
 
     // Consistent features
     this.data.xs = plotResult.x_data;
@@ -294,19 +283,9 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
       plotResult.parameters.xlabel;
 
-    switch (plot_key) {
+    switch (plotKey) {
       case "Rmerge vs Frame":
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
-        // Axis options
-        // this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
-        //   var xLabels = data.ticks;
-        //   xLabels.forEach(function (labels, i) {
-        //       if (i % 10 !== 0){
-        //           xLabels[i] = '';
-        //       }
-        //   });
-        //   // xLabels.push('360');
-        // };
         break;
 
       case "Imean/RMS scatter":
@@ -323,11 +302,9 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
       case "I/sigma, Mean Mn(I)/sd(Mn(I))":
         // Make the x labels in 1/A
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data: any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels: any, i: number) => {
             xLabels[i] = "1/" + (1.0 / xLabels[i]).toFixed(2).toString();
           });
         };
@@ -335,62 +312,49 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
       case "rs_vs_res":
         // Make the x labels in A
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data: any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels: any, i: number) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
         // X-axis label
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          "Dmid (\u00C5)";
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = "Dmid (\u00C5)";
         break;
 
       case "Average I, RMS deviation, and Sd":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data: any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels: any, i: number) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
         // X-axis label
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          "Dmid (\u00C5)";
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = "Dmid (\u00C5)";
         // Y-axis label
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-          "Intensity";
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = "Intensity";
         break;
 
       case "Completeness":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (
-          data
-        ) => {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data: any) => {
           const xLabels = data.ticks;
-          xLabels.forEach((labels, i) => {
+          xLabels.forEach((labels: any, i: number) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
         // X-axis label
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          "Dmid (\u00C5)";
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = "Dmid (\u00C5)";
         break;
 
       case "Redundancy":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (
-          data
-        ) => {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data: any) => {
           const xLabels = data.ticks;
-          xLabels.forEach((labels, i) => {
+          xLabels.forEach((labels: any, i: number) => {
             xLabels[i] = (1.0 / xLabels[i]).toFixed(2);
           });
         };
         // X-axis label
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          "Dmid (\u00C5)";
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = "Dmid (\u00C5)";
         break;
 
       case "Radiation Damage":
@@ -400,7 +364,6 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       default:
         this.data = false;
     }
-    // console.log(this.data);
   }
 
   public openReintegrateDialog() {
@@ -434,19 +397,19 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   // Change the current result's display to 'pinned'
-  public pinResult(result) {
+  public pinResult(result: any) {
     result.display = "pinned";
     this.websocketService.updateResult(result);
   }
 
   // Change the current result's display to undefined
-  public undefResult(result) {
+  public undefResult(result: any) {
     result.display = "";
     this.websocketService.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
-  public junkResult(result) {
+  public junkResult(result: any) {
     result.display = "junked";
     this.websocketService.updateResult(result);
   }

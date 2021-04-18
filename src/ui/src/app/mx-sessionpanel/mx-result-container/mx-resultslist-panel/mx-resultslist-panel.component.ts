@@ -43,15 +43,15 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     mad: "mx:mad"
   };
 
-  @Input() session_id: string;
-  @Input() result_type: string;
+  @Input() sessionId: string;
+  @Input() resultType: string;
   @Output() resultSelect = new EventEmitter();
 
   constructor(private websocketService: WebsocketService) {}
 
   ngOnInit() {
     this.incomingData$ = this.websocketService.subscribeResults(
-      this.session_id
+      this.sessionId
     );
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
@@ -72,9 +72,9 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
       // My kind of data
       if (
         (result.data_type + ":" + result.plugin_type).toLowerCase() ===
-        this.result_types[this.result_type]
+        this.result_types[this.resultType]
       ) {
-        // console.log('Adding to', this.result_types[this.result_type], 'results');
+        // console.log('Adding to', this.result_types[this.resultType], 'results');
 
         // Filter for age & status
         if (!result.display) {
@@ -184,8 +184,8 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     });
   }
 
-  private onClick(id: string) {
-    // console.log("onClick", id);
+  public onClick(id: string) {
+    console.log("onClick", id);
 
     // Save the current result as the active result
     this.active_result = id;

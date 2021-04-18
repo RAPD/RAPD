@@ -191,7 +191,7 @@
 
             <div class="rapd-titleselect-panel">
               <mat-select class="rapd-matselect-panel" placeholder="Select plot" (selectionChange)="setPlot(selectedPlot)" [(ngModel)]="selectedPlot" name="plot">
-                <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                <mat-option *ngFor="let key of objectKeys(plotSelectLabels)" [value]="key">{{plotSelectLabels[key]}}</mat-option>
               </mat-select>
             </div>
             <div class="rapd-chart-select-panel">

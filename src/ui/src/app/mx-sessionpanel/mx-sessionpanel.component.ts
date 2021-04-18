@@ -16,7 +16,7 @@ import { WebsocketService } from '../shared/services/websocket.service';
 })
 export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
-  public sessionId: string;
+  public sessionId: string = "";
   public sub: any;
   public tabsIndexes = [
     'snaps',
