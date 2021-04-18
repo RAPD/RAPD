@@ -36,8 +36,6 @@ const Result = mongoose.ctrl_conn.model(
   require("./models/result").ResultSchema
 );
 
-console.debug(Result);
-
 // Definitions of result types
 var result_type_trans = {
   mx: {
@@ -51,8 +49,9 @@ var result_type_trans = {
 };
 
 // All the ws_connections
-var ws_connections = {};
-var activeSessions = [];
+let ws_connections = {};
+let activeSessions = [];
+let subscribedResults = {};
 
 // Subscribe to redis updates
 try {
@@ -118,6 +117,7 @@ sub.on("message", function(channel, message) {
     console.log(minimalResult);
     
     let detailedResult = false;
+    
     // Any webssocket with the session_id gets the minimal result
     Object.keys(ws_connections).forEach((socket_id) => {
       // Same session
@@ -131,12 +131,12 @@ sub.on("message", function(channel, message) {
           })
         );
         // Check if connection is subscribed to this result
-        console.log(ws_connections[socket_id].session.current_results);
+        console.log(ws_connections[socket_id].session.currentResults);
         const resultType = (minimalResult.data_type+":"+minimalResult.plugin_type).toUpperCase();
         console.log('resultType', resultType);
-        console.log(ws_connections[socket_id].session.current_results[resultType]);
-        if (ws_connections[socket_id].session.current_results[resultType]) {
-          if (ws_connections[socket_id].session.current_results[resultType]._id === minimalResult._id) {
+        console.log(ws_connections[socket_id].session.currentResults[resultType]);
+        if (ws_connections[socket_id].session.currentResults[resultType]) {
+          if (ws_connections[socket_id].session.currentResults[resultType]._id === minimalResult._id) {
             console.log("HAVE A WEBSOCKET SUBBSCRIBED TO RESULT")
             if (! detailedResult) {
               getNewDetailedResult(message_object).then((result) => {
@@ -554,7 +554,7 @@ function Wss(opt, callback) {
     ws.session = {
       session_id: undefined,
       current_result: undefined,
-      current_results: {},
+      currentResults: {},
     };
 
     // Mark the ws and save to ws_connections object
@@ -770,7 +770,18 @@ function Wss(opt, callback) {
             
             console.log("get_result_details", data);
 
-            this.session.current_results[data.result_type] = data;
+            // data
+            // {
+            //   request_type: 'get_result_details',
+            //   result_type: 'MX:INTEGRATE',
+            //   data_type: 'MX',
+            //   plugin_type: 'INTEGRATE',
+            //   result_id: '60789df20f4939cba74053eb',
+            //   _id: '60789deef4683356c034e66c'
+            // }
+
+            this.session.currentResults[data.result_type] = data;
+            console.log(this.session.currentResults);
 
             // Send current detailed result over the line
             getDetailedResult(data.data_type, data.plugin_type, data._id, ws)
@@ -808,7 +819,7 @@ function Wss(opt, callback) {
             // Remove the session from activeSessions
             activeSessions.splice(activeSessions.indexOf(this.session.session_id), 1);
             this.session.session_id = undefined;
-            this.session.current_results = {};
+            this.session.currentResults = {};
             break;
 
           case "update_result":

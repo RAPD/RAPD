@@ -133,7 +133,7 @@ export class WebsocketService {
       case "results":
         console.log(data);
         data.results.forEach((result) => {
-          console.log(result);
+          // console.log(result);
           // Send the data to the subscribers
           self.resultsSubscribers.forEach((subscriber) => {
             if (subscriber.session_id === result.session_id) {
@@ -296,9 +296,9 @@ export class WebsocketService {
     const resultDetailsSubject = new ReplaySubject<string>(1);
     this.detailsSubscribers.push({
       subject: resultDetailsSubject,
-      result_type: dataType + ":" + pluginType,
-      data_type: dataType,
-      plugin_type: pluginType,
+      result_type: (dataType + ":" + pluginType).toUpperCase(),
+      data_type: dataType.toUpperCase(),
+      plugin_type: pluginType.toUpperCase(),
       result_id: resultId,
       _id,
     });
@@ -309,9 +309,9 @@ export class WebsocketService {
       self.ws.send(
         JSON.stringify({
           request_type: "get_result_details",
-          result_type: dataType + ":" + pluginType,
-          data_type: dataType,
-          plugin_type: pluginType,
+          result_type: (dataType + ":" + pluginType).toUpperCase(),
+          data_type: dataType.toUpperCase(),
+          plugin_type: pluginType.toUpperCase(),
           result_id: resultId,
           _id,
         })
@@ -330,9 +330,9 @@ export class WebsocketService {
       self.ws.send(
         JSON.stringify({
           request_type: "get_result_details",
-          result_type: subject.result_type,
-          data_type: subject.data_type,
-          plugin_type: subject.plugin_type,
+          result_type: subject.result_type.toUpperCase(),
+          data_type: subject.data_type.toUpperCase(),
+          plugin_type: subject.plugin_type.toUpperCase(),
           result_id: subject.result_id,
           _id: subject._id,
         })

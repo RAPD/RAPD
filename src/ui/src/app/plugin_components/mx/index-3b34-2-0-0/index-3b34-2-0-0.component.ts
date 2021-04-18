@@ -19,53 +19,52 @@ import { DialogSelectProjectComponent } from "../../../shared/components/dialog-
 @Component({
   selector: "app-index-3b34-2-0-0",
   templateUrl: "./index-3b34-2-0-0.component.html",
-  styleUrls: ["./index-3b34-2-0-0.component.css"]
+  styleUrls: ["./index-3b34-2-0-0.component.css"],
 })
-export class Index3b34200Component implements OnInit, OnDestroy {
+export class Index3b34200Component implements OnDestroy {
 
   // @Input() currentResult: any;
 
   @Input() set incomingResult(currentResult: any) {
     this.setCurrentResult(currentResult);
   }
-  public currentResult;
+  public currentResult:any;
 
+  private incomingData$: ReplaySubject<string>;
 
-  incomingData$: ReplaySubject<string>;
+  public fullResult:any = { process: { status: 0 }, results: {} };
 
-  fullResult: any = { process: { status: 0 }, results: {} };
+  viewMode: string = "summary";
 
-  view_mode: string = "summary";
-
-  selected_plot: string;
-  selected_plot_label: string;
-  plot_select_labels: any = {
+  public selectedPlot:string = "osc_range";
+  public selectedPlotLabel:string = "";
+  plotSelectLabels: any = {
     // 'background':'Background',
     // 'exposure':'Exposure',
     osc_range: "Osc Range NORM",
     osc_range_anom: "Osc Range ANOM",
     max_delta_omega: "Max Oscillation",
     rad_damage: "Radiation Damage",
-    wilson: "Wilson"
+    wilson: "Wilson",
   };
 
   data: any = {
     lineChartType: "line",
     lineChartOptions: {
       animation: {
-        duration: 500
+        duration: 500,
       },
       elements: {
         line: {
-          tension: 0 // disables bezier curves
-        }
+          tension: 0, // disables bezier curves
+        },
       },
       legend: {
         display: true,
         position: "right",
         labels: {
-          boxWidth: 3
-        }
+          boxWidth: 3,
+        },
       },
       responsive: true,
       scales: {
@@ -73,36 +72,36 @@ export class Index3b34200Component implements OnInit, OnDestroy {
           {
             scaleLabel: {
               display: true,
-              labelString: ""
+              labelString: "",
             },
-            ticks: {}
-          }
+            ticks: {},
+          },
         ],
         xAxes: [
           {
             scaleLabel: {
               display: true,
-              labelString: ""
+              labelString: "",
             },
-            ticks: {}
-          }
-        ]
+            ticks: {},
+          },
+        ],
       },
       tooltips: {
-        callbacks: {}
-      }
-    }
+        callbacks: {},
+      },
+    },
   };
 
   objectKeys = Object.keys;
-  objectToArray(input: any): [any] {
-    return [].concat.apply(
-      [],
-      Object.keys(input).map((key, index) => {
-        return input[key];
-      })
-    );
-  }
+  // objectToArray(input:any): [any] {
+  //   return [].concat.apply(
+  //     [],
+  //     Object.keys(input).map((key, index) => {
+  //       return input[key];
+  //     })
+  //   );
+  // }
 
   constructor(
     private websocketService: WebsocketService,
@@ -111,13 +110,14 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     public dialog: MatDialog
   ) {}
 
-  ngOnInit() { }
+  // ngOnInit() {}
 
   ngOnDestroy() {
     this.websocketService.unsubscribeResultDetails(this.incomingData$);
   }
 
   private setCurrentResult(data:any):void {
+
     // console.log('setCurrentResult');
 
     // Unsubscribe to changes of previously displayed result
@@ -127,6 +127,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
       this.websocketService.unsubscribeResultDetails(this.incomingData$);
       this.incomingData$.unsubscribe();
     }
+
     // Save data
     this.currentResult = data;
 
@@ -140,12 +141,9 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  // public testerfunction(data:string){
-  //   console.log("testerfunction", data);
-  // }
-
   public handleIncomingData(data: any) {
-    console.log("handleIncomingData", data);
+
+    // console.log("handleIncomingData", data);
 
     // Set full_result to incoming data
     this.fullResult = data;
@@ -154,7 +152,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     if ("results" in this.fullResult) {
       if ("plots" in this.fullResult.results) {
         if ("osc_range" in this.fullResult.results.plots) {
-          this.selected_plot = "osc_range";
+          this.selectedPlot = "osc_range";
           this.setPlot("osc_range");
         }
       }
@@ -162,7 +160,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   // Display the header information
-  displayHeader(imageData) {
+  displayHeader(imageData:any) {
     const config = {
       data: {
         image_data: imageData,
@@ -173,44 +171,42 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   // Set up the plot
-  setPlot(plot_key: string) {
-    // console.log('setPlot', plot_key, this.selected_plot);
+  setPlot(plotKey:string) {
+    // console.log('setPlot', plotKey, this.selectedPlot);
 
     // Load the result for convenience
-    let plot_result = this.fullResult.results.plots[plot_key];
-    console.log(plot_result);
+    const plotResult = this.fullResult.results.plots[plotKey];
+    // console.log(plotResult);
 
     // Set the label in the UI
-    this.selected_plot_label = plot_result.parameters.toplabel;
+    this.selectedPlotLabel = plotResult.parameters.toplabel;
 
     // Certain features are consistent
-    this.data.xs = plot_result.x_data;
-    this.data.ys = plot_result.y_data;
-    this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-      plot_result.parameters.ylabel;
-    this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-      plot_result.parameters.xlabel;
+    this.data.xs = plotResult.x_data;
+    this.data.ys = plotResult.y_data;
+    this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plotResult.parameters.ylabel;
+    this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =  plotResult.parameters.xlabel;
 
-    switch (plot_key) {
+    switch (plotKey) {
       // case 'background':
-      //   this.data.xs = plot_result.x_data;
-      //   this.data.ys = plot_result.y_data;
+      //   this.data.xs = plotResult.x_data;
+      //   this.data.ys = plotResult.y_data;
       //   // this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
       //   break;
       //
       // case 'exposure':
-      //   this.data.ys = plot_result.y_data;
-      //   this.data.xs = plot_result.x_data;
-      //   // this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
-      //   // this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+      //   this.data.ys = plotResult.y_data;
+      //   this.data.xs = plotResult.x_data;
+      //   // this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plotResult.parameters.ylabel;
+      //   // this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plotResult.parameters.xlabel;
       //   // this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
       //   break;
 
       case "osc_range":
       case "osc_range_anom":
         // First 5 plots, and no points
-        this.data.ys = plot_result.y_data.slice(0, 5).map(function(el) {
-          var o = Object.assign({}, el);
+        this.data.ys = plotResult.y_data.slice(0, 5).map((el:any) => {
+          const o = Object.assign({}, el);
           o.pointRadius = 0;
           return o;
         });
@@ -218,11 +214,9 @@ export class Index3b34200Component implements OnInit, OnDestroy {
         // this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = 'Required Sweep Width';
         this.data.lineChartOptions.scales.yAxes[0].ticks.beginAtZero = true;
         // this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Starting Omega';
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data:any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels:any, i:number) => {
             if (i % 10 !== 0) {
               xLabels[i] = "";
             }
@@ -230,38 +224,30 @@ export class Index3b34200Component implements OnInit, OnDestroy {
           xLabels.push("360");
         };
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          plot_result.parameters.xlabel + " (\u00B0)";
+          plotResult.parameters.xlabel + " (\u00B0)";
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-          plot_result.parameters.ylabel + " (\u00B0)";
+          plotResult.parameters.ylabel + " (\u00B0)";
         // Tooltips
-        this.data.lineChartOptions.tooltips.callbacks.title = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.title = (tooltipItem:any, data:any) => {
           return data.labels[tooltipItem[0].index] + "° start";
         };
-        this.data.lineChartOptions.tooltips.callbacks.label = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.label = (tooltipItem:any, data:any) => {
           return tooltipItem.yLabel + "° width";
         };
         break;
 
       case "max_delta_omega":
         // Limit to 1st 5 plots and take out the dots
-        this.data.ys = plot_result.y_data.slice(0, 5).map(function(el) {
-          var o = Object.assign({}, el);
+        this.data.ys = plotResult.y_data.slice(0, 5).map((el:any) => {
+          const o = Object.assign({}, el);
           o.pointRadius = 0;
           return o;
         });
-        this.data.xs = plot_result.x_data;
+        this.data.xs = plotResult.x_data;
         // Axis options
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data:any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels:any, i:number) => {
             if (i % 10 !== 0) {
               xLabels[i] = "";
             }
@@ -269,31 +255,23 @@ export class Index3b34200Component implements OnInit, OnDestroy {
           xLabels.push("180");
         };
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          plot_result.parameters.xlabel + " (\u00B0)";
+          plotResult.parameters.xlabel + " (\u00B0)";
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString =
-          plot_result.parameters.ylabel + " (\u00B0)";
+          plotResult.parameters.ylabel + " (\u00B0)";
         // Tooltips
-        this.data.lineChartOptions.tooltips.callbacks.title = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.title = (tooltipItem:any, data:any) => {
           return data.labels[tooltipItem[0].index] + "°";
         };
-        this.data.lineChartOptions.tooltips.callbacks.label = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.label = (tooltipItem:any, data:any) => {
           return tooltipItem.yLabel + "° width";
         };
         break;
 
       case "rad_damage":
         // Axis options
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data:any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels:any, i:number) => {
             if (i % 10 !== 0) {
               xLabels[i] = "";
             }
@@ -301,55 +279,41 @@ export class Index3b34200Component implements OnInit, OnDestroy {
           xLabels.push("180");
         };
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          plot_result.parameters.xlabel + " (\u00B0)";
+          plotResult.parameters.xlabel + " (\u00B0)";
         // Tooltips
-        this.data.lineChartOptions.tooltips.callbacks.title = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.title = (tooltipItem:any, data:any) => {
           return data.labels[tooltipItem[0].index] + "\u00B0";
         };
-        this.data.lineChartOptions.tooltips.callbacks.label = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.label = (tooltipItem:any, data:any) => {
           return tooltipItem.yLabel;
         };
         break;
 
       case "wilson":
         // Take out the dots
-        this.data.ys = plot_result.y_data.map(function(el) {
-          var o = Object.assign({}, el);
+        this.data.ys = plotResult.y_data.map((el:any) => {
+          const o = Object.assign({}, el);
           o.pointRadius = 0;
           return o;
         });
         // Axis options
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(
-          data
-        ) {
-          var xLabels = data.ticks;
-          xLabels.forEach(function(labels, i) {
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = (data:any) => {
+          const xLabels = data.ticks;
+          xLabels.forEach((labels:any, i:number) => {
             xLabels[i] = Math.sqrt(1 / parseFloat(xLabels[i])).toFixed(2);
           });
         };
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString =
-          plot_result.parameters.xlabel + " (\u00C5)";
+          plotResult.parameters.xlabel + " (\u00C5)";
         // Tooltips
-        this.data.lineChartOptions.tooltips.callbacks.title = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.title = (tooltipItem:any, data:any) => {
           return (
             Math.sqrt(
               1 / parseFloat(data.labels[tooltipItem[0].index])
             ).toFixed(2) + "\u00C5"
           );
         };
-        this.data.lineChartOptions.tooltips.callbacks.label = function(
-          tooltipItem,
-          data
-        ) {
+        this.data.lineChartOptions.tooltips.callbacks.label = (tooltipItem:any, data:any) => {
           return tooltipItem.yLabel;
         };
         break;
@@ -362,41 +326,40 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   openReindexDialog() {
-    let config = {
+    const config = {
       // height: '600px',
       // width: '500px',
-      data: this.fullResult
+      data: this.fullResult,
     };
 
-    let dialogRef = this.dialog.open(ReindexDialogComponent, config);
+    const dialogRef = this.dialog.open(ReindexDialogComponent, config);
   }
 
   // Open the add to project dialog
   openProjectDialog() {
-    let config = { data: this.currentResult };
-    let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
+    const config = { data: this.currentResult };
+    const dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'
-  pinResult(result) {
+  pinResult(result:any) {
     result.display = "pinned";
     this.websocketService.updateResult(result);
   }
 
   // Change the current result's display to undefined
-  undefResult(result) {
+  undefResult(result:any) {
     result.display = "";
     this.websocketService.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
-  junkResult(result) {
+  junkResult(result:any) {
     result.display = "junked";
     this.websocketService.updateResult(result);
   }
 
-  // signal upstream that a result's display status has changed
-
+  // TODO
   printPage() {
     // var doc = jsPDF();
     //

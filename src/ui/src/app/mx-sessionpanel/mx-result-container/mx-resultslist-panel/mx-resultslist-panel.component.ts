@@ -64,7 +64,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   private handleIncomingData(data: any) {
     const self = this;
 
-    console.log(data);
+    // console.log(data);
 
     for (const result of data) {
       // console.log(result);

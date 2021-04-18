@@ -21,7 +21,7 @@
         <div style="float:left;">
           <h3>
             Indexing Initiated for
-            <span>{{fullResult.image1.fullname.split('/').reverse()[0]}}</span>
+            <span>{{fullResult?.image1?.fullname?.split('/').reverse()[0]}}</span>
             <span style="color:blue;"><mat-icon (click)="displayHeader(fullResult.image1)">info_outline</mat-icon></span>
             <span *ngIf="fullResult.image2"> & {{fullResult.image2.fullname.split('/').reverse()[0]}}</span>
             <span *ngIf="fullResult.image2" style="color:blue;"><mat-icon (click)="displayHeader(fullResult.image2)">info_outline</mat-icon></span>
@@ -40,7 +40,7 @@
         <div style="float:left;">
           <h3>
             Indexing Results for
-            <span>{{fullResult.image1.fullname.split('/').reverse()[0]}}</span>
+            <span>{{fullResult?.image1?.fullname?.split('/').reverse()[0]}}</span>
             <span style="color:blue;"><mat-icon (click)="displayHeader(fullResult.image1)">info_outline</mat-icon></span>
             <span *ngIf="fullResult.image2"> & {{fullResult.image2.fullname.split('/').reverse()[0]}}</span>
             <span *ngIf="fullResult.image2" style="color:blue;"><mat-icon (click)="displayHeader(fullResult.image2)">info_outline</mat-icon></span>
@@ -51,8 +51,8 @@
             class="rapd-matselect-panel"
             placeholder="View mode"
             floatPlaceholder="auto"
-            [(ngModel)]="view_mode"
-            name="view_mode"
+            [(ngModel)]="viewMode"
+            name="viewMode"
             value="summary"
             style="display:initial;">
             <mat-option value="summary">Summary</mat-option>
@@ -65,7 +65,7 @@
       </div>
     </mat-card-header>
     <div>
-      <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+      <mat-card-content *ngIf="viewMode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none">
             <div *ngIf="(fullResult.results)?.labelit_results.status !== 'FAILED'">
@@ -224,19 +224,19 @@
                 <mat-select
                 class="rapd-matselect-panel"
                 placeholder="Select plot"
-                (selectionChange)="setPlot(selected_plot)"
-                [(ngModel)]="selected_plot"
+                (selectionChange)="setPlot(selectedPlot)"
+                [(ngModel)]="selectedPlot"
                 name="plot">
-                <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                <mat-option *ngFor="let key of objectKeys(plotSelectLabels)" [value]="key">{{plotSelectLabels[key]}}</mat-option>
                 </mat-select>
               </div>
               <div class="rapd-chart-select-panel">
-                <!-- <h3>{{selected_plot}}</h3> -->
+                <!-- <h3>{{selectedPlot}}</h3> -->
               </div>
             </div>
             <div fxFlex="grow">
               <div class="chart-container" style="position: relative;">
-                <!-- <div *ngIf="selected_plot=='background'">
+                <!-- <div *ngIf="selectedPlot=='background'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -247,7 +247,7 @@
                     (chartClick)="chartClicked($event)">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='exposure'">
+                <div *ngIf="selectedPlot=='exposure'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -258,7 +258,7 @@
                     (chartClick)="chartClicked($event)">
                   </canvas>
                 </div> -->
-                <div *ngIf="selected_plot=='max_delta_omega'">
+                <div *ngIf="selectedPlot=='max_delta_omega'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -267,7 +267,7 @@
                     [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='osc_range'">
+                <div *ngIf="selectedPlot=='osc_range'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -276,7 +276,7 @@
                     [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='osc_range_anom'">
+                <div *ngIf="selectedPlot=='osc_range_anom'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -285,7 +285,7 @@
                     [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='rad_damage'">
+                <div *ngIf="selectedPlot=='rad_damage'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -294,7 +294,7 @@
                     [colors]="globalsService.LineChartColors">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='wilson'">
+                <div *ngIf="selectedPlot=='wilson'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -308,14 +308,14 @@
           </div>
         </div>
       </mat-card-content>
-      <mat-card-content *ngIf="view_mode === 'image'" class="rapd-result">
+      <mat-card-content *ngIf="viewMode === 'image'" class="rapd-result">
         <!-- <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none"> -->
             <app-mx-image [result]="fullResult"></app-mx-image>
           <!-- </div>
         </div> -->
       </mat-card-content>
-      <mat-card-content *ngIf="view_mode === 'details'" class="rapd-result">
+      <mat-card-content *ngIf="viewMode === 'details'" class="rapd-result">
         <div>
           <div *ngIf="fullResult.results.best_results_norm !== 'FAILED'" class="rapd-result">
             <h3>Data Collection Strategy from Best Normal</h3>
@@ -659,7 +659,7 @@
           </div>
         </div>
       </mat-card-content>
-      <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+      <mat-card-content *ngIf="viewMode === 'logs'" class="rapd-result">
         <app-log-card
           *ngIf="fullResult.results.best_results_norm"
           [log]="fullResult.results.best_results_norm.log"

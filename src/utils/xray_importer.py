@@ -3,7 +3,7 @@ Tool for importing X-ray files into RAPD"""
 """
 This file is part of RAPD
 
-Copyright (C) 2017-2018, Cornell University
+Copyright (C) 2017-2021, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
