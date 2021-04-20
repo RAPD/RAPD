@@ -10,8 +10,8 @@ export class WebsocketService {
   private websocketUrl: string;
   private ws: WebSocket;
 
-  public resultsSubscribers = [];
-  public detailsSubscribers = [];
+  public resultsSubscribers: any[] = [];
+  public detailsSubscribers: any[] = [];
 
   public resultsSubject: ReplaySubject<string>;
   // public resultDetailsSubject: ReplaySubject<string>;
@@ -131,12 +131,13 @@ export class WebsocketService {
     switch (data.msg_type) {
       // A result has arrived
       case "results":
-        console.log(data);
-        data.results.forEach((result) => {
+        // console.log(data);
+        data.results.forEach((result: any) => {
           // console.log(result);
           // Send the data to the subscribers
           self.resultsSubscribers.forEach((subscriber) => {
-            if (subscriber.session_id === result.session_id) {
+            // console.log(subscriber);
+            if (subscriber.sessionId === result.session_id && subscriber.resultType === result.plugin_type) {
               subscriber.subject.next([result]);
             }
           });
@@ -253,15 +254,17 @@ export class WebsocketService {
   }
 
   // Get all results for a session
-  subscribeResults(session_id: string): ReplaySubject<string> {
-    console.log("subscribeResults session_id:", session_id);
+  subscribeResults(sessionId: string, resultType: string): ReplaySubject<string> {
+
+    console.log('websocket.service.subscribeResults sessionId:', sessionId, 'resultType', resultType);
 
     const resultsSubject = new ReplaySubject<string>(1);
 
     // Store the observable
     this.resultsSubscribers.push({
       subject: resultsSubject,
-      session_id,
+      sessionId,
+      resultType:resultType.toUpperCase(),
     });
 
     // Return the observable

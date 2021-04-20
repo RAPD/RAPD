@@ -12,7 +12,7 @@ import { WebsocketService } from '../shared/services/websocket.service';
   selector: 'app-mx-sessionpanel',
   templateUrl: './mx-sessionpanel.component.html',
   styleUrls: ['./mx-sessionpanel.component.css'],
-  providers: [ MxResultContainerComponent ]
+  providers: [ MxResultContainerComponent ],
 })
 export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
@@ -24,7 +24,7 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
     'merge',
     'mr',
     'sad',
-    'mad'
+    'mad',
   ];
 
   constructor(private router: Router,
@@ -46,7 +46,7 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
     this.websocketService.unsubscribeResults();
   }
 
-  tabSelected(event) {
+  tabSelected(event:any) {
     // console.log('tab selected', event);
     // console.log('tab=', this.tabs_indexes[event.index]);
     // this.router.navigate(['mx', this.session_id]);

@@ -1,48 +1,48 @@
 // Configuration
-const config = require("./config");
+const config = require('./config');
 
 // Core modules
-var http = require("http");
+var http = require('http');
 const os = require('os');
-var url = require("url");
-var WebSocketServer = require("ws").Server;
-var mongoose = require("./models/mongoose");
-Q = require("q");
+var url = require('url');
+var WebSocketServer = require('ws').Server;
+var mongoose = require('./models/mongoose');
+Q = require('q');
 // Fix the promise issue in Mongoose
 // mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
-const jwt = require("jsonwebtoken");
-const uuid = require("node-uuid");
+const jwt = require('jsonwebtoken');
+const uuid = require('node-uuid');
 
-const Redis = require("ioredis");
+const Redis = require('ioredis');
 
 // Identifying data
 const myId = uuid.v1();
 const myHost = os.hostname();
 
 // Import models
-var mongoose = require("./models/mongoose");
+var mongoose = require('./models/mongoose');
 const Activity = mongoose.ctrl_conn.model(
-  "Activity",
-  require("./models/activity").ActivitySchema
+  'Activity',
+  require('./models/activity').ActivitySchema
 );
 const Image = mongoose.ctrl_conn.model(
-  "Image",
-  require("./models/image").ImageSchema
+  'Image',
+  require('./models/image').ImageSchema
 );
 const Result = mongoose.ctrl_conn.model(
-  "Result",
-  require("./models/result").ResultSchema
+  'Result',
+  require('./models/result').ResultSchema
 );
 
 // Definitions of result types
 var result_type_trans = {
   mx: {
-    snap: ["mx:index+strategy"],
-    sweep: ["mx:integrate"],
+    snap: ['mx:index+strategy'],
+    sweep: ['mx:integrate'],
     merge: [],
-    mr: [],
+    mr: ['mx:mr'],
     sad: [],
     mad: []
   }
@@ -120,6 +120,7 @@ sub.on("message", function(channel, message) {
     
     // Any webssocket with the session_id gets the minimal result
     Object.keys(ws_connections).forEach((socket_id) => {
+      
       // Same session
       if (ws_connections[socket_id].session.session_id === session_id) {
         console.log("Sending minimal result to", session_id);
@@ -130,7 +131,8 @@ sub.on("message", function(channel, message) {
             results: [minimalResult]
           })
         );
-        // Check if connection is subscribed to this result
+
+        // Check if any connections aare subscribed to this result
         console.log(ws_connections[socket_id].session.currentResults);
         const resultType = (minimalResult.data_type+":"+minimalResult.plugin_type).toUpperCase();
         console.log('resultType', resultType);
@@ -544,11 +546,12 @@ function Wss(opt, callback) {
     server: opt.server
   });
 
-  console.log('Wss up!');
+  // console.log('Wss up!');
 
   wss.on("connection", function connection(ws) {
     
     console.log("WS Connected");
+    console.log(ws.session);
 
     // Create a session object
     ws.session = {
@@ -576,13 +579,18 @@ function Wss(opt, callback) {
 
     // Websocket has closed
     ws.on("close", function() {
-      console.log("websocket closed");
+      
+      console.log('websocket', ws.id,'closed');
 
       // Cancel the ping interval
       clearInterval(ping_timer);
-      clearInterval(register_interval)
+      clearInterval(register_interval);
+
+      // Clear immediately from register in Redis
+      redis_client.del("R2:WSC:"+ws.id);
 
       // Remove the session from activeSessions
+      console.log('Removing', ws.session.session_id, 'from activeSessions');
       activeSessions.splice(activeSessions.indexOf(ws.session.session_id), 1);
 
       // Remove the websocket from the storage objects
@@ -634,6 +642,7 @@ function Wss(opt, callback) {
           case "get_results":
             
             console.log("get_results");
+            console.log(data);
 
             var data_type, data_class;
 
@@ -642,11 +651,12 @@ function Wss(opt, callback) {
             if (data_type === "mx") {
               
               if (data_class === "data") {
+                
                 Result.find({
                   session_id: mongoose.Types.ObjectId(data.session_id)
                 })
                   .where("result_type")
-                  .in(["mx:index", "mx:integrate"])
+                  .in(['mx:index', 'mx:integrate', 'mx:mr'])
                   // populate('children').
                   .sort("-timestamp")
                   .exec(function(err, results) {
@@ -704,9 +714,32 @@ function Wss(opt, callback) {
                       })
                     );
                   });
+
+                } else if (data_class === "mr") {
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id)
+                  })
+                    .where("result_type")
+                    .in(result_type_trans[data_type][data_class])
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, sessions) {
+                      if (err) {
+                        return false;
+                      }
+                      console.log("Found", sessions.length, "results");
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: sessions
+                        })
+                      );
+                    });
               
               } else if (data_class === "all") {
-                console.log("data.session_id", data.session_id);
+                
+                // console.log("data.session_id", data.session_id);
 
                 // Change to indexings first - load will be faster in UI appearance
                 Result.find({
@@ -737,6 +770,46 @@ function Wss(opt, callback) {
                     .exec(function(err, results) {
                       if (err) return false;
                       console.log("Found", results.length, "results");
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
+
+                  // And now the MRs
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "MR",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      console.log(results);
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
+
+                  // And now SAD
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "SAD",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      console.log(results);
                       // Send back over the websocket
                       ws.send(
                         JSON.stringify({
@@ -806,24 +879,39 @@ function Wss(opt, callback) {
             break;
 
           // Set the session id for the connected websocket
-          case "set_session":
-            console.log("Session set to " + data.session_id);
-            this.session.session_id = data.session_id;
-            activeSessions.push(data.session_id);
+          case 'set_session':
+            console.log('set_session');
+            // Session already set to passed-in value
+            if (this.session.session_id === data.session_id) {
+              console.log('this.session.session_id already set to', data.session_id);
+            } else {
+              // Have a session, have to clear it out before replacing
+              if (this.session.session_id !== undefined) {
+                console.log('Remove current session', this.session.session_id);
+                activeSessions.splice(activeSessions.indexOf(this.session.session_id), 1);
+                this.session.session_id = undefined;
+                this.session.currentResults = {};
+              }
+              // Now assign session
+              console.log('Set this.session.session_id to', data.session_id);
+              this.session.session_id = data.session_id;
+              activeSessions.push(data.session_id);
+            }
+            
             console.log(activeSessions);
             break;
 
           // Unset the session id for the connected websocket
-          case "unset_session":
-            console.log("Unset session");
+          case 'unset_session':
+            console.log('Unset session');
             // Remove the session from activeSessions
             activeSessions.splice(activeSessions.indexOf(this.session.session_id), 1);
             this.session.session_id = undefined;
             this.session.currentResults = {};
             break;
 
-          case "update_result":
-            console.log("update_result");
+          case 'update_result':
+            console.log('update_result');
             console.log(data.result);
 
             Result.update(
