@@ -471,6 +471,8 @@ class RapdPlugin(multiprocessing.Process):
         # Nicely sort datasets
         # sort_nicely(self.datasets)
 
+        # Need to add force flag.
+
         if not self.precheck:
             self.tprint("Prechecking Files Off.  Skipping to File Copying.")
         else: 
