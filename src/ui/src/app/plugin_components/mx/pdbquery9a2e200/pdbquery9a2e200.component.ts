@@ -1,7 +1,11 @@
 import { Component, Input, OnInit, ViewChild } from "@angular/core";
 import { formatNumber } from "@angular/common";
-import { MatSort, MatSnackBar, MatTableDataSource } from "@angular/material";
+import { MatDialog, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatSort } from "@angular/material/sort";
+import { MatTableDataSource } from "@angular/material/table";
 // import { MatSortModule } from '@angular/material/sort';
+import { DialogUglymolComponent } from "../../../shared/components/dialog-uglymol/dialog-uglymol.component";
 import { RestService } from "../../../shared/services/rest.service";
 
 @Component({
@@ -33,8 +37,9 @@ export class Pdbquery9a2e200Component implements OnInit {
   @ViewChild(MatSort) sort: MatSort;
 
   constructor(
-    private rest_service: RestService,
-    public snackBar: MatSnackBar
+    private restService: RestService,
+    public snackBar: MatSnackBar,
+    public dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -46,6 +51,8 @@ export class Pdbquery9a2e200Component implements OnInit {
     this.sortData({ active: "gain", direction: "desc" }, "contaminants");
     this.sortData({ active: "gain", direction: "desc" }, "searches");
     this.sortData({ active: "gain", direction: "desc" }, "customs");
+
+    console.log(this.result);
   }
 
   default_val(val: any, default_val: any, digitsInfo: string = undefined) {
@@ -60,6 +67,7 @@ export class Pdbquery9a2e200Component implements OnInit {
       return val;
     }
   }
+
   sortData(sort, data_type) {
     var data;
 
@@ -94,18 +102,29 @@ export class Pdbquery9a2e200Component implements OnInit {
 
   // Start the download of data
   public initDownload(record: any) {
-    
-    console.log('initDownload');
-    
+    console.log("initDownload");
+
     // Signal that the request has been made
     this.snackBar.open("Download request submitted", "Ok", {
       duration: 2000
     });
 
     // TODO
-    this.rest_service
-      .getDownloadByHash(record.tar.hash, record.tar.path);
-      // .subscribe(result => {}, error => {});
+    this.restService.getDownloadByHash(record.tar.hash, record.tar.path);
+    // .subscribe(result => {}, error => {});
+  }
+
+  public openViewer(record: any) {
+    console.log("openViewer");
+    // console.log(record);
+
+    // Open a new uglymol dialog
+    const dialogRef = this.dialog.open(DialogUglymolComponent, {
+      height: window.innerHeight.toString(),
+      width: window.innerWidth.toString(),
+    });
+
+    // this.restService.getPdbByHash(record.tar.hash, record.tar.path);
   }
 }
 

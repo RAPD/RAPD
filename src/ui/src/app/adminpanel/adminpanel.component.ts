@@ -5,7 +5,7 @@ import {
   ViewContainerRef
 } from "@angular/core";
 
-import { MatDialog, MatDialogRef, MatDialogConfig } from "@angular/material";
+import { MatDialog, MatDialogRef, MatDialogConfig } from "@angular/material/dialog";
 
 import { ChangepassDialogComponent } from "../shared/dialogs/changepass-dialog/changepass-dialog.component";
 import { GroupDialogComponent } from "./group-dialog/group-dialog.component";

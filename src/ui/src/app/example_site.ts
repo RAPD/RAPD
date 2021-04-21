@@ -23,6 +23,8 @@ export class Site implements OnInit {
   public name:string = 'NECAT';
   public site_tags:string[] = ['NECAT-C', 'NECAT-E']
 
-  ngOnInit() {
-  }
+  // Label appears in login panel to help guide where user login originates
+  public loginLabel = "NE-CAT Remote Login";
+
+  ngOnInit() {}
 }

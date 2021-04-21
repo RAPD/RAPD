@@ -36,7 +36,7 @@ import os
 #from bson.objectid import ObjectId
 from utils.xutils import convert_unicode, fix_R3_sg
 
-from plugins.subcontractors.rapd_phaser import run_phaser_module
+from plugins.subcontractors.rapd_phaser import run_phaser, run_phaser_module
 #import plugins.subcontractors.rapd_phaser as rapd_phaser
 
 
@@ -44,7 +44,7 @@ from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
 import iotbx.pdb.mmcif as iotbx_mmcif
 
-def get_mtz_info(datafile):
+def get_mtz_info(data_file):
     """
     Get unit cell and SG from input mtz
     """
@@ -54,12 +54,12 @@ def get_mtz_info(datafile):
     vol = False
 
     # Convert from unicode
-    datafile = convert_unicode(datafile)
+    data_file = convert_unicode(data_file)
 
-    # Read datafile
-    data = iotbx_mtz.object(datafile)
+    # Read data_file
+    data = iotbx_mtz.object(data_file)
 
-    # Derive space group from datafile
+    # Derive space group from data_file
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
 
     # Wrangle the cell parameters
@@ -70,30 +70,31 @@ def get_mtz_info(datafile):
 
     return (sg, cell, vol)
 
-def get_res(datafile):
+def get_res(data_file):
     """Return resolution limit of dataset"""
 
-    datafile = convert_unicode(datafile)
-    data = iotbx_mtz.object(datafile)
+    data_file = convert_unicode(data_file)
+    data = iotbx_mtz.object(data_file)
 
     return float(data.max_min_resolution()[-1])
 
-def get_spacegroup_info(cif_file):
+def get_spacegroup_info(struct_file):
     """Get info from PDB of mmCIF file"""
 
-    # print "get_spacegroup_info", cif_file, os.getcwd()
+    # print "get_spacegroup_info", struct_file, os.getcwd()
 
-    cif_file = convert_unicode(cif_file)
+    struct_file = convert_unicode(struct_file)
 
-    if cif_file[-3:].lower() == "cif":
+    if struct_file[-3:].lower() == "cif":
         fail = False
         cif_spacegroup = False
 
         try:
-            input_file = open(cif_file, "r").read(20480)
+            input_file = open(struct_file, "r").read(20480)
             for line in input_file.split('\n'):
                 if "_symmetry.space_group_name_H-M" in line:
                     cif_spacegroup = line[32:].strip()[1:-1].upper().replace(" ", "")
+                    # print cif_spacegroup
                 if "_pdbx_database_status.pdb_format_compatible" in line:
                     if line.split()[1] == "N":
                         fail = True
@@ -104,11 +105,14 @@ def get_spacegroup_info(cif_file):
         else:
             return cif_spacegroup
     else:
-        return str(iotbx_pdb.input(cif_file).crystal_symmetry().space_group_info()).upper().replace(" ", "")
+        return str(iotbx_pdb.input(struct_file).crystal_symmetry().space_group_info()).upper().replace(" ", "")
 
-#def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
-def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
-    """Get info from PDB of mmCIF file"""
+def get_pdb_info(struct_file,
+                 data_file,
+                 dres,
+                 matthews=True,
+                 chains=True):
+    """Get info from PDB or mmCIF file"""
 
     # Get rid of ligands and water so Phenix won't error.
     np = 0
@@ -121,11 +125,11 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
     l = []
 
     # Read in the file
-    cif_file = convert_unicode(cif_file)
-    if cif_file[-3:].lower() == 'cif':
-        root = iotbx_mmcif.cif_input(file_name=cif_file).construct_hierarchy()
+    struct_file = convert_unicode(struct_file)
+    if struct_file[-3:].lower() == 'cif':
+        root = iotbx_mmcif.cif_input(file_name=struct_file).construct_hierarchy()
     else:
-        root = iotbx_pdb.input(cif_file).construct_hierarchy()
+        root = iotbx_pdb.input(struct_file).construct_hierarchy()
 
     # Go through the chains
     for chain in root.models()[0].chains():
@@ -165,12 +169,14 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
 
                     # Long was of making sure that user does not have directory named '.pdb' or
                     # '.cif'
-                    #n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
-                    n = os.path.join(os.path.dirname(cif_file), "%s_%s.cif" % \
-                        (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], \
+                    #n = os.path.join(os.path.dirname(struct_file), "%s_%s.pdb" % \
+                    n = os.path.join(os.path.dirname(struct_file), "%s_%s.cif" % \
+                        (os.path.basename(struct_file)[:os.path.basename(struct_file).find('.')], \
                         chain.id))
                     #temp.write_pdb_file(file_name=n)
+                    # Write chain as mmCIF file.
                     temp.write_mmcif_file(file_name=n)
+                    
                     d[chain.id] = {'file': n,
                                    'NRes': np1+na1,
                                    'MWna': na1*330,
@@ -183,7 +189,7 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                         phaser_return = run_phaser_module(data_file=data_file,
                                                           ellg=True,
                                                           cca=True,
-                                                          mmcif=n,
+                                                          struct_file=n,
                                                           dres=dres,
                                                           np=np1,
                                                           na=na1)
@@ -193,8 +199,8 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                     else:
                         #res1 = run_phaser_module(n)
                         phaser_return = run_phaser_module(data_file=data_file,
-                                                           ellg=True, 
-                                                           mmcif=n)
+                                                          ellg=True, 
+                                                          struct_file=n)
                         d[chain.id].update({'res': phaser_return.get("target_resolution", res1)})
                     """
                     d[chain.id] = {'file': n,
@@ -210,19 +216,19 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
         np += np1
         na += na1
 
-    d['all'] = {'file': cif_file,
+    d['all'] = {'file': struct_file,
                 'NRes': np+na,
                 'MWna': na*330,
                 'MWaa': np*110,
                 'MW': na*330+np*110}
     # Run on entire PDB
     if matthews:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module((np, na, dres, struct_file, data_file))
+        #phaser_return = run_phaser_module(data_file, (np, na, dres, struct_file))
         phaser_return = run_phaser_module(data_file=data_file,
                                           ellg=True,
                                           cca=True,
-                                          mmcif=cif_file,
+                                          struct_file=struct_file,
                                           dres=dres,
                                           np=np,
                                           na=na)
@@ -230,14 +236,17 @@ def get_pdb_info(cif_file, data_file, dres, matthews=True, chains=True):
                          'SC': phaser_return.get("solvent_content", sc),
                          'res': phaser_return.get("target_resolution", res1)})
     else:
-        #phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        #phaser_return = run_phaser_module(data_file, (np, na, dres, cif_file))
+        #phaser_return = run_phaser_module((np, na, dres, struct_file, data_file))
+        #phaser_return = run_phaser_module(data_file, (np, na, dres, struct_file))
+        # phaser_return = run_phaser_module(data_file=data_file,
+        #                                   ellg=True, 
+        #                                   struct_file=struct_file)
         phaser_return = run_phaser_module(data_file=data_file,
-                                           ellg=True, 
-                                           mmcif=cif_file)
+                                          ellg=True, 
+                                          struct_file=struct_file)
         d['all'].update({'res': phaser_return.get("target_resolution", res1)})
     """
-    d['all'] = {'file': cif_file,
+    d['all'] = {'file': struct_file,
                 'NRes': np+na,
                 'MWna': na*330,
                 'MWaa': np*110,

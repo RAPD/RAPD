@@ -6,15 +6,11 @@ import {
   ViewContainerRef
 } from "@angular/core";
 
-import { Router, ActivatedRoute, ParamMap } from "@angular/router";
+import { ActivatedRoute, ParamMap, Router } from "@angular/router";
 
-import {
-  MatDialog,
-  MatDialogRef,
-  MAT_DIALOG_DATA,
-  MatSnackBar,
-  MatToolbarModule
-} from "@angular/material";
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatToolbarModule } from "@angular/material/toolbar";
 
 import "rxjs/add/operator/switchMap";
 // import { Observable } from 'rxjs/Observable';
@@ -33,13 +29,12 @@ import { GlobalsService } from "../../shared/services/globals.service";
 import { RestService } from "../../shared/services/rest.service";
 import { WebsocketService } from "../../shared/services/websocket.service";
 
-
-
 // Import agent components here
 import * as mx from "../../plugin_components/mx";
 var mx_values = [];
 var mx_components = {};
 for (let key in mx) {
+  // console.log(mx[key]);
   mx_values.push(mx[key]);
   mx_components[key.toLowerCase()] = mx[key];
 }
@@ -50,33 +45,33 @@ for (let key in mx) {
   styleUrls: ["./project-mx.component.css"]
 })
 export class ProjectMxComponent implements OnInit {
-  id: string;
-  project: Project;
-  selected_integrated_data: string[] = [];
-  selected_integrate_action: string = "";
-  actions: any = {
+  public uploader: FileUploader;
+  public project: Project;
+
+  private id: string;
+  private selected_integrated_data: string[] = [];
+  private selected_integrate_action: string = "";
+  private actions: any = {
+    INDEX: ["Display Result", "Remove"],
     INTEGRATE: [
-      ["Display Result", "ReIntegrate", "MR", "SAD", "Remove"],
-      ["Merge"]
+      ["ReIntegrate", "MR", "SAD", "Display Result", "Remove"],
+      ["Merge"],
     ],
-    INDEX: ["Display Result", "Remove"]
   };
-  action_icons: any = {
+  private actionIcons: any = {
     "Display Result": "visibility",
-    Merge: "call_merge",
-    MR: "search",
-    ReIntegrate: "refresh",
-    Remove: "delete",
-    SAD: "search"
+    "MR": "search",
+    "Merge": "call_merge",
+    "ReIntegrate": "refresh",
+    "Remove": "delete",
+    "SAD": "search",
   };
 
-  selected_indexed_data: string[] = [];
+  private selected_indexed_data: string[] = [];
 
   // Where results got
   @ViewChild("output_outlet", { read: ViewContainerRef })
-  outlet;
-
-  public uploader: FileUploader;
+outlet;
 
   constructor(
     private route: ActivatedRoute,
@@ -87,9 +82,8 @@ export class ProjectMxComponent implements OnInit {
     private componentfactoryResolver: ComponentFactoryResolver,
     public confirm_dialog: MatDialog,
     public error_dialog: MatDialog,
-    public reintegrate_dialog: MatDialog
-  ) // public upload_dialog: MatDialog
-  {}
+    public reintegrate_dialog: MatDialog // public upload_dialog: MatDialog
+  ) {}
 
   ngOnInit() {
     this.id = this.route.snapshot.paramMap.get("id");
@@ -97,14 +91,28 @@ export class ProjectMxComponent implements OnInit {
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
       authToken: localStorage.getItem("access_token"),
-      autoUpload: true
+      autoUpload: true,
+      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
     });
+
+    // Add form fields
+    this.uploader.onBuildItemForm = (item, form) => {
+      console.log("onBuildItemForm");
+      console.log(item);
+      console.log(form);
+      form.append("foo", "bar");
+    };
+
     // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
-    this.uploader.onAfterAddingFile = file => {
+    this.uploader.onAfterAddingFile = (file) => {
       file.withCredentials = false;
     };
+
+    this.uploader.onBeforeUploadItem = (item) => {
+      console.log("onBeforeUploadItem");
+    };
+
     // overide the onCompleteItem property of the uploader so we are
     // able to deal with the server response.
     this.uploader.onCompleteItem = (
@@ -117,7 +125,7 @@ export class ProjectMxComponent implements OnInit {
     };
   }
 
-  getProject(id: string) {
+  public getProject(id: string) {
     this.rest_service.getProject(id).subscribe(parameters => {
       console.log(parameters);
       if (parameters.success === true) {
@@ -126,7 +134,7 @@ export class ProjectMxComponent implements OnInit {
     });
   }
 
-  toggleSourceDataIntegrateSelection(id: string) {
+  public toggleSourceDataIntegrateSelection(id: string) {
     // console.log('toggleSourceDataSelection', id);
 
     // Clear the result display?
@@ -143,7 +151,7 @@ export class ProjectMxComponent implements OnInit {
     }
   }
 
-  toggleSourceDataIndexSelection(id: string) {
+  public toggleSourceDataIndexSelection(id: string) {
     let index = this.selected_indexed_data.indexOf(id);
 
     // Clear the result display?
@@ -159,7 +167,14 @@ export class ProjectMxComponent implements OnInit {
     }
   }
 
-  selectSingleIntgrationAction(action: string) {
+  public toggleResultSelection(id:string) {
+
+    console.log("toggleResultSelection", id);
+
+    this.displayResult(id);
+  }
+
+  public selectSingleIntgrationAction(action: string) {
     console.log("selectSingleIntgrationAction", action);
 
     switch (action) {
@@ -179,7 +194,27 @@ export class ProjectMxComponent implements OnInit {
     }
   }
 
-  selectSingleIndexAction(action: string) {
+  public selectMultipleIntgrationAction(action: string) {
+    console.log("selectMultipleIntgrationAction", action);
+
+    switch (action) {
+      case "Display Result":
+        this.displayResult(this.selected_integrated_data[0]);
+        break;
+
+      case "ReIntegrate":
+        this.activateReintegration(this.selected_integrated_data[0]);
+        break;
+
+      case "Remove":
+        this.activateRemoveConfirm(this.selected_integrated_data[0]);
+
+      default:
+        break;
+    }
+  }
+
+  public selectSingleIndexAction(action: string) {
     console.log("selectSingleIndexAction", action);
 
     switch (action) {
@@ -195,10 +230,11 @@ export class ProjectMxComponent implements OnInit {
     }
   }
 
-  displayResult(result_id: string) {
-    console.log("displayResult", result_id);
+  public displayResult(resultId: string) {
 
-    this.rest_service.getResult(result_id).subscribe(
+    console.log("displayResult", resultId);
+
+    this.rest_service.getResult(resultId).subscribe(
       parameters => {
         console.log(parameters);
         if (parameters.success === true) {
@@ -228,31 +264,31 @@ export class ProjectMxComponent implements OnInit {
     );
   }
 
-  activateReintegration(result_id: string) {
+  private activateReintegration(result_id: string) {
     console.log("activateReintegration", result_id);
 
     // Get the full result
-    this.rest_service.getResultDetail(result_id).subscribe(parameters => {
+    this.rest_service.getResultDetail(result_id).subscribe((parameters) => {
       console.log(parameters);
       if (parameters.success === true) {
         let dialogRef = this.reintegrate_dialog.open(
           ReintegrateDialogComponent,
           {
-            data: parameters.results
+            data: parameters.results,
           }
         );
       } else {
         let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
-          data: { message: parameters.message }
+          data: { message: parameters.message },
         });
       }
     });
   }
 
-  activateRemoveConfirm(result_id: string) {
+  private activateRemoveConfirm(result_id: string) {
     console.log("activateRemoveConfirm", result_id);
 
-    let label = this.project.source_data.filter(function(obj) {
+    let label = this.project.source_data.filter((obj) => {
       return obj._id === result_id;
     })[0].repr;
 

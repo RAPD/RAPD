@@ -75,6 +75,7 @@ def parse_output(labelit_output, iteration=0):
     few_spots = False
     min_spots = False
     spot_problem = False
+    soft_fail = False
     labelit_face = []
     labelit_solution = []
     labelit_metric = []
@@ -117,12 +118,16 @@ def parse_output(labelit_output, iteration=0):
         if len(line) > 1:
             if line.startswith("distl_minimum_number_spots"):
                 min_spots = line
+
+            # Outright fails
             if line.startswith("RuntimeError:"):
                 return "failed"
             if line.startswith("ValueError:"):
                 return "failed"
             if line.startswith("Exception:"):
                 return "failed"
+            
+            # Labelit errors
             if line.startswith("Labelit finds no reasonable solution"):
                 # if self.multiproc:
                 return "failed"
@@ -138,20 +143,15 @@ def parse_output(labelit_output, iteration=0):
                 return "failed"
                 # else:
                 #     return "no index"
-            if line.startswith("MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR"):
-                # if self.multiproc:
-                return "failed"
-                # else:
-                #     return "no index"
-            if line.startswith("MOSFLM_Warning: MOSFLM logfile overflow"):
-                # if self.multiproc:
-                return "failed"
             
             if line.startswith("ValueError: min()"):
                 # if self.multiproc:
                 return "failed"
                 # else:
-                    # return "no index"
+            if line.count("Input/output error"):
+                return "failed"
+            
+            # Fails with possible fixes
             if line.startswith("Spotfinder Problem:"):
                 spot_problem = True
             if line.startswith("InputFileError: Input error: File header must contain the sample-to\
@@ -171,12 +171,31 @@ def parse_output(labelit_output, iteration=0):
                 error_lg = line.split()[11]
             if line.startswith("No_Lattice_Selection: The known_symmetry"):
                 return "bad_input"
-            if line.startswith("MOSFLM_Warning: MOSFLM does not give expected results on r_"):
-                return "mosflm_error"
             if line.count("TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'"):
                 return "eiger_cbf_error"
+            
+            # Mosflm errors
+            """
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR"):
+                # if self.multiproc:
+                return "failed"
+                # else:
+                #     return "no index"
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile overflow"):
+                # if self.multiproc:
+                return "failed"
+            """
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile"):
+                # if self.multiproc:
+                return "failed"
+            
             if line.startswith("MosflmVersionError:"):
                 return "mosflm_version_error"
+            if line.count("MOSFLM logfile declares FATAL ERROR"):
+                soft_fail = True
+            
+            if line.startswith('MOSFLM_Warning: MOSFLM does not give expected results on r_'):
+                return 'mosflm error'
             
             # Save the beam center
             if line.startswith("Beam center"):
@@ -287,6 +306,7 @@ def parse_output(labelit_output, iteration=0):
             "mosflm_mos": mosflm_mos,
             "mosflm_rms": mosflm_rms,
             "mosflm_index": mosflm_index,
+            "index_error": soft_fail,
             "output": labelit_output}
 
     return data

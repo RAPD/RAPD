@@ -277,6 +277,7 @@ class Adapter(object):
         self.logger.debug("get_image_data")
         return_dict = {}
 
+        """
         # Get redis connection
         if tag:
             connection = self.get_redis_connection(tag)
@@ -288,7 +289,10 @@ class Adapter(object):
         # Scrub out problems with offest
         #vertical_offset = float(connection.get("SEGMENT_OFFSET_SV"))
         # Add all additional info not in header
-        if tag == 'NECAT_C':
+        
+        #should have all info in header now!
+        #if tag == 'NECAT_C':
+        if False:
             pipe = connection.pipeline()
             pipe.get("ENERGY_SV")
             pipe.get("RING_CUR_SV")
@@ -322,6 +326,7 @@ class Adapter(object):
             self.logger.debug("%s", return_dict)
         # Add vertical offset for both beamlines
         #return_dict.update({"vertical_offset" : vertical_offset})
+        """
         # Return the data
         return return_dict
 

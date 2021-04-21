@@ -61,7 +61,7 @@ from utils.processes import local_subprocess
 #CIF_CACHE = rglobals.CIF_CACHE
 
 # NE-CAT REST PDB server
-PDBQ_SERVER = rglobals.PDBQ_SERVER
+#PDBQ_SERVER = rglobals.PDBQ_SERVER
 # USed for PDBe search server
 UNLIMITED_ROWS = 10000000
 
@@ -165,7 +165,7 @@ class RapdPlugin(multiprocessing.Process):
 
             # Query pdbq server
             response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
-                       (PDBQ_SERVER, pdb_code))).read()
+                       (rglobals.PDBQ_SERVER, pdb_code))).read()
 
             # Decode search result
             entry = json.loads(response)
@@ -389,7 +389,7 @@ class NECATRepository():
     def cell_search(self, search_params):
         """search for PDBs within unit cell range."""
         # Query server
-        #print "%s/search/" % PDBQ_SERVER
+        #print "%s/search/" % rglobals.PDBQ_SERVER
         response = urllib2.urlopen(urllib2.Request("%s/cell_search/" % \
                    self.server, data=json.dumps(search_params))).read()
 
@@ -626,10 +626,10 @@ class PDBERepository():
 
 def check_pdbq(tprint=False, logger=False):
     """Check the PDBQ server and return which one is working"""
-    if PDBQ_SERVER:
-        if isinstance(PDBQ_SERVER, list):
+    if rglobals.PDBQ_SERVER:
+        if isinstance(rglobals.PDBQ_SERVER, list):
             check = False
-            for site in PDBQ_SERVER:
+            for site in rglobals.PDBQ_SERVER:
                 if site.count('rapd'):
                     instance = NECATRepository(site, tprint, logger)
                     check = instance.check_conn()

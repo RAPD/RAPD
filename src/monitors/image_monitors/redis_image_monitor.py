@@ -28,9 +28,10 @@ __status__ = "Development"
 # Standard imports
 import logging
 # import redis
-import threading
+from threading import Thread
 import time
 import importlib
+import json
 
 # RAPD imports
 from utils.overwatch import Registrar
@@ -41,7 +42,7 @@ import database.redis_adapter as redis_database
 #POLLING_REST = 0.1      # Time to rest between checks for new image
 POLLING_REST = 0.01      # Time to rest between checks for new image
 
-class Monitor(threading.Thread):
+class Monitor(Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
     # Used for stopping/starting the loop
@@ -74,7 +75,7 @@ class Monitor(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
 
         # Initialize the thread
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Passed-in variables
         self.site = site
@@ -107,7 +108,7 @@ class Monitor(threading.Thread):
         self.logger.debug("Stopping")
 
         self.running = False
-        self.redis_database.stop()
+        #self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
@@ -149,17 +150,35 @@ class Monitor(threading.Thread):
 
                     # Try to pop the oldest image off the list
                     new_image = self.redis.rpop("images_collected:%s" % tag)
-                    #new_image = self.redis.rpop("images_collected_%s" % tag)
-
+                    #new_image = json.loads(self.redis.rpop("images_collected:%s" % tag))
+                    
+                        
                     # Have a new_image
                     if new_image:
                         # self.logger.debug("New image %s - %s", tag, new_image)
-
-                        # Notify core thread that an image has been collected
                         self.notify({"message_type":"NEWIMAGE",
                                      "fullname":new_image,
                                      "site_tag":tag})
+                         # Notify core thread that an image has been collected
+                        """
+                        if self.site.HIDDEN_FAST_STORAGE and isinstance(new_image, list):
 
+                            # Same image in two locations: 
+                            #    First is fast path (RAM disk) hidden from user, 
+                            #    Second is slow path (long-term storage). 
+                            # Data will be processed from fast path, but results will only
+                            # show long-term path.
+                            # If only single path, then send string!
+                            self.notify({"message_type":"NEWIMAGE",
+                                         "ram_fullname": new_image[0],
+                                         "fullname":new_image[1],
+                                         "site_tag":tag})
+
+                        else:
+                            self.notify({"message_type":"NEWIMAGE",
+                                         "fullname":new_image,
+                                         "site_tag":tag})
+                        """
                         # self.logger.debug("New image data %s", new_image)
 
                     # Slow it down a little

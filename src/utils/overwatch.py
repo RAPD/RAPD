@@ -88,7 +88,7 @@ class Registrar(object):
             time.sleep(5)
             self.update()
 
-    def register(self, custom_vars={}):
+    def register_OLD(self, custom_vars={}):
         """
         Register the process with the central db
 
@@ -109,7 +109,6 @@ class Registrar(object):
         entry = {"ow_type":self.ow_type,
                  "host_ip":host_ip,
                  "hostname":hostname,
-                 "id":self.uuid,
                  "ow_id":self.ow_id,
                  "start_time":time.time(),
                  "status":"initializing",
@@ -120,6 +119,7 @@ class Registrar(object):
 
         # Check for launchers
         launcher = entry.get('job_list', False)
+        #print launcher
 
         # Wrap potential redis down
         try:
@@ -141,6 +141,75 @@ class Registrar(object):
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
             # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
+
+        # Redis is down
+        except redis.exceptions.ConnectionError:
+
+            print "Redis appears to be down"
+
+    def register(self, custom_vars={}):
+        """
+        Register the process with the central db
+
+        Keyword arguments:
+        custom_vars - dict containing custom elements to put in redis database
+        """
+
+        # Get connection
+        red = self.redis
+
+        hostname = socket.gethostname()
+        try:
+            host_ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            host_ip = "unknown"
+
+        # Create an entry
+        entry = {"ow_type":self.ow_type,
+                 "host_ip":host_ip,
+                 "hostname":hostname,
+                 #"ow_id":self.ow_id,
+                 "ow_id":self.uuid,
+                 "start_time":time.time(),
+                 "status":"initializing",
+                 "timestamp":time.time()}
+
+        # If custom_vars have been passed, add them
+        entry.update(custom_vars)
+
+        # Check for launchers
+        launcher = entry.get('job_list', False)
+
+        # Wrap potential redis down
+        try:
+            # Put entry in the redis db
+            #red.hmset("OW:"+self.uuid, entry)
+            for k, v in entry.iteritems():
+                red.hset("OW:"+self.uuid, k, v)
+
+            # Expire the current entry in N seconds
+            red.expire("OW:"+self.uuid, OVERWATCH_TIMEOUT)
+
+            # Announce by publishing
+            red.publish("OW:registering", json.dumps(entry))
+
+            # If this process has an overwatcher
+            if not self.ow_id == None:
+                # Put entry in the redis db
+                #red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
+                for k, v in entry.iteritems():
+                    red.hset("OW:"+self.uuid+":"+self.ow_id, k, v)
+
+                # Expire the current entry in N seconds
+                red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
+
+            # Used by launch_manager to see which launchers are running.
             if launcher:
                 # Put entry in the redis db
                 red.set("OW:"+launcher, 1)
@@ -203,7 +272,7 @@ class Registrar(object):
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
-            # Used to monitor which launchers are running.
+            # Used by launch_manager to see which launchers are running.
             if launcher:
                 # Put entry in the redis db
                 red.set("OW:"+launcher, 1)
@@ -226,7 +295,8 @@ class Registrar(object):
         """
         Stop the running process cleanly
         """
-        self.redis_database.stop()
+        #self.redis_database.stop()
+        pass
 
 class Overwatcher(Registrar):
     """
@@ -263,11 +333,6 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
-        # print self.python_command
-
-        # print site
-        # print managed_file
-        # print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
@@ -321,6 +386,8 @@ class Overwatcher(Registrar):
         """
 
         print "kill_managed_process"
+        # Small wait to all children to terminate without errors.
+        time.sleep(2)
 
         # Set flag that we do not want to restart the process
         self.run_process = False
@@ -328,7 +395,9 @@ class Overwatcher(Registrar):
         # Update the entry in redis
         self.update(custom_vars={"status":"killing"})
 
-        self.managed_process.kill()
+        self.managed_process.terminate()
+        # 'kill' makes queues hangs because they cannot close.
+        #self.managed_process.kill()
         # os.kill(self.managed_process.pid, signal.SIGKILL)
 
         # Forget the managed id
@@ -360,7 +429,6 @@ class Overwatcher(Registrar):
 
         # Run the input command
         self.managed_process = Popen(command, env=path)
-        #self.managed_process = Popen(command)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)

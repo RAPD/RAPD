@@ -766,7 +766,7 @@ def ParseOutputDistl(self, inp):
             result_dict["max_cell"] = try_float(line.split()[4])
         elif "<Spot model eccentricity> :" in line:
             result_dict["spot_eccentricity"] = try_float(line.split()[4])
-        elif "%Saturation, Top 50 Peaks :" in line:
+        elif "%Saturation, Top " in line:
             result_dict["sat_top_50"] = try_float(line.split()[5])
         elif "In-Resolution Ovrld Spots :" in line:
             result_dict["overloads"] = try_int(line.split()[4])

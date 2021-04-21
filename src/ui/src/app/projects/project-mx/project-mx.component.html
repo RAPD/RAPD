@@ -10,7 +10,7 @@
   </mat-card-header>
   <mat-card-content class="rapd_result">
     <div fxLayout="row" style="padding:10px;" fxLayoutGap="10px">
-      
+
       <div fxLayout="column">
         <table>
           <tr style="vertical-align:top;">
@@ -38,7 +38,7 @@
               <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
-              
+
               <!-- 1 Integration is selected -->
               <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
@@ -50,15 +50,15 @@
                       <mat-list-item >
                         <button mat-button color="primary"
                         (click)="selectSingleIntgrationAction(action)">
-                          <mat-icon>{{action_icons[action]}}</mat-icon>
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
                           {{action}}
-                        </button> 
+                        </button>
                       </mat-list-item>
                     </ng-container>
                   </mat-list>
                 </div>
               </div>
-            
+
               <!-- >1 Integration is selected -->
               <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
                 <div class="rapd-corral-pen">
@@ -68,7 +68,11 @@
                   <mat-list dense class="rapd-corral-content">
                     <ng-container *ngFor="let action of actions.INTEGRATE[1]">
                       <mat-list-item>
-                        {{action}}
+                        <button mat-button color="primary"
+                        (click)="selectMultipleIntgrationAction(action)">
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
+                          {{action}}
+                        </button>
                       </mat-list-item>
                     </ng-container>
                   </mat-list>
@@ -80,25 +84,28 @@
               <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
-              
+
               <!-- 1 Integration is selected -->
-              <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
+              <!-- <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;"> -->
+              <div class="rapd-corral" [ngClass]="selected_integrated_data?.length > 0 ? 'background-green': ''" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Results
                   </div>
-                  <mat-list dense class="rapd-corral-content">
+                  <mat-list dense class="rapd-corral-content" style="padding-top:0px;">
                     <!-- Here is container for results from actions taken on integrated data??-->
-                    <!-- <ng-container *ngFor="let action of actions.INTEGRATE[0]"> -->
-                    <ng-container>
-                      <mat-list-item >
-                        None
+                    <ng-container *ngFor="let result of project.results">
+                      <mat-list-item (click)="toggleResultSelection(result._id)">
+                        <!-- *ngIf="project.plugin_type==='INTEGRATE'" -->
+                        <!-- (click)="toggleSourceDataIntegrateSelection(source_datum._id)" -->
+                        <!-- [ngClass]="selected_integrated_data.indexOf(source_datum._id) != -1 ? 'active-result': ''"> -->
+                        {{result.repr}}
                       </mat-list-item>
                     </ng-container>
                   </mat-list>
                 </div>
               </div>
-            
+
               <!-- >1 Integration is selected -->
               <!-- <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
                 <div class="rapd-corral-pen">
@@ -143,7 +150,7 @@
               <div *ngIf="selected_indexed_data?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
-              
+
               <!-- 1 Integration is selected -->
               <div *ngIf="selected_indexed_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
@@ -155,9 +162,9 @@
                       <mat-list-item >
                         <button mat-button color="primary"
                         (click)="selectSingleIndexAction(action)">
-                          <mat-icon>{{action_icons[action]}}</mat-icon>
+                          <mat-icon>{{actionIcons[action]}}</mat-icon>
                           {{action}}
-                        </button> 
+                        </button>
                       </mat-list-item>
                     </ng-container>
                   </mat-list>

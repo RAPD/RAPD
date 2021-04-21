@@ -95,7 +95,8 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     # Signal to say which beamline.
     #('CLUSTER_NODES', 'NECAT_E'),
     # Signal to say rapd2 job.
-    ('CLUSTER_NODES', 'RAPD2'),
+    #('CLUSTER_NODES', 'RAPD2'),
+    ('CLUSTER_NODES', 'integrate_e.q,phase3.q,phase2.q'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
@@ -109,7 +110,8 @@ class FileLocation():
         self.ram_prefix = '/epu/rdma'
         #self.ip = '164.54.212.219'
         #self.ram_prefix = '/epu2/rdma'
-        self.nvme_prefix = '/epu/nvme'
+        #self.nvme_prefix = '/epu/nvme'
+        self.nvme_prefix = '/lustre/fs1'
         self.ft_redis = self.redis_ft_connect()
 
     def redis_ft_connect(self):
@@ -133,6 +135,10 @@ class FileLocation():
             #self.hold_data(dir)
             # Pass back location in RAMDISK
             return os.path.join('%s%s'%(self.ram_prefix,dir), file_name)
+            
+            ### HACK to get RAPD2 to use Lustre
+            #return os.path.join('%s%s'%(self.nvme_prefix,dir), file_name)
+          
         elif loc == 'nvme':
             # Tell file_tracker to not remove dataset!
             #self.hold_data(dir)
@@ -377,7 +383,8 @@ def base_read_header(image,
 
     parameters = {
         "fullname": image,
-        "detector": "Eiger-16M",
+        #"detector": "Eiger-16M",
+        "detector": VENDORTYPE,
         "directory": os.path.dirname(image),
         "image_prefix": "_".join(base.split("_")[0:-2]),
         # "run_number": int(base.split("_")[-2]),
@@ -399,7 +406,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    pprint(parameters)
+    # pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
@@ -531,6 +538,7 @@ if __name__ == "__main__":
     
     # Execute code
     main(args=commandline_args)
+
     
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
 

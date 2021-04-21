@@ -30,7 +30,7 @@ __status__ = "Development"
 import fcntl
 import os
 
-def file_lock(file_path):
+def lock_file(file_path):
     """
     Method to make sure only one instance is running on this machine.
 
@@ -49,13 +49,20 @@ def file_lock(file_path):
         if not os.path.exists(os.path.dirname(file_path)):
             os.makedirs(os.path.dirname(file_path))
 
-        file_handle = open(file_path, "w")
+        global _file_handle
+        _file_handle = open(file_path, "w")
         try:
-            fcntl.lockf(file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.lockf(_file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return False
         except IOError:
-            raise Exception("%s is already locked, unable to run" % file_path)
+            #raise Exception("%s is already locked, unable to run" % file_path)
+            return True
 
     # If file_path is False, always return False
     else:
-        return False
+        return True
+
+def close_lock_file():
+    """Close the _file_handle handle."""
+    _file_handle.close()
+

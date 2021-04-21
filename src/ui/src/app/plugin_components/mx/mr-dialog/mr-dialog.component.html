@@ -1,0 +1,131 @@
+<div *ngIf="! submitError">
+  <div MatDialogTitle>
+    <!-- <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
+    </button> -->
+    <h2>Perform MR</h2>
+    <h4>On {{data.process.repr}}</h4>
+  </div>
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+    <div class="rapd-dialog-border">
+      <form [formGroup]="mrForm">
+        <div class="form-group">
+          <table class="rapd-form-table">
+            <tbody>
+              <tr>
+                <td class="rapd-form-table-rji">Description</td>
+                <td>
+                  <mat-form-field style="width:10em;">
+                    <input matInput
+                           style="text-align:center;"
+                           placeholder=""
+                           formControlName="description">
+                  </mat-form-field>
+                </td>
+              </tr>
+              <tr>
+                <td class="rapd-form-table-rj">Project</td>
+                <td class="rapd-form-table-select">
+                  <mat-select formControlName="project"
+                              class="table-mat-select"
+                              style="margin-top:1em">
+                    <mat-option *ngFor="let project of projects" [value]="project._id">
+                      {{project.title}}
+                    </mat-option>
+                    <mat-option [value]="-1">Create New Project</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="mrForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="rapd-dialog-border">
+            <table class="rapd-form-table">
+              <tbody>
+                <tr>
+                  <td class="rapd-form-table-rji">PDB ID</td>
+                  <td>
+                    <mat-form-field style="width:5em;">
+                      <input matInput
+                            style="text-align:center;"
+                            placeholder=""
+                            formControlName="pdb_id">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rji">OR</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Selected PDB</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="selected_pdb"
+                                class="table-mat-select"
+                                style="margin-top:1em"
+                                [disabled]="pdbSelectDisabled">
+                      <mat-option>None</mat-option>
+                      <mat-option *ngFor="let pdb of uploadedPdbs" [value]="pdb._id">
+                        {{pdb.originalname}}
+                      </mat-option>
+                    </mat-select>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rji">OR</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Upload PDB/CIF</td>
+                  <td>
+                    <button mat-raised-button
+                            (click)="fileInput.click()"
+                            [disabled]="pdbSelectDisabled">
+                      <mat-icon>cloud_upload</mat-icon>
+                      Upload
+                    </button>
+                    <span style="visibility: hidden; position: absolute; overflow: hidden; width: 0px; height:0px;border:none;margin:0; padding:0">
+                      <input type="file" #fileInput ng2FileSelect [uploader]="uploader" />
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <table class="rapd-form-table">
+            <tbody>
+              <tr>
+                <td class="rapd-form-table-rj"># Molecules in ASU</td>
+                <td class="rapd-form-table-select">
+                  <mat-select formControlName="number_molecules"
+                              class="table-mat-select"
+                              style="margin-top:1em;width:4em;">
+                    <mat-option [value]="0">Auto</mat-option>
+                    <mat-option [value]="1">1</mat-option>
+                    <mat-option [value]="2">2</mat-option>
+                    <mat-option [value]="3">3</mat-option>
+                    <mat-option [value]="4">4</mat-option>
+                  </mat-select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitMr()">Execute</button>
+  </mat-dialog-actions>
+</div>
+<div *ngIf="submitError">
+  <mat-dialog-content>
+    <h2>Error</h2>
+    {{submitError}}
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
+</div>

@@ -1,4 +1,4 @@
-"""Detector description for Dectris Eiger 9M"""
+"""Detector description for Dectris Eiger 16M"""
 
 """
 This file is part of RAPD

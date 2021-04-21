@@ -1,60 +1,47 @@
 import { Component, OnInit, ViewContainerRef } from "@angular/core";
+import { MatDialog, MatDialogConfig, MatDialogRef } from "@angular/material/dialog";
+import { MatToolbarModule } from "@angular/material/toolbar";
 import { Router } from "@angular/router";
-import {
-  MatDialog,
-  MatDialogConfig,
-  MatDialogRef,
-  MatToolbarModule
-} from "@angular/material";
 
-import { RestService } from "../shared/services/rest.service";
+
 import { Project } from "../shared/classes/project";
 import { DialogNewProjectComponent } from "../shared/components/dialog-new-project/dialog-new-project.component";
+import { RestService } from "../shared/services/rest.service";
 // import { FileUploadModule } from 'ng2-file-upload';
 
 @Component({
   selector: "app-projectspanel",
+  styleUrls: ["./projectspanel.component.css"],
   templateUrl: "./projectspanel.component.html",
-  styleUrls: ["./projectspanel.component.css"]
 })
 export class ProjectspanelComponent implements OnInit {
-  projects: Project[] = [];
-  dialogRef: MatDialogRef<DialogNewProjectComponent>;
+  public projects: Project[] = [];
+  private dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
   // File uploader
   // public uploader:FileUploader = new FileUploader({url: 'https://evening-anchorage-3159.herokuapp.com/api/'});
 
   constructor(
-    private rest_service: RestService,
+    private restService: RestService,
     public viewContainerRef: ViewContainerRef,
     public dialog: MatDialog,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  public ngOnInit() {
     this.getProjects();
   }
 
-  getProjects() {
-    this.rest_service.getProjects()
-      .subscribe(
-        parameters => {
-          console.log(parameters);
-          //TODO
-          // this.projects = parameters.projects;
-        }
-      )
-  }
+  public newProject() {
 
-  newProject() {
-    let project = new Project();
+    const project = new Project();
 
     project._id = undefined;
     project.creator = undefined;
     project.created = undefined;
     project.description = undefined;
     project.group = undefined;
-    project.last_action = "created";
+    project.last_action = undefined;
     project.last_timestamp = undefined;
     project.project_type = "mx";
     project.results = [];
@@ -63,19 +50,31 @@ export class ProjectspanelComponent implements OnInit {
     this.editProject(project, "Create Project");
   }
 
-  editProject(project, dialog_title: string) {
-    if (dialog_title !== "Create Project") {
-      dialog_title = "Edit Project";
+  private getProjects() {
+    this.restService.getProjects()
+      .subscribe(
+        (parameters) => {
+          console.log(parameters);
+          //TODO
+          this.projects = parameters.projects;
+        }
+      )
+  }
+
+  private editProject(project, dialogTitle: string) {
+
+    if (dialogTitle !== "Create Project") {
+      dialogTitle = "Edit Project";
     }
 
-    let config = new MatDialogConfig();
+    const config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
     this.dialogRef.componentInstance.project = project;
-    this.dialogRef.componentInstance.dialog_title = dialog_title;
+    this.dialogRef.componentInstance.dialog_title = dialogTitle;
 
-    this.dialogRef.afterClosed().subscribe(result => {
+    this.dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (result.success === true) {
           if (result.operation === "delete") {
@@ -88,27 +87,27 @@ export class ProjectspanelComponent implements OnInit {
     });
   }
 
-  addProject(new_project: Project) {
+  private addProject(newProject: Project) {
     // If the user already exists, replace it
-    let index = this.projects.findIndex(
-      project => project._id === new_project._id
+    const index = this.projects.findIndex(
+      (project) => project._id === newProject._id
     );
     if (index !== -1) {
-      this.projects.splice(index, 1, new_project);
+      this.projects.splice(index, 1, newProject);
     } else {
-      this.projects.unshift(new_project);
+      this.projects.unshift(newProject);
     }
   }
 
-  removeProject(_id: string) {
+  private removeProject(_ID: string) {
     // If the user already exists, replace it
-    let index = this.projects.findIndex(project => project._id === _id);
+    const index = this.projects.findIndex((project) => project._id === _ID);
     if (index !== -1) {
       this.projects.splice(index, 1);
     }
   }
 
-  selectProject(project: any) {
+  private selectProject(project: any) {
     this.router.navigate(["project-" + project.project_type, project._id]);
   }
 }

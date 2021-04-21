@@ -3,7 +3,7 @@ import { FormGroup,
          FormControl,
          Validators } from '@angular/forms';
 
-import { MatDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material/dialog';
 
 import { RestService } from '../../shared/services/rest.service';
 import { User } from '../../shared/classes/user';

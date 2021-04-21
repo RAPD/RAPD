@@ -1,20 +1,20 @@
 <mat-tab-group class="session-tab-group" (focusChange)="tabSelected($event);">
   <mat-tab label="Snaps">
-    <app-mx-result-container result_type="snap" [session_id]="session_id"></app-mx-result-container>
+    <app-mx-result-container resultType="INDEX" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
   <mat-tab label="Runs">
-    <app-mx-result-container result_type="sweep" [session_id]="session_id"></app-mx-result-container>
+    <app-mx-result-container resultType="INTEGRATE" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
-  <!-- <mat-tab label="Merge">
-    <app-mx-result-container result_type="merge" [session_id]="session_id"></app-mx-result-container>
+  <mat-tab label="Merge">
+    <app-mx-result-container resultType="MERGE" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
   <mat-tab label="MR">
-    <app-mx-result-container result_type="mr" [session_id]="session_id"></app-mx-result-container>
+    <app-mx-result-container resultType="MR" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
   <mat-tab label="SAD">
-    <app-mx-result-container result_type="sad" [session_id]="session_id"></app-mx-result-container>
+    <app-mx-result-container resultType="SAD" [sessionId]="sessionId"></app-mx-result-container>
   </mat-tab>
-  <mat-tab label="MAD">
-    <app-mx-result-container result_type="mad" [session_id]="session_id"></app-mx-result-container>
+  <!-- <mat-tab label="MAD">
+    <app-mx-result-container result_type="mad" [session_id]="sessionId"></app-mx-result-container>
   </mat-tab> -->
 </mat-tab-group>

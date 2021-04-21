@@ -31,6 +31,10 @@ var UserSchema = new Schema({
     required: true,
     default: 0
   },
+  pass: {
+    type: String,
+    required: false
+  },
   password: {
     type: String,
     required: false
@@ -96,7 +100,7 @@ UserSchema.pre('save', function(next) {
         if (err) return next(err);
 
         // hash the password along with our new salt
-        bcrypt.hash(user.password, salt, function(err, hash) {
+        bcrypt.hash(user.pass, salt, function(err, hash) {
             if (err) return next(err);
 
             // override the cleartext password with the hashed one
@@ -107,8 +111,12 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.methods.comparePassword = function(candidatePassword, cb) {
-    console.log('comparePassword', this.password);
-    bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
+  var user = this;
+
+    // console.log('comparePassword', candidatePassword, user.pass);
+    // console.log(user);
+
+    bcrypt.compare(candidatePassword, this.pass, function(err, isMatch) {
         if (err) return cb(err);
         cb(null, isMatch);
     });
@@ -140,23 +148,23 @@ var reasons = UserSchema.statics.failedLogin = {
 
 UserSchema.statics.getAuthenticated = function(email, password, cb) {
 
-  console.log('getAuthenticated', email, password);
+  // console.log('getAuthenticated', email, password);
 
   this.findOne({email:email}).
        populate('groups', 'groupname').
        exec(function(err, user) {
 
          // Debugging
-         console.log(err, user);
+        //  console.log(err, user);
 
          if (err) {
-           console.log(err);
+          //  console.log(err);
            return cb(err);
          }
 
          // make sure the user exists
          if (!user) {
-           console.log('Nonuser');
+          //  console.log('Nonuser');
            return cb(null, null, reasons.NOT_FOUND);
          }
 
@@ -175,9 +183,10 @@ UserSchema.statics.getAuthenticated = function(email, password, cb) {
 
            // check if the password was a match
            if (isMatch) {
-             console.log('match');
+            //  console.log('match');
              // Remove the password from the returned
              user.password = undefined;
+             user.pass = undefined;
              // if there's no lock or failed attempts, just return the user
              if (!user.loginAttempts && !user.lockUntil) {
                return cb(null, user);
@@ -193,7 +202,7 @@ UserSchema.statics.getAuthenticated = function(email, password, cb) {
              });
            }
 
-           console.log('Not a match');
+          //  console.log('Not a match');
 
            // password is incorrect, so increment login attempts before responding
            user.incLoginAttempts(function(err) {

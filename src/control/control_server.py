@@ -30,14 +30,15 @@ import logging
 #import redis
 import importlib
 import socket
-import threading
+#import threading
+from threading import Thread
 import time
 import sys
 
 from utils.text import json
 from bson.objectid import ObjectId
 
-class ControllerServer(threading.Thread):
+class ControllerServer(Thread):
     """
     Runs the socket server and spawns new threads when connections are received
     """
@@ -52,7 +53,7 @@ class ControllerServer(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
 
         # Initialize the thred
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Store passed-in variables
         self.receiver = receiver
@@ -72,8 +73,6 @@ class ControllerServer(threading.Thread):
 
             channel, message = self.redis.brpop(["RAPD_RESULTS"])
 
-            print channel, message
-            
             # Trying to catch hanging
             try:
                 self.receiver(json.loads(message))
@@ -84,7 +83,7 @@ class ControllerServer(threading.Thread):
     def stop(self):
         self.logger.debug("Received signal to stop")
         self.Go = False
-        self.redis_database.stop()
+        #self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
@@ -94,7 +93,7 @@ class ControllerServer(threading.Thread):
         #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
-class LaunchAction(threading.Thread):
+class LaunchAction(Thread):
     """
     Manages the dispatch of jobs to the cluster process
     NB that the cluster can be on the localhost or a remote host
@@ -111,7 +110,7 @@ class LaunchAction(threading.Thread):
         self.logger.debug("LaunchAction::__init__  command:%s", command)
 
         # Initialize the thread
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
         # Store passed-in variable
         self.command = command

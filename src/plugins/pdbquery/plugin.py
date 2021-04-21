@@ -41,12 +41,16 @@ from distutils.spawn import find_executable
 import glob
 import logging
 #from multiprocessing import Process
+from multiprocessing import cpu_count
 from threading import Thread
 import os
 from pprint import pprint
+import random
 import shutil
+import sys
 import time
 import importlib
+import random
 
 # RAPD 
 from bson.objectid import ObjectId
@@ -60,7 +64,7 @@ import utils.exceptions as exceptions
 import utils.global_vars as rglobals
 from utils.text import json
 import utils.xutils as xutils
-from utils.processes import local_subprocess, mp_pool
+from utils.processes import local_subprocess, mp_pool, mp_manager
 
 import info
 
@@ -138,7 +142,8 @@ class RapdPlugin(Thread):
     # Timers for processes
     phaser_timer = rglobals.PHASER_TIMEOUT
 
-    def __init__(self, command, processed_results=False, computer_cluster=False, tprint=False, logger=False, verbosity=False):
+    #def __init__(self, command, processed_results=False, computer_cluster=False, tprint=False, logger=False, verbosity=False):
+    def __init__(self, site, command, processed_results=False, tprint=False, logger=False, verbosity=False):
         """Initialize the plugin"""
         Thread.__init__ (self)
 
@@ -171,36 +176,46 @@ class RapdPlugin(Thread):
         self.verbose = verbosity
 
         # Store passed-in variables
+        self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences", {})
+        #self.preferences = self.command.get("preferences", {})
+        self.preferences = info.DEFAULT_PREFERENCES
+        self.preferences.update(self.command.get("preferences", {}))
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
+        
         self.test = self.preferences.get("test", False)
-        self.sample_type = self.preferences.get("type", "protein")
-        self.solvent_content = self.preferences.get("solvent_content", 0.55)
+        #self.test = self.preferences.get("test", True) # Limit number of runs on cluster
+        
+        #self.sample_type = self.preferences.get("type", "protein")
+        #self.solvent_content = self.preferences.get("solvent_content", 0.55)
         self.clean = self.preferences.get("clean", True)
         # self.verbose = self.command["preferences"].get("verbose", False)
-        self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
+        self.data_file = xutils.convert_unicode(self.command["input_data"].get("data_file"))
         # Used for setting up Redis connection
         self.db_settings = self.command["input_data"].get("db_settings")
-        self.nproc = self.preferences.get("nproc", 1)
-        self.computer_cluster = self.preferences.get("computer_cluster", False)
-        
-        # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
+        #self.nproc = self.preferences.get("nproc", 1)
 
-        self.computer_cluster = computer_cluster
+        # If no launcher is passed in, use local_subprocess in a multiprocessing.Pool
+        self.computer_cluster = xutils.load_cluster_adapter(self)
         if self.computer_cluster:
             self.launcher = self.computer_cluster.process_cluster
             self.batch_queue = self.computer_cluster.check_queue(self.command.get('command'))
         else:
             self.launcher = local_subprocess
+            self.pool = mp_pool(self.preferences.get("nproc", cpu_count()-1))
+            self.manager = mp_manager()
 
         # Setup a multiprocessing pool if not using a computer cluster.
-        if not self.computer_cluster:
-            self.pool = mp_pool(self.nproc)
-
-        #Process.__init__(self, name="pdbquery")
+        #if not self.computer_cluster:
+        #    self.pool = mp_pool(self.nproc)
+        
+        # Set Python path for subcontractors.rapd_phaser
+        self.rapd_python = "rapd.python"
+        if self.site:
+            if hasattr(self.site, "RAPD_PYTHON_PATH"):
+                self.rapd_python = self.site.RAPD_PYTHON_PATH
 
     def run(self):
         """Execution path of the plugin"""
@@ -223,16 +238,16 @@ class RapdPlugin(Thread):
         self.tprint(arg=0, level="progress")
 
         # Glean some information on the input file
-        input_spacegroup, self.cell, volume = get_mtz_info(self.datafile)
+        input_spacegroup, self.cell, volume = get_mtz_info(self.data_file)
         # Get high resolution limt from MTZ
-        self.dres = get_res(self.datafile)
+        self.dres = get_res(self.data_file)
         # Determine the Laue group from the MTZ
         input_spacegroup_num = xutils.convert_spacegroup(input_spacegroup)
         self.laue = xutils.get_sub_groups(input_spacegroup_num, "laue")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
-        self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
+        self.tprint("  Data file: %s" % self.data_file, level=10, color="white")
         self.tprint("  Spacegroup: %s  (%s)" % (input_spacegroup, input_spacegroup_num),
                     level=10,
                     color="white")
@@ -247,8 +262,10 @@ class RapdPlugin(Thread):
         self.est_res_number = xutils.calc_res_number(input_spacegroup,
                                                      se=False,
                                                      volume=volume,
-                                                     sample_type=self.sample_type,
-                                                     solvent_content=self.solvent_content)
+                                                     #sample_type=self.sample_type,
+                                                     sample_type=self.preferences.get("type", "protein"),
+                                                     #solvent_content=self.solvent_content
+                                                     solvent_content=self.preferences.get("solvent_content", 0.55))
         if self.est_res_number > 5000:
             self.large_cell = True
             self.phaser_timer = self.phaser_timer * 1.5
@@ -256,8 +273,9 @@ class RapdPlugin(Thread):
         # Check for dependency problems
         self.check_dependencies()
         
-        # Connect to Redis
-        self.connect_to_redis()
+        # Connect to Redis (computer cluster sends results via Redis)
+        if self.preferences.get("run_mode") == "server" or self.computer_cluster:
+            self.connect_to_redis()
 
     def update_status(self):
         """Update the status of the run."""
@@ -338,7 +356,8 @@ class RapdPlugin(Thread):
             "common_contaminants": [],
             "search_results": [],
             "archive_files": [],
-            "data_produced": []
+            "data_produced": [],
+            "for_display": []
         }
     
     def connect_to_redis(self):
@@ -461,19 +480,24 @@ class RapdPlugin(Thread):
         no_limit = False
         if self.computer_cluster:
             if self.large_cell:
-                limit = 10
+                #limit = 10
+                limit = int(round(self.preferences.get("pdb_limit", 20) / 2))
             elif permute:
-                limit = 60
+                #limit = 60
+                limit = int(round(self.preferences.get("pdb_limit", 20) * 1.5))
             else:
                 no_limit = True
-                limit = 40
+                #limit = 40
+                limit = self.preferences.get("pdb_limit", 20)
         else:
-            limit = 8
+            #limit = 8
+            limit = self.preferences.get("pdb_limit", 20)
 
         # Limit the unit cell difference to 25%. Also stops it if errors are received.
         pdbq_results = {}
         counter = 0
-        while counter < 25:
+        #while counter < 25:
+        while counter < self.preferences.get("cell_limit", 25):
             self.tprint("  Querying server at %s" % PDBQ_SERVER,
                         level=20,
                         color="white")
@@ -575,12 +599,32 @@ class RapdPlugin(Thread):
         def launch_job(inp):
             """Launch the Phaser job"""
             #self.logger.debug("process_phaser Launching %s"%inp['name'])
-            if self.pool:
+            tag = 'Phaser_%d' % random.randint(0, 10000)
+            if self.computer_cluster:
+                # Create a unique identifier for Phaser results
+                inp['tag'] = tag
+                # Send Redis settings so results can be sent thru redis
+                #inp['db_settings'] = self.site.CONTROL_DATABASE_SETTINGS
+                # Don't need result queue since results will be sent via Redis
+                queue = False
+            else:
                 inp['pool'] = self.pool
-            job, pid, output_id = run_phaser(**inp)
+                # Add result queue
+                queue = self.manager.Queue()
+                inp['result_queue'] = queue
+            
+            #if self.pool:
+            #    inp['pool'] = self.pool
+            #else:
+            #    inp['tag'] = tag
+            #job, pid, tag = run_phaser(**inp)
+            job, pid = run_phaser(**inp)
             self.jobs[job] = {'name': inp['name'],
                               'pid' : pid,
-                              'output_id' : output_id}
+                              'tag' : tag,
+                              'result_queue': queue,
+                              'spacegroup': inp['spacegroup'] # Need for jobs that timeout.
+                              }
 
         # Run through the pdbs
         for pdb_code in self.cell_output.keys():
@@ -599,6 +643,7 @@ class RapdPlugin(Thread):
                 cif_path = os.path.join(os.getcwd(), cif_file)
             else:
                 cif_path = self.repository.download_cif(pdb_code, os.path.join(os.getcwd(), cif_file))
+            
             if not cif_path:
                 self.postprocess_invalid_code(pdb_code)
             else:
@@ -607,6 +652,7 @@ class RapdPlugin(Thread):
                 spacegroup_pdb = xutils.fix_spacegroup(get_spacegroup_info(cif_path))
                 if not spacegroup_pdb:
                     del self.cell_output[pdb_code]
+                    continue
 
                 # Now check all SG's
                 spacegroup_num = xutils.convert_spacegroup(spacegroup_pdb)
@@ -623,8 +669,8 @@ class RapdPlugin(Thread):
                 # Fewer mols in AU or in common_contaminents.
                 if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                     # if SM is lower sym, which will cause problems, since PDB is too big.
-                    pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=True)
@@ -643,8 +689,8 @@ class RapdPlugin(Thread):
     
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
-                    pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=True,
                                             chains=False)
@@ -652,30 +698,30 @@ class RapdPlugin(Thread):
     
                 # Same number of mols in AU.
                 else:
-                    pdb_info = get_pdb_info(cif_file=cif_path,
-                                            data_file=self.datafile,
+                    pdb_info = get_pdb_info(struct_file=cif_path,
+                                            data_file=self.data_file,
                                             dres=self.dres,
                                             matthews=False,
                                             chains=False)
     
                 job_description = {
-                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
-                    "datafile": self.datafile,
-                    "cif": cif_path,
-                    #"pdb": cif_path,
-                    "name": pdb_code,
+                    "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)), #
+                    "data_file": self.data_file,
+                    "struct_file": cif_path,
+                    "name": pdb_code, #
                     "spacegroup": data_spacegroup,
-                    "ncopy": copy,
-                    "test": self.test,
-                    "cell_analysis": True,
-                    "large_cell": self.large_cell,
+                    "ncopy": copy,  #
+                    #"test": self.test,
+                    "cell_analysis": True,  #
+                    #"large_cell": self.large_cell,
                     "resolution": xutils.set_phaser_res(pdb_info["all"]["res"],
                                                  self.large_cell,
                                                  self.dres),
-                    "launcher": self.launcher,
-                    "db_settings": self.db_settings,
-                    "output_id": False,
-                    "batch_queue": self.batch_queue}
+                    "launcher": self.launcher,  #
+                    "db_settings": self.db_settings,  #
+                    "tag": False,  #
+                    "batch_queue": self.batch_queue, #
+                    "rapd_python": self.rapd_python}
     
                 if not l:
                     launch_job(job_description)
@@ -686,8 +732,7 @@ class RapdPlugin(Thread):
                         job_description.update({
                             "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
                                 new_code)),
-                            "cif":pdb_info[chain]["file"],
-                            #"pdb":pdb_info[chain]["file"],
+                            "struct_file": pdb_info[chain]["file"],
                             "name":new_code,
                             "ncopy":pdb_info[chain]["NMol"],
                             "resolution":xutils.set_phaser_res(pdb_info[chain]["res"],
@@ -699,12 +744,14 @@ class RapdPlugin(Thread):
         """fix Phaser results and pass back"""
         
         self.logger.debug("postprocess_phaser")
-        self.logger.debug(results)
+        #self.logger.debug(results)
 
         # Add description to results
         results['description'] = self.cell_output[job_name.split('_')[0]].get('description')
 
-        # Copy tar to working dir
+        # Copy tar to working dir for commandline results
+        ## Have to determine when it is running in commandline mode##
+        """
         if results.get("tar", False):
             orig = results.get("tar", {"path":False}).get("path")
             if orig:
@@ -724,7 +771,7 @@ class RapdPlugin(Thread):
                 os.unlink(new)
             shutil.copy(orig, new)
             results["pdb_file"] = new
-        
+        """
          # Three result types to run through
         types = (
             ("custom_structures", self.custom_structures),
@@ -751,64 +798,113 @@ class RapdPlugin(Thread):
         # Passback new results to RAPD
         self.send_results()
 
-    def transfer_files(self, result):
+    def transfer_files(self, results):
         """
         Transfer files to a directory that the control can access
         """
 
         self.logger.debug("transfer_files")
-
-        #if self.preferences.get("exchange_dir", False):
+        #self.logger.debug(results)
         if self.command["directories"].get("exchange_dir", False):
-            #self.logger.debug("transfer_files",
-            #                 self.command["directories"].get("exchange_dir" ))
-
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-
-            # If there is data produced
-            file_to_move = result.get("pdb_file", False)
-            if file_to_move:
-                # Move data
-                target = os.path.join(
-                    target_dir, os.path.basename(file_to_move))
-                shutil.move(file_to_move, target)
-                # Compress data
-                arch_prod_file, arch_prod_hash = archive.compress_file(target)
-                # Remove the file that was compressed
-                os.unlink(target)
-                # Store information
-                new_data_produced = {
-                    "path": arch_prod_file,
-                    "hash": arch_prod_hash,
-                    "description": result.get("ID")
-                }
-                # Add the file to results.data_produced array
-                self.results["results"]["data_produced"].append(
-                    new_data_produced)
-
-            # If there is an archive
-            self.logger.debug("result", result)
-            archive_dict = result.get("tar", {})
-            self.logger.debug("archive_dict %s", archive_dict)
-            archive_file = archive_dict.get("path", False)
-            self.logger.debug("archive_file %s", archive_file)
-            if archive_file:
-                # Move the file
-                target = os.path.join(
-                    target_dir, os.path.basename(archive_file))
-                self.logger.debug("target %s", target)
-                shutil.move(archive_file, target)
-                # Store information
-                archive_dict["path"] = target
-                # Add to the results.archive_files array
-                self.results["results"]["archive_files"].append(
-                    archive_dict)
-        
+            for result in (results.get("common_contaminants", [])+results.get("search_results", [])):
+                # If there is a pdb produced -> data_produced
+                # Copy compressed results files to exchange dir and update path.
+                l = ["map_1_1", "map_2_1", 'pdb', 'mtz', 'tar']
+                for f in l:
+                    archive_dict = result.get(f, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Copy data
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        #shutil.move(archive_file, target)
+                        
+                        if f in ("map_1_1", "map_2_1", 'tar'):
+                            shutil.move(archive_file, target)
+                        else:
+                            # Once we know this works we can switch to moving files.
+                            shutil.copyfile(archive_file, target)
+                        
+                        # Store new path information
+                        archive_dict["path"] = target
+                        # Add to the results.data_produced array
+                        if f in ('pdb', 'mtz', 'tar'):
+                            self.results["results"]["data_produced"].append(archive_dict)
+                        # Also put PDB path in 'for_display' results
+                        if f in ('pdb', "map_1_1", "map_2_1"):
+                            self.results["results"]["for_display"].append(archive_dict)
+                """
+                archive_dict = result.get("pdb", {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Copy data
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.copyfile(archive_file, target)
+                    # Store new path information
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+                """
+                # # Maps & PDB
+                # for my_map in ("map_1_1", "map_2_1", "pdb"):
+                #     archive_dict = result.get(my_map, {})
+                #     archive_file = archive_dict.get("path", False)
+                #     if archive_file:
+                #         # Move the file
+                #         target = os.path.join(target_dir, os.path.basename(archive_file))
+                #         shutil.move(archive_file, target)
+                #         # Store information
+                #     archive_dict["path"] = target
+                #     # Add to the results.data_produced array
+                #     self.results["results"]["data_produced"].append(archive_dict)
+                """
+                # Maps & PDB
+                for my_map in ("map_1_1", "map_2_1", "pdb"):
+                    archive_dict = result.get(my_map, {})
+                    archive_file = archive_dict.get("path", False)
+                    if archive_file:
+                        # Move the file
+                        target = os.path.join(target_dir, os.path.basename(archive_file))
+                        shutil.move(archive_file, target)
+                        # Store information
+                        archive_dict["path"] = target
+                        # Add to the results.archive_files array
+                        self.results["results"]["for_display"].append(archive_dict)
+                
+                # If there is an archive
+                archive_dict = result.get("tar", {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Move the file
+                    target = os.path.join(
+                        target_dir, os.path.basename(archive_file))
+                    self.logger.debug("target %s", target)
+                    shutil.move(archive_file, target)
+                    # Store information
+                    archive_dict["path"] = target
+                    # Add to the results.data_produced array
+                    self.results["results"]["data_produced"].append(archive_dict)
+                """
+            """
+            # Maps & PDB (IS THIS REQUIRED?? or leftover garbage???)
+            for my_map in ("map_1_1", "map_2_1", "pdb"):
+                archive_dict = result.get(my_map, {})
+                archive_file = archive_dict.get("path", False)
+                if archive_file:
+                    # Move the file
+                    target = os.path.join(target_dir, os.path.basename(archive_file))
+                    shutil.move(archive_file, target)
+                    # Store information
+                    archive_dict["path"] = target
+                    # Add to the results.archive_files array
+                    self.results["results"]["archive_files"].append(
+                        archive_dict)
+            """
     def postprocess_invalid_code(self, job_name):
         """Make a proper result for PDB that could not be downloaded"""
         
@@ -841,25 +937,39 @@ class RapdPlugin(Thread):
         def finish_job(job):
             """Finish the jobs and send to postprocess_phaser"""
             info = self.jobs.pop(job)
-            print 'Finished Phaser on %s with id: %s'%(info['name'], info['output_id'])
+            self.tprint('    Finished Phaser on %s with id: %s'%(info['name'], info['tag']), level=30, color="white")
             self.logger.debug('Finished Phaser on %s'%info['name'])
-            results_json = self.redis.get(info['output_id'])
-            # This try/except is for when results aren't in Redis in time.
-            try:
-                results = json.loads(results_json)
-                self.postprocess_phaser(info['name'], results)
-                self.redis.delete(info['output_id'])
-            except Exception as e:
-                self.logger.error('Error'+ str(e))
-                # print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
-                # print results_json
-                # self.logger.debug('PROBLEM: %s %s'%(info['name'], info['output_id']))
-                # self.logger.debug(results_json)
-            
-            #results = json.loads(results_json)
-            #print results
-            #self.postprocess_phaser(info['name'], results)
-            #self.redis.delete(info['output_id'])
+            if self.computer_cluster:
+                results_json = self.redis.get(info['tag'])
+                #self.logger.debug('results_json_type: %s results_json: %s'%(type(results_json), results_json))
+                if not results_json:
+                    self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                           "solution": False,
+                                                           "spacegroup": info['spacegroup'],
+                                                           "message": "Error launching job"})
+                else:
+                    results = json.loads(results_json)
+                    self.postprocess_phaser(info['name'], results)
+                self.redis.delete(info['tag'])
+                """
+                # This try/except is for when results aren't in Redis in time.
+                try:
+                    results = json.loads(results_json)
+                    self.postprocess_phaser(info['name'], results)
+                    self.redis.delete(info['tag'])
+                except Exception as e:
+                    self.logger.error('Error: '+ str(e))
+                    self.logger.error('results_json: %s'%results_json)
+                    #print 'PROBLEM: %s %s'%(info['name'], info['output_id'])
+                    #print results_json
+                """
+            else:
+                results = info['result_queue'].get()
+                # pprint(results.get('stdout', " "))
+                # pprint(json.loads(results.get('stdout'," ")))
+                # if results["stderr"]:
+                #     print results["stderr"]
+                self.postprocess_phaser(info['name'], json.loads(results.get('stdout', " ")))
             jobs.remove(job)
 
         # Signal to the pool that no more processes will be added
@@ -891,8 +1001,7 @@ class RapdPlugin(Thread):
                     break
         if timed_out:
             if self.verbose:
-                self.logger.debug('AutoStat timed out.')
-                print 'AutoStat timed out.'
+                self.logger.debug('PDBQuery timed out.')
             for job in self.jobs.keys():
                 if self.computer_cluster:
                     # Kill job on cluster:
@@ -902,13 +1011,14 @@ class RapdPlugin(Thread):
                     job.terminate()
                 # Get the job info
                 info = self.jobs.pop(job)
-                print 'Timeout Phaser on %s'%info['name']
                 self.logger.debug('Timeout Phaser on %s'%info['name'])
                 # Send timeout result to postprocess
-                self.postprocess_phaser(info['name'], {"solution": False,
+                self.postprocess_phaser(info['name'], {"ID": info['name'],
+                                                       "solution": False,
+                                                       "spacegroup": info['spacegroup'],
                                                        "message": "Timed out"})
                 # Delete the Redis key
-                self.redis.delete(info['output_id'])
+                self.redis.delete(info['tag'])
 
         # Join the self.pool if used
         if self.pool:
@@ -955,16 +1065,18 @@ class RapdPlugin(Thread):
 
             # Change to work dir
             os.chdir(self.working_dir)
-            """
+            
             # Gather targets and remove
             files_to_clean = glob.glob("Phaser_*")
             for target in files_to_clean:
                 shutil.rmtree(target)
-            """
+            
     def print_results(self):
         """Print the results to the commandline"""
 
         self.tprint("\nResults", level=99, color="blue")
+
+        # pprint(self.results["results"])
 
         def get_longest_field(pdb_codes):
             """Calculate the ongest field in a set of results"""
@@ -993,7 +1105,7 @@ class RapdPlugin(Thread):
         def print_result_line(pdb_code, my_result, longest_field):
             """Print the result line in the table"""
 
-            print my_result
+            # print my_result
 
             self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}".format(
                 pdb_code,

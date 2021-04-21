@@ -208,7 +208,7 @@ class RapdPlugin(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
-        self.data_file = self.command["input_data"]["datafile"]
+        self.data_file = self.command["input_data"]["data_file"]
 
         # Get information from the data file
         self.input_sg, self.cell, self.volume = \
@@ -336,7 +336,7 @@ calculation",
 
             self.logger.debug("Sending back on redis")
 
-            self.logger.debug(self.results)
+            #self.logger.debug(self.results)
 
             #if results.get('results', False):
             #    if results['results'].get('data_produced', False):
@@ -478,7 +478,7 @@ calculation",
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-                  SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
+                  SIGI(+),I(-),SIGI(-)\" scaling.input.parameters.reporting.loggraphs=True" % \
                   self.data_file
 
         if self.verbose and self.logger:

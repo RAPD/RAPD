@@ -81,6 +81,7 @@ import plugins.analysis.plugin
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
 import utils.xutils as xutils
+from detectors.detector_utils import get_resolution_at_edge
 
 import info
 
@@ -121,7 +122,7 @@ class RapdPlugin(Process):
 
     command format
     {
-        "command":"INDTEGRATE",
+        "command":"INTEGRATE",
         "directories":
             {
                 "data_root_dir":""                  # Root directory for the data session
@@ -134,8 +135,8 @@ class RapdPlugin(Process):
     """
 
     spacegroup = False
-    low_res = False
-    hi_res = False
+    #low_res = False
+    #hi_res = False
 
     # Connection to redis database
     redis = None
@@ -227,10 +228,10 @@ class RapdPlugin(Process):
         self.spacegroup = self.preferences.get('spacegroup', False)
         #if self.preferences.get('spacegroup', False):
         #    self.spacegroup = self.preferences['spacegroup']
-        self.hi_res = self.preferences.get("hi_res", False)
+        self.hi_res = self.preferences.get("hi_res", 0.9)
         #if self.preferences.get("hi_res", False):
         #    self.hi_res = self.preferences.get("hi_res")
-        self.low_res = self.preferences.get("low_res", False)
+        self.low_res = self.preferences.get("low_res", 200.0)
         #if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
 
@@ -247,7 +248,6 @@ class RapdPlugin(Process):
         self.procs = 4
 
         # If using a computer cluster, overwrite the self.launcher
-        #self.cluster_use = self.preferences.get('cluster_use', False)
         if self.preferences.get('computer_cluster', False):
             # Load the cluster adapter
             computer_cluster = xutils.load_cluster_adapter(self)
@@ -262,7 +262,8 @@ class RapdPlugin(Process):
                     self.procs = 8
                 else:
                     # Set self.jobs and self.procs based on available cluster resources
-                    self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
                     #self.jobs = 20
                     #self.procs = 8
             else:
@@ -528,7 +529,92 @@ class RapdPlugin(Process):
 
         return first_frame, last_frame
 
+    def get_place_in_run(self):
+        """
+        Get the current image number (place_in_run) detected by rapd.model.add_image
+        """
+        # Get redis instance
+        if not self.redis:
+            self.connect_to_redis()
+        
+        return int(self.redis.get('place_in_run:%s'%self.image_data.get('site_tag',self.run_data.get("site_tag"))))
+
+    def wait_for_image_redis(self, image_number):
+        """
+        Watch for an image to be recorded. Return True if is does, False if timed out
+        """
+        #self.logger.debug("wait_for_image  image_number:%d", image_number)
+
+        # Get a bead on where we are now (Last image may not be accurate!!)
+        #first, last = self.get_current_images()
+        # Get first frame from run_data
+        first = self.run_data.get('start_image_number')
+        # Check Redis for current frame number
+        last = self.get_place_in_run()
+        self.logger.debug('first: %s last: %s'%(first, last))
+        if image_number <= last:
+            self.logger.debug("Image %d already present", image_number)
+            return True
+
+        # Estimate max time to get to target_image
+        max_time = (image_number - last) * (self.image_data["time"]) * 4
+        self.logger.debug('max_time: %s'%str(max_time))
+        
+        # Look for images in cycle
+        start_time = time.time()
+        self.tprint("  Watching for image number %s " % image_number, level=10, color="white", newline=False)
+        while (time.time() - start_time) < max_time:
+            self.tprint(".", level=10, color="white", newline=False)
+            if self.get_place_in_run() >= image_number:
+                self.tprint(".", level=10, color="white")
+                return True
+            time.sleep(1)
+
+        self.tprint(".", level=10, color="white")
+        self.logger.debug('Timed out waiting for image to appear')
+        return False
+    
     def wait_for_image(self, image_number):
+        """
+        Watch for an image to be recorded. Return True if is does, False if timed out
+        """
+        self.logger.debug("wait_for_image  image_number:%d", image_number)
+        
+        if self.preferences.get("run_mode") == "server":
+            # To get a more reliable existence of image...
+            return self.wait_for_image_redis(image_number)
+        else:
+            # Determine image to look for
+            target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
+    
+            # Get a bead on where we are now
+            first, last = self.get_current_images()
+            self.logger.debug('first: %s last: %s'%(first, last))
+    
+            if image_number <= last:
+                self.logger.debug("Image %d already present", image_number)
+                return True
+    
+            # Estimate max time to get to target_image
+            max_time = (image_number - last) * (self.image_data["time"]) * 4
+            self.logger.debug('max_time: %s'%str(max_time))
+    
+            # Look for images in cycle
+            start_time = time.time()
+            self.tprint("  Watching for %s " % target_image, level=10, color="white", newline=False)
+            while (time.time() - start_time) < max_time:
+                self.tprint(".", level=10, color="white", newline=False)
+                #if os.path.exists(target_image):
+                if os.path.isfile(target_image):
+                    self.tprint(".", level=10, color="white")
+                    return True
+                time.sleep(1)
+    
+            self.tprint(".", level=10, color="white")
+            self.logger.debug('Timed out waiting for image to appear')
+            return False
+    
+    def wait_for_image_OLD(self, image_number):
         """
         Watch for an image to be recorded. Return True if is does, False if timed out
         """
@@ -539,6 +625,7 @@ class RapdPlugin(Process):
 
         # Get a bead on where we are now
         first, last = self.get_current_images()
+        self.logger.debug('first: %s last: %s'%(first, last))
 
         if image_number <= last:
             self.logger.debug("Image %d already present", image_number)
@@ -546,6 +633,7 @@ class RapdPlugin(Process):
 
         # Estimate max time to get to target_image
         max_time = (image_number - last) * (self.image_data["time"]) * 4
+        self.logger.debug('max_time: %s'%str(max_time))
 
         # Look for images in cycle
         start_time = time.time()
@@ -559,15 +647,14 @@ class RapdPlugin(Process):
             time.sleep(1)
 
         self.tprint(".", level=10, color="white")
+        self.logger.debug('Timed out waiting for image to appear')
         return False
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
-        #redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = redis_database.connect_to_redis()
-        #self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
@@ -618,11 +705,11 @@ class RapdPlugin(Process):
         # Run analysis
         self.run_analysis_plugin()
         
-        # Run pdbquery
+        # Run pdbquery - now at tail of analysis
         self.run_pdbquery_plugin()
 
         # Send back results - the final time
-        #self.send_results(self.results)
+        self.send_results(self.results)
 
         # Save output
         self.write_json(self.results)
@@ -630,7 +717,9 @@ class RapdPlugin(Process):
         # Housekeeping
         self.clean_up()
 
+        # Say plugin is finished
         self.tprint(100, "progress")
+        self.logger.debug("Integration Complete")
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
@@ -665,10 +754,18 @@ class RapdPlugin(Process):
             #plugin_queue = Queue()
 
             # Construct the pdbquery plugin command
+            self.db_settings = False
+            if self.site:
+                # print "Have self.site"
+                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+            # else:
+            #     print "No self.site"
+            #     db_settings = False
+            
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs
@@ -676,7 +773,7 @@ class RapdPlugin(Process):
                 run_mode = self.preferences.get("run_mode", False)
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
-                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                db_settings = self.db_settings
                 test = False
 
             analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
@@ -701,9 +798,16 @@ class RapdPlugin(Process):
             # Back to where we were, in case it matters
             os.chdir(start_dir)
 
+            # Chain on the PDBQuery
+            #time.sleep(15)
+            #self.run_pdbquery_plugin()
+
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
+
+            # Chain on the PDBQuery
+            #self.run_pdbquery_plugin()
             
     def run_pdbquery_plugin(self):
         """Set up and run the analysis plugin"""
@@ -722,16 +826,22 @@ class RapdPlugin(Process):
             os.chdir(self.dirs["work"])
 
             # Construct the pdbquery plugin command
+            self.db_settings = False
+            if self.site:
+                # print "Have self.site"
+                self.db_settings = self.site.CONTROL_DATABASE_SETTINGS
+
+            # Construct the pdbquery plugin command
             class PdbqueryArgs(object):
                 """Object for command construction"""
                 clean = self.preferences.get("clean_up", False)
-                datafile = self.results["results"]["mtzfile"]
+                data_file = self.results["results"]["mtzfile"]
                 dir_up = self.preferences.get("dir_up", False)
                 json = self.preferences.get("json", True)
                 nproc = self.procs
                 progress = self.preferences.get("progress", False)
                 run_mode = self.preferences.get("run_mode", False)
-                db_settings = self.site.CONTROL_DATABASE_SETTINGS
+                db_settings = self.db_settings
                 exchange_dir = self.preferences.get("exchange_dir", False)
                 pdbs = False
                 contaminants = True
@@ -751,25 +861,13 @@ class RapdPlugin(Process):
             self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
     
             # Run the plugin
-            self.pdbq_process = plugin.RapdPlugin(command=pdbquery_command,
+            self.pdbq_process = plugin.RapdPlugin(site=self.site,
+                                                  command=pdbquery_command,
                                                   processed_results = self.results,
-                                                  computer_cluster=self.computer_cluster,
                                                   tprint=self.tprint,
                                                   logger=self.logger)
 
             self.pdbq_process.start()
-            
-            """
-            # Allow multiple returns for each part of analysis.
-            while True:
-                analysis_result = plugin_queue.get()
-                self.results["results"]["analysis"] = analysis_result
-                self.send_results(self.results)
-                if analysis_result['process']["status"] in (-1, 100):
-                    break
-            """
-            #analysis_result = plugin_queue.get()
-            #self.results["results"]["analysis"] = analysis_result
 
             # Back to where we were, in case it matters
             os.chdir(start_dir)
@@ -906,18 +1004,17 @@ class RapdPlugin(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        if self.low_res or self.hi_res:
-            if not self.low_res:
-                low_res = 200.0
-            else:
-                low_res = self.low_res
-            if not self.hi_res:
-                hi_res = 0.9
-            else:
-                hi_res = self.hi_res
-            xdsinp = self.change_xds_inp(
-                xdsinp,
-                "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
+        # if self.low_res or self.hi_res:
+        if not self.low_res:
+            self.low_res = 200.0
+        low_res = self.low_res
+        if not self.hi_res:
+            self.hi_res = 0.9
+        hi_res = self.hi_res
+        # print "Setting INCLUDE_RESOLUTION_RANGE", low_res, hi_res
+        xdsinp = self.change_xds_inp(
+            xdsinp,
+            "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
         xdsinp = self.change_xds_inp(
             xdsinp,
             "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
@@ -1033,14 +1130,11 @@ class RapdPlugin(Process):
                 "SPACE_GROUP_NUMBER=%d\n" % sg_num_pointless)
 
         # Already have hi res cutoff
-        if self.hi_res:
+        #if self.hi_res:
+        if self.preferences.get("hi_res", False):
             new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
         else:
-            if self.low_res:
-                low_res = self.low_res
-            else:
-                low_res = 200.0
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
@@ -1052,7 +1146,7 @@ class RapdPlugin(Process):
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
                 newinp = self.change_xds_inp(
                     newinp,
-                    "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], low_res, new_rescut))
+                    "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], self.low_res, new_rescut))
                 # newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  Reintegrating with new resolution cutoff",
@@ -1476,27 +1570,10 @@ class RapdPlugin(Process):
                     line = (l0, line[1])
                     break
             xds_input.append("%s%s"%('='.join(line), '\n'))
-
-        """
-        for key, value in xds_dict.iteritems():
-            # Regions that are excluded are defined with
-            # various keyword containing the word UNTRUSTED.
-            # Since multiple regions may be specified using
-            # the same keyword on XDS but a dict cannot
-            # have multiple values assigned to a key,
-            # the following if statements work though any
-            # of these regions and add them to xdsinput.
-            if 'UNTRUSTED' in key:
-                if 'RECTANGLE' in key:
-                    line = 'UNTRUSTED_RECTANGLE=%s\n' %value
-                elif 'ELLIPSE' in key:
-                    line = 'UNTRUSTED_ELLIPSE=%s\n' %value
-                elif 'QUADRILATERAL' in key:
-                    line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
-            else:
-                line = "%s=%s\n" % (key, value)
-            xds_input.append(line)
-        """
+        
+        # Set resolution limit to edge of detector.
+        #xds_input = get_resolution_at_edge(xds_input)
+        
 
     	# If the detector is tilted in 2theta, adjust the value of
     	# DIRECTION_OF_DETECTOR_Y-AXIS.
@@ -2009,7 +2086,8 @@ class RapdPlugin(Process):
         """Parse out the XPARM file for information"""
 
         if not os.path.exists(infile):
-            return False
+            #return False
+            infile = "XPARM.XDS"
 
         in_lines = open(infile, "r").readlines()
         results = {}
@@ -2082,6 +2160,14 @@ class RapdPlugin(Process):
         os.chdir(directory)
 
         orig_rescut = False
+        
+        # Check if XDS logs exist
+        l = ["IDXREF.LP", "INTEGRATE.LP", "CORRECT.LP"]
+        for f in l:
+            if not os.path.exists(f):
+                self.logger.debug('    XDS did not run properly!')
+                self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
+                return 'Failed'
 
         # Open up xds log files for saving
         xds_idxref_log = open("IDXREF.LP", "r").readlines()
@@ -2090,6 +2176,7 @@ class RapdPlugin(Process):
 
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
+        self.logger.debug('xds_parm_results: %s'%xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile, pointless_log = self.pointless()
@@ -2320,21 +2407,20 @@ class RapdPlugin(Process):
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
-        #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
-        #print "Copy %s to %s" % (src_file, tgt_file)
+        # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
-        #print "Copy %s to %s" % (src_file, prod_file)
+        # print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"unmerged"
+            "description":"unmerged_mtz"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Move to archive
         src_file = os.path.abspath("freer.mtz")
@@ -2351,9 +2437,23 @@ class RapdPlugin(Process):
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"rfree"
+            "description":"rfree_mtz"
         })
         #pprint(self.results["results"]["data_produced"])
+
+        # Add XDS.ASCII to data_produced
+        src_file = os.path.abspath("XDS_ASCII.HKL")
+        tgt_file = "%s_XDS_ASCII.HKL" % archive_files_prefix
+        shutil.copyfile(src_file, tgt_file)
+        results["xdsascii_hkl"] = tgt_file
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
+        self.results["results"]["data_produced"].append({
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
+            "description":"xdsascii_hkl"
+        })
 
         if scalepack:
             # Create the merged scalepack format file.

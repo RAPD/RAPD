@@ -33,17 +33,16 @@ import shlex
 #import time
 #import subprocess32 as subprocess
 from subprocess import Popen, call, PIPE, STDOUT
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager, cpu_count
 from multiprocessing.pool import ThreadPool
-
-
-import threading
-#import subprocess
-
+from multiprocessing.managers import BaseManager
+from utils.site import get_ip_address
+from queue import Queue
+from threading import Thread
 
 import traceback
-from multiprocessing.pool import Pool
-import multiprocessing
+#from multiprocessing.pool import Pool
+#import multiprocessing
 
 # Shortcut to multiprocessing's logger
 def error(msg, *args):
@@ -68,13 +67,13 @@ class LogExceptions(object):
         # It was fine, give a normal answer
         return result
 
-class LoggingPool(Pool):
-    def apply_async(self, func, args=(), kwds={}, callback=None):
-        return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
+#class LoggingPool(Pool):
+#    def apply_async(self, func, args=(), kwds={}, callback=None):
+#        return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
 
 
 
-class LocalSubprocess(threading.Thread):
+class LocalSubprocess(Thread):
 
     done = False
 
@@ -97,7 +96,7 @@ class LocalSubprocess(threading.Thread):
         self.result_queue=result_queue
         self.tag=tag
 
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
     def run(self):
 
@@ -134,17 +133,82 @@ class LocalSubprocess(threading.Thread):
 # myclass.join()
 # print myclass.stdout
 
-def local_process(command, shell=False):
-    if shell:
-        # If requesting shell
-        proc = call(command, shell=True)
-    elif isinstance(command, basestring):
-        # If command is a string and no shell.
-        proc = call(shlex.split(command))
-    else:
-        # no shell and command is a list already.
-        proc = call(command)
-    return proc
+class QueueManager(BaseManager):
+    """Setup a multiprocessing.manager to pass results queue through Process or apply.
+       This is a way to get a queue across different machines. 
+       DID NOT WORK because you cannot close the manager server?!?"""
+    def __init__(self,
+                 ip=False,
+                 port=20100,
+                 authkey=None,
+                 manager=False):
+
+        self.ip = ip
+        self.port = port
+        self.authkey = authkey
+      
+        if not self.ip:
+            self.ip = get_ip_address()
+    
+    def setup_manager(self):
+        """Setup manager on host machine running job."""
+        queue = Queue.Queue()
+        self.register('get_queue', callable=lambda:queue)
+        manager = BaseManager(address=(self.ip, self.port), authkey=self.authkey)
+        #m = QueueManager(address=(get_ip_address(), 50000), authkey=self.authkey)
+        #self.queue_server = manager.get_server()
+        #self.queue_server.serve_forever()
+        self.queue_server = manager.start()
+        print dir(queue)
+        
+        
+        #print dir(manager)
+        #print dir(self.queue_server)
+        #print self.queue_server.address
+        
+        #return queue
+        
+    def stop_manager(self):
+        #self.queue_server.shutdown()
+        self.queue_server.stop()
+    
+    def setup_client(self):
+        """Setup remote client and return remote queue."""
+        self.register('get_queue')
+        manager = BaseManager(address=(self.ip, self.port), authkey=self.authkey)
+        manager.connect()
+        queue = manager.get_queue()
+        return queue
+
+def mp_manager_TEST():
+    # This is a way to get a queue across different machines. 
+    # DID NOT WORK because you cannot close the manager server?!?
+
+    queue = Queue()
+    class QueueManager(BaseManager): pass
+    
+    QueueManager.register('get_queue', callable=lambda:queue)
+    m = QueueManager(address=(get_ip_address(), 20100), authkey=None)
+    #m.start()
+    s = m.get_server()
+    print dir(s)
+    stop_timer = threading.Timer(1, lambda:s.stop_event.set())
+    QueueManager.register('stop', callable=lambda:stop_timer.start())
+    s.serve_forever()
+    return (m, queue)
+
+def mp_client(inp):
+   # This is a way to get a queue across different machines. 
+    # DID NOT WORK because you cannot close the manger server?!?
+
+    class QueueManager(BaseManager): pass
+    QueueManager.register('get_queue')
+    #QueueManager.register('stop')
+    m = QueueManager(address=(inp[0],inp[1]), authkey=None)
+    m.connect()
+    queue = m.get_queue()
+    return (m, queue)
+
 
 def local_subprocess(command,
                      logfile=False,
@@ -164,31 +228,25 @@ def local_subprocess(command,
         tag - an identifying tag to be useful to the caller
     """
     # Need the PIPE otherwise PHENIX jobs dont finish for some reason... 
-    #proc = Popen(command, 
-    #             shell=True,
-    #print(1)
-    #raise Exception()
-    #print(2)
-    #print command
     if shell:
         # If requesting shell
         proc = Popen(command, 
-                 stdout=PIPE,
-                 stderr=PIPE,
-                 shell=True,
-                 bufsize=-1)
+                     stdout=PIPE,
+                     stderr=PIPE,
+                     shell=True,
+                     bufsize=-1)
     elif isinstance(command, basestring):
         # If command is a string and no shell.
         proc = Popen(shlex.split(command), 
                      stdout=PIPE,
                      stderr=PIPE,
-                     bufsize=-1           )
+                     bufsize=-1)
     else:
         # no shell and command is a list already.
         proc = Popen(command, 
                      stdout=PIPE,
                      stderr=PIPE,
-                     bufsize=-1           )
+                     bufsize=-1)
     # print "  running...", command
     # Send back PID if have pid_queue
     if pid_queue:
@@ -224,11 +282,18 @@ def local_subprocess(command,
             pass
 
     # print "  finished...", command
+
+def total_nproc():
+    """Returns the nproc on machine."""
+    return cpu_count()
+
 #@staticmethod
 def mp_pool(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
-    pool = Pool(processes=nproc)
-    return pool
+    return Pool(processes=nproc)
+
+def mp_manager():
+    return Manager()
 
 @staticmethod
 def mp_pool_TESTING(nproc=8):

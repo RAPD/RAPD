@@ -31,8 +31,12 @@ from pprint import pprint
 import shutil
 import subprocess
 import sys
+import stat
+import shlex
+import time
 
 from utils.text import json
+from utils.processes import local_subprocess
 from bson.objectid import ObjectId
 
 from iotbx import mtz as iotbx_mtz
@@ -240,7 +244,48 @@ def date_adsc_to_sql(datetime_in):
     #print ' '.join((date,time))
     return('T'.join((date,time)))
 
-def calcADF(self, inp):
+def calc_ADF_map(data_file, phaser_mtz, phaser_pdb):
+    """
+    Calc an ADF from MR phases.
+    data_file - mtz file from processed data collection
+    phaser_mtz - MTZ file out of Phaser
+    phaser_pdb - PDB file out of Phaser
+    """
+    adf_map = phaser_mtz.replace('.mtz', '_adf.map')
+    peak = adf_map.replace('.map', '_peak.pdb')
+    com_file = os.path.join(os.getcwd(),"adf.com")
+
+    command  = "cad hklin1 %s hklin2 %s hklout adf_input.mtz<<eof3\n"%(phaser_mtz, data_file)
+    command += "labin file 1 E1=FC  E2=PHIC E3=FOM\n"
+    command += "labin file 2 all\nend\neof3\n"
+    command += "fft hklin adf_input.mtz mapout map.tmp<<eof4\n"
+    command += "scale F1 1.0\n"
+    command += "labin DANO=DANO SIG1=SIGDANO PHI=PHIC W=FOM\n"
+    command += "end\neof4\n"
+    command += "mapmask mapin map.tmp xyzin %s mapout %s<<eof5\n" % (phaser_pdb, adf_map)
+    command += "border 5\nend\neof5\n"
+    command += "peakmax mapin %s xyzout %s<<eof6\n" % (adf_map, peak)
+    command += "numpeaks 50\nend\neof6\n\n"
+    
+    adf = open(com_file, "w")
+    adf.writelines(command)
+    adf.close()
+    os.chmod(com_file, stat.S_IRWXU)
+    local_subprocess(command=com_file,
+                     logfile='adf.log',
+                     shell=True)
+    # Delete the temp files.
+    os.unlink('adf_input.mtz')
+    os.unlink('map.tmp')
+    
+    if os.path.exists(adf_map) and os.path.exists(peak):
+        return ({'adf': adf_map,
+                 'peak': peak})
+    else:
+        return ({'adf': None,
+                 'peak': None})
+
+def calcADF_OLD(self, inp):
     """
     Calc an ADF from MR phases.
     """
@@ -282,6 +327,17 @@ def calcADF(self, inp):
         # self.logger.exception('**Error in Utils.calcADF**')
         pass
     """
+def calc_maps(mtz_file, pdb_file):
+  """Calculates 2fofc and fofc maps from Phaser MTZ file."""
+  from mmtbx.command_line import mtz2map
+  # I get a c++ error occasionally. Rerun to see if it goes through.
+  for i in range(2):
+      try:
+          mtz2map.run([mtz_file, pdb_file])
+          break
+      except:
+          time.sleep(2)
+
 def calcResNumber(self,sg,se=False,vol=False):
   """
   Calculates total number of residues or number of Se in AU.
@@ -808,7 +864,7 @@ def convertImage(self, inp, output):
   except:
     self.logger.exception('**ERROR in Utils.convertImage**')
   """
-def convertSG(self, inp, reverse=False):
+def convertSG_OLD(self, inp, reverse=False):
     """
     Convert SG to SG#.
     """
@@ -3628,12 +3684,12 @@ def get_sub_groups(input_sg, mode="laue"):
                   "209": ["209", "210"],
                   "211": ["211", "214"]}
 
-    shelx_sg = False
+    sg2 = False
 
     if isinstance(input_sg, int):
         input_sg = str(input_sg)
 
-    # Look for subgroups
+    # Look up Laue group of input SG
     if subgroups1.has_key(input_sg):
         simple_sg = input_sg
     else:
@@ -3641,10 +3697,25 @@ def get_sub_groups(input_sg, mode="laue"):
             if line[1].count(input_sg):
                 simple_sg = line[0]
                 break
-
     # Returns Laue group number
     if mode == "laue":
         return simple_sg
+
+    # Otherwise it expects a list of SG's back
+    elif mode == "shelx":
+        # SHELX SG's
+        if subgroups2.has_key(simple_sg):
+            sg2 = subgroups2[simple_sg]
+    else:
+        # Phaser SG's
+        if subgroups3.has_key(simple_sg):
+            sg2 = subgroups3[simple_sg]
+    if sg2:
+        return sg2
+    else:
+        return [sg2]
+    
+    """
     else:
         if mode == "shelx":
             if subgroups2.has_key(simple_sg):
@@ -3656,7 +3727,7 @@ def get_sub_groups(input_sg, mode="laue"):
             return shelx_sg
         else:
             return [simple_sg]
-
+    """
 def symopsSG(self, inp):
   """
   Convert SG to SG#.

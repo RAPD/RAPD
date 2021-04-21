@@ -168,8 +168,6 @@ class Model(object):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.redis_adapter')
 
-        #self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        #self.redis = self.redis_database.connect_to_redis()
         self.redis = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS, 
                                              logger=self.logger)
 
@@ -221,7 +219,7 @@ class Model(object):
         # Shorten variable names
         site = self.site
 
-        import sites.detectors.necat_dectris_eiger16m
+        #import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
         if site.DETECTOR:
@@ -416,16 +414,15 @@ class Model(object):
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
+        fast_fullname = image_data.get("fast_fullname", None)
 
         self.logger.debug("Received new image %s", fullname)
+        #if not os.path.exists(fullname):
+        #    self.logger.debug("This image does NOT exist:%s"%fullname)
+        #    return False
 
         # Shortcut to detector
         detector = self.detectors[site_tag]
-
-        # Check if it exists. May have been deleted from RAMDISK
-        #if os.path.isfile(fullname) in (False, None):
-        #    if self.site.ALT_IMAGE_LOCATION:
-        #        fullname = detector.get_alt_path(fullname)
 
         # Save some typing
         dirname = os.path.dirname(fullname)
@@ -446,8 +443,9 @@ class Model(object):
 
         # Image is in a run
         if isinstance(place_in_run, int):
-
-            # self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
+            # Save the current place_in_run in Redis so integration has reliable signal of whether an image exists.
+            # This is a problem on some filesystems (ie. NFS) caching the file attributes.
+            self.redis.set('place_in_run:%s'%site_tag, str(place_in_run))
 
             # Save some typing
             current_run = self.recent_runs[str(run_id)]
@@ -470,10 +468,12 @@ class Model(object):
                         site_header = site_data
 
                     # Get all the image information
+                    self.logger.debug("First image in run: %s"%fullname)
                     attempt_counter = 0
                     while attempt_counter < 5:
                         try:
                             attempt_counter += 1
+                            self.logger.debug("Attempt to read image: %s"%str(attempt_counter))
                             if os.path.exists(fullname):
                                 header = detector.read_header(
                                     fullname,
@@ -494,7 +494,13 @@ class Model(object):
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
-
+                    """
+                    # Save path info for hidden fast storage, if present
+                    header["fast_fullname"] = fast_fullname
+                    if fast_fullname not in (None):
+                        header["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                        header["run"]["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                    """
                     # Add to the database
                     image_id = self.database.add_image(data=header, return_type="id")
 
@@ -561,7 +567,9 @@ class Model(object):
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
-
+            """
+            header["fast_fullname"] = fast_fullname
+            """
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
             if image_id:
@@ -632,8 +640,10 @@ class Model(object):
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
-            print 'run_id:%s'%run_id
-            print 'run: %s'%run
+            # print 'run_id:%s'%run_id
+            # print 'run: %s'%run
+            #self.logger.debug('run_id:%s'%run_id)
+            #self.logger.debug('run:%s'%run)
 
             #self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
@@ -660,6 +670,7 @@ class Model(object):
                                                      minutes=minutes,
                                                      return_type=return_type)
 
+        self.logger.debug('identified_runs:%s'%identified_runs)
         # If boolean, just return
         if return_type == "boolean":
             return identified_runs
@@ -734,6 +745,8 @@ class Model(object):
         detector = self.detectors[site_tag.upper()]
 
         # If the detector can determine if run or snap from the image name
+        ## I don't remember which line is correct for catching th e exceptions??
+        #if getattr(detector, "is_run_from_imagename", None):
         if hasattr(detector, "is_run_from_imagename"):
             # Make sure we have a function
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
@@ -748,12 +761,12 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
-        # self.logger.debug("%s %s %s %s %s",
-        #                   directory,
-        #                   basename,
-        #                   image_prefix,
-        #                   run_number,
-        #                   image_number)        
+        self.logger.debug("%s %s %s %s %s",
+                           directory,
+                           basename,
+                           image_prefix,
+                           run_number,
+                           image_number)
 
         # Look for run information for this image
         run_info = self.query_in_run(site_tag=site_tag,
@@ -1023,7 +1036,7 @@ class Model(object):
 
             # Determine group_id
             if self.site.GROUP_ID:
-                print "Have self.site.GROUP_ID"
+                # print "Have self.site.GROUP_ID"
                 det_type, det_attribute, det_field = self.site.GROUP_ID
                 if det_type == "stat":
                     attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)

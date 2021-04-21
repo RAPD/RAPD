@@ -1,59 +1,5 @@
 <div class="result-panel child">
     <mat-tab-group>
-        <mat-tab label="Contaminants">
-            <div fxLayout="row" fxLayoutGap="10px">
-                <div fxFlex="none">
-                    <div>
-                        <h3>Contaminant Search</h3>
-
-                        <table mat-table class="rapd-table" [dataSource]="contaminants" matSort (matSortChange)="sortData($event, 'contaminants')"
-                            matSortActive="gain" matSortDirection="desc">
-
-                            <ng-container matColumnDef="ID">
-                                <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
-                                <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="description">
-                                <th mat-header-cell *matHeaderCellDef style="text-align: center;"> Description </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="gain">
-                                <th mat-header-cell *matHeaderCellDef mat-sort-header="gain"> LL Gain </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.gain, 'No Solution', '1.1-1')}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="rfz">
-                                <th mat-header-cell *matHeaderCellDef> RF Z-score </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.rfz, '-', '1.1-1')}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="tfz">
-                                <th mat-header-cell *matHeaderCellDef> TF Z-score </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.tfz, '-', '1.1-1')}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="clash">
-                                <th mat-header-cell *matHeaderCellDef> # Clashes </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
-                            </ng-container>
-
-                            <ng-container matColumnDef="actions">
-                                <th mat-header-cell *matHeaderCellDef> Actions </th>
-                                <td mat-cell *matCellDef="let element">
-                                    <button *ngIf="element.pdb !== undefined" mat-button (click)="initDownload(element)">
-                                        <mat-icon>get_app</mat-icon>Download</button>
-                                </td>
-                            </ng-container>
-
-                            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-                            <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </mat-tab>
         <mat-tab label="Cell Search">
             <div fxLayout="row" fxLayoutGap="10px">
                 <div fxFlex="none">
@@ -90,14 +36,17 @@
 
                             <ng-container matColumnDef="clash">
                                 <th mat-header-cell *matHeaderCellDef> # Clashes </th>
-                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
+                                <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.0')}} </td>
                             </ng-container>
 
                             <ng-container matColumnDef="actions">
                                 <th mat-header-cell *matHeaderCellDef> Actions </th>
                                 <td mat-cell *matCellDef="let element">
-                                    <button mat-button *ngIf="element.pdb !== undefined" (click)="initDownload(element)">
+                                    <button mat-button *ngIf="element.pdb" (click)="initDownload(element)">
                                         <mat-icon>get_app</mat-icon>
+                                    </button>
+                                    <button mat-button *ngIf="element.pdb" (click)="openViewer(element)">
+                                        <mat-icon>zoom_in</mat-icon>
                                     </button>
                                 </td>
                             </ng-container>
@@ -165,6 +114,60 @@
                 </div>
             </div>
         </mat-tab>
+        <mat-tab label="Contaminants">
+          <div fxLayout="row" fxLayoutGap="10px">
+              <div fxFlex="none">
+                  <div>
+                      <h3>Contaminant Search</h3>
+
+                      <table mat-table class="rapd-table" [dataSource]="contaminants" matSort (matSortChange)="sortData($event, 'contaminants')"
+                          matSortActive="gain" matSortDirection="desc">
+
+                          <ng-container matColumnDef="ID">
+                              <th mat-header-cell *matHeaderCellDef mat-sort-header="ID"> ID </th>
+                              <td mat-cell *matCellDef="let element"> {{element.ID}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="description">
+                              <th mat-header-cell *matHeaderCellDef style="text-align: center;"> Description </th>
+                              <td mat-cell *matCellDef="let element"> {{default_val(element.description, 'Unknown')}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="gain">
+                              <th mat-header-cell *matHeaderCellDef mat-sort-header="gain"> LL Gain </th>
+                              <td mat-cell *matCellDef="let element"> {{default_val(element.gain, 'No Solution', '1.1-1')}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="rfz">
+                              <th mat-header-cell *matHeaderCellDef> RF Z-score </th>
+                              <td mat-cell *matCellDef="let element"> {{default_val(element.rfz, '-', '1.1-1')}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="tfz">
+                              <th mat-header-cell *matHeaderCellDef> TF Z-score </th>
+                              <td mat-cell *matCellDef="let element"> {{default_val(element.tfz, '-', '1.1-1')}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="clash">
+                              <th mat-header-cell *matHeaderCellDef> # Clashes </th>
+                              <td mat-cell *matCellDef="let element"> {{default_val(element.clash, '-', '1.1-1')}} </td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="actions">
+                              <th mat-header-cell *matHeaderCellDef> Actions </th>
+                              <td mat-cell *matCellDef="let element">
+                                  <button *ngIf="element.pdb !== undefined" mat-button (click)="initDownload(element)">
+                                      <mat-icon>get_app</mat-icon></button>
+                              </td>
+                          </ng-container>
+
+                          <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+                          <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      </mat-tab>
         <mat-tab label="Raw">
             <div fxLayout="row" fxLayoutGap="10px">
                 <div fxFlex="none">
