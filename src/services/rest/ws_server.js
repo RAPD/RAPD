@@ -1,52 +1,57 @@
 // Configuration
-const config = require("./config");
+const config = require('./config');
 
 // Core modules
-var http = require("http");
-var url = require("url");
-var WebSocketServer = require("ws").Server;
-// var SocketIo = require('socket.io');
-var mongoose = require("./models/mongoose");
-Q = require("q");
+var http = require('http');
+const os = require('os');
+var url = require('url');
+var WebSocketServer = require('ws').Server;
+var mongoose = require('./models/mongoose');
+Q = require('q');
 // Fix the promise issue in Mongoose
 // mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
-var jwt = require("jsonwebtoken");
-var uuid = require("node-uuid");
+const jwt = require('jsonwebtoken');
+const uuid = require('node-uuid');
 
-// Redis
-var Redis = require("ioredis");
+const Redis = require('ioredis');
+
+// Identifying data
+const myId = uuid.v1();
+const myHost = os.hostname();
 
 // Import models
-var mongoose = require("./models/mongoose");
+var mongoose = require('./models/mongoose');
 const Activity = mongoose.ctrl_conn.model(
-  "Activity",
-  require("./models/activity").ActivitySchema
+  'Activity',
+  require('./models/activity').ActivitySchema
 );
 const Image = mongoose.ctrl_conn.model(
-  "Image",
-  require("./models/image").ImageSchema
+  'Image',
+  require('./models/image').ImageSchema
 );
 const Result = mongoose.ctrl_conn.model(
-  "Result",
-  require("./models/result").ResultSchema
+  'Result',
+  require('./models/result').ResultSchema
 );
 
 // Definitions of result types
 var result_type_trans = {
   mx: {
-    snap: ["mx:index+strategy"],
-    sweep: ["mx:integrate"],
+    snap: ['mx:index+strategy'],
+    sweep: ['mx:integrate'],
     merge: [],
-    mr: [],
+    mr: ['mx:mr'],
     sad: [],
     mad: []
   }
 };
 
 // All the ws_connections
-var ws_connections = {};
+let ws_connections = {};
+let activeSessions = [];
+let subscribedResults = {};
 
 // Subscribe to redis updates
 try {
@@ -56,13 +61,35 @@ try {
   throw e;
 }
 
+// Register connection to Redis database
+const redis_client = new Redis(config.redis_connection);
+redis_client.set("R2:WSS:"+myId, myHost, 'EX', 31);
+setInterval(function() {
+  // console.log("Updating connection tag on Redis");
+  redis_client.set("R2:WSS:"+myId, myHost, 'EX', 31);
+}, 30000);
+
 // Handle new message passed from Redis
 sub.on("message", function(channel, message) {
+  
   console.log("sub channel " + channel);
+  // console.log(message);
 
   // Decode into oject
-  let message_object = JSON.parse(message);
-
+  let message_object;
+  try {
+    message_object = JSON.parse(message);
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      console.error("Failure in parsing message");
+    } else {
+      console.error("Unknown error parsing message");
+      console.error(e);
+    }
+    // Break out of message handling
+    return false;
+  }
+  
   // Grab out the session_id
   let session_id = false;
   try {
@@ -74,48 +101,127 @@ sub.on("message", function(channel, message) {
     } else {
       console.error(e);
     }
+    // Break out of message handling
+    return false;
   }
+    
+  // Only publish result if we have a session_id for the result
+  // console.log(session_id);
+  // console.log(activeSessions);
+  if (activeSessions.includes(session_id)) {
+    
+    console.log("Have a subscribed session");
+    
+    // Create minimal result
+    const minimalResult = getMinimalResult(message_object);
+    console.log(minimalResult);
+    
+    let detailedResult = false;
+    
+    // Any webssocket with the session_id gets the minimal result
+    Object.keys(ws_connections).forEach((socket_id) => {
+      
+      // Same session
+      if (ws_connections[socket_id].session.session_id === session_id) {
+        console.log("Sending minimal result to", session_id);
+        // Send the minimalResult
+        ws_connections[socket_id].send(
+          JSON.stringify({
+            msg_type: "results",
+            results: [minimalResult]
+          })
+        );
 
-  // Any connections?
-  if (Object.keys(ws_connections).length > 0) {
-    // Turn message into messages to send to clients
-    parse_message(channel, message_object).then(function(messages_to_send) {
-      console.log("messages_to_send", messages_to_send);
-      //
-      // console.log('Will send', messages_to_send.length, 'messages');
-      //
-      // Look for websockets that are watching the same session
-      if (session_id) {
-        Object.keys(ws_connections).forEach(function(socket_id) {
-          console.log(ws_connections[socket_id].session);
-          if (ws_connections[socket_id].session.session_id === session_id) {
-            console.log("Have a live one!");
-            messages_to_send.forEach(function(message) {
-              console.log(message);
-              ws_connections[socket_id].send(
-                JSON.stringify({
-                  msg_type: message[0],
-                  results: message[1]
-                })
-              );
-            });
+        // Check if any connections aare subscribed to this result
+        console.log(ws_connections[socket_id].session.currentResults);
+        const resultType = (minimalResult.data_type+":"+minimalResult.plugin_type).toUpperCase();
+        console.log('resultType', resultType);
+        console.log(ws_connections[socket_id].session.currentResults[resultType]);
+        if (ws_connections[socket_id].session.currentResults[resultType]) {
+          if (ws_connections[socket_id].session.currentResults[resultType]._id === minimalResult._id) {
+            console.log("HAVE A WEBSOCKET SUBBSCRIBED TO RESULT")
+            if (! detailedResult) {
+              getNewDetailedResult(message_object).then((result) => {
+                detailedResult = result;
+                console.log('Sending', detailedResult);
+                ws_connections[socket_id].send(
+                  JSON.stringify({
+                    msg_type: "result_details",
+                    results: detailedResult
+                  })
+                );
+              });
+            }
           }
-        });
+        }
       }
     });
+
   }
 });
 
 // Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
 
-var parse_message = function(channel, message) {
-  // console.log('parse_message');
+// Create a minimal result to send to clients
+const getMinimalResult = function(message) {
+  const result = {
+    _id: message.process.result_id,
+    data_type: message.plugin.data_type.toLowerCase(),
+    parent_id: message.process.parent_id,
+    plugin_id: message.plugin.id,
+    plugin_type: message.plugin.type.toLowerCase(),
+    plugin_version: message.plugin.version,
+    projects: [],
+    repr: message.process.repr,
+    result_id: message._id,
+    session_id: message.process.session_id,
+    spoof: message.process.spoof,
+    status: message.process.status,
+    timestamp: new Date().toISOString()
+  };
+  return result;
+}
+
+const getNewDetailedResult = function(message) {
+  const deferred = Q.defer();
+
+  // Do nothing for ECHO
+  if (message.command === "ECHO") {
+    console.log("Echo...");
+    deferred.resolve({});
+
+  // Do something for not ECHO
+  } else {
+    // Create a detailed result
+    Q.all([
+      // Image 1
+      populateImage(message.process.image1_id),
+      // Image 2
+      populateImage(message.process.image2_id),
+      // Analysis
+      populateChildResult(message.results.analysis, "analysis"),
+      // PDBQuery
+      populateChildResult(message.results.pdbquery, "pdbquery")
+    ]).then((results) => {
+      // Assign results to detailed results
+      message.image1 = results[0];
+      message.image2 = results[1];
+      message.results.analysis = results[2];
+      message.results.pdbquery = results[3];
+      deferred.resolve(message);
+    });
+  }
+  return deferred.promise;
+}
+
+const parseMessage = function(channel, message) {
+  // console.log('parseMessage');
 
   var deferred = Q.defer();
 
   // Array to return
-  var return_array = [];
+  const returnObject = {};
 
   switch (channel) {
     case "RAPD_RESULTS":
@@ -124,12 +230,14 @@ var parse_message = function(channel, message) {
       // Do nothing for ECHO
       if (message.command === "ECHO") {
         console.log("Echo...");
-        deferred.resolve(return_array);
+        deferred.resolve(returnObject);
 
         // Do something for not ECHO
       } else {
-        console.log(message.plugin);
-        console.log(message.process);
+        // console.log(message.plugin);
+        // console.log(message.process);
+        
+        // message.process:
         // { subtype: 'CORE',
         //   version: '2.0.0',
         //   type: 'ANALYSIS',
@@ -148,63 +256,75 @@ var parse_message = function(channel, message) {
         //   parent_id: '5b3a975af468331c90d4e583',
         //   result_id: '5b3a97f1b77af848335f6ccd' }
 
-        // Create a result
-        let result = {
-          _id: message.process.result_id,
-          data_type: message.plugin.data_type.toLowerCase(),
-          parent_id: message.process.parent_id,
-          plugin_id: message.plugin.id,
-          plugin_type: message.plugin.type.toLowerCase(),
-          plugin_version: message.plugin.version,
-          projects: [],
-          repr: message.process.repr,
-          result_id: message._id,
-          session_id: message.process.session_id,
-          status: message.process.status,
-          timestamp: new Date().toISOString()
-        };
-        return_array.push(["results", [result]]);
-        // console.log('  Pushed results object onto return array');
+        // Create a result for clients
+        let result;
+        try {
+          result = {
+            _id: message.process.result_id,
+            data_type: message.plugin.data_type.toLowerCase(),
+            parent_id: message.process.parent_id,
+            plugin_id: message.plugin.id,
+            plugin_type: message.plugin.type.toLowerCase(),
+            plugin_version: message.plugin.version,
+            projects: [],
+            repr: message.process.repr,
+            result_id: message._id,
+            session_id: message.process.session_id,
+            status: message.process.status,
+            timestamp: new Date().toISOString()
+          };
+          
+          // console.log('  Pushed results object onto return array');
+          // returnArray.push(["results", [result]]);
+          returnObject.minimal = result;
 
-        // Create a detailed result
-        Q.all([
-          // Image 1
-          populate_image(message.process.image1_id),
-          // Image 2
-          populate_image(message.process.image2_id),
-          // Analysis
-          populate_child_result(message.results.analysis, "analysis"),
-          // PDBQuery
-          populate_child_result(message.results.pdbquery, "pdbquery")
-        ]).then(function(results) {
-          // Assign results to detailed results
-          message.image1 = results[0];
-          message.image2 = results[1];
-          message.results.analysis = results[2];
-          message.results.pdbquery = results[3];
+          // Create a detailed result
+          Q.all([
+            // Image 1
+            populateImage(message.process.image1_id),
+            // Image 2
+            populateImage(message.process.image2_id),
+            // Analysis
+            populateChildResult(message.results.analysis, "analysis"),
+            // PDBQuery
+            populateChildResult(message.results.pdbquery, "pdbquery")
+          ]).then(function(results) {
+            // Assign results to detailed results
+            message.image1 = results[0];
+            message.image2 = results[1];
+            message.results.analysis = results[2];
+            message.results.pdbquery = results[3];
 
-          return_array.push(["result_details", message]);
+            // returnArray.push(["result_details", message]);
+            returnObject.full = message;
 
-          // If result has a parent create a detailed result
-          if (message.process.parent_id) {
-            // Get the response to send to the websocket
-            get_detailed_result(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id)
-            .then(function(response) {
-              return_array.push(["result_details", response]);
-            });
-          }
+            // If result has a parent create a detailed result
+            if (message.process.parent_id) {
+              // Get the response to send to the websocket
+              getDetailedResult(message.process.parent.data_type, message.process.parent.plugin_type, message.process.parent_id)
+              .then(function(response) {
+                // returnArray.push(["result_details", response]);
+                returnObject.full_parent = response;
+              });
+            }
 
-          // console.log('return_array now has length', return_array.length);
-          // console.log('return_array', return_array);
-          deferred.resolve(return_array);
-        });
+            // console.log('return_array now has length', returnArray.length);
+            // console.log('return_array', return_array);
+            deferred.resolve(returnObject);
+          });
+
+        } catch (e) {
+          console.error("Unable to construct result from RAPD_RESULT");
+          console.error(e);
+          deferred.resolve(false);
+        }
       }
 
       break;
 
     default:
       console.log("Don't know about this channel.");
-      deferred.resolve(return_array);
+      deferred.resolve(returnArray);
       break;
   }
 
@@ -213,9 +333,8 @@ var parse_message = function(channel, message) {
 
 /*
  * Populate image data for detailed result
- * 
  */
-var populate_image = function(image_key) {
+var populateImage = function(image_key) {
   // Create deferred
   var deferred = Q.defer();
 
@@ -241,10 +360,9 @@ var populate_image = function(image_key) {
 };
 
 /*
- * Populate analysis data for detailed result
- * 
+ * Populate child result data of detailed result
  */
-var populate_child_result = function(result_id, mode) {
+var populateChildResult = function(result_id, mode) {
   // Create deferred
   var deferred = Q.defer();
 
@@ -298,17 +416,19 @@ var populate_child_result = function(result_id, mode) {
   return deferred.promise;
 };
 
-function get_detailed_result(data_type, plugin_type, result_id) {
+// Retrieve and populate a detailed result from a plugin
+function getDetailedResult(data_type, plugin_type, result_id, ws) {
   
-  console.log('get_detailed_result', data_type, plugin_type, result_id);
+  // console.log('getDetailedResult', data_type, plugin_type, result_id);
   
   var deferred = Q.defer();
 
   // Create a mongoose model for the result
   let name = (data_type + "_" + plugin_type + "_result").toLowerCase();
   let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
-  console.log(name, collection_name);
-  var ResultModel;
+  
+  // Retrieve or make a model for this request
+  let ResultModel;
   try {
     if (mongoose.ctrl_conn.model(collection_name)) {
       ResultModel = mongoose.ctrl_conn.model(collection_name);
@@ -331,73 +451,87 @@ function get_detailed_result(data_type, plugin_type, result_id) {
   }
 
   // Now get the result
-  ResultModel.findOne({
-    "process.result_id": mongoose.Types.ObjectId(result_id)
-  }).exec(function(err, detailed_result) {
-    // Error
-    if (err) {
-      console.error(err);
-      deferred.resolve({
-        msg_type: "result_details",
-        success: false,
-        results: err
-      });
+  ResultModel.findOne(
+    {"process.result_id": mongoose.Types.ObjectId(result_id)},)
+    .exec(function(err, detailed_result) {
+      // Error
+      if (err) {
+        console.error(err);
+        deferred.resolve({
+          msg_type: "result_details",
+          success: false,
+          results: err
+        });
 
-    // No error
-    } else {
-      console.log(detailed_result);
-      if (detailed_result) {
-        // console.log(Object.keys(detailed_result));
-        // console.log(detailed_result._doc);
-        // console.log(detailed_result._doc.process);
+      // No error
+      } else {
+        if (detailed_result) {
 
-        // Make sure there is a process
-        if ("process" in detailed_result._doc) {
-          Q.all([
-            // Image 1
-            populate_image(detailed_result._doc.process.image1_id),
-            // Image 2
-            populate_image(detailed_result._doc.process.image2_id),
-            // Analysis
-            populate_child_result(
-              detailed_result._doc.results.analysis,
-              "analysis"
-            ),
-            // PDBQuery
-            populate_child_result(
-              detailed_result._doc.results.pdbquery,
-              "pdbquery"
-            )
-          ]).then(function(results) {
-            // Assign results to detailed results
-            detailed_result._doc.image1 = results[0];
-            detailed_result._doc.image2 = results[1];
-            detailed_result._doc.results.analysis = results[2];
-            detailed_result._doc.results.pdbquery = results[3];
+          // Send part of the ressult back immediately before populating = faster
+          if (ws) {
+            ws.send(JSON.stringify({
+              msg_type: "result_details",
+              success: true,
+              results: detailed_result,
+              // results: {
+              //   process:detailed_result._doc.process,
+              //   results:{
+              //     plots:detailed_result._doc.results.plots,
+              //     summary:detailed_result._doc.results.summary,
+              //   }
+            }));
+          }  
 
-            console.log('result_details', detailed_result);
+          // If there is a process then we add to the result
+          if ("process" in detailed_result._doc) {
+            Q.all([
+              populateImage(detailed_result._doc.process.image1_id),
+              populateImage(detailed_result._doc.process.image2_id),
+              populateChildResult(
+                detailed_result._doc.results.analysis,
+                "analysis"
+              ),
+              populateChildResult(
+                detailed_result._doc.results.pdbquery,
+                "pdbquery"
+              ),
+              ]).then((results) => {
+                // Assign results to detailed results
+                detailed_result._doc.image1 = results[0];
+                detailed_result._doc.image2 = results[1];
+                detailed_result._doc.results.analysis = results[2];
+                detailed_result._doc.results.pdbquery = results[3];
+              
+                // Send back
+                const secondResponse = {
+                  msg_type: "result_details",
+                  success: true,
+                  results: detailed_result
+                };
+                if (ws) {
+                  ws.send(JSON.stringify(secondResponse));
+                }
+                deferred.resolve(secondResponse);
+              });
 
+          // No 'process' in detailed_result._doc
+          } else {
             // Send back
-            deferred.resolve({
+            const response = {
               msg_type: "result_details",
               success: true,
               results: detailed_result
-            });
-          });
-
-          // No 'process' in detailed_result._doc
-        } else {
-          // Send back
-          deferred.resolve({
-            msg_type: "result_details",
-            success: true,
-            results: detailed_result
-          });
-        }
+            }
+            if (ws) {
+              ws.send(response);
+            }
+            deferred.resolve(response);
+          }
       }
     }
   });
 
+  // Return the promise to caller
   return deferred.promise;
 }
 
@@ -412,32 +546,52 @@ function Wss(opt, callback) {
     server: opt.server
   });
 
-  // const wss = new WebSocketServer({ port: 8080 });
-
-  console.log('Wss up!');
+  // console.log('Wss up!');
 
   wss.on("connection", function connection(ws) {
     
-    console.log("Connected");
+    console.log("WS Connected");
+    console.log(ws.session);
 
     // Create a session object
-    ws.session = {};
+    ws.session = {
+      session_id: undefined,
+      current_result: undefined,
+      currentResults: {},
+    };
 
-    // Mark the ws and save to list
+    // Mark the ws and save to ws_connections object
     ws.id = uuid.v1();
     ws_connections[ws.id] = ws;
 
     // Create a ping interval to keep websocket connection alive
-    let ping_timer = setInterval(function() {
+    const ping_timer = setInterval(function() {
       ws.send("ping");
     }, 45000);
 
+    // Register the existencce of this WS cclient connection in Redis
+    redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
+    const register_interval = setInterval(function() {
+      // console.log("Updating connection tag on Redis");
+      redis_client.set("R2:WSC:"+ws.id, ws.session.session_id, 'EX', 31);
+    }, 30000);
+
+
     // Websocket has closed
     ws.on("close", function() {
-      console.log("websocket closed");
+      
+      console.log('websocket', ws.id,'closed');
 
       // Cancel the ping interval
       clearInterval(ping_timer);
+      clearInterval(register_interval);
+
+      // Clear immediately from register in Redis
+      redis_client.del("R2:WSC:"+ws.id);
+
+      // Remove the session from activeSessions
+      console.log('Removing', ws.session.session_id, 'from activeSessions');
+      activeSessions.splice(activeSessions.indexOf(ws.session.session_id), 1);
 
       // Remove the websocket from the storage objects
       delete ws_connections[ws.id];
@@ -452,8 +606,7 @@ function Wss(opt, callback) {
 
     // Message incoming from the client
     ws.on("message", function(message) {
-      var data = JSON.parse(message);
-      // console.log(data);
+      const data = JSON.parse(message);
 
       // Initializing the websocket
       if (data.request_type === "initialize") {
@@ -484,21 +637,26 @@ function Wss(opt, callback) {
         }
 
         switch (data.request_type) {
+          
           // Get results
           case "get_results":
+            
             console.log("get_results");
+            console.log(data);
 
             var data_type, data_class;
 
             [data_type, data_class] = data.data_type.split(":");
 
             if (data_type === "mx") {
+              
               if (data_class === "data") {
+                
                 Result.find({
                   session_id: mongoose.Types.ObjectId(data.session_id)
                 })
                   .where("result_type")
-                  .in(["mx:index", "mx:integrate"])
+                  .in(['mx:index', 'mx:integrate', 'mx:mr'])
                   // populate('children').
                   .sort("-timestamp")
                   .exec(function(err, results) {
@@ -556,11 +714,37 @@ function Wss(opt, callback) {
                       })
                     );
                   });
-              } else if (data_class === "all") {
-                console.log("data.session_id", data.session_id);
 
+                } else if (data_class === "mr") {
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id)
+                  })
+                    .where("result_type")
+                    .in(result_type_trans[data_type][data_class])
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, sessions) {
+                      if (err) {
+                        return false;
+                      }
+                      console.log("Found", sessions.length, "results");
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: sessions
+                        })
+                      );
+                    });
+              
+              } else if (data_class === "all") {
+                
+                // console.log("data.session_id", data.session_id);
+
+                // Change to indexings first - load will be faster in UI appearance
                 Result.find({
-                  session_id: mongoose.Types.ObjectId(data.session_id)
+                  session_id: mongoose.Types.ObjectId(data.session_id),
+                  plugin_type : "INDEX",
                 })
                   // populate('children').
                   .sort("-timestamp")
@@ -575,56 +759,159 @@ function Wss(opt, callback) {
                       })
                     );
                   });
+                  
+                  // And now the integrations
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "INTEGRATE",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
+
+                  // And now the MRs
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "MR",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      console.log(results);
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
+
+                  // And now SAD
+                  Result.find({
+                    session_id: mongoose.Types.ObjectId(data.session_id),
+                    plugin_type : "SAD",
+                  })
+                    // populate('children').
+                    .sort("-timestamp")
+                    .exec(function(err, results) {
+                      if (err) return false;
+                      console.log("Found", results.length, "results");
+                      console.log(results);
+                      // Send back over the websocket
+                      ws.send(
+                        JSON.stringify({
+                          msg_type: "results",
+                          results: results
+                        })
+                      );
+                    });
               }
             }
 
-            console.log(ws.session.token);
+            // console.log(ws.session.token);
 
             // Register activity
-            let new_activity = new Activity({
-              source: "websocket",
-              type: "get_results",
-              subtype: data.data_type + "_" + data.plugin_type,
-              user: ws.session.token._id
-            }).save();
+            try {
+              let new_activity = new Activity({
+                source: "websocket",
+                type: "get_results",
+                subtype: data.data_type + "_" + data.plugin_type,
+                user: ws.session.token._id
+              }).save();
+            // TODO error comes when no longer logged in person connects
+            } catch (e) {
+              console.error(e);
+            }
 
             break;
 
           // Get result details
           case "get_result_details":
+            
             console.log("get_result_details", data);
 
-            // Get the response to send to the websocket
-            get_detailed_result(data.data_type, data.plugin_type, data._id)
-            .then(function(response) {
-              // Send response over the wire
-              console.log('response', response);
-              ws.send(JSON.stringify(response));
+            // data
+            // {
+            //   request_type: 'get_result_details',
+            //   result_type: 'MX:INTEGRATE',
+            //   data_type: 'MX',
+            //   plugin_type: 'INTEGRATE',
+            //   result_id: '60789df20f4939cba74053eb',
+            //   _id: '60789deef4683356c034e66c'
+            // }
 
-              // Register activity
-              var grd_activity = new Activity({
-                source: "websocket",
-                type: "get_result_details",
-                subtype: data.data_type + "_" + data.plugin_type,
-                user: ws.session.token._id
-              }).save();
-            });
+            this.session.currentResults[data.result_type] = data;
+            console.log(this.session.currentResults);
+
+            // Send current detailed result over the line
+            getDetailedResult(data.data_type, data.plugin_type, data._id, ws)
+              .then((response) => { 
+                // Subscribe to new results
+
+              });
+              
+              // Register the activity
+              try {
+                var grd_activity = new Activity({
+                  source: "websocket",
+                  type: "get_result_details",
+                  subtype: data.data_type + "_" + data.plugin_type,
+                  user: ws.session.token._id
+                }).save();
+              // TODO error comes when no longer logged in person connects
+              } catch (e) {
+                console.error(e);
+              }
+            
             break;
 
           // Set the session id for the connected websocket
-          case "set_session":
-            console.log("Session set to " + data.session_id);
-            this.session.session_id = data.session_id;
+          case 'set_session':
+            console.log('set_session');
+            // Session already set to passed-in value
+            if (this.session.session_id === data.session_id) {
+              console.log('this.session.session_id already set to', data.session_id);
+            } else {
+              // Have a session, have to clear it out before replacing
+              if (this.session.session_id !== undefined) {
+                console.log('Remove current session', this.session.session_id);
+                activeSessions.splice(activeSessions.indexOf(this.session.session_id), 1);
+                this.session.session_id = undefined;
+                this.session.currentResults = {};
+              }
+              // Now assign session
+              console.log('Set this.session.session_id to', data.session_id);
+              this.session.session_id = data.session_id;
+              activeSessions.push(data.session_id);
+            }
+            
+            console.log(activeSessions);
             break;
 
           // Unset the session id for the connected websocket
-          case "unset_session":
-            console.log("Unset session");
+          case 'unset_session':
+            console.log('Unset session');
+            // Remove the session from activeSessions
+            activeSessions.splice(activeSessions.indexOf(this.session.session_id), 1);
             this.session.session_id = undefined;
+            this.session.currentResults = {};
             break;
 
-          case "update_result":
-            console.log("update_result");
+          case 'update_result':
+            console.log('update_result');
             console.log(data.result);
 
             Result.update(

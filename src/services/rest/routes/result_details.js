@@ -52,9 +52,8 @@ router.route('/result_details/:result_id')
               message: err
             });
           } else {
-            console.log('Have result:', result);
+            // console.log('Have result:', result);
 
-            
             // Create a mongoose model for the result
             let name = (result._doc.data_type + '_' + result._doc.plugin_type +'_result').toLocaleLowerCase();
             // console.log('name', name);
@@ -117,66 +116,6 @@ router.route('/result_details/:result_id')
                         results: detailed_result
                       });
                     });
-                    
-
-
-                    // // If there is an image1_id
-                    // if ('image1_id' in detailed_result._doc.process) {
-                    //   // Manually populate
-                    //   Image.
-                    //   findOne({_id:detailed_result._doc.process.image1_id}).
-                    //   exec(function(err, image1) {
-                    //     if (err) {
-                    //       console.error(err);
-                    //       return false;
-                    //     } else {
-                    //       detailed_result._doc.image1 = image1;
-                    //       return detailed_result;
-                    //     }
-                    //   })
-                    //   .then(function(detailed_result) {
-                    //     if ('image2_id' in detailed_result._doc.process) {
-
-                    //       // Manually populate
-                    //       Image.
-                    //       findOne({_id:detailed_result._doc.process.image1_id}).
-                    //       exec(function(err, image2) {
-                    //         if (err) {
-                    //           console.error(err);
-                    //           return false;
-                    //         } else {
-                    //           detailed_result._doc.image1 = image2;
-                    //           // console.log('POPULATED image2');
-                    //           // console.log(detailed_result);
-                    //           // Send back
-                    //           // res.status(200).json({
-                    //           //     success: true,
-                    //           //     results: detailed_result
-                    //           // });
-                    //           return detailed_result;
-                    //         }
-                    //       });
-
-                    //     // No image2_id
-                    //     } else {
-                    //       // Send back
-                    //       // res.status(200).json({
-                    //       //     success: true,
-                    //       //     results: detailed_result
-                    //       // });
-                    //       return detailed_result;
-                    //     }
-                    //   })
-                    //   .then();
-
-                    // // No image1_id
-                    // } else {
-                    //   // Send back
-                    //   res.status(200).json({
-                    //     success: true,
-                    //     results: detailed_result
-                    //   });
-                    // }
 
                   // No process  
                   } else {

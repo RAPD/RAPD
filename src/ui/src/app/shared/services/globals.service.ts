@@ -7,7 +7,8 @@ export class GlobalsService implements OnInit {
   // public apiUrl = 'http://localhost:3000/api';
   // public apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
 
-  public currentSession = undefined;
+  public currentSessionId = undefined;
+  public currentSessionType = undefined;
   public currentProject = undefined;
 
   // public site = "SERCAT";

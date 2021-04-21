@@ -45,11 +45,11 @@ export class MrDialogComponent implements OnInit {
 
   public ngOnInit() {
 
-    console.log(this.data);
+    // console.log(this.data);
 
     // Create form
     this.mrForm = new FormGroup({
-      description: new FormControl(""),
+      description: new FormControl("", Validators.required),
       number_molecules: new FormControl(0),
       pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
       project: new FormControl("", Validators.required),
@@ -61,13 +61,21 @@ export class MrDialogComponent implements OnInit {
     this.initUploader();
 
     // Get the uploads for the current group
-    this.getUploads(this.globalsService.currentSession);
+    this.getUploads(this.globalsService.currentSessionId);
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSession);
+    this.getProjects(this.globalsService.currentSessionId);
   }
 
   private onChanges(): void {
+
+    /*
+    description: "ddddd"
+    number_molecules: 0
+    pdb_id: ""
+    project: ""
+    selected_pdb: 0
+    */
 
     const self = this;
 
@@ -98,23 +106,23 @@ export class MrDialogComponent implements OnInit {
       }
 
       // Enable execute button when conditions are correct
-      if (val.pdb_id.length > 3 || val.selected_pdb != 0) {
+      if ((val.description !== "") && (val.project !== "") && (val.pdb_id.length > 3 || val.selected_pdb !== 0)) {
         self.executeDisabled = false;
       } else {
         self.executeDisabled = true;
       }
 
-      if (val.project != 0) {
-        self.executeDisabled = false;
-      } else {
-        self.executeDisabled = true;
-      }
+      // if (val.project != 0) {
+      //   self.executeDisabled = false;
+      // } else {
+      //   self.executeDisabled = true;
+      // }
     });
   }
 
-  private getUploads(session_id: string) {
+  private getUploads(sessionId: string) {
 
-    this.restService.getUploadedPdbsBySession(session_id).subscribe(parameters => {
+    this.restService.getUploadedPdbsBySession(sessionId).subscribe(parameters => {
       // console.log(parameters);
       if (parameters.success === true) {
         this.uploadedPdbs = parameters.result;
@@ -122,9 +130,9 @@ export class MrDialogComponent implements OnInit {
     });
   }
 
-  private getProjects(session_id: string) {
+  private getProjects(sessionId: string) {
 
-    this.restService.getProjectsBySession(session_id).subscribe(parameters => {
+    this.restService.getProjectsBySession(sessionId).subscribe(parameters => {
       // console.log(parameters);
       if (parameters.success === true) {
         this.projects = parameters.result;
@@ -136,7 +144,7 @@ export class MrDialogComponent implements OnInit {
     let self = this;
 
     this.uploader = new FileUploader({
-      additionalParameter: {session_id:this.globalsService.currentSession},
+      additionalParameter: {session_id:this.globalsService.currentSessionId},
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
       url: this.globalsService.site.restApiUrl + "/upload_pdb",

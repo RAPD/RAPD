@@ -49,7 +49,7 @@ export class SadDialogComponent implements OnInit {
     this.onChanges();
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSession);
+    this.getProjects(this.globalsService.currentSessionId);
   }
 
   private onChanges(): void {

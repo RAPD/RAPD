@@ -70,7 +70,7 @@ export class ProjectMxComponent implements OnInit {
   private selected_indexed_data: string[] = [];
 
   // Where results got
-  @ViewChild("output_outlet", { read: ViewContainerRef, static: false })
+  @ViewChild("output_outlet", { read: ViewContainerRef })
 outlet;
 
   constructor(
@@ -91,14 +91,28 @@ outlet;
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
       authToken: localStorage.getItem("access_token"),
-      autoUpload: true
+      autoUpload: true,
+      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
     });
+
+    // Add form fields
+    this.uploader.onBuildItemForm = (item, form) => {
+      console.log("onBuildItemForm");
+      console.log(item);
+      console.log(form);
+      form.append("foo", "bar");
+    };
+
     // override the onAfterAddingfile property of the uploader so it doesn't authenticate with //credentials.
-    this.uploader.onAfterAddingFile = file => {
+    this.uploader.onAfterAddingFile = (file) => {
       file.withCredentials = false;
     };
+
+    this.uploader.onBeforeUploadItem = (item) => {
+      console.log("onBeforeUploadItem");
+    };
+
     // overide the onCompleteItem property of the uploader so we are
     // able to deal with the server response.
     this.uploader.onCompleteItem = (

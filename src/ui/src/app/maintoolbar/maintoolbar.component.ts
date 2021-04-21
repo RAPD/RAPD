@@ -27,30 +27,34 @@ export class MaintoolbarComponent implements OnInit {
               public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   changeMode(mode: string) {
     this.modeChange.emit({
-      value: mode
+      value: mode,
     });
   }
 
   openLoginDialog() {
 
-    let config = new MatDialogConfig();
-    config.viewContainerRef = this.viewContainerRef;
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.viewContainerRef = this.viewContainerRef;
+    dialogConfig.disableClose = true;
+    dialogConfig.autoFocus = true;
 
-    this.loginDialogRef = this.dialog.open(LoginDialogComponent, config);
+    this.loginDialogRef = this.dialog.open(LoginDialogComponent, dialogConfig);
 
     this.loginDialogRef.afterClosed().subscribe(result => {
-      // console.log('closed', result);
+      console.log(result);
       this.loginDialogRef = null;
       if (result) {
-        if (result.pass_force_change == true) {
-          let config = new MatDialogConfig();
-          config.viewContainerRef = this.viewContainerRef;
-          this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, config);
+        if (result.pass_force_change === true) {
+          console.log("Pop open the change password dialog");
+          const changeDialogConfig = new MatDialogConfig();
+          changeDialogConfig.viewContainerRef = this.viewContainerRef;
+          changeDialogConfig.disableClose = true;
+          changeDialogConfig.autoFocus = true;
+          this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, changeDialogConfig);
         }
       }
     });

@@ -12,12 +12,10 @@ import { AppComponent } from "./app.component";
 import { FlexLayoutModule } from "@angular/flex-layout";
 
 import { AppRoutingModule, appRoutingProviders } from "./app.routing";
-
-import "hammerjs";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RapdMaterialModule } from "./material.module";
 import { NgxDatatableModule } from "@swimlane/ngx-datatable";
-import { ChartsModule } from "ng2-charts/ng2-charts";
+import { ChartsModule } from "ng2-charts";
 
 import { LoginGuard } from "./shared/guards/login-guard";
 import { AuthService } from "./shared/services/auth.service";

@@ -1,52 +1,65 @@
 <div class="rapd-main-panel">
+
   <article class="c-content">
-    <ngx-datatable
-      class="material"
-      [rows]="sessions"
-      [columnMode]="'force'"
-      [headerHeight]="50"
-      [footerHeight]="50"
-      [limit]="10"
-      [rowHeight]="'auto'"
-      [reorderable]="true"
-      [selectionType]="'single'"
-      [sorts]="[{prop: 'last_process', dir: 'desc'}]"
-      (select)='selectSession($event)'>
-      <ngx-datatable-column name="Site" prop="site">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Group" prop="group.groupname">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Created" prop="timestamp">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{ value | date:'y-MM-dd HH:mm' }}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Last Process" prop="last_process">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{ value | date:'y-MM-dd HH:mm' }}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Directory" prop="data_root_dir">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
+
+    <mat-progress-bar *ngIf="dataSource.loading$ | async" mode="query"></mat-progress-bar>
+
+    <table mat-table
+      [dataSource]="dataSource"
+      matSort
+      matSortStart="desc"
+      multiTemplateDataRows
+      style="width:100%">
+
+      <!-- AsIsSortable Columns -->
+      <ng-container *ngFor="let myColumn of asIsSortableColumns" matColumnDef="{{myColumn}}">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels[myColumn]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record[myColumn]}} </td>
+      </ng-container>
+
+      <!-- AsIsNotSortable Columns -->
+      <ng-container *ngFor="let myColumn of asIsNotSortableColumns" matColumnDef="{{myColumn}}">
+        <th mat-header-cell *matHeaderCellDef>{{columnLabels[myColumn]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record[myColumn]}} </td>
+      </ng-container>
+
+      <!-- Custom Columns-->
+      <ng-container matColumnDef="timestamp">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["timestamp"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record["timestamp"] | date:"short"}} </td>
+      </ng-container>
+      <ng-container matColumnDef="last_process">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>{{columnLabels["last_process"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record["last_process"] | date:"short"}} </td>
+      </ng-container>
+      <ng-container matColumnDef="group_name">
+        <th mat-header-cell *matHeaderCellDef>{{columnLabels["group_name"]}}</th>
+        <td mat-cell class="normal" *matCellDef="let record"> {{record["group"]?.groupname}} </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let session; columns: displayedColumns;" (click)="recordClick(session, $event)"></tr>
+
+    </table>
+
+    <mat-paginator
+      [length]="dataSource.count$ | async"
+      [pageSize]="dataSettings.pageSize"
+      [pageIndex]="dataSettings.pageIndex"
+      [pageSizeOptions]="[10, 20, 50, 100]"
+      showFirstLastButtons>
+    </mat-paginator>
+
   </article>
+
   <mat-toolbar class="rapd-main-panel-action-bar" style="height:4em;">
-    <form class="session-filter-form">
+    <!-- <form class="session-filter-form">
       <mat-form-field
         (keyup)='updateSessionFilter($event)'>
         <input
           matInput
           placeholder="Filter">
       </mat-form-field>
-    </form>
+    </form> -->
   </mat-toolbar>
 </div>
