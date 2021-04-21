@@ -468,6 +468,9 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::Prechecking files: %s' %
                           str(self.datasets))
 
+        # Nicely sort datasets
+        # sort_nicely(self.datasets)
+
         if not self.precheck:
             self.tprint("Prechecking Files Off.  Skipping to File Copying.")
         else: 
@@ -481,41 +484,45 @@ class RapdPlugin(multiprocessing.Process):
                 types.append(reflection_file.file_type())
                 hashset[dataset] = hashlib.md5(
                     open(dataset, 'rb').read()).hexdigest()  # hash for duplicates test
-                
-                try:
-                    #Test for all the same format
-                    if len(set(types)) > 1:
-                        raise ValueError('HCMerge::All files must be the same type and format.')
-                    if not reflection_file.file_type() == 'xds_ascii':
-                        raise ValueError('HCMerge::All files must be XDS_ASCII.HKL format.')
-                #     # Test for SCA format
-                #     # Require Unit Cell for Scalepack No Merge Original Index Format
-                #     if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.unitcell == False:
-                #         raise ValueError('HCMerge::Unit Cell required for scalepack no merge original index format.') 
-                # # Test reflection files to make sure they have observations
-                #     elif ((reflection_file.file_type() == 'xds_ascii') and (reflection_file.file_content().iobs.size() == 0)):
-                #         raise ValueError(
-                #             "HCMerge::%s Reflection Check Failed. No Observations." % reflection_file.file_name())
-                #     elif ((reflection_file.file_type() == 'ccp4_mtz') and (reflection_file.file_content().n_reflections() == 0)):
-                #         raise ValueError(
-                #             "HCMerge::%s Reflection Check Failed. No Observations." % reflection_file.file_name())
-                #     elif (((reflection_file.file_type() == 'scalepack_no_merge_original_index') or (reflection_file.file_type() == 
-                #         'scalepack_merge')) and (reflection_file.file_content().i_obs.size() == 0)):
-                #         raise ValueError(
-                #             "HCMerge::%s Reflection Check Failed. No Observations." % reflection_file.file_name())
-                #     # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
-                #     # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
-                #     elif ((self.strict == True) and (reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
-                #         raise ValueError(
-                #             "HCMerge::%s Reflection Check Failed. Must be unmerged reflections in strict mode." % reflection_file.file_name())
-                #     # Test reflection file if sca and make sure it isn't merged by checking file type
-                #     # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
-                #     elif ((self.strict == True) and reflection_file.file_type() == 'scalepack_merge'):
-                #         raise ValueError(
-                #             'HCMerge::Scalepack Format. Unmerged reflections required in Strict Mode.')
-                except ValueError as err:
-                    self.tprint(err)
-                    sys.exit('Exit at Preprocess.')
+                # Test for SCA format
+                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.unitcell == False:
+                    self.logger.error(
+                        'HCMerge::Unit Cell required for scalepack no merge original index format.')
+                # Test for all the same format
+                elif len(set(types)) > 1:
+                    self.logger.error('HCMerge::Too Many File Types')
+                    raise ValueError(
+                        "All files must be the same type and format.")
+                # Test reflection files to make sure they have observations
+                elif ((reflection_file.file_type() == 'xds_ascii') and (reflection_file.file_content().iobs.size() == 0)):
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                elif ((reflection_file.file_type() == 'ccp4_mtz') and (reflection_file.file_content().n_reflections() == 0)):
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                elif (((reflection_file.file_type() == 'scalepack_no_merge_original_index') or (reflection_file.file_type() == 'scalepack_merge')) and (reflection_file.file_content().i_obs.size() == 0)):
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and (reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  Must be unmerged reflections in strict mode.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. Must be unmerged reflections in strict mode." % reflection_file.file_name())
+                # Test reflection file if sca and make sure it isn't merged by checking file type
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and reflection_file.file_type() == 'scalepack_merge'):
+                    self.logger.error(
+                        'HCMerge::Scalepack Merged format. Strict Mode On. Aborted.')
+                    raise ValueError(
+                        'Scalepack Format. Unmerged reflections required in Strict Mode.')
 
             # Test reflection files to make sure there are no duplicates
             combos_temp = self.make_combinations(self.datasets, 2)
@@ -607,6 +614,7 @@ class RapdPlugin(multiprocessing.Process):
             r = pool.map(combine_wrapper, pool_arguments)
 
         # calculate correlation coefficient
+        pairs_to_calculate_cc = []
         self.tprint("Process: Calculating CCs.")
         # grab intensity arrays from either combined mtz in strict mode or individual HKL pairs in sloppy
         if self.strict:
@@ -617,15 +625,17 @@ class RapdPlugin(multiprocessing.Process):
                     batches = self.get_batch(pair+'_pointless.mtz')
                     # Second, check if both datasets made it into the final mtz
                     if len(batches) >= 2:
-                        int_array1,int_array2 = self.get_int_pointless(pair, batches)
                         # Third, calculate the linear correlation coefficient if there are two datasets
-                        self.results[pair]['CC'] = self.get_cc(int_array1, int_array2)
-                        self.logger.debug('Correlation Coefficient of %s: %s' % (pair, str(self.results[pair]['CC'])))
+                        self.results[pair]['CC'] = self.get_cc_pointless(
+                            pair, batches)  # results are a dict with pair as key
+                        pairs_to_calculate_cc.append(pair)
                     else:
                         # If only one dataset in mtz, default to no correlation.
                         self.logger.error(
                             'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
                         self.results[pair]['CC'] = 0
+                else:
+                    self.results[pair]['CC'] = 0
 
         else:
             for pair in self.id_list.keys():
@@ -684,7 +694,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Send back results
         self.handle_return()
-        self.tprint('Postprocess: Cleaning up files.')
+
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
         # Copy original datasets to a DATA directory
         commandline_utils.check_work_dir(self.dirs['data'], True)
@@ -723,7 +733,7 @@ class RapdPlugin(multiprocessing.Process):
     def handle_return(self):
         """Output data to consumer"""
 
-        self.tprint("Postprocess: handle_return")
+        self.tprint("handle_return")
 
         run_mode = self.command["preferences"]["run_mode"]
 
@@ -802,8 +812,8 @@ class RapdPlugin(multiprocessing.Process):
         # Given a non-anomalous array, expand to generate anomalous pairs. Though all data from RAPD2 
         # should be FRIEDEL'S_LAW=FALSE and this is an extraneous step.
 
-        ma1_ext=ma1.generate_bijvoet_mates()
-        ma2_ext=ma2.generate_bijvoet_mates()
+        ma1_ext=ma1[0].generate_bijvoet_mates()
+        ma2_ext=ma2[0].generate_bijvoet_mates()
         
         # Determine common sets and calculate correlation between the two datasets. assert_is_similar_symmetry=True
         # means that the two datasets must be in the same spacegroup and unit cell.
@@ -828,9 +838,9 @@ class RapdPlugin(multiprocessing.Process):
         ma2 = file2.as_miller_arrays(merge_equivalents=False)
 
         # return the intensity arrays
-        return(ma1[0], ma2[0])
+        return(ma1, ma2)
 
-    def get_int_pointless(self, in_file, batches):
+    def get_cc_pointless(self, in_file, batches):
         """
         Get intensity arrays from pointless-combined mtz file with 2 batches.
         """
@@ -872,18 +882,17 @@ class RapdPlugin(multiprocessing.Process):
         my_millerset2 = miller.set(crystal_symmetry, indices=indices2)
         my_miller2 = miller.array(my_millerset2, data=data2)
         
-        return(my_miller1,my_miller2)
-        # # Obtain common set of reflections
-        # common1, common2 = my_miller1.common_sets(my_miller2)
-        # # Deal with only 1 or 2 common reflections in small wedges
-        # if (len(common1.indices()) == 1 or len(common1.indices()) == 2):
-        #     return(0)
-        # else:
-        #     # Calculate correlation between the two datasets.
-        #     cc = flex.linear_correlation(common1.data(), common2.data())
-        #     self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (
-        #         str(in_file), str(cc.coefficient())))
-        #     return(cc.coefficient())
+        # Obtain common set of reflections
+        common1, common2 = my_miller1.common_sets(my_miller2)
+        # Deal with only 1 or 2 common reflections in small wedges
+        if (len(common1.indices()) == 1 or len(common1.indices()) == 2):
+            return(0)
+        else:
+            # Calculate correlation between the two datasets.
+            cc = flex.linear_correlation(common1.data(), common2.data())
+            self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (
+                str(in_file), str(cc.coefficient())))
+            return(cc.coefficient())
 
     def scale(self, in_file, out_file, VERBOSE=False):
         """
