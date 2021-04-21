@@ -99,11 +99,13 @@ def parse_aimless(logfile):
 	"""
 
     log = smartie.parselog(logfile)
+    # print log.nfragments()
+    # print dir(log.fragment(0))
 
 	# Pull out information for the results summary table.
     flag = True
     summary = log.keytext(0).message().split("\n")
-
+    # print summary
 	# For some reason "Anomalous flag switched ON" is not always
 	# found, so the line below creates a blank entry for the
 	# the variable that should be created when that phrase is
@@ -199,6 +201,7 @@ def parse_aimless(logfile):
     # scales = "=== Scales v rotation"
     rfactor = "Analysis against all Batches"
     cchalf = "Correlations CC(1/2)"
+    cc = "Run pair correlations by resolution"
     # anisotropy = "Anisotropy analysis"
     vresolution = "Analysis against resolution,"
     # anomalous = "Analysis against resolution, with & without"
@@ -922,6 +925,74 @@ def parse_aimless(logfile):
     # Return to the main program.
     return (plots, int_results)
 
+def get_cc(log_file):
+    """
+    Returns the CCs in the section 'Matrix of correlations of E^2 between runs'
+    """
+
+    # Handle filename
+    if isinstance(log_file, str):
+        log_lines = open(log_file, "r").readlines()
+    elif isinstance(log_file, list):
+        log_lines = log_file
+    else:
+        raise TypeError("Function takes a file name or list of lines from log file")
+
+    results = {
+        "cc": {},
+        "maximum_resolution": {},
+        "number": {},
+        "runs": []
+    }
+
+    # Look through for the lines of interest
+    in_range = False
+    for log_line in log_lines:
+        if "Matrix of correlations of E^2 between runs" in log_line:
+            in_range = True
+            in_body = False
+        if in_range:
+            # print log_line.rstrip()
+            if "$TABLE:" in log_line:
+                in_range = False
+            # In the body of the table
+            if in_body:
+                # print "body>>", log_line.rstrip()
+                body_split = log_line.split()
+                if body_split:
+                    # The CC
+                    if body_split[0] == "Run":
+                        # print body_split
+                        from_run = int(body_split[1])
+                        to_run = from_run + 1
+                        for f in body_split[3:]:
+                            results["cc"][(from_run, to_run)] = float(f)
+                            to_run += 1
+                    # Number of reflections used in the CC
+                    elif body_split[0] == "N":
+                        # print from_run, body_split
+                        to_run = from_run + 1
+                        for f in body_split[1:]:
+                            results["number"][(from_run, to_run)] = int(f)
+                            to_run += 1
+            # Not in the body
+            else:
+                # Maximum resolution of the runs
+                if "maximum resolution" in log_line:
+                    run = int(log_line.split()[1])
+                    max_res = float(log_line.split()[4])
+                    results["maximum_resolution"][run] = max_res
+                # Header of the table
+                elif "   Run   " in log_line:
+                    # print "header", log_line.rstrip()
+                    in_body = True
+                    header_split = log_line.split()
+                    runs = [1] + [ int(i) for i in header_split[1:] ]
+                    results["runs"] = runs
+
+    return results
+    
+
 def main():
     """
     The main process docstring
@@ -934,7 +1005,9 @@ def main():
     args = get_commandline()
     print args
 
-    pprint(parse_aimless(args.file))
+    # res = parse_aimless(args.file)
+    # pprint(res)
+    get_cc(args.file)
 
 def get_commandline():
     """

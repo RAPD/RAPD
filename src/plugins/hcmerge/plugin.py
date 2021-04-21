@@ -41,14 +41,16 @@ from collections import OrderedDict
 # import datetime
 import glob
 import json
-import logging, logging.handlers
+import logging
+import logging.handlers
 import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
-# import re
+import re
 # import redis
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -58,7 +60,8 @@ import uuid
 
 from multiprocessing import Process, cpu_count
 import matplotlib
-# Force matplotlib to not use any Xwindows backend.  Must be called before any other matplotlib/pylab import.
+# Force matplotlib to not use any Xwindows backend.
+# Must be called before any other matplotlib/pylab import.
 matplotlib.use('Agg')
 import hashlib
 from itertools import combinations, groupby
@@ -68,32 +71,195 @@ from iotbx import reflection_file_reader
 from cctbx import miller
 from cctbx.array_family import flex
 from cctbx.sgtbx import space_group_symbols
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage, dendrogram, to_tree
 #from hcluster import linkage, dendrogram
 
-import cPickle as pickle # For storing dicts as pickle files for later use
+import cPickle as pickle  # For storing dicts as pickle files for later use
 
 # RAPD imports
+#import plugins.assess_integrated_data.plugin as assess_integrated_data_plugin
+#import plugins.assess_integrated_data.commandline as assess_integrated_data_commandline
 import plugins.subcontractors.aimless as aimless
 import utils.commandline_utils as commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
 import utils.credits as credits
+import utils.text as rtext
 import info
 
 # Software dependencies
 VERSIONS = {
     "aimless": (
         "0.5",
-        ),
+    ),
     "gnuplot": (
         "gnuplot 4.2",
         "gnuplot 5.0",
     ),
     "pointless": (
         "1.10.23",
-        )
+    )
 }
+
+# Threshold for CC - below will be highlighted in the table
+HIGHLIGHT_THRESHOLD = 0.9
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+     
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+
+def sort_nicely(l):
+    """ Sort the given list in the way that humans expect.
+    """
+    l.sort(key=alphanum_key)
+
+def combine_wrapper(args):
+    """
+    Wrapper for mutiple arguments passing into combine
+    """
+    return combine(*args)
+
+
+def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
+    """
+    Combine XDS_ASCII.HKL files using POINTLESS
+    in_files = list of files
+
+    cmd_prefix
+    strict
+    user_spacegroup
+    """
+    print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
+    command = []
+    command.append('pointless hklout '+out_file +
+                   '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
+
+    for hklin in in_files:
+        command.append('hklin '+hklin+' \n')
+        # Add ability to do batches
+    # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
+#    if strict == False:
+#        command.append('tolerance 1000.0 \n')
+    # Add LAUEGROUP if user has chosen a spacegroup
+    if user_spacegroup:
+        command.append('lauegroup %s \n' % space_group_symbols(
+            user_spacegroup).universal_hermann_mauguin())
+        command.append('choose spacegroup %s \n' % space_group_symbols(
+            user_spacegroup).universal_hermann_mauguin())
+    command.append('eof\n')
+    # print command
+    comfile = open(out_file+'_pointless.sh', 'w')
+    comfile.writelines(command)
+    comfile.close()
+    os.chmod('./'+out_file+'_pointless.sh', 0755)
+    # p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
+    p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE).communicate()
+    
+    if user_spacegroup == 0:
+        # Sub-routine for different point groups
+        pointless_error = ['WARNING: Cannot combine reflection lists with different symmetry', 'ERROR: cannot combine files belonging to different crystal systems']
+        if (p[0] == '' and p[1] == '') == False:
+            pass
+#            print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
+        if any(x in p[1] for x in pointless_error):
+            print 'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files)
+            for hklin in in_files:
+                cmd = []
+                cmd.append('pointless hklin '+hklin +
+                           ' hklout '+hklin+'> '+hklin+'_p.log \n')
+                subprocess.Popen(
+                    cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+            p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                 shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE).communicate()
+            if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
+                print 'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files)
+                for hklin in in_files:
+                    cmd = []
+                    hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+                    cmd.append('pointless hklin '+hklin+' hklout ' +
+                               hklout+'> '+hklin+'_p1.log <<eof \n')
+                    cmd.append('lauegroup P1 \n')
+                    cmd.append('choose spacegroup P1 \n')
+                    cmd.append('eof\n')
+                    cmdfile = open('p1_pointless.sh', 'w')
+                    cmdfile.writelines(cmd)
+                    cmdfile.close()
+                    os.chmod('./p1_pointless.sh', 0755)
+                    p1 = subprocess.Popen('p1_pointless.sh',
+                                          shell=True,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE).communicate()
+                command = [x.replace('.mtz', 'p1.mtz')
+                           for x in command if any('hklin')]
+                comfile = open(out_file+'_pointless.sh', 'w')
+                comfile.writelines(command)
+                comfile.close()
+                p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE).communicate()
+
+    # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
+    plog = open(out_file+'_pointless.log', 'r').readlines()
+    for num, line in enumerate(plog):
+        if line.startswith('FATAL ERROR'):
+            # Go to the next line for error message
+            if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
+                print 'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.'
+                for num, itm in enumerate(command):
+                    if itm == 'eof\n':
+                        command.insert(num, 'choose solution 1\n')
+                        break
+            comfile = open(out_file+'_pointless.sh', 'w')
+            comfile.writelines(command)
+            comfile.close()
+            # Run pointless again with new keyword
+            p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                 shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE).wait()
+            if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
+                print 'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files)
+                for hklin in in_files:
+                    cmd = []
+                    hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
+                    cmd.append('pointless hklin '+hklin+' hklout ' +
+                               hklout+'> '+hklin+'_p1.log <<eof \n')
+                    cmd.append('lauegroup P1 \n')
+                    cmd.append('choose spacegroup P1 \n')
+                    cmd.append('eof\n')
+                    cmdfile = open('p1_pointless.sh', 'w')
+                    cmdfile.writelines(cmd)
+                    cmdfile.close()
+                    os.chmod('./p1_pointless.sh', 0755)
+                    p1 = subprocess.Popen('p1_pointless.sh',
+                                          shell=True,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE).communicate()
+                command = [x.replace('.mtz', 'p1.mtz')
+                           for x in command if any('hklin')]
+                comfile = open(out_file+'_pointless.sh', 'w')
+                comfile.writelines(command)
+                comfile.close()
+                p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE).communicate()
+
 
 class RapdPlugin(multiprocessing.Process):
     """
@@ -152,24 +318,26 @@ class RapdPlugin(multiprocessing.Process):
 #        self.process_id = self.settings['process_id']
 
         # Variables for holding filenames and results
-        self.data_files                    = []            # List of data file names
-        self.graphs                        = {}
-        self.results                       = {}
-        self.merged_files                  = []            # List of prefixes for final files.
+        self.data_files = []            # List of data file names
+        self.graphs = {}
+        self.results = {}
+        self.merged_files = []            # List of prefixes for final files.
         # dict for keeping track of file identities
-        self.id_list                       = OrderedDict() # Dict will hold prefix as key and pair of file names as value
-        self.dirs['data']                  = os.path.join(self.command['directories']['work'], "DATA")
+        # Dict will hold prefix as key and pair of file names as value
+        self.id_list = OrderedDict()
+        self.dirs['data'] = os.path.join(
+            self.command['directories']['work'], "DATA")
 
         # Establish setting defaults
         # Check for agglomerative clustering linkage method
         # Options for linkage are:
-            # single: the single/min/nearest algorithm. (alias)
-            # complete: the complete/max/farthest algorithm. (alias)
-            # average: the average/UPGMA algorithm. (alias)
-            # weighted: the weighted/WPGMA algorithm. (alias)
-            # centroid: the centroid/UPGMC algorithm. (alias)
-            # median: the median/WPGMC algorithm. (alias)
-            # ward: the Ward/incremental algorithm. (alias)
+        # single: the single/min/nearest algorithm. (alias)
+        # complete: the complete/max/farthest algorithm. (alias)
+        # average: the average/UPGMA algorithm. (alias)
+        # weighted: the weighted/WPGMA algorithm. (alias)
+        # centroid: the centroid/UPGMC algorithm. (alias)
+        # median: the median/WPGMC algorithm. (alias)
+        # ward: the Ward/incremental algorithm. (alias)
         if self.settings.has_key('method'):
             self.method = self.settings['method']
         else:
@@ -177,7 +345,8 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check for cutoff value
         if self.settings.has_key('cutoff'):
-            self.cutoff = self.settings['cutoff'] # CC 1/2 value passed in by user
+            # CC 1/2 value passed in by user
+            self.cutoff = self.settings['cutoff']
         else:
             self.cutoff = 0.95
 
@@ -191,19 +360,19 @@ class RapdPlugin(multiprocessing.Process):
         if self.settings.has_key('spacegroup'):
             self.user_spacegroup = self.settings['spacegroup']
         else:
-            self.user_spacegroup = 0 # Default to None
+            self.user_spacegroup = 0  # Default to None
 
-        # Check for unit cell
-        if self.settings.has_key('cell'):
-            self.cell = self.settings['cell']
+        # Check for unit cell.  This is a list.
+        if self.settings.has_key('unitcell'):
+            self.unitcell = self.settings['unitcell']
         else:
-            self.cell = False
+            self.unitcell = False
 
         # Check for user-defined high resolution cutoff
         if self.settings.has_key('resolution'):
             self.resolution = self.settings['resolution']
         else:
-            self.resolution = 0 # Default high resolution limit to 0
+            self.resolution = 0  # Default high resolution limit to 0
 
         # Check for file cleanup
         if self.settings.has_key('clean'):
@@ -213,34 +382,37 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check whether to make all clusters or the first one that exceeds the cutoff
         if self.settings.has_key('all_clusters'):
-            self.all_clusters=self.settings['all_clusters']
+            self.all_clusters = self.settings['all_clusters']
         else:
             self.all_clusters = False
 
         # Check whether to add labels to the dendrogram
         if self.settings.has_key('labels'):
-            self.labels=self.settings['labels']
+            self.labels = self.settings['labels']
         else:
             self.labels = False
 
         # Check whether to start at the beginning or skip to a later step
         if self.settings.has_key('start_point'):
-            self.start_point=self.settings['start_point']
+            self.start_point = self.settings['start_point']
         else:
-            self.start_point= 'start'
+            self.start_point = 'start'
 
         # Check whether to skip prechecking files during preprocess
         if self.settings.has_key('precheck'):
-            self.precheck=self.settings['precheck']
+            self.precheck = self.settings['precheck']
         else:
-            self.precheck = True
+            self.precheck = False
 
         # Set resolution for dendrogram image
         if self.settings.has_key('dpi'):
-            self.dpi=self.settings['dpi']
+            self.dpi = self.settings['dpi']
         else:
             self.dpi = 100
 
+        # Set running in strict or sloppy mode
+        self.strict = self.settings['strict']
+        
         # Check on number of processors
         if self.settings.has_key('nproc'):
             self.nproc = self.settings['nproc']
@@ -262,7 +434,6 @@ class RapdPlugin(multiprocessing.Process):
 
         Process.__init__(self, name="hcmerge")
         self.start()
-
 
     def run(self):
         """Execution path of the plugin"""
@@ -294,87 +465,121 @@ class RapdPlugin(multiprocessing.Process):
         - ensure all files are the same format
         """
         self.tprint("Preprocess: Prechecking files")
-        self.logger.debug('HCMerge::Prechecking files: %s' % str(self.datasets))
+        self.logger.debug('HCMerge::Prechecking files: %s' %
+                          str(self.datasets))
 
-        if self.precheck:
+        # Nicely sort datasets
+        # sort_nicely(self.datasets)
+
+        # Need to add force flag.
+
+        if not self.precheck:
+            self.tprint("Prechecking Files Off.  Skipping to File Copying.")
+        else: 
             # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
             types = []
             hashset = {}
             for dataset in self.datasets:
-                reflection_file = reflection_file_reader.any_reflection_file(file_name=dataset)
-                types.append(reflection_file.file_type()) # Get types for format test
-                hashset[dataset] = hashlib.md5(open(dataset, 'rb').read()).hexdigest() # hash for duplicates test
+                reflection_file = reflection_file_reader.any_reflection_file(
+                    file_name=dataset)
+                # Get types for format test
+                types.append(reflection_file.file_type())
+                hashset[dataset] = hashlib.md5(
+                    open(dataset, 'rb').read()).hexdigest()  # hash for duplicates test
                 # Test for SCA format
-                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.cell == False:
-                    self.logger.error('HCMerge::Unit Cell required for scalepack no merge original index format.')
-                # if reflection_file.file_type() == 'scalepack_no_merge_original_index' or reflection_file.file_type() == 'scalepack_merge':
-                #     self.logger.error('HCMerge::Scalepack format. Aborted')
-                #     raise ValueError("Scalepack Format. Unmerged mtz format required.")
-                # # Test reflection files to make sure they are XDS or MTZ format
-                # elif reflection_file.file_type() != 'xds_ascii' and reflection_file.file_type() != 'ccp4_mtz':
-                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Not XDS or MTZ format.' % reflection_file.file_name())
-                #     raise ValueError("%s has incorrect file format. Unmerged reflections in XDS format only." % reflection_file.file_name())
+                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.unitcell == False:
+                    self.logger.error(
+                        'HCMerge::Unit Cell required for scalepack no merge original index format.')
                 # Test for all the same format
                 elif len(set(types)) > 1:
                     self.logger.error('HCMerge::Too Many File Types')
-                    raise ValueError("All files must be the same type and format.")
+                    raise ValueError(
+                        "All files must be the same type and format.")
                 # Test reflection files to make sure they have observations
                 elif ((reflection_file.file_type() == 'xds_ascii') and (reflection_file.file_content().iobs.size() == 0)):
-                    self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
-                    raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
                 elif ((reflection_file.file_type() == 'ccp4_mtz') and (reflection_file.file_content().n_reflections() == 0)):
-                    self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
-                    raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
                 elif (((reflection_file.file_type() == 'scalepack_no_merge_original_index') or (reflection_file.file_type() == 'scalepack_merge')) and (reflection_file.file_content().i_obs.size() == 0)):
-                    self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
-                    raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. No Observations." % reflection_file.file_name())
                 # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
-                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary
-                # elif ((reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
-                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections.' % reflection_file.file_name())
-                #     raise ValueError("%s Reflection Check Failed. Must be unmerged reflections." % reflection_file.file_name())
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and (reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
+                    self.logger.error(
+                        'HCMerge::%s Reflection Check Failed.  Must be unmerged reflections in strict mode.' % reflection_file.file_name())
+                    raise ValueError(
+                        "%s Reflection Check Failed. Must be unmerged reflections in strict mode." % reflection_file.file_name())
+                # Test reflection file if sca and make sure it isn't merged by checking file type
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary in sloppy mode.
+                elif ((self.strict == True) and reflection_file.file_type() == 'scalepack_merge'):
+                    self.logger.error(
+                        'HCMerge::Scalepack Merged format. Strict Mode On. Aborted.')
+                    raise ValueError(
+                        'Scalepack Format. Unmerged reflections required in Strict Mode.')
+
             # Test reflection files to make sure there are no duplicates
-            combos_temp =  self.make_combinations(self.datasets,2)
+            combos_temp = self.make_combinations(self.datasets, 2)
             for combo in combos_temp:
                 if hashset[combo[0]] == hashset[combo[1]]:
-                    self.datasets.remove(combo[1]) # Remove second occurrence in list of datasets
-                    self.logger.error('HCMerge::Same file Entered Twice. %s deleted from list.' % combo[1])
+                    # Remove second occurrence in list of datasets
+                    self.datasets.remove(combo[1])
+                    self.logger.error(
+                        'HCMerge::Same file Entered Twice. %s deleted from list.' % combo[1])
 
         # Make and move to the work directory
-        # if os.path.isdir(self.dirs['work']) == False:
-        #     os.makedirs(self.dirs['work'])
-        #     os.chdir(self.dirs['work'])
-        # else:
         os.chdir(self.dirs['work'])
-        # convert all files to mtz format
+
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
-            hkl_filename = str(count)+'_'+dataset.rsplit("/", 1)[1].rsplit(".", 1)[0]+'.mtz'
-            if self.user_spacegroup != 0:
-                sg = space_group_symbols(self.user_spacegroup).universal_hermann_mauguin()
-                self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (str(hkl_filename), str(sg)))
-                out_file = hkl_filename.rsplit(".",1)[0]
-                command = []
-                command.append('pointless hklout '+hkl_filename+'> '+out_file+'_import.log <<eof \n')
-                command.append('xdsin '+dataset+' \n')
-                command.append('lauegroup %s \n' % sg)
-                command.append('choose spacegroup %s \n' % sg)
-                command.append('eof\n')
-                comfile = open(out_file+'_import.sh','w')
-                comfile.writelines(command)
-                comfile.close()
-                os.chmod('./'+out_file+'_import.sh',0755)
+            hkl_filename = str(count)+'_'+dataset.rsplit('/',1)[1]
+            shutil.copy(dataset,hkl_filename)
 
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
-                                 shell=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE).wait()
-            else:
-                self.logger.debug('HCMerge::Copying %s to Working Directory.' % str(dataset))
-                p = subprocess.Popen('pointless -copy xdsin ' + dataset + ' hklout ' + hkl_filename,
-                                 shell=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE).wait()
+        # convert all files to mtz format
+        # copy the files to be merged to the work directory
+        # for count, dataset in enumerate(self.datasets):
+        #     hkl_filename = str(count)+'_'+dataset.rsplit("/",
+        #                                                  1)[1].rsplit(".", 1)[0]+'.mtz'
+        #     if self.user_spacegroup != 0:
+        #         sg = space_group_symbols(
+        #             self.user_spacegroup).universal_hermann_mauguin()
+        #         self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (
+        #             str(hkl_filename), str(sg)))
+        #         out_file = hkl_filename.rsplit(".", 1)[0]
+        #         command = []
+        #         command.append('pointless hklout '+hkl_filename +
+        #                        '> '+out_file+'_import.log <<eof \n')
+        #         command.append('xdsin '+dataset+' \n')
+        #         command.append('lauegroup %s \n' % sg)
+        #         command.append('choose spacegroup %s \n' % sg)
+        #         if 'scalepack_no_merge_original_index' in set(types):
+        #             command.append('cell ' + str(self.unitcell[0]) + ' ' + str(self.unitcell[1]) + ' ' + str(self.unitcell[2]) +
+        #                            ' ' + str(self.unitcell[3]) + ' ' + str(self.unitcell[4]) + ' ' + str(self.unitcell[5]) + '\n')
+        #         command.append('eof\n')
+        #         comfile = open(out_file+'_import.sh', 'w')
+        #         comfile.writelines(command)
+        #         comfile.close()
+        #         os.chmod('./'+out_file+'_import.sh', 0755)
+
+        #         p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
+        #                              shell=True,
+        #                              stdout=subprocess.PIPE,
+        #                              stderr=subprocess.PIPE).wait()
+        #     else:
+        #         self.logger.debug(
+        #             'HCMerge::Copying %s to Working Directory.' % str(dataset))
+        #         p = subprocess.Popen('pointless -copy xdsin ' + dataset + ' hklout ' + hkl_filename,
+        #                              shell=True,
+        #                              stdout=subprocess.PIPE,
+        #                              stderr=subprocess.PIPE).wait()
             # Make a list of filenames
             self.data_files.append(hkl_filename)
 
@@ -387,49 +592,82 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::Data Merging Started.')
 
         # Make 1 x 1 combinations
-        combos = self.make_combinations(self.data_files,2)
+        combos = self.make_combinations(self.data_files, 2)
 
         # lists for running the multiprocessing
-        jobs                               = []
+        # jobs = []
 
-        # combine the files with POINTLESS
+        pool = multiprocessing.Pool(self.nproc)
+
+        pool_arguments = []
         for pair in combos:
-            outfile_prefix = str(pair[0].split('_')[0])+'x'+str(pair[1].split('_')[0])
+            outfile_prefix = str(pair[0].split('_')[0]) + \
+                'x'+str(pair[1].split('_')[0])
             self.id_list[outfile_prefix] = pair
-#            combine = pool.map(self.merge,id_list)
-            combine = Process(target=self.combine,args=(pair,outfile_prefix))
-            jobs.append(combine)
-#            combine.start()
-#                combine = self.combine(pair,outfile_prefix)
+            #in_files, out_file, logger, cmd_prefix, strict, user_spacegroup
+            pool_arguments.append(
+                (pair, outfile_prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
+#           combine = pool.map(self.merge,id_list)
+#           combine.start()
+#               combine = self.combine(pair,outfile_prefix)
 
-        # Wait for all worker processes to finish
-        numjobs = len(jobs)
-        jobNum = 0
-        while jobNum < numjobs:
-            endjobNum = min(jobNum+self.nproc, numjobs)
-            for job in jobs[jobNum:endjobNum]:
-                job.start()
-            for job in jobs[jobNum:endjobNum]:
-                job.join()
-            jobNum = endjobNum
+        # combine the files with POINTLESS to ensure spacegroup is the same in strict mode
+        if self.strict:
+            r = pool.map(combine_wrapper, pool_arguments)
 
-        # When POINTLESS is complete, calculate correlation coefficient
-        for pair in self.id_list.keys():
-            self.results[pair] = {}
-            if os.path.isfile(pair+'_pointless.mtz'):
-                # First, get batch information from pointless mtz file
-                batches = self.get_batch(pair+'_pointless.mtz')
-                # Second, check if both datasets made it into the final mtz
-                if len(batches)>=2:
-                # Third, calculate the linear correlation coefficient if there are two datasets
-                    self.results[pair]['CC'] = self.get_cc_pointless(pair,batches) # results are a dict with pair as key
+        # calculate correlation coefficient
+        pairs_to_calculate_cc = []
+        self.tprint("Process: Calculating CCs.")
+        # grab intensity arrays from either combined mtz in strict mode or individual HKL pairs in sloppy
+        if self.strict:
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                if os.path.isfile(pair+'_pointless.mtz'):
+                    # First, get batch information from pointless mtz file
+                    batches = self.get_batch(pair+'_pointless.mtz')
+                    # Second, check if both datasets made it into the final mtz
+                    if len(batches) >= 2:
+                        # Third, calculate the linear correlation coefficient if there are two datasets
+                        self.results[pair]['CC'] = self.get_cc_pointless(
+                            pair, batches)  # results are a dict with pair as key
+                        pairs_to_calculate_cc.append(pair)
+                    else:
+                        # If only one dataset in mtz, default to no correlation.
+                        self.logger.error(
+                            'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
+                        self.results[pair]['CC'] = 0
                 else:
-                    # If only one dataset in mtz, default to no correlation.
-                    self.logger.error('HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.'% pair)
                     self.results[pair]['CC'] = 0
-            else:
-                self.results[pair]['CC'] = 0
 
+        else:
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                int_array1,int_array2 = self.get_int(self.id_list[pair])
+                self.results[pair]['CC'] = self.get_cc(int_array1, int_array2)
+                self.logger.debug('Correlation Coefficient of %s: %s' % (pair, str(self.results[pair]['CC'])))
+
+        # for pair in self.id_list.keys():
+        #     self.results[pair] = {}
+        #     if os.path.isfile(pair+'_pointless.mtz'):
+        #         # First, get batch information from pointless mtz file
+        #         batches = self.get_batch(pair+'_pointless.mtz')
+        #         # Second, check if both datasets made it into the final mtz
+        #         if len(batches) >= 2:
+        #             # Third, calculate the linear correlation coefficient if there are two datasets
+        #             self.results[pair]['CC'] = self.get_cc_pointless(
+        #                 pair, batches)  # results are a dict with pair as key
+        #             pairs_to_calculate_cc.append(pair)
+        #         else:
+        #             # If only one dataset in mtz, default to no correlation.
+        #             self.logger.error(
+        #                 'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
+        #             self.results[pair]['CC'] = 0
+        #     else:
+        #         self.results[pair]['CC'] = 0
+        
+        # Make chart of CC by pairs of files (and a CSV file)
+        self.make_cc_chart()
+        
         # Make relationship matrix
         self.matrix = self.make_matrix(self.method)
 
@@ -444,7 +682,7 @@ class RapdPlugin(multiprocessing.Process):
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files})
 
-		# Make the summary text file for all merged files
+        # Make the summary text file for all merged files
         self.make_log(self.merged_files)
 
         # Make the dendrogram and write it out as a PNG
@@ -463,7 +701,7 @@ class RapdPlugin(multiprocessing.Process):
         # Copy original datasets to a DATA directory
         commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
-	        shutil.move(file,self.dirs['data'])
+            shutil.move(file, self.dirs['data'])
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
@@ -480,14 +718,15 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("Clean up excess intermediate processing and log files")
         killlist = []
-        killext = ['_pointless.sh', '_pointless.mtz', '_pointless.log', '_pointless_p1.log']
+        killext = ['_pointless.sh', '_pointless.mtz',
+                   '_pointless.log', '_pointless_p1.log']
         for ext in killext:
             for prefix in self.id_list:
                 killlist.append(prefix+ext)
     #        for itm in self.merged_files:
     #            killlist.append(itm+'_aimless.sh')
-        filelist = [ f for f in os.listdir(self.dirs['work']) if f.endswith(".sh") or f.endswith(".log")
-                     or f.endswith(".mtz")]
+        filelist = [f for f in os.listdir(self.dirs['work']) if f.endswith(".sh") or f.endswith(".log")
+                    or f.endswith(".mtz")]
         purgelist = set(filelist).intersection(set(killlist))
     #        purgelist = [f for f in filelist if f not in safelist]
         for file in purgelist:
@@ -500,26 +739,24 @@ class RapdPlugin(multiprocessing.Process):
 
         run_mode = self.command["preferences"]["run_mode"]
 
-        # Print results to the terminal
+        # Print results to the terminal?
         if run_mode == "interactive":
             self.print_results(self.merged_files)
-        # Prints JSON of results to the terminal
-        elif run_mode == "json":
-            self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
-                             'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
-                             'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+
+        # Take care of JSON
+        dendrogram = self.json_dendrogram(self.matrix, self.data_files)
+        self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
+                         'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
+                         'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+
         # Traditional mode as at the beamline
-        elif run_mode == "server":
+        if run_mode == "server":
             pass
         # Run and return results to launcher
         elif run_mode == "subprocess":
             return {'data_files': self.data_files, 'id_list': self.id_list,
                     'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                     'merged_files': self.merged_files, 'data_dir': self.dirs['data']}
-        # A subprocess with terminal printing
-        elif run_mode == "subprocess-interactive":
-            self.print_results(self.merged_files)
-            return self.results
 
     def make_combinations(self, files, number=2):
         """
@@ -528,171 +765,91 @@ class RapdPlugin(multiprocessing.Process):
         number = number of files in a combination. For a pair, use 2
         """
 
-        self.logger.debug('HCMerge::Setting up %s as %s file combinations' % (str(files),number))
+        self.logger.debug(
+            'HCMerge::Setting up %s as %s file combinations' % (str(files), number))
         combos = list()
-        for i in combinations(files,number):
+        for i in combinations(files, number):
             combos.append(i)
         return(combos)
-
-    def combine(self, in_files, out_file):
-        """
-        Combine XDS_ASCII.HKL files using POINTLESS
-        in_files = list of files
-        """
-
-        self.logger.debug('HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
-        command = []
-        command.append('pointless hklout '+out_file+'_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
-
-        for hklin in in_files:
-            command.append('hklin '+hklin+' \n')
-            # Add ability to do batches
-        # Make TOLERANCE huge to accept unit cell variations
-        command.append('tolerance 1000.0 \n')
-        # Add LAUEGROUP if user has chosen a spacegroup
-        if self.user_spacegroup:
-            command.append('lauegroup %s \n' % space_group_symbols(self.user_spacegroup).universal_hermann_mauguin())
-            command.append('choose spacegroup %s \n' % space_group_symbols(self.user_spacegroup).universal_hermann_mauguin())
-        command.append('eof\n')
-        comfile = open(out_file+'_pointless.sh','w')
-        comfile.writelines(command)
-        comfile.close()
-        os.chmod('./'+out_file+'_pointless.sh',0755)
-#            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
-        p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                             shell = True,
-                             stdout = subprocess.PIPE,
-                             stderr = subprocess.PIPE).communicate()
-        if self.user_spacegroup == 0:
-            # Sub-routine for different point groups
-            if (p[0] == '' and p[1] == '') == False:
-                self.logger.debug('HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p)))
-            if ('WARNING: Cannot combine reflection lists with different symmetry' or 'ERROR: cannot combine files belonging to different crystal systems') in p[1]:
-                self.logger.debug('HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
-                for hklin in in_files:
-                    cmd = []
-                    cmd.append('pointless hklin '+hklin+' hklout '+hklin+'> '+hklin+'_p.log \n')
-                    subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                 shell = True,
-                                 stdout = subprocess.PIPE,
-                                 stderr = subprocess.PIPE).communicate()
-                if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
-                    self.logger.debug('HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
-                    for hklin in in_files:
-                        cmd = []
-                        hklout = hklin.rsplit('.',1)[0]+'p1.mtz'
-                        cmd.append('pointless hklin '+hklin+' hklout '+hklout+'> '+hklin+'_p1.log <<eof \n')
-                        cmd.append('lauegroup P1 \n')
-                        cmd.append('choose spacegroup P1 \n')
-                        cmd.append('eof\n')
-                        cmdfile = open('p1_pointless.sh','w')
-                        cmdfile.writelines(cmd)
-                        cmdfile.close()
-                        os.chmod('./p1_pointless.sh',0755)
-                        p1 = subprocess.Popen('p1_pointless.sh',
-                                             shell = True,
-                                             stdout = subprocess.PIPE,
-                                             stderr = subprocess.PIPE).communicate()
-                    command = [x.replace('.mtz', 'p1.mtz') for x in command if any('hklin')]
-                    comfile = open(out_file+'_pointless.sh','w')
-                    comfile.writelines(command)
-                    comfile.close()
-                    p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                 shell = True,
-                                 stdout = subprocess.PIPE,
-                                 stderr = subprocess.PIPE).communicate()
-
-        # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
-        plog = open(out_file+'_pointless.log', 'r').readlines()
-        for num,line in enumerate(plog):
-            if line.startswith('FATAL ERROR'):
-                # Go to the next line for error message
-                if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
-                    self.logger.debug('HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
-                    for num,itm in enumerate(command):
-                        if itm == 'eof\n':
-                            command.insert(num, 'choose solution 1\n' )
-                            break
-                comfile = open(out_file+'_pointless.sh','w')
-                comfile.writelines(command)
-                comfile.close()
-                # Run pointless again with new keyword
-                p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                     shell=True,
-                                     stdout = subprocess.PIPE,
-                                     stderr = subprocess.PIPE).wait()
-                if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
-                    self.logger.debug('HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
-                    for hklin in in_files:
-                        cmd = []
-                        hklout = hklin.rsplit('.',1)[0]+'p1.mtz'
-                        cmd.append('pointless hklin '+hklin+' hklout '+hklout+'> '+hklin+'_p1.log <<eof \n')
-                        cmd.append('lauegroup P1 \n')
-                        cmd.append('choose spacegroup P1 \n')
-                        cmd.append('eof\n')
-                        cmdfile = open('p1_pointless.sh','w')
-                        cmdfile.writelines(cmd)
-                        cmdfile.close()
-                        os.chmod('./p1_pointless.sh',0755)
-                        p1 = subprocess.Popen('p1_pointless.sh',
-                                             shell = True,
-                                             stdout = subprocess.PIPE,
-                                             stderr = subprocess.PIPE).communicate()
-                    command = [x.replace('.mtz', 'p1.mtz') for x in command if any('hklin')]
-                    comfile = open(out_file+'_pointless.sh','w')
-                    comfile.writelines(command)
-                    comfile.close()
-                    p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
-                                 shell = True,
-                                 stdout = subprocess.PIPE,
-                                 stderr = subprocess.PIPE).communicate()
-
-
-#        sts = os.waitpid(p.pid, 1)[1]
 
     def get_batch(self, in_file):
         """
         Obtain batch numbers from mtz file. Returns a list of tuples.
         """
 
-        self.logger.debug('HCMerge::get_batch %s from mtz file.' % str(in_file))
+        self.logger.debug(
+            'HCMerge::get_batch %s from mtz file.' % str(in_file))
 
         batch_list = []
         batches = []
-        reflection_file = reflection_file_reader.any_reflection_file(file_name=in_file)
+        reflection_file = reflection_file_reader.any_reflection_file(
+            file_name=in_file)
         # Make a list of all the batch numbers
         for item in reflection_file.file_content().batches():
             batch_list.append(item.num())
         # Go through the list of batches, find the gaps and group by ranges
-        for k, g in groupby(enumerate(batch_list), lambda x:x[0]-x[1]):
+        for k, g in groupby(enumerate(batch_list), lambda x: x[0]-x[1]):
             group = list(map(itemgetter(1), g))
             batches.append((group[0], group[-1]))
-        #
-        # batches = {}
-        # log = open(in_file+'_pointless.log','r').readlines()
-        #
-        # for line in log:
-        #     if ('consists of batches' in line):
-        #         sline = line.split()
-        #         run_number = int(sline[2])
-        #         batch_start = int(sline[6])
-        #         batch_end = int(sline[len(sline)-1])
-        #         batches[run_number] = (batch_start,batch_end)
-        #         self.logger.debug('%s has batches %d to %d' % (in_file,batch_start,batch_end))
-        #
         return(batches)
+
+    def get_cc (self, array1, array2):
+        """
+        Calculate correlation coefficient (CC) between two datasets that are given as XDS_ASCII.HKL files.  Need
+        to convert to reading in intensity arrays.  
+        Uses cctbx.
+        """
+        
+        # Read in reflection files    
+        #file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
+        #file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
+        
+        # Convert to miller arrays
+        # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
+        #ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        #ma2 = file2.as_miller_arrays(merge_equivalents=False)
+        
+        ma1 = array1
+        ma2 = array2
+        # Given a non-anomalous array, expand to generate anomalous pairs. Though all data from RAPD2 
+        # should be FRIEDEL'S_LAW=FALSE and this is an extraneous step.
+
+        ma1_ext=ma1[0].generate_bijvoet_mates()
+        ma2_ext=ma2[0].generate_bijvoet_mates()
+        
+        # Determine common sets and calculate correlation between the two datasets. assert_is_similar_symmetry=True
+        # means that the two datasets must be in the same spacegroup and unit cell.
+        try:
+            if self.strict:
+                I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=True)
+            else:
+                I_ma1, I_ma2 = ma1_ext.common_sets(ma2_ext, assert_is_similar_symmetry=False)
+            cc = I_ma1.correlation(I_ma2, assert_is_similar_symmetry=False).coefficient()
+        except:
+            cc=0
+        return(cc)                                      
+
+    def get_int(self, pair):
+        # Read in reflection files    
+        file1 = reflection_file_reader.any_reflection_file(file_name=pair[0])
+        file2 = reflection_file_reader.any_reflection_file(file_name=pair[1])
+        
+        # Convert to miller arrays
+        # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
+        ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        ma2 = file2.as_miller_arrays(merge_equivalents=False)
+
+        # return the intensity arrays
+        return(ma1, ma2)
 
     def get_cc_pointless(self, in_file, batches):
         """
-        Calculate correlation coefficient (CC) between two datasets which have been combined
-        by pointless.  Uses cctbx.  Reads in an mtz file.
+        Get intensity arrays from pointless-combined mtz file with 2 batches.
         """
-
-        self.logger.debug('HCMerge::get_cc_pointless::Obtain correlation coefficient from %s with batches %s' % (str(in_file),str(batches)))
-
+        
         # Read in mtz file
-        mtz_file = reflection_file_reader.any_reflection_file(file_name=in_file+'_pointless.mtz')
+        mtz_file = reflection_file_reader.any_reflection_file(
+            file_name=in_file+'_pointless.mtz')
 
         # Convert to miller arrays
         # ma[1] has batch information, ma[2] has I and SIGI
@@ -710,7 +867,7 @@ class RapdPlugin(multiprocessing.Process):
         run2_batch_end = batches[1][1]
 
         # Separate datasets by batch
-        for cnt,batch in enumerate(ma[1].data()):
+        for cnt, batch in enumerate(ma[1].data()):
             if batch >= run1_batch_start and batch <= run1_batch_end:
                 data1.append(ma[2].data()[cnt])
                 indices1.append(ma[2].indices()[cnt])
@@ -718,53 +875,26 @@ class RapdPlugin(multiprocessing.Process):
                 data2.append(ma[2].data()[cnt])
                 indices2.append(ma[2].indices()[cnt])
 
-        crystal_symmetry=ma[1].crystal_symmetry()
-
-        # Create miller arrays for each dataset and merge equivalent reflections
-        my_millerset1 = miller.set(crystal_symmetry,indices=indices1)
-        my_miller1 = miller.array(my_millerset1,data=data1)
-        merged1 = my_miller1.merge_equivalents().array()
-
-        my_millerset2 = miller.set(crystal_symmetry,indices=indices2)
-        my_miller2 = miller.array(my_millerset2,data=data2)
-        merged2 = my_miller2.merge_equivalents().array()
-
+        crystal_symmetry = ma[1].crystal_symmetry()
+        
+        # Create miller arrays for each dataset
+        my_millerset1 = miller.set(crystal_symmetry, indices=indices1)
+        my_miller1 = miller.array(my_millerset1, data=data1)
+        
+        my_millerset2 = miller.set(crystal_symmetry, indices=indices2)
+        my_miller2 = miller.array(my_millerset2, data=data2)
+        
         # Obtain common set of reflections
-        common1 = merged1.common_set(merged2)
-        common2 = merged2.common_set(merged1)
+        common1, common2 = my_miller1.common_sets(my_miller2)
         # Deal with only 1 or 2 common reflections in small wedges
         if (len(common1.indices()) == 1 or len(common1.indices()) == 2):
             return(0)
         else:
             # Calculate correlation between the two datasets.
-            cc = flex.linear_correlation(common1.data(),common2.data())
-            self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (str(in_file),str(cc.coefficient())))
+            cc = flex.linear_correlation(common1.data(), common2.data())
+            self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (
+                str(in_file), str(cc.coefficient())))
             return(cc.coefficient())
-
-
-    def get_cc(self, in_files):
-        """
-        Calculate correlation coefficient (CC) between two datasets.  Uses cctbx.
-        """
-
-        # Read in reflection files
-        file1 = reflection_file_reader.any_reflection_file(file_name=in_files[0])
-        file2 = reflection_file_reader.any_reflection_file(file_name=in_files[1])
-
-        # Convert to miller arrays
-        # ma[2] has I and SIGI
-        my_miller1 = file1.as_miller_arrays(merge_equivalents=False)
-        my_miller2 = file2.as_miller_arrays(merge_equivalents=False)
-
-        # Create miller arrays for each dataset and merge equivalent reflections
-
-        # Obtain common set of reflections
-        common1 = my_miller1[0].common_set(my_miller2[0])
-        common2 = my_miller2[0].common_set(my_miller1[0])
-
-        # Calculate correlation between the two datasets.
-        cc = flex.linear_correlation(common1.data(),common2.data())
-        return(cc.coefficient())
 
     def scale(self, in_file, out_file, VERBOSE=False):
         """
@@ -773,9 +903,11 @@ class RapdPlugin(multiprocessing.Process):
         out_file = prefix for output mtz file
         """
 
-        self.logger.debug('HCMerge::Scale with AIMLESS in_file: %s as out_file: %s' % (in_file,out_file))
+        self.logger.debug(
+            'HCMerge::Scale with AIMLESS in_file: %s as out_file: %s' % (in_file, out_file))
         command = []
-        command.append('aimless hklin '+in_file+'_pointless.mtz hklout '+out_file+'_scaled.mtz > '+out_file+'_scaled.log <<eof \n')
+        command.append('aimless hklin '+in_file+'_pointless.mtz hklout ' +
+                       out_file+'_scaled.mtz > '+out_file+'_scaled.log <<eof \n')
         command.append('bins 10 \n')
         command.append('scales constant \n')
         command.append('anomalous on \n')
@@ -784,21 +916,21 @@ class RapdPlugin(multiprocessing.Process):
             command.append('resolution high %s \n' % self.resolution)
 #        command.append('END \n')
         command.append('eof \n')
-        comfile = open(in_file+'_aimless.sh','w')
+        comfile = open(in_file+'_aimless.sh', 'w')
         comfile.writelines(command)
         comfile.close()
-        os.chmod(in_file+'_aimless.sh',0755)
+        os.chmod(in_file+'_aimless.sh', 0755)
         p = subprocess.Popen(self.cmd_prefix+' ./'+in_file+'_aimless.sh',
                              shell=True,
-                             stdout = subprocess.PIPE,
-                             stderr = subprocess.PIPE).wait()
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE).wait()
 
         # Check for maximum resolution and re-run scaling if resolution is too high
         scalog = open(out_file+'_scaled.log', 'r').readlines()
         if self.resolution:
             pass
         else:
-            for num,line in enumerate(scalog):
+            for num, line in enumerate(scalog):
                 if line.startswith('Estimates of resolution limits: overall'):
                     # Go to the next line to check resolution
                     if scalog[num+1].endswith('maximum resolution\n'):
@@ -807,25 +939,30 @@ class RapdPlugin(multiprocessing.Process):
                         break
                     # Make exception for really weak data
                     elif scalog[num+1].endswith('WARNING: weak data, all data below threshold'):
-                        self.results['errormsg'].append('Weak Data.  Check %s_scaled.log.\n' % out_file)
+                        self.results['errormsg'].append(
+                            'Weak Data.  Check %s_scaled.log.\n' % out_file)
                         break
                     elif scalog[num+2].endswith('WARNING: weak data, all data below threshold'):
-                        self.results['errormsg'].append('Weak Data.  Check %s_scaled.log.\n' % out_file)
+                        self.results['errormsg'].append(
+                            'Weak Data.  Check %s_scaled.log.\n' % out_file)
                         break
                     else:
-                        new_res = min(scalog[num+1].split()[8].rstrip('A'),scalog[num+2].split()[6].rstrip('A'))
-                        self.logger.debug('HCMerge::Scale resolution %s' % new_res)
-                        for num,itm in enumerate(command):
+                        new_res = min(
+                            scalog[num+1].split()[8].rstrip('A'), scalog[num+2].split()[6].rstrip('A'))
+                        self.logger.debug(
+                            'HCMerge::Scale resolution %s' % new_res)
+                        for num, itm in enumerate(command):
                             if itm == 'END \n':
-                                command.insert(num, 'resolution high %s \n' % new_res)
+                                command.insert(
+                                    num, 'resolution high %s \n' % new_res)
                                 break
-                        comfile = open(out_file+'_aimless.sh','w')
+                        comfile = open(out_file+'_aimless.sh', 'w')
                         comfile.writelines(command)
                         comfile.close()
                         p = subprocess.Popen(self.cmd_prefix+' ./'+in_file+'_aimless.sh',
                                              shell=True,
-                                             stdout = subprocess.PIPE,
-                                             stderr = subprocess.PIPE).wait()
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.PIPE).wait()
 
     def make_matrix(self, method):
         """
@@ -838,13 +975,14 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.info('HCMerge::make_matrix using method %s' % method)
-        Y = [] # The list of distances, our equivalent of pdist
+        Y = []  # The list of distances, our equivalent of pdist
         for pair in self.id_list.keys():
             # grab keys with stats of interest, but ensure that keys go in numerical order
             cc = 1 - self.results[pair]['CC']
             Y.append(cc)
         self.logger.debug('HCMerge::Array of distances for matrix = %s' % Y)
-        Z = linkage(Y, method=method) # The linkage defaults to single and euclidean
+        # The linkage defaults to single and euclidean
+        Z = linkage(Y, method=method)
         return Z
 
     def select_data(self, Z, cutoff):
@@ -857,29 +995,29 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.info('HCMerge::Apply cutoff to linkage array %s' % Z)
-        node_list = {} # Dict to hold new nodes
-        for cnt,row in enumerate(Z):
+        node_list = {}  # Dict to hold new nodes
+        for cnt, row in enumerate(Z):
             node_list[len(Z)+cnt+1] = [int(row[0]), int(row[1])]
         # Set up for making groups of all clusters below cutoff.  Turn most_wedges into a dict.
         # Default to most closely linked pair of wedges
         if any(item for item in Z.tolist() if item[2] < cutoff):
             most_wedges = {}
         else:
-            most_wedges = {0: ([int(Z[0][0]),int(Z[0][1])], Z[0][2])}
-        for cnt,item in enumerate(Z[::-1]):
+            most_wedges = {0: ([int(Z[0][0]), int(Z[0][1])], Z[0][2])}
+        for cnt, item in enumerate(Z[::-1]):
             # Apply cutoff
             if item[2] <= cutoff:
                 # Dict holding clusters using node ID as key
-                most_wedges[cnt] = [int(item[0]),int(item[1])], item[2]
+                most_wedges[cnt] = [int(item[0]), int(item[1])], item[2]
         # iteratively go through dict values and reduce to original leaves
         for i in most_wedges.values():
             # use set because it is faster than list
             while set(i[0]).intersection(set(node_list.keys())):
-                self.replace_wedges(i[0],node_list)
+                self.replace_wedges(i[0], node_list)
 
         # Convert numbers to filenames
         for i in most_wedges:
-            for cnt,item in enumerate(most_wedges[i][0]):
+            for cnt, item in enumerate(most_wedges[i][0]):
                 most_wedges[i][0][cnt] = self.data_files[item]
 
 #        # Convert to a flat list and remove the duplicates
@@ -894,7 +1032,7 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.debug('HCMerge::Replace Wedges: %s' % wedges)
-        for count,item in enumerate(wedges):
+        for count, item in enumerate(wedges):
             if item in node_dict.keys():
                 wedges[count] = node_dict[item][0]
                 wedges.append(node_dict[item][1])
@@ -910,40 +1048,55 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::Merge Wedges: %s' % wedge_files)
         # lists for running the multiprocessing
-        jobs                               = []
+        jobs = []
+        pool = multiprocessing.Pool(self.nproc)
+        pool_arguments = []
 
         # Check for all_clusters flag
         if self.all_clusters:
-            for cnt,cluster in enumerate(wedge_files.values()):
-                combine_all = Process(target=self.combine(cluster[0], self.prefix+str(cnt)))
-                jobs.append(combine_all)
-                combine_all.start()
-            for pair in jobs:
-                pair.join()
+            for cnt, cluster in enumerate(wedge_files.values()):
+                pool_arguments.append(
+                    (cluster[0], self.prefix+str(cnt), self.cmd_prefix, self.strict, self.user_spacegroup))
+            r = pool.map(combine_wrapper, pool_arguments)
+#                combine_all = Process(target=self.combine(
+#                    cluster[0], self.prefix+str(cnt)))
+#                jobs.append(combine_all)
+#                combine_all.start()
+#            for pair in jobs:
+#                pair.join()
             # Scale the files with aimless
-            for cnt,itm in enumerate(wedge_files):
-                scale = Process(target=self.scale,args=(self.prefix+str(cnt),self.prefix+str(cnt)))
+            for cnt, itm in enumerate(wedge_files):
+                scale = Process(target=self.scale, args=(
+                    self.prefix+str(cnt), self.prefix+str(cnt)))
                 jobs.append(scale)
                 scale.start()
             for pair in jobs:
                 pair.join()
-            for cnt,itm in enumerate(wedge_files):
+            for cnt, itm in enumerate(wedge_files):
                 new_prefix = self.prefix+str(cnt)
-                self.graphs[new_prefix],self.results[new_prefix] = aimless.parse_aimless(self.prefix+str(cnt)+'_scaled.log')
+                self.graphs[new_prefix], self.results[new_prefix] = aimless.parse_aimless(
+                    self.prefix+str(cnt)+'_scaled.log')
                 self.results[new_prefix]['files'] = wedge_files[itm][0]
                 self.results[new_prefix]['CC'] = 1 - wedge_files[itm][1]
                 self.merged_files.append(new_prefix)
         else:
-            combine_all = Process(target=self.combine,args=(next(wedge_files.itervalues())[0],self.prefix))
-            combine_all.start()
-            combine_all.join()
+            pool_arguments.append(
+                (next(wedge_files.itervalues())[0], self.prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
+            r = pool.map(combine_wrapper, pool_arguments)
+#            combine_all = Process(target=self.combine, args=(
+#                next(wedge_files.itervalues())[0], self.prefix))
+#            combine_all.start()
+#            combine_all.join()
             # Scale the files with aimless
-            scale = Process(target=self.scale,args=(self.prefix,self.prefix))
+            scale = Process(target=self.scale, args=(self.prefix, self.prefix))
             scale.start()
             scale.join()
-            self.graphs[self.prefix],self.results[self.prefix] = aimless.parse_aimless(self.prefix+'_scaled.log')
-            self.results[self.prefix]['files'] = next(wedge_files.itervalues())[0]
-            self.results[self.prefix]['CC'] = 1 - next(wedge_files.itervalues())[1]
+            self.graphs[self.prefix], self.results[self.prefix] = aimless.parse_aimless(
+                self.prefix+'_scaled.log')
+            self.results[self.prefix]['files'] = next(
+                wedge_files.itervalues())[0]
+            self.results[self.prefix]['CC'] = 1 - \
+                next(wedge_files.itervalues())[1]
             self.merged_files.append(self.prefix)
 
     def make_dendrogram(self, matrix, resolution):
@@ -955,19 +1108,151 @@ class RapdPlugin(multiprocessing.Process):
         try:
             import matplotlib.pylab
             if self.labels:
-                dendrogram(matrix, color_threshold = 1 - self.cutoff, labels = self.data_files, leaf_rotation = -90)
+                dendrogram(matrix, color_threshold=1 - self.cutoff,
+                           labels=self.data_files, leaf_rotation=-90)
                 matplotlib.pylab.xlabel('Datasets')
                 matplotlib.pylab.ylabel('1 - Correlation Coefficient')
                 f = matplotlib.pylab.gcf()
-                f.set_size_inches([8,8])
+                f.set_size_inches([8, 8])
                 f.subplots_adjust(bottom=0.4)
             else:
-                dendrogram(matrix, color_threshold = 1 - self.cutoff)
+                dendrogram(matrix, color_threshold=1 - self.cutoff)
             # Save a PNG of the plot
-            matplotlib.pylab.savefig(self.prefix+'-dendrogram.png', dpi=resolution)
+            matplotlib.pylab.savefig(
+                self.prefix+'-dendrogram.png', dpi=resolution)
         except:
-            dendrogram(matrix, color_threshold = 1 - self.cutoff, no_plot=True)
-            self.logger.error('HCMerge::matplotlib.pylab unavailable in your version of cctbx.  Plot not generated.')
+            dendrogram(matrix, color_threshold=1 - self.cutoff, no_plot=True)
+            self.logger.error(
+                'HCMerge::matplotlib.pylab unavailable in your version of cctbx.  Plot not generated.')
+
+    def getNewick(self, node, newick, parentdist, leaf_names):
+        """
+        Get Newick format
+        https://stackoverflow.com/questions/28222179/save-dendrogram-to-newick-format
+
+        tree = scipy.cluster.hierarchy.to_tree(Z,False)
+        getNewick(tree, "", tree.dist, leaf_names)
+        """
+        if node.is_leaf():
+            return "%s:%.3f%s" % (leaf_names[node.id], parentdist - node.dist, newick)
+        else:
+            if len(newick) > 0:
+                newick = "):%.3f%s" % (parentdist - node.dist, newick)
+            else:
+                newick = ");"
+            newick = self.getNewick(
+                node.get_left(), newick, node.dist, leaf_names)
+            newick = self.getNewick(node.get_right(), ",%s" %
+                                    (newick), node.dist, leaf_names)
+            newick = "(%s" % (newick)
+            return newick
+
+    def make_cc_chart(self):
+        """
+        Make a chart of the correlation coefficients by file pairs.
+        """
+        # Create a dict of wedge names keyed by the index used by the plugin
+        wedges = {}
+        for data_file in self.data_files:
+            key = data_file.split("_")[0]
+            value = "_".join(data_file.split("_")[1:])
+            wedges[key] = value
+        
+        # Create an array of keys to put file strings in proper numerical order
+        wedge_keys =  wedges.keys()
+#        wedge_keys = self.id_list.keys()
+        wedge_keys.sort(key=lambda x: int(x))
+        # print wedge_keys
+
+        # Figure out the longest wedge name
+        longest = 0
+        for file_name in wedges.values():
+            length = len(file_name)
+            if length > longest:
+                longest = length
+        # print "Longest file name is %d characters" % longest
+
+        self.tprint("\nTable of correlation coefficients\n", 50, "blue")
+
+        # Print column headers
+        count = longest
+        while count > 0:
+            # print count
+            line = " "*longest+"  |"
+            for key in wedge_keys[1:]:
+                value = wedges[key]
+                position = len(value)-count
+                if position >= 0:
+                    line += "   "+value[position]+"   |"
+                else:
+                    line += "       |"
+            self.tprint(line, 50)
+            count -= 1
+
+        # Print the rows
+        counter1 = 0
+        for key1 in wedge_keys[:-1]:
+            value = wedges[key1]
+            line = " "+value+(" "*(longest-len(value)))+" |"
+            counter2 = 1
+            colorations = 0
+            for key2 in wedge_keys[1:]:
+                if counter2 > counter1:
+                    if "x".join([key1, key2]) in self.results:
+                        cc = self.results["x".join([key1, key2])]["CC"]
+                    elif "x".join([key2, key1]) in self.results:
+                        cc = self.results["x".join([key2, key1])]["CC"]
+                    else:
+                        cc = -1
+                    if cc < HIGHLIGHT_THRESHOLD:
+                        line += ((rtext.red+" %3.3f "+rtext.stop+"|") % cc)
+                        colorations += 1
+                    else:
+                        line += " %3.3f |" % cc
+                else:
+                    line += "       |"
+                counter2 += 1
+            self.tprint("-"*(len(line)-(9*colorations)), 50)
+            self.tprint(line, 50)
+            counter1 += 1
+        self.tprint("-"*(len(line)-(9*colorations))+"\n", 50)
+
+        # Make a CSV
+        csv_lines = []
+        # Header
+        csv_line = ""
+        for key in wedge_keys[1:]:
+            csv_line += ("," + wedges[key])
+        csv_lines.append(csv_line)
+        # Body
+        counter1 = 0
+        for key1 in wedge_keys[:-1]:
+            value = wedges[key1]
+            csv_line = value
+            counter2 = 1
+            colorations = 0
+            for key2 in wedge_keys[1:]:
+                # print counter1, counter2
+                if counter2 > counter1:
+                    if "x".join([key1, key2]) in self.results:
+                        cc = self.results["x".join([key1, key2])]["CC"]
+                        csv_line += (",%f" % cc)
+                    elif "x".join([key2, key1]) in self.results:
+                        cc = self.results["x".join([key2, key1])]["CC"]
+                        csv_line += (",%f" % cc)
+                    else:
+                        csv_line += (",")
+                else:
+                    csv_line += (",")
+                counter2 += 1
+            counter1 += 1
+            # print csv_line
+            csv_lines.append(csv_line)
+
+        # Write CSV
+        with open("cc.csv", "w") as csv_file:
+            for csv_line in csv_lines:
+                csv_file.write(csv_line+"\n")
 
     def make_log(self, files):
         """
@@ -975,7 +1260,8 @@ class RapdPlugin(multiprocessing.Process):
         files = list of results files, prefix only
         """
 
-        self.logger.debug('HCMerge::Write tabulated results to %s' % (self.prefix + '.log'))
+        self.logger.debug('HCMerge::Write tabulated results to %s' %
+                          (self.prefix + '.log'))
 
         # Make a comparison table of results
         # Set up list of lists for making comparison table
@@ -988,7 +1274,7 @@ class RapdPlugin(multiprocessing.Process):
                     'rpim_norm', 'rpim_anom', 'cc-half', 'anom_completeness',
                     'anom_multiplicity', 'anom_correlation', 'anom_slope', 'total_obs', 'unique_obs']
         for file in files:
-            row = [ file ]
+            row = [file]
             for item in key_list:
                 # If it is a list, add first item from the list which is overall stat
                 if type(self.results[file][item]) == list:
@@ -1028,7 +1314,7 @@ class RapdPlugin(multiprocessing.Process):
                     'rpim_norm', 'rpim_anom', 'cc-half', 'anom_completeness',
                     'anom_multiplicity', 'anom_correlation', 'anom_slope', 'total_obs', 'unique_obs']
         for file in files:
-            row = [ file ]
+            row = [file]
             for item in key_list:
                 # If it is a list, add first item from the list which is overall stat
                 if type(self.results[file][item]) == list:
@@ -1052,8 +1338,8 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.debug('HCMerge::Pickling Dicts')
-        file = open(self.prefix + '.pkl','wb')
-        pickle.dump(dicts,file)
+        file = open(self.prefix + '.pkl', 'wb')
+        pickle.dump(dicts, file)
         file.close()
 
     def get_dicts(self, file):
@@ -1062,9 +1348,9 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.debug('HCMerge::UnPickling Dicts')
-        tmp = pickle.load(open(file,'rb'))
-        for itm,val in tmp.iteritems():
-        	setattr(self, itm, val)
+        tmp = pickle.load(open(file, 'rb'))
+        for itm, val in tmp.iteritems():
+            setattr(self, itm, val)
 
     def rerun(self, pkl_file):
         """
@@ -1075,16 +1361,18 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::rerun')
         self.get_dicts(pkl_file)
         if self.start_point == 'clustering':
-            self.merged_files = []                    # List for storing new merged files.
+            # List for storing new merged files.
+            self.merged_files = []
             os.chdir(self.dirs['work'])
-        	# Make new COMBINE directory and move data files over
-			# combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
-			# os.chdir(combine_dir)
-            self.logger.debug('HCMerge::Copying files from %s to %s' % (self.data_dir, self.dirs['work']))
+            # Make new COMBINE directory and move data files over
+            # combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
+            # os.chdir(combine_dir)
+            self.logger.debug('HCMerge::Copying files from %s to %s' %
+                              (self.data_dir, self.dirs['work']))
             for file in self.data_files:
                 shutil.copy(self.data_dir + '/' + file, self.dirs['work'])
 
-			# Make relationship matrix
+            # Make relationship matrix
             self.matrix = self.make_matrix(self.method)
 
             # Find data above CC cutoff.  Key 0 is most wedges and above CC cutoff
@@ -1098,7 +1386,7 @@ class RapdPlugin(multiprocessing.Process):
                               'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                               'merged_files': self.merged_files})
 
-			# Make the summary text file for all merged files
+            # Make the summary text file for all merged files
             self.make_log(self.merged_files)
 
         else:
@@ -1120,6 +1408,13 @@ class RapdPlugin(multiprocessing.Process):
         with open("result.json", 'w') as outfile:
             outfile.writelines(json_string)
 
+    def json_dendrogram(self, Z, leaf_names):
+        """Make a Newick json suitable for use with http://bl.ocks.org/kueda/1036776 which uses d3 to make a phylogenetic tree"""
+
+        tree = to_tree(Z, False)
+        json = self.getNewick(tree, "", tree.dist, leaf_names)
+        return json
+
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
@@ -1127,7 +1422,8 @@ class RapdPlugin(multiprocessing.Process):
 
         programs = ["CCTBX", "AIMLESS", "POINTLESS"]
         info_string = credits.get_credits_text(programs, "    ")
-        self.tprint(info_string, level=99, color="white")
+        self.tprint(info_string, level=99, color="default")
+
 
 class MakeTables:
     """
