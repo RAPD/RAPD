@@ -1252,40 +1252,6 @@ class RapdPlugin(multiprocessing.Process):
             out.write(file + ' = ' + str(self.results[file]['files']) + '\n')
         out.close()
 
-    def print_results(self, files):
-        """
-        Makes a log file of the merging results
-        files = list of results files, prefix only
-        """
-
-        # Make a comparison table of results
-        # Set up list of lists for making comparison table
-        table = [['', 'Correlation', 'Space Group', 'Resolution', 'Completeness',
-                  'Multiplicity', 'I/SigI', 'Rmerge', 'Rmeas', 'Anom Rmeas',
-                  'Rpim', 'Anom Rpim', 'CC 1/2', 'Anom Completeness', 'Anom Multiplicity',
-                  'Anom CC', 'Anom Slope', 'Total Obs', 'Unique Obs']]
-        key_list = ['CC', 'scaling_spacegroup', 'bins_high', 'completeness', 'multiplicity',
-                    'isigi', 'rmerge_norm', 'rmeas_norm', 'rmeas_anom',
-                    'rpim_norm', 'rpim_anom', 'cc-half', 'anom_completeness',
-                    'anom_multiplicity', 'anom_correlation', 'anom_slope', 'total_obs', 'unique_obs']
-        for file in files:
-            row = [file]
-            for item in key_list:
-                # If it is a list, add first item from the list which is overall stat
-                if type(self.results[file][item]) == list:
-                    row.append(self.results[file][item][0])
-                # Otherwise, add the entire contents of the item
-                else:
-                    row.append(self.results[file][item])
-            table.append(row)
-        # flip columns and rows since rows are so long
-        table = zip(*table)
-        table_print = MakeTables()
-        table_print.pprint_table(sys.stdout, table)
-
-        # Append a key for merged file names
-        for file in files:
-            print(file + ' = ' + str(self.results[file]['files']) + '\n')
 
     def store_dicts(self, dicts):
         """
