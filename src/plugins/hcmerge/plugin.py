@@ -129,7 +129,7 @@ def combine_wrapper(args):
     return combine(*args)
 
 
-def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
+def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
     """
     Combine XDS_ASCII.HKL files using POINTLESS
     in_files = list of files
@@ -147,8 +147,8 @@ def combine(in_files, out_file, cmd_prefix, strict, user_spacegroup):
         command.append('hklin '+hklin+' \n')
         # Add ability to do batches
     # Make TOLERANCE huge to accept unit cell variations when in sloppy mode.
-#    if strict == False:
-#        command.append('tolerance 1000.0 \n')
+    if strict == False or force == True:
+        command.append('tolerance 1000.0 \n')
     # Add LAUEGROUP if user has chosen a spacegroup
     if user_spacegroup:
         command.append('lauegroup %s \n' % space_group_symbols(
@@ -412,6 +412,13 @@ class RapdPlugin(multiprocessing.Process):
 
         # Set running in strict or sloppy mode
         self.strict = self.settings['strict']
+
+        # Allow for merging of all even when different unit cells. Default to no.
+        if self.settings.has_key('force'):
+            self.force = self.settings['force']
+            self.cutoff = 0
+        else:
+            self.force = False
         
         # Check on number of processors
         if self.settings.has_key('nproc'):
@@ -597,7 +604,7 @@ class RapdPlugin(multiprocessing.Process):
             self.id_list[outfile_prefix] = pair
             #in_files, out_file, logger, cmd_prefix, strict, user_spacegroup
             pool_arguments.append(
-                (pair, outfile_prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
+                (pair, outfile_prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup))
 #           combine = pool.map(self.merge,id_list)
 #           combine.start()
 #               combine = self.combine(pair,outfile_prefix)
@@ -963,6 +970,7 @@ class RapdPlugin(multiprocessing.Process):
         Return Z, the linkage array
         """
 
+        self.tprint('Process::Generate Relationship Matrix using method %s' % method)
         self.logger.info('HCMerge::make_matrix using method %s' % method)
         Y = []  # The list of distances, our equivalent of pdist
         for pair in self.id_list.keys():
@@ -1069,13 +1077,11 @@ class RapdPlugin(multiprocessing.Process):
                 self.results[new_prefix]['CC'] = 1 - wedge_files[itm][1]
                 self.merged_files.append(new_prefix)
         else:
-            pool_arguments.append(
-                (next(wedge_files.itervalues())[0], self.prefix, self.cmd_prefix, self.strict, self.user_spacegroup))
+            #in_files, out_file, cmd_prefix, strict, force, user_spacegroup
+            pool_arguments.append((next(wedge_files.itervalues())[0], self.prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup))
             r = pool.map(combine_wrapper, pool_arguments)
-#            combine_all = Process(target=self.combine, args=(
-#                next(wedge_files.itervalues())[0], self.prefix))
-#            combine_all.start()
-#            combine_all.join()
+            #combine_all = combine(self.data_files, self.prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup)
+                
             # Scale the files with aimless
             scale = Process(target=self.scale, args=(self.prefix, self.prefix))
             scale.start()

@@ -119,7 +119,6 @@ def get_commandline():
                         dest="all_clusters",
                         default=False,
                         help="make all agglomerative clusters greater than cutoff value")
-
     parser.add_argument("-c", "--cutoff",
                         dest="cutoff",
                         type=float,
@@ -151,6 +150,7 @@ def get_commandline():
                         dest="prefix",
                         default="merged",
                         help="set a prefix for output files. Used in rerun as the name of the .pkl file")
+    # Precheck Files for Spacegroup and is XDS_ASCII.HKL
     parser.add_argument("-p", "--precheck",
                         action="store_true",  # Automatic default of True
                         dest="precheck",
@@ -192,6 +192,11 @@ def get_commandline():
                         help="Have clustering run with strict parameters. Setting spacegroup or unitcell \
                         automatically forces strict mode.")
 
+    # Allow for merging everything no matter what.  Default is force = False.
+    parser.add_argument("-f", "--force",
+                        dest="force",
+                        action="store_true",
+                        help="Force everything to be merged even if not isomorphous.")
     # Run in test mode
     parser.add_argument("-t", "--test",
                         action="store_true",
