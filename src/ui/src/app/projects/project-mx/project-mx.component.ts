@@ -19,6 +19,7 @@ import { FileUploader } from "ng2-file-upload";
 
 import { ReintegrateDialogComponent } from "../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component";
 // import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
+import { MrDialogComponent } from '../../plugin_components/mx/mr-dialog/mr-dialog.component';
 
 import { Project } from "../../shared/classes/project";
 
@@ -45,12 +46,13 @@ for (let key in mx) {
   styleUrls: ["./project-mx.component.css"]
 })
 export class ProjectMxComponent implements OnInit {
+
   public uploader: FileUploader;
   public project: Project;
 
   private id: string;
-  private selected_integrated_data: string[] = [];
-  private selected_integrate_action: string = "";
+  private selectedIntegratedData: string[] = [];
+  private selectedIntegrateAction: string = "";
   private actions: any = {
     INDEX: ["Display Result", "Remove"],
     INTEGRATE: [
@@ -58,7 +60,8 @@ export class ProjectMxComponent implements OnInit {
       ["Merge"],
     ],
   };
-  private actionIcons: any = {
+
+  public actionIcons: any = {
     "Display Result": "visibility",
     "MR": "search",
     "Merge": "call_merge",
@@ -67,22 +70,23 @@ export class ProjectMxComponent implements OnInit {
     "SAD": "search",
   };
 
-  private selected_indexed_data: string[] = [];
+  public selectedIndexedData: string[] = [];
 
   // Where results got
-  @ViewChild("output_outlet", { read: ViewContainerRef })
-outlet;
+  @ViewChild("output_outlet", { read: ViewContainerRef }) outlet: any;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private globals_service: GlobalsService,
+    private globalsService: GlobalsService,
     private rest_service: RestService,
     private websocket_service: WebsocketService,
     private componentfactoryResolver: ComponentFactoryResolver,
     public confirm_dialog: MatDialog,
     public error_dialog: MatDialog,
-    public reintegrate_dialog: MatDialog // public upload_dialog: MatDialog
+    public reintegrateDialog: MatDialog,
+    // public upload_dialog: MatDialog,
+    public mrDialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -93,7 +97,7 @@ outlet;
     this.uploader = new FileUploader({
       authToken: localStorage.getItem("access_token"),
       autoUpload: true,
-      url: this.globals_service.site.restApiUrl + "/upload_mx_raw",
+      url: this.globalsService.site.restApiUrl + "/upload_mx_raw",
     });
 
     // Add form fields
@@ -140,30 +144,30 @@ outlet;
     // Clear the result display?
     this.outlet.clear();
 
-    let index = this.selected_integrated_data.indexOf(id);
+    let index = this.selectedIntegratedData.indexOf(id);
     // Add to selected data array
     if (index === -1) {
-      this.selected_integrated_data.push(id);
-      this.selected_indexed_data = [];
+      this.selectedIntegratedData.push(id);
+      this.selectedIndexedData = [];
       // Remove id from selected array
     } else {
-      this.selected_integrated_data.splice(index, 1);
+      this.selectedIntegratedData.splice(index, 1);
     }
   }
 
   public toggleSourceDataIndexSelection(id: string) {
-    let index = this.selected_indexed_data.indexOf(id);
+    const index = this.selectedIndexedData.indexOf(id);
 
     // Clear the result display?
     this.outlet.clear();
 
     // Add to selected data array
     if (index === -1) {
-      this.selected_indexed_data.push(id);
-      this.selected_integrated_data = [];
+      this.selectedIndexedData.push(id);
+      this.selectedIntegratedData = [];
       // Remove id from selected array
     } else {
-      this.selected_indexed_data.splice(index, 1);
+      this.selectedIndexedData.splice(index, 1);
     }
   }
 
@@ -179,15 +183,20 @@ outlet;
 
     switch (action) {
       case "Display Result":
-        this.displayResult(this.selected_integrated_data[0]);
+        this.displayResult(this.selectedIntegratedData[0]);
         break;
 
       case "ReIntegrate":
-        this.activateReintegration(this.selected_integrated_data[0]);
+        this.activateReintegration(this.selectedIntegratedData[0]);
+        break;
+
+      case 'MR':
+        this.activateMR(this.selectedIntegratedData[0]);
         break;
 
       case "Remove":
-        this.activateRemoveConfirm(this.selected_integrated_data[0]);
+        this.activateRemoveConfirm(this.selectedIntegratedData[0]);
+        break;
 
       default:
         break;
@@ -195,19 +204,24 @@ outlet;
   }
 
   public selectMultipleIntgrationAction(action: string) {
+
     console.log("selectMultipleIntgrationAction", action);
 
     switch (action) {
       case "Display Result":
-        this.displayResult(this.selected_integrated_data[0]);
+        this.displayResult(this.selectedIntegratedData[0]);
         break;
 
       case "ReIntegrate":
-        this.activateReintegration(this.selected_integrated_data[0]);
+        this.activateReintegration(this.selectedIntegratedData[0]);
         break;
 
       case "Remove":
-        this.activateRemoveConfirm(this.selected_integrated_data[0]);
+        this.activateRemoveConfirm(this.selectedIntegratedData[0]);
+        break;
+
+      case "Merge":
+        break;
 
       default:
         break;
@@ -219,11 +233,11 @@ outlet;
 
     switch (action) {
       case "Display Result":
-        this.displayResult(this.selected_indexed_data[0]);
+        this.displayResult(this.selectedIndexedData[0]);
         break;
 
       case "Remove":
-        this.activateRemoveConfirm(this.selected_indexed_data[0]);
+        this.activateRemoveConfirm(this.selectedIndexedData[0]);
 
       default:
         break;
@@ -271,7 +285,7 @@ outlet;
     this.rest_service.getResultDetail(result_id).subscribe((parameters) => {
       console.log(parameters);
       if (parameters.success === true) {
-        let dialogRef = this.reintegrate_dialog.open(
+        const dialogRef = this.reintegrateDialog.open(
           ReintegrateDialogComponent,
           {
             data: parameters.results,
@@ -279,6 +293,21 @@ outlet;
         );
       } else {
         let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+          data: { message: parameters.message },
+        });
+      }
+    });
+  }
+
+  private activateMR(resultId: string) {
+    // Get the full result
+    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
+      console.log(parameters);
+      parameters.results.current_project_id = this.id;
+      if (parameters.success === true) {
+        const dialogRef = this.mrDialog.open(MrDialogComponent, {data: parameters.results,});
+      } else {
+        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
@@ -312,26 +341,26 @@ outlet;
         });
         this.project.source_data.splice(index_to_remove, 1);
 
-        // Remove from selected_integrated_data
-        var sid_index_to_remove = this.selected_integrated_data.findIndex(
+        // Remove from selectedIntegratedData
+        var sid_index_to_remove = this.selectedIntegratedData.findIndex(
           function(element) {
             return element === result_id;
           }
         );
         if (sid_index_to_remove !== -1) {
-          this.selected_integrated_data.splice(sid_index_to_remove, 1);
+          this.selectedIntegratedData.splice(sid_index_to_remove, 1);
           // Clear the result display?
           this.outlet.clear();
         }
 
-        // Remove from selected_indexed_data
-        var sid_index_to_remove = this.selected_indexed_data.findIndex(function(
+        // Remove from selectedIndexedData
+        var sid_index_to_remove = this.selectedIndexedData.findIndex(function(
           element
         ) {
           return element === result_id;
         });
         if (sid_index_to_remove !== -1) {
-          this.selected_indexed_data.splice(sid_index_to_remove, 1);
+          this.selectedIndexedData.splice(sid_index_to_remove, 1);
           // Clear the result display?
           this.outlet.clear();
         }
