@@ -334,7 +334,7 @@ def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
 ------------
-RAPD Example
+RAPD Merging
 ------------"""
     printer(message, 50, color="blue")
 

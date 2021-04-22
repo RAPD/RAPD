@@ -48,7 +48,7 @@ import os
 from pprint import pprint
 # import pymongo
 import re
-# import redis
+import redis
 import shutil
 import stat
 import subprocess
@@ -138,7 +138,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
     strict
     user_spacegroup
     """
-    print 'HCMerge::Pair-wise joining of %s using pointless.' % str(in_files)
+    print 'HCMerge::Joining of %s using pointless.' % str(in_files)
     command = []
     command.append('pointless hklout '+out_file +
                    '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
@@ -311,11 +311,7 @@ class RapdPlugin(multiprocessing.Process):
         self.dirs = self.command['directories']
         # List of original data files to be merged.  Currently expected to be ASCII.HKL
         self.datasets = self.command['input_data']['datasets']
-        self.settings = self.command['preferences']
-
-        # Variables
-#        self.cmdline = self.settings['cmdline']
-#        self.process_id = self.settings['process_id']
+        self.settings = self.command.get('preferences')
 
         # Variables for holding filenames and results
         self.data_files = []            # List of data file names
@@ -338,84 +334,47 @@ class RapdPlugin(multiprocessing.Process):
         # centroid: the centroid/UPGMC algorithm. (alias)
         # median: the median/WPGMC algorithm. (alias)
         # ward: the Ward/incremental algorithm. (alias)
-        if self.settings.has_key('method'):
-            self.method = self.settings['method']
-        else:
-            self.method = 'complete'
+        self.method = self.settings['method']
 
         # Check for cutoff value
-        if self.settings.has_key('cutoff'):
-            # CC 1/2 value passed in by user
-            self.cutoff = self.settings['cutoff']
-        else:
-            self.cutoff = 0.95
-
+        self.cutoff = self.settings['cutoff']
+        
         # Check for filename for merged dataset
-        if self.settings.has_key('prefix'):
-            self.prefix = self.settings['prefix']
-        else:
-            self.prefix = 'merged'
-
+        self.prefix = self.settings['prefix']
+        
         # Check for user-defined spacegroup
-        if self.settings.has_key('spacegroup'):
-            self.user_spacegroup = self.settings['spacegroup']
-        else:
-            self.user_spacegroup = 0  # Default to None
+        self.user_spacegroup = self.settings['spacegroup']
 
         # Check for unit cell.  This is a list.
-        if self.settings.has_key('unitcell'):
-            self.unitcell = self.settings['unitcell']
-        else:
-            self.unitcell = False
+        self.unitcell = self.settings['unitcell']
 
         # Check for user-defined high resolution cutoff
-        if self.settings.has_key('resolution'):
-            self.resolution = self.settings['resolution']
-        else:
-            self.resolution = 0  # Default high resolution limit to 0
+        self.resolution = self.settings['resolution']
 
         # Check for file cleanup
-        if self.settings.has_key('clean'):
-            self.clean = self.settings['clean']
-        else:
-            self.clean = True
-
+        self.clean = self.settings['clean']
+        
         # Check whether to make all clusters or the first one that exceeds the cutoff
-        if self.settings.has_key('all_clusters'):
-            self.all_clusters = self.settings['all_clusters']
-        else:
-            self.all_clusters = False
+        self.all_clusters = self.settings['all_clusters']
 
         # Check whether to add labels to the dendrogram
-        if self.settings.has_key('labels'):
-            self.labels = self.settings['labels']
-        else:
-            self.labels = False
+        self.labels = self.settings['labels']
 
         # Check whether to start at the beginning or skip to a later step
-        if self.settings.has_key('start_point'):
-            self.start_point = self.settings['start_point']
-        else:
-            self.start_point = 'start'
+        self.start_point = self.settings['start_point']
 
         # Check whether to skip prechecking files during preprocess
-        if self.settings.has_key('precheck'):
-            self.precheck = self.settings['precheck']
-        else:
-            self.precheck = False
+        self.precheck = self.settings['precheck'] 
 
         # Set resolution for dendrogram image
-        if self.settings.has_key('dpi'):
-            self.dpi = self.settings['dpi']
-        else:
-            self.dpi = 100
+        self.dpi = self.settings['dpi']
 
         # Set running in strict or sloppy mode
         self.strict = self.settings['strict']
 
         # Allow for merging of all even when different unit cells. Default to no.
-        if self.settings.has_key('force'):
-            self.force = self.settings['force']
+        if self.settings.get('force') == True:
+            self.force = True
             self.cutoff = 0
         else:
             self.force = False
@@ -437,7 +396,7 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 self.cmd_prefix = 'sh'
         else:
-            self.cmd_prefix = 'sh'
+            self.cmd_prefix = 'sh'        
 
         Process.__init__(self, name="hcmerge")
         self.start()
@@ -689,8 +648,12 @@ class RapdPlugin(multiprocessing.Process):
         Data transfer, file cleanup and other maintenance issues.
         """
 
+        # Clean up mess
+        #self.clean_up()
+
         # Send back results
         self.handle_return()
+
         self.tprint('Postprocess: Cleaning up files.')
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
         # Copy original datasets to a DATA directory
@@ -736,22 +699,19 @@ class RapdPlugin(multiprocessing.Process):
 
         # Print results to the terminal?
         if run_mode == "interactive":
-            self.print_results(self.merged_files)
+            with open(self.prefix + '.log', 'r') as summary:
+                self.tprint(summary.read())
 
         # Take care of JSON
         dendrogram = self.json_dendrogram(self.matrix, self.data_files)
-        self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
+        all_results = {'data_files': self.data_files, 'id_list': self.id_list,
                          'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
-                         'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+                         'newick': dendrogram, 'merged_files': self.merged_files, 'data_dir': self.dirs['data']}
+        self.write_json(all_results)
 
         # Traditional mode as at the beamline
         if run_mode == "server":
-            pass
-        # Run and return results to launcher
-        elif run_mode == "subprocess":
-            return {'data_files': self.data_files, 'id_list': self.id_list,
-                    'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
-                    'merged_files': self.merged_files, 'data_dir': self.dirs['data']}
+            self.send_results(all_results)
 
     def make_combinations(self, files, number=2):
         """
@@ -1409,6 +1369,39 @@ class RapdPlugin(multiprocessing.Process):
         tree = to_tree(Z, False)
         json = self.getNewick(tree, "", tree.dist, leaf_names)
         return json
+
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+
+        self.tprint("Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST)
+
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
+                                    port=self.command["site"].CONTROL_REDIS_PORT,
+                                    db=self.command["site"].CONTROL_REDIS_DB)
+
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
+
+    def send_results(self, results):
+        """Let everyone know we are working on this"""
+
+        self.logger.debug("send_results")
+
+        if self.preferences.get("run_mode") == "server":
+
+            self.logger.debug("Sending back on redis")
+
+            # Transcribe results
+            json_results = json.dumps(results)
+
+            # Get redis instance
+            if not self.redis:
+                self.connect_to_redis()
+
+            # Send results back
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
