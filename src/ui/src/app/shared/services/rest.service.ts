@@ -13,6 +13,7 @@ import { Project } from "../classes/project";
 import { Run } from "../classes/run";
 import { Session } from "../classes/session";
 import { User } from "../classes/user";
+import { isDataSource } from "@angular/cdk/collections";
 
 function baseName(str: string): string {
   let base = new String(str).substring(str.lastIndexOf("/") + 1);
@@ -80,25 +81,25 @@ export class RestService {
       })
       .subscribe(res => {
         // Convert base64 string to byte array
-        var byteCharacters = atob(<any>res);
-        var byteNumbers = new Array(byteCharacters.length);
-        for (var i = 0; i < byteCharacters.length; i++) {
+        const byteCharacters = atob(<any>res);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-        var byteArray = new Uint8Array(byteNumbers);
+        const byteArray = new Uint8Array(byteNumbers);
         // Convert byte array to Blob
-        var blob = new Blob([byteArray], {
-          type: "application/octet-stream"
+        const blob = new Blob([byteArray], {
+          type: "application/octet-stream",
         });
         // Create ObjectURL
-        var url = window.URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(blob);
         // Create DOM element with download attribute
-        var pom = document.createElement("a");
+        const pom = document.createElement("a");
         pom.setAttribute("href", url);
         pom.setAttribute("download", filename);
         // Now trigger download
         if (document.createEvent) {
-          var event = document.createEvent("MouseEvents");
+          const event = document.createEvent("MouseEvents");
           event.initEvent("click", true, true);
           pom.dispatchEvent(event);
         } else {
@@ -121,7 +122,7 @@ export class RestService {
         // Convert base64 string to byte array
         const byteCharacters = atob(res);
         const byteNumbers = new Array(byteCharacters.length);
-        for (var i = 0; i < byteCharacters.length; i++) {
+        for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
@@ -479,6 +480,19 @@ export class RestService {
     );
   }
 
+  public getMultipleResultDetails(ids: string[]): Observable<any> {
+    console.log("getMultipleResultDetail", ids);
+
+    return (
+      this.authHttp
+        .get(this.globalsService.site.restApiUrl + "/result_details/multiple", {
+          params: {ids:JSON.stringify(ids)},
+        })
+        // .map(res => res.json())
+        .catch(error => this.handleError(error))
+    );
+  }
+
   //
   // RUN methods
   //
@@ -521,7 +535,7 @@ export class RestService {
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/sessions/" + session._id,
-          JSON.stringify({ session: session })
+          JSON.stringify({session})
           // { headers: header }
         )
         // .map(res => res.json())
@@ -535,7 +549,7 @@ export class RestService {
 
     return this.authHttp.delete(
       this.globalsService.site.restApiUrl + "/sessions/" + _id
-    ); //.map(res => res.json());
+    ); // .map(res => res.json());
   }
 
   //
@@ -553,7 +567,7 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
-  private extractUsers(res, error) {
+  private extractUsers(res: any, error: any) {
     return res.users || [];
   }
 
@@ -569,7 +583,7 @@ export class RestService {
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/users/" + user._id,
-          JSON.stringify({ user: user })
+          JSON.stringify({user})
           // { headers: header }
         )
         // .map(res => res.json())

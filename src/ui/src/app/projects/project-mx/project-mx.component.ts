@@ -20,6 +20,7 @@ import { FileUploader } from "ng2-file-upload";
 import { ReintegrateDialogComponent } from "../../plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component";
 // import { UploadDialogComponent } from '../../shared/dialogs/upload-dialog/upload-dialog.component';
 import { MrDialogComponent } from '../../plugin_components/mx/mr-dialog/mr-dialog.component';
+import { MergeDialogComponent } from '../../plugin_components/mx/merge-dialog/merge-dialog.component';
 
 import { Project } from "../../shared/classes/project";
 
@@ -220,7 +221,9 @@ export class ProjectMxComponent implements OnInit {
         this.activateRemoveConfirm(this.selectedIntegratedData[0]);
         break;
 
-      case "Merge":
+      case 'Merge':
+        console.log('Merge');
+        this.activateMerge(this.selectedIntegratedData);
         break;
 
       default:
@@ -306,6 +309,22 @@ export class ProjectMxComponent implements OnInit {
       parameters.results.current_project_id = this.id;
       if (parameters.success === true) {
         const dialogRef = this.mrDialog.open(MrDialogComponent, {data: parameters.results,});
+      } else {
+        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+          data: { message: parameters.message },
+        });
+      }
+    });
+  }
+
+  private activateMerge(resultIds: string[]) {
+    console.log('activateMerge', resultIds);
+    // Get the full result
+    this.rest_service.getMultipleResultDetails(resultIds).subscribe((parameters) => {
+      console.log(parameters);
+      parameters.results.current_project_id = this.id;
+      if (parameters.success === true) {
+        const dialogRef = this.mrDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
       } else {
         const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
