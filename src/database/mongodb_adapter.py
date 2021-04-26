@@ -389,8 +389,8 @@ class Database(object):
 
                 # Find files to remove
                 files_in_database = db.fs.files.find({"metadata.result_id":result_id,
-                                                      "metadata.file_type":file_type,
-                                                      "metadata.description":file_to_remove.get("description")})
+                                                  "metadata.file_type":file_type,
+                                                  "metadata.description":file_to_remove.get("description")})
                 # self.logger.debug("Looking for %s", {"metadata.result_id":result_id,
                 #                                      "metadata.file_type":file_type,
                 #                                      "metadata.description":file_to_remove.get("description")})

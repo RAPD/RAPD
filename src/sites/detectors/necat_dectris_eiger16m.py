@@ -96,7 +96,7 @@ XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     #('CLUSTER_NODES', 'NECAT_E'),
     # Signal to say rapd2 job.
     #('CLUSTER_NODES', 'RAPD2'),
-    ('CLUSTER_NODES', 'general.q'),
+    ('CLUSTER_NODES', 'integrate_e.q,phase3.q,phase2.q'),
     ]
 
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
@@ -538,6 +538,7 @@ if __name__ == "__main__":
     
     # Execute code
     main(args=commandline_args)
+
     
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
 

@@ -178,7 +178,9 @@ class RapdPlugin(Thread):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences", {})
+        #self.preferences = self.command.get("preferences", {})
+        self.preferences = info.DEFAULT_PREFERENCES
+        self.preferences.update(self.command.get("preferences", {}))
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
@@ -478,19 +480,24 @@ class RapdPlugin(Thread):
         no_limit = False
         if self.computer_cluster:
             if self.large_cell:
-                limit = 10
+                #limit = 10
+                limit = int(round(self.preferences.get("pdb_limit", 20) / 2))
             elif permute:
-                limit = 60
+                #limit = 60
+                limit = int(round(self.preferences.get("pdb_limit", 20) * 1.5))
             else:
                 no_limit = True
-                limit = 40
+                #limit = 40
+                limit = self.preferences.get("pdb_limit", 20)
         else:
-            limit = 8
+            #limit = 8
+            limit = self.preferences.get("pdb_limit", 20)
 
         # Limit the unit cell difference to 25%. Also stops it if errors are received.
         pdbq_results = {}
         counter = 0
-        while counter < 25:
+        #while counter < 25:
+        while counter < self.preferences.get("cell_limit", 25):
             self.tprint("  Querying server at %s" % PDBQ_SERVER,
                         level=20,
                         color="white")
@@ -799,37 +806,12 @@ class RapdPlugin(Thread):
         self.logger.debug("transfer_files")
         #self.logger.debug(results)
         if self.command["directories"].get("exchange_dir", False):
-<<<<<<< HEAD
-            self.logger.debug("transfer_files",
-                              self.command["directories"].get("exchange_dir" ))
-
-=======
->>>>>>> jon_working
             # Determine and validate the place to put the data
             target_dir = os.path.join(
                 #self.preferences["exchange_dir"], os.path.split(self.working_dir)[1])
                 self.command["directories"].get("exchange_dir" ), os.path.split(self.working_dir)[1])
             if not os.path.exists(target_dir):
                 os.makedirs(target_dir)
-<<<<<<< HEAD
-
-            # If there is a pdb produced -> data_produced
-            archive_dict = result.get("pdb", {})
-            archive_file = archive_dict.get("path", False)
-            self.logger.debug(archive_dict, archive_file)
-            if archive_file:
-                # Copy data
-                target = os.path.join(target_dir, os.path.basename(file_to_move))
-                shutil.copyfile(file_to_move, target)
-                # Store information
-                archive_dict["path"] = target
-                # Add to the results.data_produced array
-                self.results["results"]["data_produced"].append(archive_dict)
-
-            # Maps & PDB
-            for my_map in ("map_1_1", "map_2_1", "pdb"):
-                archive_dict = result.get(my_map, {})
-=======
             for result in (results.get("common_contaminants", [])+results.get("search_results", [])):
                 # If there is a pdb produced -> data_produced
                 # Copy compressed results files to exchange dir and update path.
@@ -858,7 +840,6 @@ class RapdPlugin(Thread):
                             self.results["results"]["for_display"].append(archive_dict)
                 """
                 archive_dict = result.get("pdb", {})
->>>>>>> jon_working
                 archive_file = archive_dict.get("path", False)
                 if archive_file:
                     # Copy data

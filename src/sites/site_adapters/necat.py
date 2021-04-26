@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2021 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -277,6 +277,7 @@ class Adapter(object):
         self.logger.debug("get_image_data")
         return_dict = {}
 
+        """
         # Get redis connection
         if tag:
             connection = self.get_redis_connection(tag)
@@ -325,6 +326,7 @@ class Adapter(object):
             self.logger.debug("%s", return_dict)
         # Add vertical offset for both beamlines
         #return_dict.update({"vertical_offset" : vertical_offset})
+        """
         # Return the data
         return return_dict
 

@@ -58,6 +58,7 @@ import sys
 import time
 import importlib
 import stat
+import urllib2
 
 # RAPD imports
 import info
@@ -65,6 +66,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
 import plugins.subcontractors.mosflm as mosflm
+import plugins.subcontractors.distl as distl
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
 from utils.r_numbers import try_int, try_float
@@ -322,6 +324,9 @@ class RapdPlugin(Process):
         else:
             self.multicrystalstrat = True
             self.strategy = "mosflm"
+        
+        # Check if DISTL server is present
+        self.distl_server = self.site.DISTL_SERVER
 
         # Settings for all programs
         #self.beamline = self.image1.get("beamline")
@@ -417,11 +422,11 @@ class RapdPlugin(Process):
         if self.minikappa:
             self.process_xoalign()
         else:
-            # Run Distl
-            self.process_distl()
-
             # Run Labelit
             self.start_labelit()
+            
+            # Run Distl
+            self.preprocess_distl()
 
             # Sorts labelit results by highest symmetry.
             self.labelit_sort()
@@ -485,9 +490,12 @@ class RapdPlugin(Process):
         # Check if pair are in different folders, then make symlink for Labelit.
         if self.image2:
           if os.path.dirname(self.image1['fullname']) != os.path.dirname(self.image2['fullname']):
-            os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
+            try:
+                os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
+                os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
+            except OSError:
+                self.logger.debug("symlinks are already present")
             self.image1['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image1['fullname']))
-            os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
             self.image2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image2['fullname']))
 
         # Setup event for job control on cluster
@@ -569,6 +577,41 @@ class RapdPlugin(Process):
                 self.tprint("  Executable for raddose is not present - will continue",
                         level=30,
                         color="red")
+
+    def preprocess_distl(self):
+        """
+        Setup Distl
+        """
+        if self.verbose and self.logger:
+            self.logger.debug('AutoindexingStrategy::preprocess_distl')
+
+        l = [self.image1]
+        if self.image2:
+            l.append(self.image2)
+        
+        for i in range(len(l)):
+            if not self.test:
+                if self.distl_server:
+                    # Send job to a DISTL server (Apache or Python) for fast results
+                    # Job is not saved because it takes less tha 1s to complete
+                    distl.process_distl_server(IP = self.distl_server[0],
+                                               port = self.distl_server[1],
+                                               image = l[i].get("fast_fullname", l[i].get("fullname")),
+                                               res_inner = self.preferences.get("distl_res_inner", 50.0),
+                                               res_outer = self.preferences.get("distl_res_outer", 3.0),
+                                               queue = self.distl_queue,
+                                               logfile = os.path.join(os.getcwd(),"distl%s.log" % i),
+                                               logger = self.logger)
+                else:
+                    # Launch the job locally from commandline
+                    job = distl.process_distl_local(image = l[i].get("fast_fullname", l[i].get("fullname")),
+                                                    res_inner = self.preferences.get("distl_res_inner", 50.0),
+                                                    res_outer = self.preferences.get("distl_res_outer", 3.0),
+                                                    queue = self.distl_queue,
+                                                    logfile = os.path.join(os.getcwd(),"distl%s.log" % i),
+                                                    logger = self.logger)
+                    # Save job so postprocess_distl will wait for it.
+                    self.distl_output.append(job)
 
     def preprocess_raddose(self):
         """
@@ -859,32 +902,6 @@ class RapdPlugin(Process):
 
         except:
             self.logger.exception("**Error in process_xds_bg.**")
-
-    def process_distl(self):
-        """
-        Setup Distl for multiprocessing if enabled.
-        """
-        if self.verbose and self.logger:
-            self.logger.debug('AutoindexingStrategy::process_distl')
-
-        l = ["1", "2"]
-        f = 1
-        if self.image2:
-            f = 2
-        for i in range(0, f):
-            if self.test:
-                job = Thread(target=local_subprocess,
-                             kwargs={"command": 'ls'})
-            else:
-                command = "distl.signal_strength %s" % eval("self.image%s" % l[i]).get("fullname")
-                #job = Thread(target=local_subprocess,
-                job = Process(target=local_subprocess,
-                             kwargs={"command": command,
-                                     "result_queue": self.distl_queue,
-                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
-                                   },)
-            job.start()
-            self.distl_output.append(job)
 
     def process_raddose(self):
         """
@@ -1313,9 +1330,10 @@ class RapdPlugin(Process):
             self.distl_log.extend(log)
             # Parse and put the distl results into storage
             self.distl_results.append(Parse.ParseOutputDistl(self, log))
+            
 
         # Debugging
-        # pprint(self.distl_results)
+        #pprint(self.distl_results)
 
         # Print DISTL results to commandline - verbose only
         self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
@@ -2071,6 +2089,8 @@ Distance | % Transmission", level=98, color="white")
                     output["STAC file%s" % str(index+1)] = "None"
             """
         else:
+            # If Labelit did fail, set status to 101  FM 20200302
+            self.results["process"]["status"] = 101
             #output["STAC file1"] = "None"
             #output["STAC file2"] = "None"
             output["STAC file1"] = None
@@ -2129,7 +2149,7 @@ Distance | % Transmission", level=98, color="white")
         if self.labelit_results.get("status") == "FAILED":
             self.results["process"]["status"] = -1
 
-        self.logger.debug(self.results)
+        #self.logger.debug(self.results)
 
         # Print results to screen in JSON format
         # json_output = json.dumps(self.results).replace("\\n", "")
@@ -2585,15 +2605,16 @@ rerunning.\n" % spot_count)
                     self.log[iteration] = ['\nSetting spot picking level to 3.\n']
                     area = 3
                 elif "Eiger" in self.vendortype:
-                    preferences.write('distl.minimum_spot_area=3\n')
-                    self.log[iteration] = ['\nSetting spot picking level to 3.\n']
-                    area = 3
+                    preferences.write('distl.minimum_spot_area=24\n')
+                    preferences.write('distl.spot_area_maximum_factor=7.5\n')
+                    self.log[iteration] = ['\nLooking for more diffuse spots.\n']
+                    area = 15
                 else:
                     preferences.write('distl.minimum_spot_area=8\n')
                     self.log[iteration] = ['\nSetting spot picking level to 8.\n']
                     area = 8
-                self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
-                self.logger.debug('Setting spot picking level to 3 or 8.')
+                self.tprint("\n    Looking for more diffuse spots.", level=30, color="white", newline=False)
+                self.logger.debug('Looking for more diffuse spots.')
 
             elif iteration == 5:
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
@@ -2675,12 +2696,18 @@ rerunning.\n" % spot_count)
             command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
         if inp:
             command += '%s ' % inp
-        command += '%s ' % self.image1.get('fullname')
-
+        #command += '%s ' % self.image1.get('fullname')
+        if self.image1.get('fast_fullname', None) not in (None, False):
+            command += '%s ' % self.image1.get('fast_fullname')
+        else:
+            command += '%s ' % self.image1.get('fullname')
         # If pair of images
         if self.image2:
-            command += "%s " % self.image2.get("fullname")
-
+            #command += "%s " % self.image2.get("fullname")
+            if self.image2.get('fast_fullname', None) not in (None, False):
+                command += '%s ' % self.image2.get('fast_fullname')
+            else:
+                command += '%s ' % self.image2.get('fullname')
         # Save the command to the top of log file, before running job.
         self.log[iteration].extend([command])
         #print '\n%s'%command

@@ -24,29 +24,13 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-# Standard imports
-# import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
-# import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
-# import sys
-# import time
-# import unittest
 
-# RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
+# Get the default preferences setup
+DEFAULT_PREFERENCES = {"pdb_limit": 5, #DEFAULT:40
+                       "cell_limit": 25,
+                       
+  }
+
 
 # Dict with PDB codes for common contaminants.
 CONTAMINANTS = {
@@ -99,3 +83,4 @@ CONTAMINANTS = {
     "1BTL": {"description": "BETA-LACTAMASE",
              "path": "/gpfs5/users/necat/rapd/pdbq/pdb/bt/1btl.cif"},
 }
+

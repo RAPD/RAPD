@@ -5,7 +5,7 @@ Manager which sorts out jobs and send to appropriate launchers
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2021 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -200,7 +200,7 @@ class Launcher_Manager(Thread):
         command -- command from redis
         """
         print "push_command"
-        pprint(command)
+        #pprint(command)
 
         # Split up the command
         message = command

@@ -414,16 +414,15 @@ class Model(object):
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
+        fast_fullname = image_data.get("fast_fullname", None)
 
         self.logger.debug("Received new image %s", fullname)
+        #if not os.path.exists(fullname):
+        #    self.logger.debug("This image does NOT exist:%s"%fullname)
+        #    return False
 
         # Shortcut to detector
         detector = self.detectors[site_tag]
-
-        # Check if it exists. May have been deleted from RAMDISK
-        #if os.path.isfile(fullname) in (False, None):
-        #    if self.site.ALT_IMAGE_LOCATION:
-        #        fullname = detector.get_alt_path(fullname)
 
         # Save some typing
         dirname = os.path.dirname(fullname)
@@ -469,10 +468,12 @@ class Model(object):
                         site_header = site_data
 
                     # Get all the image information
+                    self.logger.debug("First image in run: %s"%fullname)
                     attempt_counter = 0
                     while attempt_counter < 5:
                         try:
                             attempt_counter += 1
+                            self.logger.debug("Attempt to read image: %s"%str(attempt_counter))
                             if os.path.exists(fullname):
                                 header = detector.read_header(
                                     fullname,
@@ -493,7 +494,13 @@ class Model(object):
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
-
+                    """
+                    # Save path info for hidden fast storage, if present
+                    header["fast_fullname"] = fast_fullname
+                    if fast_fullname not in (None):
+                        header["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                        header["run"]["fast_directory"] = os.path.dirname(header["fast_fullname"])
+                    """
                     # Add to the database
                     image_id = self.database.add_image(data=header, return_type="id")
 
@@ -560,7 +567,9 @@ class Model(object):
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
-
+            """
+            header["fast_fullname"] = fast_fullname
+            """
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
             if image_id:
@@ -735,12 +744,6 @@ class Model(object):
         # The detector
         detector = self.detectors[site_tag.upper()]
 
-<<<<<<< HEAD
-        # If the detector can determine if run or snap
-        # Make sure we have a function
-        if getattr(detector, "is_run_from_imagename", None):
-            if isinstance(detector.is_run_from_imagename, types.FunctionType):
-=======
         # If the detector can determine if run or snap from the image name
         ## I don't remember which line is correct for catching th e exceptions??
         #if getattr(detector, "is_run_from_imagename", None):
@@ -748,7 +751,6 @@ class Model(object):
             # Make sure we have a function
             if isinstance(detector.is_run_from_imagename, types.FunctionType):
                 self.logger.debug("Have function")
->>>>>>> jon_working
                 # See if we have a SNAP
                 if detector.is_run_from_imagename(fullname) == True:
                     self.logger.debug("Could NOT be a snap")

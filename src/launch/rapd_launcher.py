@@ -241,14 +241,11 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
         # Check if a multiprocessing.Pool needs to be setup for launcher adapter.
         if self.tag == 'shell':
             if self.launcher.get('pool_size', False):
-                try:
-                    size = int(self.launcher.get('pool_size'))
-                except ValueError:
-                    size = total_nproc()-1
+                size = self.launcher.get('pool_size')
             else:
                 size = total_nproc()-1
             # Make sure its an integer
-            self.pool = mp_pool(size)
+            self.pool = mp_pool(int(size))
 
     def load_adapter(self):
         """Find and load the adapter"""

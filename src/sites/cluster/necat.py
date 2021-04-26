@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2021 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -70,23 +70,23 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'phase1.q,general.q',
-         #"INDEX"          : 'phase2.q,phase3.q,index.q',
-         "INDEX"          : 'index.q,phase2.q',
+         "INDEX"          : 'phase2.q,index.q', # read off gpfs so need FC
+         #"INDEX"          : 'integrate_c.q,integrate_e.q,phase3.q',
          "BEAMCENTER"     : 'all.q',
          #"XDS"            : 'all.q',
          #"XDS"            : 'phase2.q,phase1.q,fibre.q',
          "XDS"            : 'phase1.q,general.q',
          #"INTEGRATE"      : 'integrate.q',
          #"INTEGRATE"      : 'phase2.q,phase1.q,fibre.q', # because phase 3 nodes are having problems allocating memory
-         #"INTEGRATE"      : 'phase3.q',
-         "INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
+         "INTEGRATE"      : 'phase3.q,phase2.q',
+         #"INTEGRATE"      : 'integrate_c.q,integrate_e.q,phase3.q',
          #"PDBQUERY"       : 'phase2.q,phase1.q,general.q',
          #"PDBQUERY"       : 'phase3.q',
-         "PDBQUERY"      : 'phase1.q,general.q',
+         "PDBQUERY"      : 'phase1.q,general.q,all.q',
          #"ANALYSIS"       : 'phase2.q,phase1.q,general.q',
          #"ANALYSIS"       : 'phase3.q',
-         "ANALYSIS"       : 'phase1.q,general.q',
-         "MR"             : 'phase2.q',
+         "ANALYSIS"       : 'phase1.q,general.q,all.q',
+         "MR"             : 'phase2.q,all.q',
          }
     if d.get(inp, False):
         return(d[inp])
@@ -100,8 +100,8 @@ def get_resources(command):
     elif command in ('INTEGRATE'):
         #Integrate gets number of processors and number of jobs
         #return (4, 8)
-        #return (8, 8)
-        return (8, 12)
+        return (8, 8)
+        #return (8, 12)
     else:
         return 1
 

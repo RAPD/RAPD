@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2021 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -350,6 +350,9 @@ IMAGE_IGNORE_STRINGS = ("ignore",
                         "priming_shot",
                         )
 
+# IP and port of DISTL server (Apache or Python). Set to False to run on local node. 
+DISTL_SERVER = (DISTL_IP, DISTL_PORT)
+
 # If image is not present, look in long term storage location.
 # Runs function detector.get_alt_path() to get new path
 # Set to False if not using.
@@ -361,6 +364,19 @@ ALT_IMAGE_LOCATION = True
 # Name of class in detector file that runs as server.
 # Set to False if not using server 
 ALT_IMAGE_SERVER_NAME = 'FileLocation'
+
+# If using tiered storage where image data is located on "hidden" fast storage
+# as well as long-term storage, RAPD can process data from fast storage location to 
+# minimize data processing times. In this case, the "hidden" fast storage is 
+# NOT presented to the user (ie. User presented data from long-term storage location).
+# In this instance, results will show image data as long-term storage path presented 
+# in UI results. When enabled, image paths sent to "redis_image_monitor.py" are expected
+# to be json.dumps([fast path, slow path]). THIS IS NOT A COMMON OPTION.
+
+# If fast storage is visible to user, then set to False.
+# If image data only in single location, set to False.
+# Default = False
+HIDDEN_FAST_STORAGE = True
 
 # Monitor for collected run information
 #RUN_MONITOR = "sites.monitors.run_monitors.necat_e"

@@ -187,6 +187,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -910,11 +911,6 @@ class RapdPlugin(Process):
             spot_range = self.ram_nodes[2][-1]
         xdsinp.append('SPOT_RANGE=%s %s\n' %(self.ram_nodes[1][-1], spot_range))
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
-        # The exclude
-        if self.preferences.get("exclude", False):
-            pprint(self.preferences.get("exclude", False))
-        sys.exit()
-
         self.write_file('XDS.INP', xdsinp)
         self.write_forkscripts(self.ram_nodes, self.image_data['osc_range'])
 
@@ -1465,11 +1461,6 @@ class RapdPlugin(Process):
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
         xdsinp.append('JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
-        # The exclude
-        if self.preferences.get("exclude", False):
-            pprint(self.preferences.get("exclude", False))
-        sys.exit()
-
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Searching for peaks wedge", level=99, color="white", newline=False)
@@ -1564,12 +1555,8 @@ class RapdPlugin(Process):
                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %
                      (float(self.image_data['wavelength'])),
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
-                     'BACKGROUND_RANGE=%s\n\n' % background_range]
-                    #  '!===== DETECTOR_PARAMETERS =====\n']
-
-        sys.exit()
-
-        xds_input.append('!===== DETECTOR_PARAMETERS =====\n')
+                     'BACKGROUND_RANGE=%s\n\n' % background_range,
+                     '!===== DETECTOR_PARAMETERS =====\n']
 
         # Regions that are excluded are defined with
         # various keyword containing the word UNTRUSTED.
@@ -2420,21 +2407,20 @@ class RapdPlugin(Process):
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
-        #src_file = os.path.join(results['dir'], results["mtzfile"].replace("_aimless", "_pointless"))
         tgt_file = "%s_unmerged.mtz" % archive_files_prefix
-        #print "Copy %s to %s" % (src_file, tgt_file)
+        # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
-        #print "Copy %s to %s" % (src_file, prod_file)
+        # print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
         arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"unmerged"
+            "description":"unmerged_mtz"
         })
-        #pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Move to archive
         src_file = os.path.abspath("freer.mtz")
@@ -2451,9 +2437,23 @@ class RapdPlugin(Process):
         self.results["results"]["data_produced"].append({
             "path":arch_prod_file,
             "hash":arch_prod_hash,
-            "description":"rfree"
+            "description":"rfree_mtz"
         })
         #pprint(self.results["results"]["data_produced"])
+
+        # Add XDS.ASCII to data_produced
+        src_file = os.path.abspath("XDS_ASCII.HKL")
+        tgt_file = "%s_XDS_ASCII.HKL" % archive_files_prefix
+        shutil.copyfile(src_file, tgt_file)
+        results["xdsascii_hkl"] = tgt_file
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
+        self.results["results"]["data_produced"].append({
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
+            "description":"xdsascii_hkl"
+        })
 
         if scalepack:
             # Create the merged scalepack format file.
