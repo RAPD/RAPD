@@ -20,6 +20,7 @@ import { RestService } from "../../../shared/services/rest.service";
   styleUrls: ["./mr-dialog.component.css"]
 })
 export class MrDialogComponent implements OnInit {
+
   public submitted: boolean = false;
   public submitError: string = "";
   public model: any;
@@ -45,7 +46,7 @@ export class MrDialogComponent implements OnInit {
 
   public ngOnInit() {
 
-    // console.log(this.data);
+    console.log(this.data);
 
     // Create form
     this.mrForm = new FormGroup({
@@ -61,10 +62,10 @@ export class MrDialogComponent implements OnInit {
     this.initUploader();
 
     // Get the uploads for the current group
-    this.getUploads(this.globalsService.currentSessionId);
+    this.getUploads(this.data.process.session_id);
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSessionId);
+    this.getProjects(this.data.process.session_id);
   }
 
   private onChanges(): void {
@@ -80,6 +81,7 @@ export class MrDialogComponent implements OnInit {
     const self = this;
 
     this.mrForm.valueChanges.subscribe((val) => {
+
       console.log("onChanges", val);
 
       // New project
@@ -90,10 +92,10 @@ export class MrDialogComponent implements OnInit {
           if (result) {
             if (result.success === true) {
               self.projects.push(result.project);
-              self.mrForm.controls["project"].setValue(result.project._id);
+              self.mrForm.controls.project.setValue(result.project._id);
             }
           } else {
-            self.mrForm.controls["project"].reset();
+            self.mrForm.controls.project.reset();
           }
         });
       }
@@ -121,7 +123,7 @@ export class MrDialogComponent implements OnInit {
   }
 
   private getUploads(sessionId: string) {
-
+    console.log('getUploads', sessionId);
     this.restService.getUploadedPdbsBySession(sessionId).subscribe(parameters => {
       // console.log(parameters);
       if (parameters.success === true) {
@@ -131,11 +133,15 @@ export class MrDialogComponent implements OnInit {
   }
 
   private getProjects(sessionId: string) {
-
+    console.log('getProjects', sessionId);
     this.restService.getProjectsBySession(sessionId).subscribe(parameters => {
-      // console.log(parameters);
+      console.log(parameters);
       if (parameters.success === true) {
         this.projects = parameters.result;
+        // this.data.current_poject_id ||
+        if (this.data.current_project_id) {
+          this.mrForm.patchValue({project:this.data.current_project_id});
+        }
       }
     });
   }
@@ -222,7 +228,7 @@ export class MrDialogComponent implements OnInit {
       console.log(parameters);
       if (parameters.success === true) {
         let snackBarRef = this.snackBar.open(
-          "Reintegrate request submitted",
+          "MR request submitted",
           "Ok",
           {
             duration: 10000,
