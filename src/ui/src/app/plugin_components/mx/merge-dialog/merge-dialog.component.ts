@@ -82,7 +82,7 @@ export class MergeDialogComponent implements OnInit {
 
   public submitMerge() {
 
-    // Collect data from merrge form
+    // Collect data from merge form
     const mergeFormData = this.mergeForm.value;
     const mergeData = {
       cutoff: -1,
@@ -97,28 +97,53 @@ export class MergeDialogComponent implements OnInit {
     if (! isNaN(parseFloat(mergeFormData.resolution))) {
       mergeData.resolution = parseFloat(mergeFormData.resolution);
     }
+    // console.log(mergeData);
 
-    console.log(mergeData);
+    // Collect parent_ids into one variable
+    const parentIds = this.data.map((x: any) => {return x._id});
 
-    // // Start to make the request object
-    // const request: any = {
-    //   command: "MERGE",
-    //   data: false,
-    //   preferences: Object.assign(
-    //     this.data[0].preferences,
-    //     this.mergeForm.value
-    //   ),
-    //   process: {
-    //     image_id: this.data.process.image_id,
-    //     parent_id: this.data._id,
-    //     repr: this.data.process.repr,
-    //     run_id: this.data.process.run_id,
-    //     session_id: this.data.process.session_id,
-    //     status: 0,
-    //     type: "plugin",
-    //   },
-    //   site_parameters: false,
-    // };
+    // Start to make the request object
+    const request: any = {
+      command: "MERGE",
+      data: false,
+      preferences: Object.assign(
+        this.data[0].preferences,
+        mergeData
+      ),
+      process: {
+        // image_id: undefined,
+        parent_id: 'multiple',
+        parent_ids: parentIds,
+        // TODO
+        repr: "Merge",
+        // run_id: this.data.process.run_id,
+        session_id: this.data[0].process.session_id,
+        status: 0,
+        type: "plugin",
+      },
+      site_parameters: false,
+    };
+    delete request.preferences.xdsinp;
+    console.log(request);
+
+    // Send to REST service and notfy via snackbar
+    this.submitted = true;
+    this.restService.submitJob(request).subscribe(parameters => {
+      console.log(parameters);
+      if (parameters.success === true) {
+        const snackBarRef = this.snackBar.open(
+          "Merge request submitted",
+          "Ok",
+          {
+            duration: 10000,
+          }
+        );
+        // Close the dialog
+        this.dialogRef.close(parameters);
+      } else {
+        this.submitError = parameters.error;
+      }
+    });
 
   }
 

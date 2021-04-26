@@ -57,9 +57,10 @@
                               formControlName="number_atoms"
                               type="number">
                     </mat-form-field>
+                    <span *ngIf="zeroAtoms" style="padding-left:2em;">(auto)</span>
                   </td>
                 </tr>
-                <tr>
+                <tr *ngIf="isSulfur">
                   <td class="rapd-form-table-rj">Number of Disulfide Bridges</td>
                   <td class="rapd-form-table-select">
                       <mat-form-field style="width:4em;">
@@ -92,8 +93,9 @@
                         <input matInput
                               style="text-align:center;"
                               formControlName="hires_cutoff"
-                              type="number">
+                              type="text">
                     </mat-form-field>
+                    <span *ngIf="zeroCutoff" style="padding-left:2em;">(auto)</span>
                   </td>
                 </tr>
                 <tr>
@@ -119,7 +121,7 @@
 
     <mat-dialog-actions align="end">
       <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
-      <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitMr()">Execute</button>
+      <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitSad()">Execute</button>
     </mat-dialog-actions>
   </div>
   <div *ngIf="submitError">
