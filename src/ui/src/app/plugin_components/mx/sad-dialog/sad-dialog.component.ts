@@ -3,6 +3,8 @@ import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
+import * as moment from "moment-mini";
+
 import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
 import { SequenceDialogComponent } from "../../../shared/dialogs/sequence-dialog/sequence-dialog.component";
 import { GlobalsService } from "../../../shared/services/globals.service";
@@ -130,6 +132,7 @@ export class SadDialogComponent implements OnInit {
     const request: any = {
       command: "SAD",
       data: false,
+      directories: {work: 'sad/'+moment().format('YYYY-MM-DD')+'/'+Math.random().toString().substr(2, 6)},
       preferences: Object.assign(
         this.data.preferences,
         this.sadForm.value

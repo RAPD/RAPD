@@ -196,6 +196,7 @@ export class MrDialogComponent implements OnInit {
     const request: any = {
       command: "MR",
       data: false,
+      directories: {work: 'mr/'+moment().format('YYYY-MM-DD')+'/'+Math.random().toString().substr(2, 6)},
       preferences: Object.assign(
         this.data.preferences,
         this.mrForm.value

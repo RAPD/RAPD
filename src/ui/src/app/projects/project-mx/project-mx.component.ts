@@ -34,12 +34,11 @@ import { WebsocketService } from "../../shared/services/websocket.service";
 
 // Import agent components here
 import * as mx from "../../plugin_components/mx";
-var mx_values = [];
-var mx_components = {};
-for (let key in mx) {
-  // console.log(mx[key]);
-  mx_values.push(mx[key]);
-  mx_components[key.toLowerCase()] = mx[key];
+// const MX_VALUES: any[] = [];
+const MX_COMPONENTS: any = {};
+for (const [key, value] of (<any>Object).entries(mx)) {
+  // MX_VALUES.push(value);
+  MX_COMPONENTS[key.toLowerCase()] = value;
 }
 
 @Component({
@@ -52,7 +51,7 @@ export class ProjectMxComponent implements OnInit {
   public uploader: FileUploader;
   public project: Project;
 
-  private id: string;
+  private id: string = '';
   private selectedIntegratedData: string[] = [];
   private selectedIntegrateAction: string = "";
   private actions: any = {
@@ -81,25 +80,27 @@ export class ProjectMxComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private globalsService: GlobalsService,
-    private rest_service: RestService,
-    private websocket_service: WebsocketService,
+    private restService: RestService,
+    private websocketService: WebsocketService,
     private componentfactoryResolver: ComponentFactoryResolver,
-    public confirm_dialog: MatDialog,
-    public error_dialog: MatDialog,
+    public confirmDialog: MatDialog,
+    public errorDialog: MatDialog,
     public reintegrateDialog: MatDialog,
+    public mergeDialog: MatDialog,
+    public mrDialog: MatDialog,
+    public sadDialog: MatDialog
     // public upload_dialog: MatDialog,
-    public mrDialog: MatDialog
   ) {}
 
   ngOnInit() {
-    this.id = this.route.snapshot.paramMap.get("id");
+    this.id = this.route.snapshot.paramMap.get('id');
     // console.log(this.id);
     this.getProject(this.id);
 
     this.uploader = new FileUploader({
-      authToken: localStorage.getItem("access_token"),
+      authToken: localStorage.getItem('access_token'),
       autoUpload: true,
-      url: this.globalsService.site.restApiUrl + "/upload_mx_raw",
+      url: this.globalsService.site.restApiUrl + '/upload_mx_raw',
     });
 
     // Add form fields
@@ -132,7 +133,7 @@ export class ProjectMxComponent implements OnInit {
   }
 
   public getProject(id: string) {
-    this.rest_service.getProject(id).subscribe(parameters => {
+    this.restService.getProject(id).subscribe(parameters => {
       console.log(parameters);
       if (parameters.success === true) {
         this.project = parameters.project;
@@ -146,7 +147,7 @@ export class ProjectMxComponent implements OnInit {
     // Clear the result display?
     this.outlet.clear();
 
-    let index = this.selectedIntegratedData.indexOf(id);
+    const index = this.selectedIntegratedData.indexOf(id);
     // Add to selected data array
     if (index === -1) {
       this.selectedIntegratedData.push(id);
@@ -256,28 +257,28 @@ export class ProjectMxComponent implements OnInit {
 
     console.log("displayResult", resultId);
 
-    this.rest_service.getResult(resultId).subscribe(
+    this.restService.getResult(resultId).subscribe(
       parameters => {
         console.log(parameters);
         if (parameters.success === true) {
           // For ease of use
           const result = parameters.result;
           // Work out the name of the component
-          const component_name = (
+          const componentName = (
             result.plugin_type +
             result.plugin_id +
             result.plugin_version.replace(/\./g, "") +
             "component"
           ).toLowerCase();
-          console.log(component_name);
+          console.log(componentName);
           // Create a componentfactoryResolver instance
           const factory = this.componentfactoryResolver.resolveComponentFactory(
-            mx_components[component_name]
+            MX_COMPONENTS[componentName]
           );
           // Destroy the current component in the target view
           this.outlet.clear();
           // Create the component
-          let component = this.outlet.createComponent(factory);
+          const component = this.outlet.createComponent(factory);
           // Set the component current_result value to the result
           component.instance.current_result = result;
         }
@@ -286,11 +287,11 @@ export class ProjectMxComponent implements OnInit {
     );
   }
 
-  private activateReintegration(result_id: string) {
-    console.log("activateReintegration", result_id);
+  private activateReintegration(resultId: string) {
+    console.log("activateReintegration", resultId);
 
     // Get the full result
-    this.rest_service.getResultDetail(result_id).subscribe((parameters) => {
+    this.restService.getResultDetail(resultId).subscribe((parameters) => {
       console.log(parameters);
       if (parameters.success === true) {
         const dialogRef = this.reintegrateDialog.open(
@@ -300,7 +301,7 @@ export class ProjectMxComponent implements OnInit {
           }
         );
       } else {
-        let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+        const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
@@ -309,13 +310,13 @@ export class ProjectMxComponent implements OnInit {
 
   private activateMR(resultId: string) {
     // Get the full result
-    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
+    this.restService.getResultDetail(resultId).subscribe((parameters) => {
       console.log(parameters);
       parameters.results.current_project_id = this.id;
       if (parameters.success === true) {
         const dialogRef = this.mrDialog.open(MrDialogComponent, {data: parameters.results,});
       } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+        const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
@@ -324,13 +325,13 @@ export class ProjectMxComponent implements OnInit {
 
   private activateSAD(resultId: string) {
     // Get the full result
-    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
+    this.restService.getResultDetail(resultId).subscribe((parameters) => {
       // console.log(parameters);
       parameters.results.current_project_id = this.id;
       if (parameters.success === true) {
-        const dialogRef = this.mrDialog.open(SadDialogComponent, {data: parameters.results,});
+        const dialogRef = this.sadDialog.open(SadDialogComponent, {data: parameters.results,});
       } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+        const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
@@ -339,13 +340,13 @@ export class ProjectMxComponent implements OnInit {
 
   private activateMerge(resultIds: string[]) {
     // Get the full result
-    this.rest_service.getMultipleResultDetails(resultIds).subscribe((parameters) => {
+    this.restService.getMultipleResultDetails(resultIds).subscribe((parameters) => {
       console.log(parameters);
       parameters.results.current_project_id = this.id;
       if (parameters.success === true) {
-        const dialogRef = this.mrDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
+        const dialogRef = this.mergeDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
       } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+        const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
@@ -355,11 +356,11 @@ export class ProjectMxComponent implements OnInit {
   private activateRemoveConfirm(result_id: string) {
     console.log("activateRemoveConfirm", result_id);
 
-    let label = this.project.source_data.filter((obj) => {
+    const label = this.project.source_data.filter((obj) => {
       return obj._id === result_id;
     })[0].repr;
 
-    let dialogRef = this.confirm_dialog.open(ConfirmDialogComponent, {
+    let dialogRef = this.confirmDialog.open(ConfirmDialogComponent, {
       data: {
         message:
           "Are you sure you want to remove " + label + " from the project?"
@@ -372,39 +373,34 @@ export class ProjectMxComponent implements OnInit {
         // console.log('Removing from project');
 
         // Remove from project
-        var index_to_remove = this.project.source_data.findIndex(function(
-          element
-        ) {
+        const indexToRemove = this.project.source_data.findIndex((element) => {
           return element._id === result_id;
         });
-        this.project.source_data.splice(index_to_remove, 1);
+        this.project.source_data.splice(indexToRemove, 1);
 
         // Remove from selectedIntegratedData
-        var sid_index_to_remove = this.selectedIntegratedData.findIndex(
-          function(element) {
+        const sidIndexToRemove = this.selectedIntegratedData.findIndex((element) => {
             return element === result_id;
           }
         );
-        if (sid_index_to_remove !== -1) {
-          this.selectedIntegratedData.splice(sid_index_to_remove, 1);
+        if (sidIndexToRemove !== -1) {
+          this.selectedIntegratedData.splice(sidIndexToRemove, 1);
           // Clear the result display?
           this.outlet.clear();
         }
 
         // Remove from selectedIndexedData
-        var sid_index_to_remove = this.selectedIndexedData.findIndex(function(
-          element
-        ) {
+        const sid2IndexToRemove = this.selectedIndexedData.findIndex((element) => {
           return element === result_id;
         });
-        if (sid_index_to_remove !== -1) {
-          this.selectedIndexedData.splice(sid_index_to_remove, 1);
+        if (sidIndexToRemove !== -1) {
+          this.selectedIndexedData.splice(sidIndexToRemove, 1);
           // Clear the result display?
           this.outlet.clear();
         }
 
         // Update the database
-        this.rest_service.submitProject(this.project).subscribe(params => {
+        this.restService.submitProject(this.project).subscribe(params => {
           console.log(params);
           // A problem connecting to REST server
           // Submitted is over
@@ -413,7 +409,7 @@ export class ProjectMxComponent implements OnInit {
           if (params.success) {
             // this.dialogRef.close(params);
           } else {
-            let errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+            const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
               data: { message: params.message }
             });
           }
