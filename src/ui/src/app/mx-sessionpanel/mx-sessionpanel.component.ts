@@ -12,40 +12,41 @@ import { WebsocketService } from '../shared/services/websocket.service';
   selector: 'app-mx-sessionpanel',
   templateUrl: './mx-sessionpanel.component.html',
   styleUrls: ['./mx-sessionpanel.component.css'],
-  providers: [ MxResultContainerComponent ]
+  providers: [ MxResultContainerComponent ],
 })
 export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
-  public session_id: string;
+  public sessionId: string = "";
   public sub: any;
-  public tabs_indexes = [
+  public tabsIndexes = [
     'snaps',
     'sweeps',
     'merge',
     'mr',
     'sad',
-    'mad'
+    'mad',
   ];
 
   constructor(private router: Router,
               private route: ActivatedRoute,
-              private websocket_service: WebsocketService) { }
+              private websocketService: WebsocketService) { }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
-      // console.log('ngOnInit >>', params);
-      this.session_id = params['session_id'];
-      this.websocket_service.setSession(this.session_id, 'mx');
+      console.log('MxSessionpanelComponent.ngOnInit >>', params);
+      this.sessionId = params.session_id;
+      // Set the session in the websocket >> get current results and subscribe to future results
+      this.websocketService.setSession(this.sessionId, 'mx');
     });
   }
 
   ngOnDestroy() {
     this.sub.unsubscribe();
-    this.websocket_service.unsetSession();
-    this.websocket_service.unsubscribeResults();
+    this.websocketService.unsetSession();
+    this.websocketService.unsubscribeResults();
   }
 
-  tabSelected(event) {
+  tabSelected(event:any) {
     // console.log('tab selected', event);
     // console.log('tab=', this.tabs_indexes[event.index]);
     // this.router.navigate(['mx', this.session_id]);

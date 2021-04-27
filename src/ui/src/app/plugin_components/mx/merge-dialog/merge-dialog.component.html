@@ -1,0 +1,103 @@
+<div *ngIf="! submitError">
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <h2>Perform Merge</h2>
+    <div style="margin-left:1em;">
+      <h4>{{data[0].process.repr}} &</h4>
+      <h4 *ngIf="data.length === 2">{{data[1].process.repr}}</h4>
+    </div>
+  </div>
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+    <div class="rapd-dialog-border">
+      <form [formGroup]="mergeForm">
+        <div class="form-group">
+          <div class="rapd-dialog-border">
+            <table class="rapd-form-table">
+              <tbody>
+                <tr>
+                  <td class="rapd-form-table-rji">Description</td>
+                  <td>
+                    <mat-form-field style="width:10em;">
+                      <input matInput
+                            style="text-align:center;"
+                            placeholder=""
+                            formControlName="description">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rj">Project</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="project"
+                                class="table-mat-select"
+                                style="margin-top:1em">
+                      <mat-option *ngFor="let project of projects" [value]="project._id">
+                        {{project.title}}
+                      </mat-option>
+                      <mat-option [value]="-1">Create New Project</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="mergeForm.get('project').hasError('required')" style="font-size:0.5em;">Please choose a project</mat-error>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="rapd-dialog-border">
+            <table class="rapd-form-table">
+              <tbody>
+                <tr>
+                  <td class="rapd-form-table-rj">Metric</td>
+                  <td class="rapd-form-table-select">
+                    <mat-select formControlName="metric"
+                                class="table-mat-select"
+                                style="margin-top:1em;width:8em;">
+                      <mat-option [value]="'CC'">CC</mat-option>
+                      <mat-option [value]="'CELL'">Unit Cell</mat-option>
+                    </mat-select>
+                  </td>
+                </tr>
+                <tr *ngIf="metric === 'CC'">
+                  <td class="rapd-form-table-rji">CC Cutoff (%)</td>
+                  <td>
+                    <mat-form-field style="width:10em;">
+                      <input matInput
+                             style="text-align:center;"
+                             formControlName="cutoff">
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="rapd-form-table-rji">High Resolution Cutoff (A)</td>
+                  <td>
+                    <mat-form-field style="width:10em;">
+                      <input matInput
+                             style="text-align:center;"
+                             formControlName="resolution">
+                    </mat-form-field>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </form>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button color="primary" [disabled]="executeDisabled" (click)="submitMerge()">Execute</button>
+  </mat-dialog-actions>
+</div>
+<div *ngIf="submitError">
+  <mat-dialog-content>
+    <h2>Error</h2>
+    {{submitError}}
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
+</div>
+

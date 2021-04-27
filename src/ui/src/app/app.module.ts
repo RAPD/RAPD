@@ -12,12 +12,10 @@ import { AppComponent } from "./app.component";
 import { FlexLayoutModule } from "@angular/flex-layout";
 
 import { AppRoutingModule, appRoutingProviders } from "./app.routing";
-
-import "hammerjs";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RapdMaterialModule } from "./material.module";
 import { NgxDatatableModule } from "@swimlane/ngx-datatable";
-import { ChartsModule } from "ng2-charts/ng2-charts";
+import { ChartsModule } from "ng2-charts";
 
 import { LoginGuard } from "./shared/guards/login-guard";
 import { AuthService } from "./shared/services/auth.service";
@@ -76,6 +74,7 @@ import { ReindexDialogComponent } from "./plugin_components/mx/index-3b34-2-0-0/
 import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
 // MX Request Dialogs
+import { MergeDialogComponent } from './plugin_components/mx/merge-dialog/merge-dialog.component';
 import { MrDialogComponent } from "./plugin_components/mx/mr-dialog/mr-dialog.component";
 import { ReintegrateDialogComponent } from "./plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component";
 import { SadDialogComponent } from "./plugin_components/mx/sad-dialog/sad-dialog.component";
@@ -152,6 +151,7 @@ export function tokenGetter() {
     MxImageComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MergeDialogComponent,
     MrDialogComponent,
     SadDialogComponent,
     //
@@ -227,6 +227,7 @@ export function tokenGetter() {
     HeaderDialogComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MergeDialogComponent,
     MrDialogComponent,
     RunDialogComponent,
     SadDialogComponent,

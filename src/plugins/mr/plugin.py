@@ -199,17 +199,24 @@ class RapdPlugin(Thread):
 
     def preprocess(self):
         """Set up for plugin action"""
+        
         self.logger.debug("preprocess")
         
-        # Get running instance of PDB server
-        self.repository = check_pdbq(self.tprint, self.logger)
+        # Record a starting time
+        self.start_time = time.time()
+
+        # Register progress
+        self.tprint(arg=0, level="progress")
 
         # Construct the results
         self.construct_results()
-
-        # self.tprint("preprocess")
-        self.tprint(arg=0, level="progress")
         
+        # Let everyone know we are working on this
+        self.send_results(self.results)
+
+        # Get running instance of PDB server
+        self.repository = check_pdbq(self.tprint, self.logger)
+
         # Change into working directory
         xutils.create_folder(self.working_dir)
         

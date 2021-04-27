@@ -4,7 +4,7 @@ var express =        require('express');
 var findRemoveSync = require('find-remove')
 const fs =           require('fs');
 const mkdirp =       require('mkdirp');
-const uuidv1 =       require('uuid/v1');
+// const uuidv1 =       require('uuid/v1');
 var mongoose = require('../models/mongoose');
 
 const Image =  mongoose.ctrl_conn.model('Image', require('../models/image').ImageSchema);

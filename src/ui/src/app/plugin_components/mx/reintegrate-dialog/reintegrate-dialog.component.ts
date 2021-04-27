@@ -19,6 +19,7 @@ import { RestService } from "../../../shared/services/rest.service";
   styleUrls: ["./reintegrate-dialog.component.css"]
 })
 export class ReintegrateDialogComponent implements OnInit {
+
   public submitted: boolean = false;
   public submit_error: string = "";
   public model: any;
@@ -100,7 +101,7 @@ export class ReintegrateDialogComponent implements OnInit {
     this.onChanges();
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSession);
+    this.getProjects(this.globalsService.currentSessionId);
   }
 
   private onChanges(): void {

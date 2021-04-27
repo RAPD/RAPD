@@ -1,16 +1,16 @@
 <div *ngIf="! submit_error">
   <div MatDialogTitle>
-    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <button mat-icon-button (click)="exitLogin()" class="button-dialog-top-right">
       <mat-icon>close</mat-icon>
     </button>
   </div>
   <div *ngIf="mode === 'login'">
     <h2>
-      Login
+      RAPD2 Login
     </h2>
     <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
       <table>
-        <tr><td *ngIf="globals_service.site.auth_user_type === 'email'">
+        <tr><td *ngIf="globalsService.site.auth_user_type === 'email'">
           <mat-form-field>
             <input matInput
               formControlName='email'
@@ -20,13 +20,13 @@
           </mat-form-field>
           <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
             <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
-              Email is required
+              {{globalsService.site.loginLabel}}
             </div>
             <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
               Email is invalid
             </div>
           </div>
-        </td><td *ngIf="globals_service.site.auth_user_type === 'uid'">
+        </td><td *ngIf="globalsService.site.auth_user_type === 'uid'">
           <mat-form-field>
             <input
               matInput
@@ -83,7 +83,7 @@
         </mat-form-field>
         <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
           <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.required">
-            Email is required
+            {{globalsService.site.loginLabel}}
           </div>
           <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.pattern">
             Email is invalid
@@ -127,7 +127,7 @@
 <div *ngIf="submit_error">
   <mat-dialog-content>
     <h2>Error</h2>
-    {{submit_error}}
+    {{submit_error.name}}
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-raised-button color="primary" mat-dialog-close>Ok</button>

@@ -17,28 +17,48 @@ import { Viewer } from "uglymol";
 export class DialogUglymolComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private restService: RestService
+    private restService: RestService,
+    public dialogRef: MatDialogRef<DialogUglymolComponent>
   ) {}
 
   ngOnInit() {
     console.log(this.data);
 
+    this.dialogRef.afterOpened().subscribe(()=>{
+      // Instantiate Uglymol viewer
+      const V = new Viewer([{ viewer: "viewer"}, {hud: "hud"}, {help: "help" }]);
+
+      // Load PDB
+      this.restService.getPdb("1mru").subscribe(res => {
+        console.log(res);
+        V.load_pdb_from_text(res);
+      });
+
+      // Load a map
+      this.restService.getMap("1mru").subscribe(res => {
+        console.log(res);
+        V.load_map_from_buffer(res, {}); //, {format:"dsn6"});
+        // V.load_from_pdbe("1qrv");
+      });
+
+    });
+
     // Instantiate Uglymol viewer
-    const V = new Viewer({ viewer: "viewer", hud: "hud", help: "help" });
+    // const V = new Viewer({ viewer: "viewer", hud: "hud", help: "help" });
 
     // Load PDB
-    this.restService.getPdb("1mru").subscribe(res => {
-      // console.log(res);
-      V.load_pdb_from_text(res);
-      // V.load_from_pdbe("1qrv");
-    });
+    // this.restService.getPdb("1mru").subscribe(res => {
+    //   console.log(res);
+    //   V.load_pdb_from_text(res);
+    //   // V.load_from_pdbe("1qrv");
+    // });
     // V.load_pdb("http://localhost:3000/api/download_pdb/1qrv");
 
     // Load a map
-    this.restService.getMap("1mru").subscribe(res => {
-      console.log(res);
-      V.load_map_from_buffer(res, {}); //, {format:"dsn6"});
-      // V.load_from_pdbe("1qrv");
-    });
+    // this.restService.getMap("1mru").subscribe(res => {
+    //   console.log(res);
+    //   V.load_map_from_buffer(res, {}); //, {format:"dsn6"});
+    //   // V.load_from_pdbe("1qrv");
+    // });
   }
 }

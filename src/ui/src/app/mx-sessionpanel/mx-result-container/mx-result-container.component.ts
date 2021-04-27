@@ -25,45 +25,69 @@ for (let key in mx) {
                MxResultPanelComponent ],
   entryComponents: mx_values
 })
-export class MxResultContainerComponent implements OnInit {
+export class MxResultContainerComponent {
 
-  current_result: any = 'none';
-  current_displayed_component: string = 'empty';
+  currentResult: any = {};
+  currentComponentName: string = 'empty';
+  currentComponent: any = undefined;
+  currentFactory: any = undefined;
 
-  @Input() session_id: string;
-  @Input() result_type: string;
+  @Input() sessionId: string = "";
+  @Input() resultType: string = "";
 
   @ViewChild('target', { read: ViewContainerRef, static: true }) target;
 
   constructor(private componentfactoryResolver: ComponentFactoryResolver) { }
 
-  ngOnInit() {}
+  // ngOnInit() {}
 
   // A result has been selected - implement the agent interface
-  selectResult(event) {
+  selectResult(event: any) {
 
     console.log('selectResult', event);
+    console.log('currentResult', this.currentResult);
+    console.log('currentDisplayedComponentName', this.currentComponentName);
 
-    // Destroy the current component in the target view
-    this.target.clear();
+    // // Destroy the current component in the target view
+    // this.target.clear();
 
     // Save the current displayed result
-    this.current_result = event.value;
+    this.currentResult = event.value;
+    console.log('currentResult', this.currentResult);
 
     // Construct the component name from the result
-    const component_name = (this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    const componentName = (this.currentResult.plugin_type + this.currentResult.plugin_id + this.currentResult.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
+    console.log('componentName', componentName);
 
-    console.log(component_name);
-    console.log(mx_components);
+    if (componentName !== this.currentComponentName) {
 
-    // Create a componentfactoryResolver instance
-    const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
+      // Create a componentfactoryResolver instance
+      const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[componentName]);
 
-    // Create the component
-    let component = this.target.createComponent(factory);
+      // Destroy the current component in the target view
+      this.target.clear();
 
-    // Set the component current_result value
-    component.instance.current_result = event.value;
+      // Create the component
+      const component = this.target.createComponent(factory);
+
+      component.instance.incomingResult = event.value;
+
+      // Save
+      this.currentFactory = factory;
+      this.currentComponentName = componentName;
+      this.currentComponent = component;
+    } else {
+
+      // Destroy the current component in the target view
+      // this.target.clear();
+
+      // Create the component
+      // const component = this.target.createComponent(this.currentFactory);
+
+      this.currentComponent.instance.incomingResult = event.value;
+
+      // Save
+      // this.currentComponent = component;
+    }
   }
-
 }

@@ -11,45 +11,51 @@ import { RestService } from "../../../shared/services/rest.service";
 @Component({
   selector: "app-sad-dialog",
   templateUrl: "./sad-dialog.component.html",
-  styleUrls: ["./sad-dialog.component.css"]
+  styleUrls: ["./sad-dialog.component.css"],
 })
 export class SadDialogComponent implements OnInit {
+
   public submitted: boolean = false;
   public submitError: string = "";
-  public sadForm: FormGroup;
+
+  public sadForm: FormGroup = new FormGroup({
+    description: new FormControl("", Validators.required),
+    element: new FormControl("Se"),
+    hires_cutoff: new FormControl("0"),
+    number_atoms: new FormControl(0),
+    number_disulfides: new FormControl(0),
+    number_trials: new FormControl(1024),
+    project: new FormControl("", Validators.required),
+    sequence: new FormControl(0),
+  });
+
+  // Form appearance
+  isSulfur = false;
+  zeroAtoms = true;
+  zeroCutoff = true;
 
   // Projects for the group that owns the session
-  public projects = [];
+  public projects: string[] = [];
 
   // Sequences for the group that owns the session
-  public sequences = [];
+  public sequences: string[] = [];
 
   constructor(
-    private globalsService: GlobalsService,
-    private restService: RestService,
-    private newProjectDialog: MatDialog,
-    private newSequenceDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<SadDialogComponent>,
-    public snackBar: MatSnackBar
+    public globalsService: GlobalsService,
+    public snackBar: MatSnackBar,
+    private restService: RestService,
+    private newProjectDialog: MatDialog,
+    private newSequenceDialog: MatDialog
   ) {}
 
   public ngOnInit() {
-    // Create form
-    this.sadForm = new FormGroup({
-      description: new FormControl(""),
-      element: new FormControl("Se"),
-      hires_cutoff: new FormControl(0),
-      number_atoms: new FormControl(0),
-      number_disulfides: new FormControl({value: 0, disabled: true}),
-      number_trials: new FormControl(1024),
-      project: new FormControl("", Validators.required),
-      sequence: new FormControl(0),
-    });
+
     this.onChanges();
 
     // Get the projects for the current group
-    this.getProjects(this.globalsService.currentSession);
+    this.getProjects(this.data.process.session_id);
   }
 
   private onChanges(): void {
@@ -57,21 +63,17 @@ export class SadDialogComponent implements OnInit {
     const self = this;
 
     this.sadForm.valueChanges.subscribe((val) => {
-      console.log("onChanges", val);
+
+      // console.log("onChanges", val);
 
       // Disulfides
-      if (val.element === "S") {
-        if (this.sadForm.controls["number_disulfides"].disabled) {
-          this.sadForm.controls["number_disulfides"].enable();
-        }
-      } else {
-        if (val.number_disulfides > 0) {
-          this.sadForm.controls["number_disulfides"].setValue(0);
-        }
-        if (this.sadForm.controls["number_disulfides"].enabled) {
-          this.sadForm.controls["number_disulfides"].disable();
-        }
-      }
+      this.isSulfur = (val.element === "S");
+
+      // Atoms
+      this.zeroAtoms = (val.number_atoms === 0);
+
+      // Hires cutoff
+      this.zeroCutoff = (val.hires_cutoff.sstrip() === "0");
 
       // New project
       if (val.project === -1) {
@@ -81,10 +83,10 @@ export class SadDialogComponent implements OnInit {
           if (result) {
             if (result.success === true) {
               self.projects.push(result.project);
-              self.sadForm.controls["project"].setValue(result.project._id);
+              self.sadForm.controls.project.setValue(result.project._id);
             }
           } else {
-            self.sadForm.controls["project"].reset();
+            self.sadForm.controls.project.reset();
           }
         });
       }
@@ -97,22 +99,86 @@ export class SadDialogComponent implements OnInit {
           if (result) {
             if (result.success === true) {
               self.projects.push(result.project);
-              self.sadForm.controls["sequence"].setValue(result.project._id);
+              self.sadForm.controls.sequence.setValue(result.project._id);
             }
           } else {
-            self.sadForm.controls["sequence"].setValue(0);
+            self.sadForm.controls.sequence.setValue(0);
           }
         });
       }
   })
 }
 
-  private getProjects(session_id: string) {
-    this.restService.getProjectsBySession(session_id).subscribe(parameters => {
-      // console.log(parameters);
+  private getProjects(sessionId: string) {
+    this.restService.getProjectsBySession(sessionId).subscribe(parameters => {
       if (parameters.success === true) {
         this.projects = parameters.result;
+        if (this.data.current_project_id) {
+          this.sadForm.patchValue({project:this.data.current_project_id});
+        }
       }
     });
   }
+
+  private submitSad() {
+
+    let formData = this.sadForm.value;
+    console.log(formData);
+    console.log(this.data);
+
+    // Start to make the request object
+    const request: any = {
+      command: "SAD",
+      data: false,
+      preferences: Object.assign(
+        this.data.preferences,
+        this.sadForm.value
+      ),
+      process: {
+        image_id: this.data.process.image_id,
+        parent_id: this.data._id,
+        repr: this.data.process.repr,
+        run_id: this.data.process.run_id,
+        session_id: this.data.process.session_id,
+        status: 0,
+        type: "plugin",
+      },
+      site_parameters: false,
+    };
+
+    // Cleanup the preferences
+    if ('xdsinp' in request.preferences) {
+      delete request.preferences.xdsinp;
+    }
+    if ('analysis' in request.preferences) {
+      delete request.preferences.analysis;
+    }
+    if (isNaN(request.preferences.hires_cutoff)) {
+      request.preferences.hires_cutoff = 0;
+    } else {
+      request.preferences.hires_cutoff = parseFloat(request.preferences.hires_cutoff);
+    }
+
+    // Debugging
+    console.log(request);
+
+    this.submitted = true;
+    this.restService.submitJob(request).subscribe(parameters => {
+      // console.log(parameters);
+      if (parameters.success === true) {
+        const snackBarRef = this.snackBar.open(
+          "SAD request submitted",
+          "Ok",
+          {
+            duration: 10000,
+          }
+        );
+        // Close the dialog
+        this.dialogRef.close(parameters);
+      } else {
+        this.submitError = parameters.error;
+      }
+    });
+  }
+
 }

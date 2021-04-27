@@ -1,13 +1,13 @@
 <mat-list dense class="rapd-side-list">
-  <mat-list-item *ngIf="data_results.length == 0">No results</mat-list-item>
-  <ng-container *ngFor="let data_result of data_results">
+  <mat-list-item *ngIf="dataResults.length == 0">No results</mat-list-item>
+  <ng-container *ngFor="let data_result of dataResults">
     <div *ngIf="data_result.display == 'pinned'">
       <mat-list-item
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
-        [ngClass]="data_result._id == active_result ? 'active-result': ''">
+        [ngClass]="data_result._id == activeResult ? 'active-result': ''">
         {{data_result.repr}}
       </mat-list-item>
       <div *ngFor="let child of data_result.children; let i = index;">
@@ -15,9 +15,9 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
-          [ngClass]="child._id == active_result ? 'active-result': ''">
+          [ngClass]="child._id == activeResult ? 'active-result': ''">
           Reprocess {{data_result.children.length-i+1}}
         </mat-list-item>
       </div>
@@ -26,19 +26,19 @@
 
   <mat-divider class="rapd-side-list-divider"></mat-divider>
 
-  <ng-container *ngFor="let data_result of data_results">
+  <ng-container *ngFor="let data_result of dataResults">
     <div *ngIf="! data_result.display">
       <mat-list-item
         *ngIf="! data_result.parent_id"
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
-        [ngClass]="data_result._id == active_result ? 'active-result': ''">
+        [ngClass]="data_result._id == activeResult ? 'active-result': ''">
         <table style="width:100%;">
           <tr>
             <td
-              [ngClass]="data_result.status < 0 || data_result.status > 100 ? 'rapd-error-result' : ''"
+              [ngClass]="data_result.status < 0 || data_result.status === 101 ? 'rapd-error-result' : ''"
               style="padding:0 0 0 0;">
               {{data_result.repr}}
             </td>
@@ -59,9 +59,9 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
-          [ngClass]="child._id == active_result ? 'active-result': ''">
+          [ngClass]="child._id == activeResult ? 'active-result': ''">
           <table style="width:100%;">
             <tr>
               <td
@@ -86,14 +86,14 @@
 
   <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
 
-  <ng-container *ngFor="let data_result of data_results">
+  <ng-container *ngFor="let data_result of dataResults">
     <div *ngIf="data_result.display === 'junked'">
       <mat-list-item
         class="rapd-list-item"
         [attr.id]=data_result._id
-        [myHighlight]="highlight_color"
+        [myHighlight]="highlightColor"
         (click)="onClick(data_result._id)"
-        [ngClass]="data_result._id == active_result ? 'active-result': ''">
+        [ngClass]="data_result._id == activeResult ? 'active-result': ''">
         {{data_result.repr}}
       </mat-list-item>
       <div *ngFor="let child of data_result.children; let i = index;">
@@ -101,9 +101,9 @@
           *ngIf="! child.display"
           class="rapd-list-child-item"
           [attr.id]="child._id"
-          [myHighlight]="highlight_color"
+          [myHighlight]="highlightColor"
           (click)="onClick(child._id)"
-          [ngClass]="child._id == active_result ? 'active-result': ''">
+          [ngClass]="child._id == activeResult ? 'active-result': ''">
           Reprocess {{data_result.children.length-i+1}}
         </mat-list-item>
       </div>

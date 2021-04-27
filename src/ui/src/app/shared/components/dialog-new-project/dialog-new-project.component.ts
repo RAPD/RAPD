@@ -45,7 +45,7 @@ export class DialogNewProjectComponent implements OnInit {
       description: new FormControl(),
       // group: new FormControl(),
       project_type: new FormControl(),
-      session: new FormControl(this.globalsService.currentSession),
+      session: new FormControl(this.globalsService.currentSessionId),
       title: new FormControl(),
     });
   }

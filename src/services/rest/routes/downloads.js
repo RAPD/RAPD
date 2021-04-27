@@ -77,84 +77,100 @@ router
   .get(function(req, res) {
     console.log("get_pdb_by_hash", req.params.hash);
 
-    // Get the tar file out of the database
-    var gridfs = Grid(mongoose.ctrl_conn.db);
+    // HACK
+    res.download("P41212.1.pdb");
 
-    gridfs.files.findOne({ "metadata.hash": req.params.hash }, function(
-      err,
-      file
-    ) {
-      var readstream = gridfs.createReadStream({
-        _id: file._id
-      });
-      req.on("error", function(err) {
-        console.error(err);
-        res.send(500, err);
-      });
+  //   /*
+  //   // Get the tar file out of the database
+  //   var gridfs = Grid(mongoose.ctrl_conn.db);
 
-      readstream.on("error", function(err) {
-        console.error(err);
-        res.send(500, err);
-      });
+  //   gridfs.files.findOne({ "metadata.hash": req.params.hash }, function(
+  //     err,
+  //     file
+  //   ) {
 
-      console.log(readstream);
+  //     console.log("Retrieved:")
+  //     console.log(file);
 
-      class MyWritable extends stream.Writable {
-        _write(chunk, encoding, callback) {
-          console.log(chunk);
-          // if (chunk.toString().indexOf('a') >= 0) {
-          //   callback(new Error('chunk is invalid'));
-          // } else {
-          //   callback();
-          // }
-          callback();
-        }
-      }
+  //     if (file === null) {
+  //       res.send(500, "Error finding file");
+  //       return false;
+  //     }
 
-      let xform = new MyWritable;
-      // xform.on("data", function(data) {
-      //   console.log(data);
-      // })
+  //     var readstream = gridfs.createReadStream({
+  //       _id: file._id
+  //     });
+  //     req.on("error", function(err) {
+  //       console.error(err);
+  //       res.send(500, err);
+  //     });
+
+  //     readstream.on("error", function(err) {
+  //       console.error(err);
+  //       res.send(500, err);
+  //     });
+
+  //     console.log(readstream);
+
+  //     class MyWritable extends stream.Writable {
+  //       _write(chunk, encoding, callback) {
+  //         console.log(chunk);
+  //         // if (chunk.toString().indexOf('a') >= 0) {
+  //         //   callback(new Error('chunk is invalid'));
+  //         // } else {
+  //         //   callback();
+  //         // }
+  //         callback();
+  //       }
+  //     }
+
+  //     let xform = new MyWritable;
+  //     // xform.on("data", function(data) {
+  //     //   console.log(data);
+  //     // })
       
-      readstream.pipe(xform);
+  //     readstream.pipe(xform);
 
 
-      // // Convert base64 string to byte array
-      // var converter = new stream.Writable();
-      // converter.data = []; // We'll store all the data inside this array
-      // converter._write = function(chunk) {
-      //   this.data.push(chunk);
-      // };
-      // converter.on("end", function() {
-      //   // Will be emitted when the input stream has ended, ie. no more data will be provided
-      //   var b = Buffer.concat(this.data); // Create a buffer from all the received chunks
-      //   // Insert your business logic here
-      //   console.log(b);
-      // });
-      // readstream.pipe(converter);
+  //     // // Convert base64 string to byte array
+  //     // var converter = new stream.Writable();
+  //     // converter.data = []; // We'll store all the data inside this array
+  //     // converter._write = function(chunk) {
+  //     //   this.data.push(chunk);
+  //     // };
+  //     // converter.on("end", function() {
+  //     //   // Will be emitted when the input stream has ended, ie. no more data will be provided
+  //     //   var b = Buffer.concat(this.data); // Create a buffer from all the received chunks
+  //     //   // Insert your business logic here
+  //     //   console.log(b);
+  //     // });
+  //     // readstream.pipe(converter);
 
       
-      // streamToBuffer(readstream, function (err, buffer) {
-      //   console.log(err);
-      //   console.log(buffer);
-      // });
+  //     // streamToBuffer(readstream, function (err, buffer) {
+  //     //   console.log(err);
+  //     //   console.log(buffer);
+  //     // });
 
-      // var converter = new stream.Writable();
-      // toString(converter, function (err, msg) {
-      //   console.log(msg)
-      // });
-      // readstream.pipe(converter);
-      // var byteCharacters = atob(res);
-      // var byteNumbers = new Array(byteCharacters.length);
-      // for (var i = 0; i < byteCharacters.length; i++) {
-      //   byteNumbers[i] = byteCharacters.charCodeAt(i);
-      // }
-      // var byteArray = new Uint8Array(byteNumbers);
+  //     // var converter = new stream.Writable();
+  //     // toString(converter, function (err, msg) {
+  //     //   console.log(msg)
+  //     // });
+  //     // readstream.pipe(converter);
+  //     // var byteCharacters = atob(res);
+  //     // var byteNumbers = new Array(byteCharacters.length);
+  //     // for (var i = 0; i < byteCharacters.length; i++) {
+  //     //   byteNumbers[i] = byteCharacters.charCodeAt(i);
+  //     // }
+  //     // var byteArray = new Uint8Array(byteNumbers);
 
-      // // Write to temporary file
-      // var myFile = fs.createWriteStream("tmp.tar.bz2");
-      // readstream.pipe(myFile);
-    });
+  //     // // Write to temporary file
+  //     // var myFile = fs.createWriteStream("tmp.tar.bz2");
+  //     // readstream.pipe(myFile);
+
+     
+  //   });
+  
   });
 
 // Temporary - will change to one of the above

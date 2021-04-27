@@ -96,9 +96,12 @@ router.route('/dashboard/results')
         }
 
         // Put the results into an object
-        results.forEach(function(result) {
+        results.forEach((result) => {
+          console.log(result);
           try {
-            staging_obj[result._id.plugin_type.toLowerCase()][`${result._id.month}-${result._id.day}`] = result.count;
+            if (staging_obj[result._id.plugin_type.toLowerCase()]) {
+              staging_obj[result._id.plugin_type.toLowerCase()][`${result._id.month}-${result._id.day}`] = result.count;
+            } 
           } catch (e) {
             console.error(e);
           }

@@ -1,5 +1,4 @@
 const bodyParser = require("body-parser");
-// const cookieParser =  require('cookie-parser');
 const debug = require("debug")("backend:server");
 const express = require("express");
 const session = require("express-session");
@@ -9,11 +8,18 @@ const http = require("http");
 const jwt = require("jsonwebtoken");
 const morgan = require("morgan");
 const nodemailer = require("nodemailer");
+const os = require('os');
 const smtpTransport = require("nodemailer-smtp-transport");
 // const path =          require('path');
-const randomstring = require("randomstring");
+// const randomstring = require("randomstring");
 const useragent = require("express-useragent");
-const multer = require("multer");
+const bcrypt = require('bcryptjs');
+const moment = require("moment");
+const uuid = require("node-uuid");
+
+// Identifying data
+const myId = uuid.v1();
+const myHost = os.hostname();
 
 // RAPD websocket server
 const Wss = require("./ws_server");
@@ -46,9 +52,15 @@ const users_routes = require("./routes/users");
 var Redis = require("ioredis");
 var redis_client = new Redis(config.redis_connection);
 
+// Register connection to Redis database
+redis_client.set("R2:REST:"+myId, myHost, 'EX', 31);
+setInterval(function() {
+  redis_client.set("R2:REST:"+myId, myHost, 'EX', 31);
+}, 30000);
+
 // MongoDB connection
 var mongoose = require("./models/mongoose");
-mongoose.set("debug", true);
+mongoose.set("debug", false);
 
 // Connect to ctrl_conn
 const Activity = mongoose.ctrl_conn.model(
@@ -90,23 +102,9 @@ let app_session = session({
   store: new RedisStore({ client: redis_client }),
   secret: "keyboard cat",
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: false
 });
 app.use(app_session);
-
-// Middleware for uploads
-var upload = multer({
-  dest: config.upload_directory,
-  rename: function(fieldname, filename) {
-    return filename + Date.now();
-  },
-  onFileUploadStart: function(file) {
-    console.log(file.originalname + " is starting ...");
-  },
-  onFileUploadComplete: function(file) {
-    console.log(file.fieldname + " uploaded to  " + file.path);
-  }
-});
 
 // Add useragent to make some stuff simpler
 app.use(useragent.express());
@@ -152,8 +150,8 @@ var apiRoutes = express.Router(); // get an instance of the express Router
 
 // middleware to use for all requests
 apiRoutes.use(function(req, res, next) {
-  console.log(req.method);
-  console.log(">>1<<");
+  // console.log(req.method);
+  // console.log(">>1<<");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
@@ -180,9 +178,10 @@ apiRoutes.post("/authenticate", function(req, res) {
   // Get useragent data
   let ua = req.useragent;
 
-  console.log(req.body);
+  // console.log(req.body);
 
   if (config.authenticate_mode === "mongo") {
+    // console.log("Using Mongo to authenticate");
     User.getAuthenticated(req.body.email, req.body.password, function(
       err,
       user,
@@ -190,7 +189,11 @@ apiRoutes.post("/authenticate", function(req, res) {
     ) {
       if (err) {
         console.error(err);
-        res.json({ success: false, message: err });
+        // res.json({ success: false, message: err });
+        res.status(500).json({
+          success: false,
+          message: err
+        });
         // login was successful if we have a user
       } else if (user) {
         console.log("user:", user);
@@ -544,26 +547,27 @@ apiRoutes.post("/authenticate", function(req, res) {
 
 // route to authenticate a user (POST api/requestpass)
 apiRoutes.post("/requestpass", function(req, res) {
-  console.log(">>2<<");
-  console.log('requestpass');
-  console.log(">>3<<");
-  console.log(req.body);
-  console.log(">>4<<");
+  // console.log(">>2<<");
+  // console.log('requestpass');
+  // console.log(">>3<<");
+  // console.log(req.body);
+  // console.log(">>4<<");
   if (config.authenticate_mode === "mongo") {
     User.findOne({ email: req.body.email }).exec(function(err, user) {
       if (err) {
-        console.error(err);
         console.error(err);
         res.send({
           success: false,
           message: err
         });
       } else if (user) {
-        let new_pass_raw = randomstring.generate(12);
-        // console.log('new_pass_raw', new_pass_raw);
-        user.password = new_pass_raw;
+        const new_pass = randomString(24),
+          salt = bcrypt.genSaltSync(10),
+          new_hash = bcrypt.hashSync(new_pass, salt) ;
+          user.pass = new_hash;
         // Expire in 60 minutes
-        user.pass_expire = Date.now() + 3600;
+        user.pass_expire = moment().utc().add(1,"h").toDate();
+        // user.pass_expire = Date.now() + 3600;
         user.pass_force_change = true;
         user.save(function(err, saved_user) {
           if (err) {
@@ -581,13 +585,13 @@ apiRoutes.post("/requestpass", function(req, res) {
               subject: "RAPD password recovery",
               text:
                 "Your new temporary password is " +
-                new_pass_raw +
+                new_pass +
                 "\nIt is authorized for 60 minutes."
             };
             // Send the email
             smtp_transport.sendMail(mailOptions);
             // Reply to client
-            console.log(`Reset password for ${user.email} to ${new_pass_raw}`);
+            console.log(`Reset password for ${user.email} to ${new_pass}`);
             res.json({ success: true });
           }
         });
@@ -616,9 +620,9 @@ apiRoutes.get("/", function(req, res) {
 // if (! process.env.NODE_ENV === 'development') {
 // route middleware to verify a token
 apiRoutes.use(function(req, res, next) {
-  console.log(req.body);
-  console.log(req.query);
-  console.log(req.headers);
+  // console.log(req.body);
+  // console.log(req.query);
+  // console.log(req.headers);
 
   // check header or url parameters or post parameters for token
   var token = req.headers.authorization.replace("Bearer ", "");
@@ -736,4 +740,14 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
+}
+
+function randomString(length) {
+  var s = [];
+    var allDigits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_'; //_!@#$%^&*()-+=';
+    for (var i = 0; i < length; i++) {
+    s[i] = allDigits.substr(Math.floor(Math.random() * 76), 1);
+    }
+    var ss = s.join('');
+    return ss;
 }

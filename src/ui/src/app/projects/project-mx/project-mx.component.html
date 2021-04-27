@@ -15,7 +15,7 @@
         <table>
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
-              <div class="rapd-corral" [ngClass]="selected_integrated_data.length > 0 ? 'background-green': ''">
+              <div class="rapd-corral" [ngClass]="selectedIntegratedData.length > 0 ? 'background-green': ''">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Integrated Data
@@ -25,7 +25,7 @@
                       <mat-list-item
                         *ngIf="source_datum.plugin_type==='INTEGRATE'"
                         (click)="toggleSourceDataIntegrateSelection(source_datum._id)"
-                        [ngClass]="selected_integrated_data.indexOf(source_datum._id) != -1 ? 'active-result': ''">
+                        [ngClass]="selectedIntegratedData.indexOf(source_datum._id) != -1 ? 'active-result': ''">
                         {{source_datum.repr}}
                       </mat-list-item>
                     </ng-container>
@@ -35,12 +35,12 @@
             </td>
             <td style="padding:0 0 0 0;">
               <!-- Connect Integrated source data to actions -->
-              <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div>
+              <div *ngIf="selectedIntegratedData?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
 
               <!-- 1 Integration is selected -->
-              <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
+              <div *ngIf="selectedIntegratedData?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Actions
@@ -60,7 +60,7 @@
               </div>
 
               <!-- >1 Integration is selected -->
-              <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
+              <div *ngIf="selectedIntegratedData?.length > 1" class="rapd-corral background-green">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Actions
@@ -81,13 +81,13 @@
             </td>
             <td style="padding:0 0 0 0;">
               <!-- Connect Integrated source data to actions -->
-              <div *ngIf="selected_integrated_data?.length > 0" class="data-action-connector"></div>
+              <div *ngIf="selectedIntegratedData?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
 
               <!-- 1 Integration is selected -->
-              <!-- <div *ngIf="selected_integrated_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;"> -->
-              <div class="rapd-corral" [ngClass]="selected_integrated_data?.length > 0 ? 'background-green': ''" style="min-width:12em;width:12em;">
+              <!-- <div *ngIf="selectedIntegratedData?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;"> -->
+              <div class="rapd-corral" [ngClass]="selectedIntegratedData?.length > 0 ? 'background-green': ''" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Results
@@ -98,8 +98,13 @@
                       <mat-list-item (click)="toggleResultSelection(result._id)">
                         <!-- *ngIf="project.plugin_type==='INTEGRATE'" -->
                         <!-- (click)="toggleSourceDataIntegrateSelection(source_datum._id)" -->
-                        <!-- [ngClass]="selected_integrated_data.indexOf(source_datum._id) != -1 ? 'active-result': ''"> -->
+                        <!-- [ngClass]="selectedIntegratedData.indexOf(source_datum._id) != -1 ? 'active-result': ''"> -->
                         {{result.repr}}
+                      </mat-list-item>
+                    </ng-container>
+                    <ng-container *ngIf="project.results?.length === 0">
+                      <mat-list-item>
+                        No results
                       </mat-list-item>
                     </ng-container>
                   </mat-list>
@@ -107,7 +112,7 @@
               </div>
 
               <!-- >1 Integration is selected -->
-              <!-- <div *ngIf="selected_integrated_data?.length > 1" class="rapd-corral background-green">
+              <!-- <div *ngIf="selectedIntegratedData?.length > 1" class="rapd-corral background-green">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Actions
@@ -127,7 +132,7 @@
 
           <tr style="vertical-align:top;">
             <td style="padding:0 0 0 0;">
-              <div class="rapd-corral" [ngClass]="selected_indexed_data.length > 0 ? 'background-green': ''">
+              <div class="rapd-corral" [ngClass]="selectedIndexedData.length > 0 ? 'background-green': ''">
                   <div class="rapd-corral-pen">
                     <div class="rapd-corral-heading">
                       Indexed Data
@@ -137,7 +142,7 @@
                         <mat-list-item
                           *ngIf="source_datum.plugin_type==='INDEX'"
                           (click)="toggleSourceDataIndexSelection(source_datum._id)"
-                          [ngClass]="selected_indexed_data.indexOf(source_datum._id) != -1 ? 'active-result': ''">
+                          [ngClass]="selectedIndexedData.indexOf(source_datum._id) != -1 ? 'active-result': ''">
                           {{source_datum.repr}}
                         </mat-list-item>
                       </ng-container>
@@ -147,12 +152,12 @@
             </td>
             <td style="padding:0 0 0 0;">
               <!-- Visually connect Indexed source data to actions -->
-              <div *ngIf="selected_indexed_data?.length > 0" class="data-action-connector"></div>
+              <div *ngIf="selectedIndexedData?.length > 0" class="data-action-connector"></div>
             </td>
             <td style="padding:0 0 0 0;">
 
               <!-- 1 Integration is selected -->
-              <div *ngIf="selected_indexed_data?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
+              <div *ngIf="selectedIndexedData?.length === 1" class="rapd-corral background-green" style="min-width:12em;width:12em;">
                 <div class="rapd-corral-pen">
                   <div class="rapd-corral-heading">
                     Actions
