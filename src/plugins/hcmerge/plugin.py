@@ -586,7 +586,7 @@ class RapdPlugin(multiprocessing.Process):
                         int_array1,int_array2 = self.get_int_pointless(pair, batches)
                         # Third, calculate the linear correlation coefficient if there are two datasets
                         self.results[pair]['CC'] = self.get_cc(int_array1, int_array2)
-                        self.logger.debug('Correlation Coefficient of %s: %s' % (pair, str(self.results[pair]['CC'])))
+                        self.logger.debug('HCMerge::Correlation Coefficient of %s: %s' % (pair, str(self.results[pair]['CC'])))
                     else:
                         # If only one dataset in mtz, default to no correlation.
                         self.logger.error(
@@ -1244,10 +1244,8 @@ class RapdPlugin(multiprocessing.Process):
         out = open(out_file, 'w')
         table_print = MakeTables()
         table_print.pprint_table(out, table)
-        out.close()
 
         # Append a key for merged file names
-        out = open(out_file, 'a')
         for file in files:
             out.write(file + ' = ' + str(self.results[file]['files']) + '\n')
         out.close()

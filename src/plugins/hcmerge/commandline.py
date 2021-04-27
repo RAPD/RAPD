@@ -243,7 +243,7 @@ def get_commandline():
                         help="Output JSON format string")
     parser.add_argument("--run_mode",
                         dest="run_mode",
-                        help="Specifically set the run mode: interactive, json, server, subprocess"
+                        help="Specifically set the run mode: interactive, json, server"
                         )
 
     # Positional argument
