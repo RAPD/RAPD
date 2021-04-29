@@ -1,19 +1,38 @@
-# ECHO plugin
+# redis_request_monitor.py
 
-The echo plugin is very much what it dounds like, and is very handy for testing how plugins work and as a testbed for new features
+This is a monitor for RAPD2 that is designed to be used by the central control process (via `model.py`) to monitor for requests via messages passed to the list with key RAPD2_REQUESTS in a redis database.
 
-## Testing File Fetching
+An example of how to make and handle a request can be seen in `plugins/echo/plugin.py`. The function fetch_data therein does all the work for requesting and returns the absolute path for the fetched file.
 
-While running `monitors/redis_request_monitor.py` in test mode (see [README](../../monitors/request_monitors/README.md)) the echo plugin can be used to test how file fetching works.
+A request LPUSHed into RAPD2_REQUESTS should be structured as:
+```python
+request_id = str(uuid.uuid1())
+request = {
+    "description": description,
+    "hash": request_hash,
+    "request_id": request_id,
+    "request_type": request_type,
+    "result_id": result_id,
+}
+```
+```
+description - currently available: xdsascii_hkl, unmerged_mtz, rfree_mtz
+hash - can be used to get file
+request_id - a unique identifier for this request
+request_type - currently only DATA_PRODUCED is supported
+result_id - _id in the results collection, equal to process.result_id
+```
 
+For a request to be successful, a result_id and description or a hash is needed. These are used as unique identifiers to query the database housing the files.
+
+If you want to explore how this works, redis_request_monitor.py can be invvoked on its own:
 ```bash
 > export PYTHONPATH=$PYTHONPATH:/Users/YOU FILL IN THIS/rapd/src
-> python plugin.py
+> python redis_request_monitor.py
 ```
 You need to have a local instance of redis running and a local MongoDB set up with a file you want in the gridFS storage of a rapd database.
-
-
 ***
+
 This is a README.md
 
 A quick guide to markdown follows. Thanks to Adam Pritchard's markdown-here

@@ -74,6 +74,7 @@ import { ReindexDialogComponent } from "./plugin_components/mx/index-3b34-2-0-0/
 import { Mrc33b200Component } from './plugin_components/mx/mrc33b200/mrc33b200.component';
 
 // MX Request Dialogs
+import { MergeDialogComponent } from './plugin_components/mx/merge-dialog/merge-dialog.component';
 import { MrDialogComponent } from "./plugin_components/mx/mr-dialog/mr-dialog.component";
 import { ReintegrateDialogComponent } from "./plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component";
 import { SadDialogComponent } from "./plugin_components/mx/sad-dialog/sad-dialog.component";
@@ -150,6 +151,7 @@ export function tokenGetter() {
     MxImageComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MergeDialogComponent,
     MrDialogComponent,
     SadDialogComponent,
     //
@@ -225,6 +227,7 @@ export function tokenGetter() {
     HeaderDialogComponent,
     ReindexDialogComponent,
     ReintegrateDialogComponent,
+    MergeDialogComponent,
     MrDialogComponent,
     RunDialogComponent,
     SadDialogComponent,

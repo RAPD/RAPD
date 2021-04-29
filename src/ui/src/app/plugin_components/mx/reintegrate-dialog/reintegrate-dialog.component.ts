@@ -19,6 +19,7 @@ import { RestService } from "../../../shared/services/rest.service";
   styleUrls: ["./reintegrate-dialog.component.css"]
 })
 export class ReintegrateDialogComponent implements OnInit {
+
   public submitted: boolean = false;
   public submit_error: string = "";
   public model: any;
