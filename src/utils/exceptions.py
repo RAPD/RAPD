@@ -50,5 +50,5 @@ __status__ = "Development"
 
 class MissingExecutableException(Exception):
     """Throw when missing an executable"""
-    def __init__(self, dErrorArguments):
-        Exception.__init__(self, "Executable not found for {}".format(dErrorArguments))
+    def __init__(self, ErrorArguments):
+        Exception.__init__(self, "Executable not found for {}".format(ErrorArguments))
