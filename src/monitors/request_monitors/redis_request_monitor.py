@@ -222,8 +222,8 @@ class Monitor(Thread):
 
 
 
-if __name__ == "__main__":
-
+def test_mode():
+    """Run in test mode"""
     # Create an object to spoof site
     import types
     site = types.ModuleType('site', 'The site module')
@@ -239,3 +239,7 @@ if __name__ == "__main__":
     site.CONTROL_DATABASE_SETTINGS = {"DATABASE_STRING": "mongodb://127.0.0.1:27017/rapd"}
 
     M = Monitor(site=site)
+
+if __name__ == "__main__":
+
+    test_mode()
