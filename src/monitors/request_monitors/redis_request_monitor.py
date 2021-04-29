@@ -179,12 +179,10 @@ class Monitor(Thread):
     def handle_request(self, request):
         """Handle requests received"""
 
-        print "handle_request", 
-        print request       
+        self.logger.debug("handle_request")      
 
         # Decode the request
         request = json.loads(request)
-        pprint(request)
 
         # Send request to instantiating thread
         if self.notify:
@@ -192,7 +190,6 @@ class Monitor(Thread):
 
         # Handle understood requests here
         if request.get("request_type", None) == "DATA_PRODUCED":
-            print "Data request received"
             self.handle_data_produced_request(request)
 
         else:
@@ -200,7 +197,8 @@ class Monitor(Thread):
 
     def handle_data_produced_request(self, request):
         """Handle a request for data produced"""
-        pass
+
+        self.logger.debug("handle_data_produced_request") 
 
         # Query for the data
         entry, content = self.database.retrieve_file(
