@@ -1,6 +1,6 @@
 """
 Code for the coordination of site activities for a RAPD install - the monitoring
-of data collection and the "cloud", as well as the running of processes and
+of data collection and requests, as well as the running of processes and
 logging of all metadata
 """
 
@@ -79,7 +79,7 @@ class Model(object):
     alt_image_path_server = None
     image_monitor = None
     run_monitor = None
-    cloud_monitor = None
+    request_monitor = None
     site_adapter = None
     remote_adapter = None
 
@@ -137,8 +137,8 @@ class Model(object):
         # Start the image monitor
         self.start_image_monitor()
 
-        # Start the cloud monitor
-        # self.start_cloud_monitor()
+        # Start the request monitor
+        # self.start_request_monitor()
 
         # Initialize the site adapter (communicating with beamline)
         self.init_site_adapter()
@@ -322,25 +322,25 @@ class Model(object):
         if self.site.RUN_MONITOR:
             self.run_monitor.stop()
 
-    def start_cloud_monitor(self):
-        """Start up the cloud listening process for core"""
+    def start_request_monitor(self):
+        """Start up the request listening process for core"""
 
         # Shorten variable names
         site = self.site
 
-        if site.CLOUD_MONITOR:
-            # Import the specific cloud monitor as cloud_monitor module
-            # global cloud_monitor
-            cloud_monitor = importlib.import_module("%s" % site.CLOUD_MONITOR.lower())
-            self.cloud_monitor = cloud_monitor.CloudMonitor(database=self.database,
-                                                            settings=site.CLOUD_MONITOR_SETTINGS,
-                                                            reply_settings=False,
-                                                            interval=site.CLOUD_INTERVAL)
+        if site.REQUEST_MONITOR:
+            # Import the specific request monitor as request_monitor module
+            # global request_monitor
+            request_monitor = importlib.import_module("%s" % site.REQUEST_MONITOR.lower())
+            self.request_monitor = request_monitor.RequestMonitor(database=self.database,
+                                                                  settings=site.REQUEST_MONITOR_SETTINGS,
+                                                                  reply_settings=False,
+                                                                  interval=site.REQUEST_INTERVAL)
 
-    def stop_cloud_monitor(self):
-        """Stop the cloud listening process for core"""
-        if site.CLOUD_MONITOR:
-            self.cloud_monitor.stop()
+    def stop_request_monitor(self):
+        """Stop the request listening process for core"""
+        if site.REQUEST_MONITOR:
+            self.request_monitor.stop()
 
     def init_site_adapter(self):
         """Initialize the connection to the site"""
@@ -399,7 +399,7 @@ class Model(object):
         self.stop_launcher_manager()
         self.stop_image_monitor()
         self.stop_run_monitor()
-        #self.stop_cloud_monitor()
+        self.stop_request_monitor()
 
     def add_image(self, image_data):
         """
@@ -1148,7 +1148,7 @@ class Model(object):
 
         # From a plugin
         if message.get("process", {}).get("type") == "plugin":
-            self.handle_plugin_communication(message=message)
+            self.handle_plugin_communication(message=message)        
 
         # NEWIMAGE
         elif message.get("message_type", None) == "NEWIMAGE":
