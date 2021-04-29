@@ -185,7 +185,6 @@ def get_hash(filename):
     """Returns a hash for a file"""
     return hashlib.sha1(open(filename, "r").read()).hexdigest()
 
-
 if __name__ == "__main__":
     print create_archive('/gpfs6/users/necat/rapd2/integrate/2018-03-23/yuan_bin3_7sk_sah_p07_w3_10/yuan_bin3_7sk_sah_p07_w3_10_1')
     #create_manifest("./", True)
