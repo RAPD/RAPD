@@ -567,6 +567,22 @@ class Database:
     # LIST Methods
     ##############
     @connectionErrorWrapper
+    def blpop(self, keys, timeout=0):
+        """
+        BLPOP a value off a given list
+        """
+        value = self.redis.blpop(keys, timeout=0)
+        return value
+
+    @connectionErrorWrapper
+    def brpop(self, keys, timeout=0):
+        """
+        RPOP a value off a given list
+        """
+        value = self.redis.brpop(keys, timeout)
+        return value
+
+    @connectionErrorWrapper
     def llen(self, key):
         """
         LLEN get length of list
@@ -589,13 +605,6 @@ class Database:
         """
         self.redis.lpush(key, value)
 
-    @connectionErrorWrapper
-    def brpop(self, key):
-        """
-        RPOP a value off a given list
-        """
-        value = self.redis.brpop(key)
-        return value
     @connectionErrorWrapper
     def rpop(self, key):
         """
