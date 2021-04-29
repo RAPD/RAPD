@@ -40,20 +40,23 @@ VERSION = "1.0.0"
 # import from collections import OrderedDict
 # import datetime
 # import glob
+import hashlib
+import importlib
 import logging
 import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
-import redis
+# import redis
 # import shutil
 # import subprocess
 # import sys
+import tempfile
 import time
 # import unittest
 # import urllib2
-# import uuid
+import uuid
 # from distutils.spawn import find_executable
 
 # RAPD imports
@@ -65,6 +68,9 @@ import utils.credits as rcredits
 # from utils import exceptions
 from utils.text import json
 from bson.objectid import ObjectId
+
+# Constants
+DATA_REQUEST_TIMEOUT = 120
 
 # Software dependencies
 VERSIONS = {}
@@ -147,6 +153,8 @@ class RapdPlugin(multiprocessing.Process):
     def run(self):
         """Execution path of the plugin"""
 
+        self.logger.debug("run")
+
         self.preprocess()
         self.process()
         self.postprocess()
@@ -154,6 +162,8 @@ class RapdPlugin(multiprocessing.Process):
 
     def preprocess(self):
         """Set up for plugin action"""
+
+        self.logger.debug("preprocess")
 
         self.tprint(arg=0, level="progress")
         self.tprint("preprocess")
@@ -168,10 +178,14 @@ class RapdPlugin(multiprocessing.Process):
     def process(self):
         """Run plugin action"""
 
+        self.logger.debug("process")
+
         self.tprint("process")
 
     def postprocess(self):
         """Events after plugin action"""
+
+        self.logger.debug("postprocess")
 
         self.tprint("postprocess")
 
@@ -192,6 +206,8 @@ class RapdPlugin(multiprocessing.Process):
 
     def check_dependencies(self):
         """Make sure dependencies are all available"""
+
+        self.logger.debug("check_dependencies")
 
         # A couple examples from index plugin
         # Can avoid using best in the plugin b        # If no best, switch to mosflm for strategy
@@ -226,8 +242,10 @@ class RapdPlugin(multiprocessing.Process):
         #                 level=30,
         #                 color="red")
 
-    def connect_to_redis(self):
+    def connect_to_redis_old(self):
         """Connect to the redis instance"""
+
+        self.logger.debug("connect_to_redis_old")
 
         print "Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST
 
@@ -239,13 +257,102 @@ class RapdPlugin(multiprocessing.Process):
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+
+        self.logger.debug("connect_to_redis")
+
+        redis_database = importlib.import_module('database.redis_adapter')
+        self.redis = redis_database.Database(settings=self.command["site"].REQUEST_MONITOR_SETTINGS)
+
+
+    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, request_hash=False, output_dir="./", output_file=False):
+        """
+        Fetch data for processing from control process. Need (result_id and description) or hash
+        
+        request_type - currently only DATA_PRODUCED is supported
+        result_id - _id in the results collection, equal to process.result_id
+        description - currently available: xdsascii_hkl, unmerged_mtz, rfree_mtz
+        hash - can be used to get file
+        """
+        
+        self.logger.debug("fetch_data")
+
+        # Make sure we have enough to go on
+        if not ((result_id and description) or request_hash):
+            raise Exception("Unable to fetch data - need (result_id and description) or hash")
+
+        # Form request
+        request_id = str(uuid.uuid1())
+        request = {
+            "description": description,
+            "hash": request_hash,
+            "request_id": request_id,
+            "request_type": request_type,
+            "result_id": result_id,
+        }
+        
+        # Push request into redis
+        self.redis.lpush("RAPD2_REQUESTS", json.dumps(request))
+
+        # Wait for reply
+        counter = 0
+        return_key = "RAPD2_DATA_REPLY_"+request_id
+        while (counter) < DATA_REQUEST_TIMEOUT:
+            counter += 1
+            reply = self.redis.get(return_key)
+            
+            # Have a reply
+            if reply:
+                raw_metadata, raw_file = reply.split("://:")
+                metadata = json.loads(raw_metadata)
+                
+                # Check for integrity
+                my_hash = hashlib.sha1(raw_file).hexdigest()
+                if metadata.get("hash") == my_hash:
+
+                    # Write the file - data_produced files are NOT compressed
+                    if output_dir:
+                        if not os.path.exists(output_dir):
+                            os.mkdir(output_dir)
+                    if output_file:
+                        if output_dir:
+                            created_file = os.path.join(output_dir, output_file)
+                        else:
+                            created_file = output_file
+                        fullpath_created_file = os.path.abspath(created_file)
+                    elif output_dir:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1], dir=output_dir)
+                    else:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1])
+
+                    with open(fullpath_created_file, "w") as filehandle:
+                        filehandle.write(raw_file)
+
+                    return fullpath_created_file
+
+                # Integrity is NOT confirmed
+                else:
+                    raise Exception("Data stream corrupted - hashes do not match")
+
+            # Wait 1 second brefore re-querying    
+            time.sleep(1)
+        
+        # Reply never comes
+        else:
+            return False
+
     def clean_up(self):
         """Clean up after plugin action"""
+
+        self.logger.debug("clean_up")
 
         self.tprint("clean_up")
 
     def handle_return(self):
         """Output data to consumer - still under construction"""
+
+        self.logger.debug("handle_return")
 
         self.tprint("handle_return")
 
@@ -272,6 +379,8 @@ class RapdPlugin(multiprocessing.Process):
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
+
+        self.logger.debug("print_credits")
 
         self.tprint("print_credits")
 
@@ -316,6 +425,56 @@ def main(args):
 
     unittest.main(verbosity=verbosity)
 
-    if __name__ == "__main__":
+def test_fetch():
+    """Test fetch_data function"""
 
-        main()
+    print "Testing fetch_data plugin function"
+
+    # Create an object to spoof site
+    import types
+    site = types.ModuleType('site', 'The site module')
+    site.ID = "TEST"
+    site.REQUEST_MONITOR_SETTINGS = {
+        "REDIS_CONNECTION":     "direct",
+        "REDIS_MASTER_NAME" :   None,
+        "REDIS_HOST":           "127.0.0.1",
+        "REDIS_PORT":           6379,
+        "REDIS_DB":             0
+    }
+    # site.CONTROL_DATABASE = "mongodb"
+    # site.CONTROL_DATABASE_SETTINGS = {"DATABASE_STRING": "mongodb://127.0.0.1:27017/rapd"}
+
+    command = {"site":site}
+
+    P = RapdPlugin(site=site, command=command)
+    P.connect_to_redis()
+
+    # Test no dir no filename
+    filename = P.fetch_data(result_id="test", description="xdsascii_hkl")
+    if filename:
+        print "Successful fetch to file %s" % filename
+    else:
+        print "FAILURE"
+
+    # Test no filename
+    filename = P.fetch_data(result_id="test", description="xdsascii_hkl", output_dir="foo")
+    if filename:
+        print "Successful fetch to file %s" % filename
+    else:
+        print "FAILURE"
+
+    print "Now we should get an error"
+    filename = P.fetch_data(description="xdsascii_hkl", output_dir="foo")
+
+    # Test no filename
+    filename = P.fetch_data(result_id="test", description="xdsascii_hkl", output_dir="foo", output_file="bar.hkl")
+    if filename:
+        print "Successful fetch to file %s" % filename
+    else:
+        print "FAILURE"
+
+if __name__ == "__main__":
+
+    # main()
+
+    test_fetch()

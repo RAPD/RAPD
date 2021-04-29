@@ -76,6 +76,8 @@ class LauncherAdapter(object):
         """
         Orchestrate the adapter's actions
         """
+        self.logger.debug("run")
+
         if self.message['command'] == 'ECHO':
             echo = load_module(seek_module='launch.launcher_adapters.echo_simple')
             # send message to simple_echo
@@ -88,7 +90,8 @@ class LauncherAdapter(object):
             # Get the new working directory. Message only has second part of the path.
             #self.message = cluster.fix_command(self.message)
             self.message = launch_tools.fix_command(self.message)
-    
+            self.logger.debug("Command updated")    
+
             # Get the new working directory
             work_dir = self.message["directories"]["work"]
     
@@ -97,9 +100,10 @@ class LauncherAdapter(object):
     
             # Put the message into a rapd-readable file
             command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
-    
+            self.logger.debug("Command file written: %s", command_file)    
+
             # Set the site tag from input
-            site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
+            site_tag = launch_tools.get_site_tag(self.message, self.site.SITE).split('_')[0]
     
             # The command to launch the job
             command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)

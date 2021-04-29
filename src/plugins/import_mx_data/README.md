@@ -1,19 +1,4 @@
-# ECHO plugin
 
-The echo plugin is very much what it dounds like, and is very handy for testing how plugins work and as a testbed for new features
-
-## Testing File Fetching
-
-While running `monitors/redis_request_monitor.py` in test mode (see [README](../../monitors/request_monitors/README.md)) the echo plugin can be used to test how file fetching works.
-
-```bash
-> export PYTHONPATH=$PYTHONPATH:/Users/YOU FILL IN THIS/rapd/src
-> python plugin.py
-```
-You need to have a local instance of redis running and a local MongoDB set up with a file you want in the gridFS storage of a rapd database.
-
-
-***
 This is a README.md
 
 A quick guide to markdown follows. Thanks to Adam Pritchard's markdown-here

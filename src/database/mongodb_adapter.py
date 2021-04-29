@@ -155,10 +155,15 @@ class Database(object):
     ############################################################################
     # Functions for connecting to the database                                 #
     ############################################################################
-    def get_db_connection(self):
+    def get_db_connection(self, read_only=False):
         """
         Returns a connection and cursor for interaction with the database.
         """
+
+        if read_only:
+            read_preference = "secondaryPreferred"
+        else:
+            read_preference = "primary"
 
         # No client - then connect
         if not self.client:
@@ -166,11 +171,14 @@ class Database(object):
             # Connect
             if self.db_string:
                 # When using login and pass.
-                self.client = pymongo.MongoClient(self.db_string)
+                self.client = pymongo.MongoClient(self.db_string, 
+                                                  readPreference=read_preference,
+                                                  )
             else:
                 # Not using user/password for now
                 self.client = pymongo.MongoClient(host=self.db_host,
                                                   port=self.db_port,
+                                                  readPreference=read_preference,
                                                   )
 
         # Get the db
@@ -389,8 +397,8 @@ class Database(object):
 
                 # Find files to remove
                 files_in_database = db.fs.files.find({"metadata.result_id":result_id,
-                                                  "metadata.file_type":file_type,
-                                                  "metadata.description":file_to_remove.get("description")})
+                                                      "metadata.file_type":file_type,
+                                                      "metadata.description":file_to_remove.get("description")})
                 # self.logger.debug("Looking for %s", {"metadata.result_id":result_id,
                 #                                      "metadata.file_type":file_type,
                 #                                      "metadata.description":file_to_remove.get("description")})
@@ -850,6 +858,39 @@ class Database(object):
                 for result in filtered_results:
                     result_ids.append(str(result["_id"]))
                 return result_ids
+
+    def retrieve_file(self, result_id=False, description=False, hash=False):
+        """Retrieve & return a file from gridFS"""
+        
+        print "retrieve_file result_id=%s description=%s hash=%s" % (result_id, description, hash)
+
+        self.logger.debug("retrieve_file result_id=%s description=%s hash=%s", result_id, description, hash)
+
+        # Connect to the database
+        db = self.get_db_connection(read_only=True)
+        grid_fs = gridfs.GridFS(db)
+        grid_bucket = gridfs.GridFSBucket(db)
+
+        if hash:
+            query = {"metadata.hash":hash}
+        elif result_id and description:
+            query = {"metadata.result_id":result_id, "metadata.description":description}
+        else:
+            raise Exception("Unable to query - not enough input data")
+
+        # Query for the _id in the fs.files collection
+        entry = db.fs.files.find_one(query)
+        files_id = entry["_id"]
+        
+        # Grab the file
+        grid_out = grid_bucket.open_download_stream(files_id)
+        contents = grid_out.read()
+
+        return (entry, contents)
+
+
+
+
 #
 # Utility functions
 #
