@@ -184,7 +184,7 @@ class Launcher(object):
             self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        #self.adapter(self.site, message, self.launcher)
+        # self.adapter(self.site, message, self.launcher)
         # If running thru a shell limit the number of running processes
         if self.pool:
             self.pool.apply_async(self.adapter(self.site, message, self.launcher))
@@ -249,8 +249,6 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
 
     def load_adapter(self):
         """Find and load the adapter"""
-
-        # Import the database adapter as database module
         
         self.adapter = load_module(
             seek_module=self.launcher["adapter"],
