@@ -266,7 +266,7 @@ class RapdPlugin(multiprocessing.Process):
         self.redis = redis_database.Database(settings=self.command["site"].REQUEST_MONITOR_SETTINGS)
 
 
-    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, hash=False, output_dir="./", output_file=False):
+    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, request_hash=False, output_dir="./", output_file=False):
         """
         Fetch data for processing from control process. Need (result_id and description) or hash
         
@@ -279,14 +279,14 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug("fetch_data")
 
         # Make sure we have enough to go on
-        if not ((result_id and description) or hash):
+        if not ((result_id and description) or request_hash):
             raise Exception("Unable to fetch data - need (result_id and description) or hash")
 
         # Form request
         request_id = str(uuid.uuid1())
         request = {
             "description": description,
-            "haash": hash,
+            "hash": request_hash,
             "request_id": request_id,
             "request_type": request_type,
             "result_id": result_id,

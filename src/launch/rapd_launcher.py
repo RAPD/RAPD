@@ -187,8 +187,12 @@ class Launcher(object):
         # self.adapter(self.site, message, self.launcher)
         # If running thru a shell limit the number of running processes
         if self.pool:
+            if self.logger:
+                self.logger.debug("Launching using apply_async")
             self.pool.apply_async(self.adapter(self.site, message, self.launcher))
         else:
+            if self.logger:
+                self.logger.debug("Launching directly")
             self.adapter(self.site, message, self.launcher)
 
     def get_settings(self):

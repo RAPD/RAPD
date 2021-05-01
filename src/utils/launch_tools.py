@@ -88,7 +88,7 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
 
     return target_file
 
-def get_site_tag(message):
+def get_site_tag(message, default_site):
     """Find and return the site_tag from the image header"""
     # Find site_tag from SNAP
     site_tag = False
@@ -97,6 +97,10 @@ def get_site_tag(message):
     # Find site_tag from INTEGRATE
     elif message.get('data', False):
         site_tag = message['data']['image_data'].get('site_tag')
+    # Fall back on default if present
+    elif default_site:
+        site_tag = default_site
+
     return site_tag
 
 def fix_command(message):

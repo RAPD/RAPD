@@ -51,7 +51,11 @@ export class ProjectMxComponent implements OnInit {
   public uploader: FileUploader;
   public project: Project;
 
+<<<<<<< HEAD
   private id: string = '';
+=======
+  private id: string;
+>>>>>>> master
   private selectedIntegratedData: string[] = [];
   private selectedIntegrateAction: string = "";
   private actions: any = {
@@ -347,6 +351,51 @@ export class ProjectMxComponent implements OnInit {
         const dialogRef = this.mergeDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
       } else {
         const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
+          data: { message: parameters.message },
+        });
+      }
+    });
+  }
+
+  private activateMR(resultId: string) {
+    // Get the full result
+    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
+      console.log(parameters);
+      parameters.results.current_project_id = this.id;
+      if (parameters.success === true) {
+        const dialogRef = this.mrDialog.open(MrDialogComponent, {data: parameters.results,});
+      } else {
+        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+          data: { message: parameters.message },
+        });
+      }
+    });
+  }
+
+  private activateSAD(resultId: string) {
+    // Get the full result
+    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
+      // console.log(parameters);
+      parameters.results.current_project_id = this.id;
+      if (parameters.success === true) {
+        const dialogRef = this.mrDialog.open(SadDialogComponent, {data: parameters.results,});
+      } else {
+        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
+          data: { message: parameters.message },
+        });
+      }
+    });
+  }
+
+  private activateMerge(resultIds: string[]) {
+    // Get the full result
+    this.rest_service.getMultipleResultDetails(resultIds).subscribe((parameters) => {
+      console.log(parameters);
+      parameters.results.current_project_id = this.id;
+      if (parameters.success === true) {
+        const dialogRef = this.mrDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
+      } else {
+        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
           data: { message: parameters.message },
         });
       }
