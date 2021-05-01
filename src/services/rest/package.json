@@ -38,7 +38,6 @@
     "redis": "^3.1.0",
     "serve-favicon": "~2.5.0",
     "shasum": "^1.0.2",
-    "uuid": "^8.3.2",
     "ws": "^7.4.4"
   },
   "optionalDependencies": {
