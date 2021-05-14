@@ -51,11 +51,7 @@ export class ProjectMxComponent implements OnInit {
   public uploader: FileUploader;
   public project: Project;
 
-<<<<<<< HEAD
   private id: string = '';
-=======
-  private id: string;
->>>>>>> master
   private selectedIntegratedData: string[] = [];
   private selectedIntegrateAction: string = "";
   private actions: any = {
