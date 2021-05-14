@@ -247,6 +247,7 @@ export class ProjectMxComponent implements OnInit {
 
       case "Remove":
         this.activateRemoveConfirm(this.selectedIndexedData[0]);
+        break;
 
       default:
         break;
@@ -353,59 +354,14 @@ export class ProjectMxComponent implements OnInit {
     });
   }
 
-  private activateMR(resultId: string) {
-    // Get the full result
-    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
-      console.log(parameters);
-      parameters.results.current_project_id = this.id;
-      if (parameters.success === true) {
-        const dialogRef = this.mrDialog.open(MrDialogComponent, {data: parameters.results,});
-      } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
-          data: { message: parameters.message },
-        });
-      }
-    });
-  }
-
-  private activateSAD(resultId: string) {
-    // Get the full result
-    this.rest_service.getResultDetail(resultId).subscribe((parameters) => {
-      // console.log(parameters);
-      parameters.results.current_project_id = this.id;
-      if (parameters.success === true) {
-        const dialogRef = this.mrDialog.open(SadDialogComponent, {data: parameters.results,});
-      } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
-          data: { message: parameters.message },
-        });
-      }
-    });
-  }
-
-  private activateMerge(resultIds: string[]) {
-    // Get the full result
-    this.rest_service.getMultipleResultDetails(resultIds).subscribe((parameters) => {
-      console.log(parameters);
-      parameters.results.current_project_id = this.id;
-      if (parameters.success === true) {
-        const dialogRef = this.mrDialog.open(MergeDialogComponent, {data: parameters.results, disableClose:true});
-      } else {
-        const errorDialogRef = this.error_dialog.open(ErrorDialogComponent, {
-          data: { message: parameters.message },
-        });
-      }
-    });
-  }
-
-  private activateRemoveConfirm(result_id: string) {
-    console.log("activateRemoveConfirm", result_id);
+  private activateRemoveConfirm(resultId: string) {
+    console.log("activateRemoveConfirm", resultId);
 
     const label = this.project.source_data.filter((obj) => {
-      return obj._id === result_id;
+      return obj._id === resultId;
     })[0].repr;
 
-    let dialogRef = this.confirmDialog.open(ConfirmDialogComponent, {
+    const dialogRef = this.confirmDialog.open(ConfirmDialogComponent, {
       data: {
         message:
           "Are you sure you want to remove " + label + " from the project?"
@@ -419,13 +375,13 @@ export class ProjectMxComponent implements OnInit {
 
         // Remove from project
         const indexToRemove = this.project.source_data.findIndex((element) => {
-          return element._id === result_id;
+          return element._id === resultId;
         });
         this.project.source_data.splice(indexToRemove, 1);
 
         // Remove from selectedIntegratedData
         const sidIndexToRemove = this.selectedIntegratedData.findIndex((element) => {
-            return element === result_id;
+            return element === resultId;
           }
         );
         if (sidIndexToRemove !== -1) {
@@ -436,7 +392,7 @@ export class ProjectMxComponent implements OnInit {
 
         // Remove from selectedIndexedData
         const sid2IndexToRemove = this.selectedIndexedData.findIndex((element) => {
-          return element === result_id;
+          return element === resultId;
         });
         if (sidIndexToRemove !== -1) {
           this.selectedIndexedData.splice(sidIndexToRemove, 1);
@@ -455,7 +411,7 @@ export class ProjectMxComponent implements OnInit {
             // this.dialogRef.close(params);
           } else {
             const errorDialogRef = this.errorDialog.open(ErrorDialogComponent, {
-              data: { message: params.message }
+              data: { message: params.message },
             });
           }
         });
