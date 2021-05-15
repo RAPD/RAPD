@@ -3,9 +3,11 @@ import { Injectable } from "@angular/core";
 //          Http } from '@angular/http';
 import { CanActivate, Router } from "@angular/router";
 
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { Observable } from "rxjs/Observable";
+import { of, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 import { GlobalsService } from "./globals.service";
 
@@ -24,26 +26,23 @@ export class AuthService implements CanActivate {
     return this.authenticated();
   }
 
-  public login(credentials): Observable<any> {
-    // let httpParams = new HttpParams()
-    //                        .set('uid', credentials.uid)
-    //                        .set('email', credentials.email)
-    //                        .set('password', credentials.password);
+  public login(credentials: any): Observable<any> {
 
-    // const headers = new HttpHeaders()
-    //         .set('Content-Type', 'application/application/json');
+    const self = this;
 
     return this.authHttp
-      .post(this.globalsService.site.restApiUrl + "authenticate", {
+      .post<any>(this.globalsService.site.restApiUrl + "authenticate", {
         email: credentials.email,
         password: credentials.password,
-        uid: credentials.uid
+        uid: credentials.uid,
       })
-      .map((res) => this.handleAuth(res))
-      .catch((error) => this.handleError(error));
+      .pipe(
+        map(res => self.handleAuth(res)),
+        catchError((err) => of({success: false, message: err}))
+      );
   }
 
-  public requestPass(credentials): Observable<any> {
+  public requestPass(credentials: any): Observable<any> {
     console.log("requestPass", credentials);
 
     // let httpParams = new HttpParams()
@@ -60,8 +59,11 @@ export class AuthService implements CanActivate {
       .catch((error) => this.handleError(error));
   }
 
-  public changePass(credentials): Observable<any> {
-    const profile = JSON.parse(localStorage.getItem("profile"));
+  public changePass(credentials: any): Observable<any> {
+
+    const profile = JSON.parse(localStorage.getItem('profile'));
+
+    // const self = this;
 
     // let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
 
@@ -118,13 +120,13 @@ export class AuthService implements CanActivate {
     this.router.navigate(["/"]);
   }
 
-  private handleAuth(res) {
+  private handleAuth(res: any) {
     console.log("handleAuth");
     console.log(res);
 
     if (res.success === true) {
       // Decode token
-      let token = res.token;
+      const token = res.token;
 
       // Save raw token
       localStorage.setItem("access_token", token);
@@ -137,11 +139,12 @@ export class AuthService implements CanActivate {
       );
 
       // Save user information
-      let decoded_token = this.helper.decodeToken(token);
-      if (decoded_token._doc) {
-        var profile = decoded_token._doc;
+      const decodedToken = this.helper.decodeToken(token);
+      let profile;
+      if (decodedToken._doc) {
+        profile = decodedToken._doc;
       } else {
-        var profile = decoded_token;
+        profile = decodedToken;
       }
       console.log(profile);
       localStorage.setItem("profile", JSON.stringify(profile));
@@ -154,7 +157,7 @@ export class AuthService implements CanActivate {
     }
   }
 
-  private handlePassReq(res) {
+  private handlePassReq(res: any) {
     if (res.success === true) {
       // Return for consumer
       return res;
@@ -178,7 +181,23 @@ export class AuthService implements CanActivate {
     }
   }
 
-  private handleError(error) {
+  private newHandleError(error: HttpErrorResponse) {
+    if (error.status === 0) {
+      // A client-side or network error occurred. Handle it accordingly.
+      console.error('An error occurred:', error.error);
+    } else {
+      // The backend returned an unsuccessful response code.
+      // The response body may contain clues as to what went wrong.
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`);
+    }
+    // Return an observable with a user-facing error message.
+    return throwError(
+      'Something bad happened; please try again later.');
+  }
+
+  private handleError(error: HttpErrorResponse): Observable<any>  {
     console.error("An error occurred", error);
     return Observable.of({
       success: false,
