@@ -1337,16 +1337,87 @@ class RapdPlugin(multiprocessing.Process):
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
-        self.tprint("Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST)
+        self.logger.debug("connect_to_redis")
 
-        # Create a pool connection
-        pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
-                                    port=self.command["site"].CONTROL_REDIS_PORT,
-                                    db=self.command["site"].CONTROL_REDIS_DB)
+        redis_database = importlib.import_module('database.redis_adapter')
+        self.redis = redis_database.Database(settings=self.command["site"].REQUEST_MONITOR_SETTINGS)
 
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
+    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, request_hash=False, output_dir="./", output_file=False):
+        """
+        Fetch data for processing from control process. Need (result_id and description) or hash
+        
+        request_type - currently only DATA_PRODUCED is supported
+        result_id - _id in the results collection, equal to process.result_id
+        description - currently available: xdsascii_hkl, unmerged_mtz, rfree_mtz
+        hash - can be used to get file
+        """
+        
+        self.logger.debug("fetch_data")
 
+        # Make sure we have enough to go on
+        if not ((result_id and description) or request_hash):
+            raise Exception("Unable to fetch data - need (result_id and description) or hash")
+
+        # Form request
+        request_id = str(uuid.uuid1())
+        request = {
+            "description": description,
+            "hash": request_hash,
+            "request_id": request_id,
+            "request_type": request_type,
+            "result_id": result_id,
+        }
+        
+        # Push request into redis
+        self.redis.lpush("RAPD2_REQUESTS", json.dumps(request))
+
+        # Wait for reply
+        counter = 0
+        return_key = "RAPD2_DATA_REPLY_"+request_id
+        while (counter) < DATA_REQUEST_TIMEOUT:
+            counter += 1
+            reply = self.redis.get(return_key)
+            
+            # Have a reply
+            if reply:
+                raw_metadata, raw_file = reply.split("://:")
+                metadata = json.loads(raw_metadata)
+                
+                # Check for integrity
+                my_hash = hashlib.sha1(raw_file).hexdigest()
+                if metadata.get("hash") == my_hash:
+
+                    # Write the file - data_produced files are NOT compressed
+                    if output_dir:
+                        if not os.path.exists(output_dir):
+                            os.mkdir(output_dir)
+                    if output_file:
+                        if output_dir:
+                            created_file = os.path.join(output_dir, output_file)
+                        else:
+                            created_file = output_file
+                        fullpath_created_file = os.path.abspath(created_file)
+                    elif output_dir:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1], dir=output_dir)
+                    else:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1])
+
+                    with open(fullpath_created_file, "w") as filehandle:
+                        filehandle.write(raw_file)
+
+                    return fullpath_created_file
+
+                # Integrity is NOT confirmed
+                else:
+                    raise Exception("Data stream corrupted - hashes do not match")
+
+            # Wait 1 second brefore re-querying    
+            time.sleep(1)
+        
+        # Reply never comes
+        else:
+            return False
+            
     def send_results(self, results):
         """Let everyone know we are working on this"""
 
