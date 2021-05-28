@@ -241,9 +241,10 @@ def get_commandline():
                         const="json",
                         default="interactive",
                         help="Output JSON format string")
+
     parser.add_argument("--run_mode",
                         dest="run_mode",
-                        help="Specifically set the run mode: interactive, json, server"
+                        help="Specifically set the run mode: interactive, server"
                         )
 
     # Positional argument
