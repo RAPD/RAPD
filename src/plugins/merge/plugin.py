@@ -314,6 +314,7 @@ class RapdPlugin(multiprocessing.Process):
         # List of original data files to be merged.  Currently expected to be ASCII.HKL
         self.datasets = self.command['input_data']['datasets'] #commandline.py
         
+        
 
         # Variables for holding filenames and results
         self.data_files = []            # List of data file names
@@ -366,13 +367,19 @@ class RapdPlugin(multiprocessing.Process):
         else:
             self.prefix = 'merge'
         
+        # Set strict for strict/sloppy processing before spacegroup and unitcell checks.      
+        if self.settings.get('strict'):
+            self.strict = self.settings['strict']
+        else:
+            self.strict = False
+
         # Check for user-defined spacegroup
         if self.settings.get('spacegroup'):
             self.user_spacegroup = space_group_symbols(self.settings.get('spacegroup')).number()
             self.strict = True
         # If user has not set a spacegroup, then default to 0.
         else:
-            self.user_spacegroup = '0'
+            self.user_spacegroup = 0
 
         # Check for unit cell.  This is a list.
         if self.settings.get('unitcell'):
@@ -382,6 +389,8 @@ class RapdPlugin(multiprocessing.Process):
         # Check for user-defined high resolution cutoff
         if self.settings.get('resolution'):
             self.resolution = self.settings['resolution']
+        else:
+            self.resolution = 0
 
         # Check for file cleanup
         if self.settings.get('clean'):
@@ -419,22 +428,18 @@ class RapdPlugin(multiprocessing.Process):
         else:
             self.dpi = 100
 
-        # Check to see if strict has been set by spacegroup or unitcell        
-        if self.strict:
-            pass
-        else:
-            # If not set, then check for existence. Default to false.
-            if self.settings.get('strict'):
-            self.strict = self.settings['strict']
-            else:
-                self.strict = False
-
         # Allow for merging of all even when different unit cells. Default to no.
-        if self.settings.get('force') == True:
+        if self.settings.get('force'):
             self.force = True
             self.cutoff = 0
         else:
             self.force = False
+        
+        # Allow switching between Bragg reflections (I) and unit cell (UC) for determining isomorphism
+        if self.settings.get('metric'):
+            self.metric = self.settings['metric']
+        else:
+            self.metric = 'I'
         
         # Check on number of processors
         if self.settings.get('nproc'):
@@ -489,7 +494,7 @@ class RapdPlugin(multiprocessing.Process):
                           str(self.datasets))
 
         # Connect to redis
-        if self.preferences.get("run_mode") == "server":
+        if self.settings.get('run_mode') == "server":
             self.connect_to_redis()
 
         if not self.precheck:
@@ -650,7 +655,11 @@ class RapdPlugin(multiprocessing.Process):
                         self.logger.error(
                             'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
                         self.results[pair]['CC'] = 0
-
+        if self.metric == 'UC':
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                self.results[pair]['CC'] = self.get_cc_cell(self.id_list[pair])
+                self.logger.debug('Correlation by Unit Cell Variation of %s: %s' % (pair, str(self.results[pair]['CC'])))
         else:
             for pair in self.id_list.keys():
                 self.results[pair] = {}
@@ -938,7 +947,7 @@ class RapdPlugin(multiprocessing.Process):
         a1, b1, c1 = uc1[0], uc1[1], uc1[2]
         a2, b2, c2 = uc2[0], uc2[1], uc2[2]
         variation = [abs(a1-a2)/min(a1,a2),abs(b1-b2)/min(b1,b2),abs(c1-c2)/min(c1, c2)]
-        average = sum(variation)/len(variation)
+        average = 1 - (sum(variation)/len(variation))
 
         try:
             if self.strict:
@@ -1454,7 +1463,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug("send_results")
 
-        if self.preferences.get("run_mode") == "server":
+        if self.settings.get('run_mode') == "server":
 
             self.logger.debug("Sending back on redis")
 
