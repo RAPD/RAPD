@@ -138,6 +138,10 @@ def get_commandline():
                         dest="method",
                         default="complete",
                         help="set alternative clustering method: single, complete (default), average, weighted, centroid, median, or ward")
+    parser.add_argument("-i", "--metric",
+                        dest="metric",
+                        default="intensity",
+                        help="set metric for determineing isomorphism: intensity, unitcell, default=intensity")
     # Number of processors to use
     parser.add_argument("--nproc",
                         action="store",
@@ -236,14 +240,15 @@ def get_commandline():
 
     # JSON Output
     parser.add_argument("-j", "--json",
-                        dest="run_mode",
-                        action="store_const",
-                        const="json",
-                        default="interactive",
+                        dest="json",
+                        action="store_true",
+                        default=False,
                         help="Output JSON format string")
+
     parser.add_argument("--run_mode",
                         dest="run_mode",
-                        help="Specifically set the run mode: interactive, json, server"
+                        default='interactive',
+                        help="Specifically set the run mode: interactive, server, subprocess"
                         )
 
     # Positional argument
@@ -296,11 +301,6 @@ def get_commandline():
             args.nproc = cpu_count()
         except:
             args.nproc = 1
-    # Implement different run modes
-    if args.run_mode == 'json':
-        args.json = True
-    else:
-        args.json = False
 
     # Set the clustering method
     try:
@@ -312,6 +312,18 @@ def get_commandline():
         sys.exit()
 
     try:
+        metric_list = ['intensity', 'unitcell']
+        if [i for i in metric_list if i in args.metric]:
+            if args.metric == 'intensity':
+                args.metric = 'I' 
+            if args.metric == 'unitcell':
+                args.metric = 'UC'
+
+    except:
+        print("Unrecognized metric. Choose 'intensity' or 'unitcell'.")
+        sys.exit()
+
+    try:
         rerun_list = ['start', 'clustering', 'dendrogram']
         if [i for i in rerun_list if i in args.start_point]:
             args.start_point = args.start_point
@@ -320,7 +332,7 @@ def get_commandline():
         sys.exit()
 
     try:
-        run_mode_list = ['interactive', 'json', 'server', 'subprocess']
+        run_mode_list = ['interactive', 'server', 'subprocess']
         if [i for i in run_mode_list if i in args.run_mode]:
             args.run_mode = args.run_mode
     except:
@@ -401,7 +413,7 @@ def main():
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
-                                 directories=["plugins.hcmerge"],
+                                 directories=["plugins.merge"],
                                  logger=logger)
 
     # Print plugin info
@@ -414,8 +426,9 @@ def main():
            plugin.VERSION, level=10, color="default")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="default")
 
+    site = False
     # Run the plugin
-    plugin.RapdPlugin(command, tprint, logger)
+    plugin.RapdPlugin(site, command, tprint, logger)
 
 
 if __name__ == "__main__":

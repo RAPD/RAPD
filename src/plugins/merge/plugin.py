@@ -280,7 +280,7 @@ class RapdPlugin(multiprocessing.Process):
 
     results = {}
 
-    def __init__(self, command, tprint=False, logger=False):
+    def __init__(self, site, command, tprint=False, logger=False):
         """Initialize the merging processing using agglomerative hierachical clustering process"""
 
         # If the logging instance is passed in...
@@ -306,12 +306,15 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.info(command)
 
         # Store passed-in variables
+        self.site = site
         self.command = command
-
-        self.dirs = self.command['directories']
-        # List of original data files to be merged.  Currently expected to be ASCII.HKL
-        self.datasets = self.command['input_data']['datasets']
         self.settings = self.command.get('preferences')
+        self.dirs = self.command['directories'] # Needs to be toggle between commandline and server
+
+        # List of original data files to be merged.  Currently expected to be ASCII.HKL
+        self.datasets = self.command['input_data']['datasets'] #commandline.py
+        
+        
 
         # Variables for holding filenames and results
         self.data_files = []            # List of data file names
@@ -324,6 +327,19 @@ class RapdPlugin(multiprocessing.Process):
         self.dirs['data'] = os.path.join(
             self.command['directories']['work'], "DATA")
 
+        # Set up the results with command
+        self.results['command'] = command
+
+        # Update process with a starting status of 1
+        if self.results.get('process'):
+            self.results['process']['status'] = 1
+
+        # Create a process section of results with the id and a starting status of 1
+        else:
+            self.results['process'] = {
+                'process_id': self.command.get('process_id'),
+                'status': 1}
+
         # Establish setting defaults
         # Check for agglomerative clustering linkage method
         # Options for linkage are:
@@ -334,53 +350,99 @@ class RapdPlugin(multiprocessing.Process):
         # centroid: the centroid/UPGMC algorithm. (alias)
         # median: the median/WPGMC algorithm. (alias)
         # ward: the Ward/incremental algorithm. (alias)
-        self.method = self.settings['method']
+        if self.settings.get('method'):
+            self.method = self.settings['method']
+        else:
+            self.method = 'complete'
 
-        # Check for cutoff value
-        self.cutoff = self.settings['cutoff']
+        # Correlation cutoff for merging clusters
+        if self.settings.get('cutoff'):
+            self.cutoff = self.settings['cutoff']
+        else:
+            self.cutoff = 0.95
         
         # Check for filename for merged dataset
-        self.prefix = self.settings['prefix']
+        if self.settings.get('prefix'):
+            self.prefix = self.settings['prefix']
+        else:
+            self.prefix = 'merge'
         
+        # Set strict for strict/sloppy processing before spacegroup and unitcell checks.      
+        if self.settings.get('strict'):
+            self.strict = self.settings['strict']
+        else:
+            self.strict = False
+
         # Check for user-defined spacegroup
-        self.user_spacegroup = self.settings['spacegroup']
+        if self.settings.get('spacegroup'):
+            self.user_spacegroup = space_group_symbols(self.settings.get('spacegroup')).number()
+            self.strict = True
+        # If user has not set a spacegroup, then default to 0.
+        else:
+            self.user_spacegroup = 0
 
         # Check for unit cell.  This is a list.
-        self.unitcell = self.settings['unitcell']
+        if self.settings.get('unitcell'):
+            self.unitcell = self.settings['unitcell']
+            self.strict = True
 
         # Check for user-defined high resolution cutoff
-        self.resolution = self.settings['resolution']
+        if self.settings.get('resolution'):
+            self.resolution = self.settings['resolution']
+        else:
+            self.resolution = 0
 
         # Check for file cleanup
-        self.clean = self.settings['clean']
+        if self.settings.get('clean'):
+            self.clean = self.settings['clean']
+        else:
+            self.clean = True
         
         # Check whether to make all clusters or the first one that exceeds the cutoff
-        self.all_clusters = self.settings['all_clusters']
+        if self.settings.get('all_clusters'):
+            self.all_clusters = self.settings['all_clusters']
+        else:
+            self.all_clusters = False
 
         # Check whether to add labels to the dendrogram
-        self.labels = self.settings['labels']
+        if self.settings.get('labels'):
+            self.labels = self.settings['labels']
+        else:
+            self.labels = False
 
         # Check whether to start at the beginning or skip to a later step
-        self.start_point = self.settings['start_point']
+        if self.settings.get('start_point'):
+            self.start_point = self.settings['start_point']
+        else:
+            self.start_point = 'start'
 
         # Check whether to skip prechecking files during preprocess
-        self.precheck = self.settings['precheck'] 
+        if self.settings.get('precheck'):
+            self.precheck = self.settings['precheck']
+        else:
+            self.precheck = False
 
         # Set resolution for dendrogram image
-        self.dpi = self.settings['dpi']
-
-        # Set running in strict or sloppy mode
-        self.strict = self.settings['strict']
+        if self.settings.get('dpi'):
+            self.dpi = self.settings['dpi']
+        else:
+            self.dpi = 100
 
         # Allow for merging of all even when different unit cells. Default to no.
-        if self.settings.get('force') == True:
+        if self.settings.get('force'):
             self.force = True
             self.cutoff = 0
         else:
             self.force = False
         
+        # Allow switching between Bragg reflections (I) and unit cell (UC) for determining isomorphism
+        if self.settings.get('metric'):
+            self.metric = self.settings['metric']
+        else:
+            self.metric = 'I'
+        
         # Check on number of processors
-        if self.settings.has_key('nproc'):
+        if self.settings.get('nproc'):
             self.nproc = self.settings['nproc']
         else:
             try:
@@ -390,13 +452,10 @@ class RapdPlugin(multiprocessing.Process):
                 self.nproc = 1
 
         # Check on whether job should be run on a cluster
-        if self.settings.has_key('cluster_use'):
-            if self.settings['cluster_use'] == True:
-                self.cmd_prefix = 'qsub -N combine -sync y'
-            else:
-                self.cmd_prefix = 'sh'
+        if self.settings.get('cluster_use'):
+            self.cmd_prefix = 'qsub -N combine -sync y'
         else:
-            self.cmd_prefix = 'sh'        
+            self.cmd_prefix = 'sh'      
 
         Process.__init__(self, name="hcmerge")
         self.start()
@@ -433,6 +492,10 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("Preprocess: Prechecking files")
         self.logger.debug('HCMerge::Prechecking files: %s' %
                           str(self.datasets))
+
+        # Connect to redis
+        if self.settings.get('run_mode') == "server":
+            self.connect_to_redis()
 
         if not self.precheck:
             self.tprint("Prechecking Files Off.  Skipping to File Copying.")
@@ -592,7 +655,11 @@ class RapdPlugin(multiprocessing.Process):
                         self.logger.error(
                             'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
                         self.results[pair]['CC'] = 0
-
+        if self.metric == 'UC':
+            for pair in self.id_list.keys():
+                self.results[pair] = {}
+                self.results[pair]['CC'] = self.get_cc_cell(self.id_list[pair])
+                self.logger.debug('Correlation by Unit Cell Variation of %s: %s' % (pair, str(self.results[pair]['CC'])))
         else:
             for pair in self.id_list.keys():
                 self.results[pair] = {}
@@ -750,8 +817,8 @@ class RapdPlugin(multiprocessing.Process):
 
     def get_cc (self, array1, array2):
         """
-        Calculate correlation coefficient (CC) between two datasets that are given as XDS_ASCII.HKL files.  Need
-        to convert to reading in intensity arrays.  
+        Calculate correlation coefficient (CC) between two datasets that are given as XDS_ASCII.HKL files.
+        Currently accepts two intensity arrays.  
         Uses cctbx.
         """
         
@@ -785,6 +852,10 @@ class RapdPlugin(multiprocessing.Process):
         return(cc)                                      
 
     def get_int(self, pair):
+        """
+        Get the intensity arrays from a pair (of files)
+        """
+
         # Read in reflection files    
         file1 = reflection_file_reader.any_reflection_file(file_name=pair[0])
         file2 = reflection_file_reader.any_reflection_file(file_name=pair[1])
@@ -851,6 +922,46 @@ class RapdPlugin(multiprocessing.Process):
         #     self.logger.debug('HCMerge::Linear Correlation Coefficient for %s = %s.' % (
         #         str(in_file), str(cc.coefficient())))
         #     return(cc.coefficient())
+
+    def get_cc_cell(self, pair):
+        """
+        Calculate a correlation based on unit cell length from a pair of files.
+        """
+
+        self.logger.debug('MERGE::Using Unit Cell to Determine Isomorphism')
+
+        # Read in reflection files    
+        file1 = reflection_file_reader.any_reflection_file(file_name=pair[0])
+        file2 = reflection_file_reader.any_reflection_file(file_name=pair[1])
+
+        # Convert to miller arrays
+        # ma[2] has I and SIGI for mtz, ma[0] has I and SIGI for hkl
+        ma1 = file1.as_miller_arrays(merge_equivalents=False)
+        ma2 = file2.as_miller_arrays(merge_equivalents=False)
+
+        # Get Unit Cells from each miller array
+        uc1 = ma1[0].unit_cell().parameters()
+        uc2 = ma2[0].unit_cell().parameters()
+
+        # Correlation as the average of the variation in cell lengths.  Does not account for angle variations.
+        a1, b1, c1 = uc1[0], uc1[1], uc1[2]
+        a2, b2, c2 = uc2[0], uc2[1], uc2[2]
+        variation = [abs(a1-a2)/min(a1,a2),abs(b1-b2)/min(b1,b2),abs(c1-c2)/min(c1, c2)]
+        average = 1 - (sum(variation)/len(variation))
+
+        try:
+            if self.strict:
+                alpha1, beta1, gamma1 = uc1[3], uc1[4], uc1[5]
+                alpha2, beta2, gamma2 = uc2[3], uc2[4], uc2[5]
+                if (alpha1 == alpha2) and (beta1 == beta2) and (gamma1 == gamma2):
+                    cc = average
+                else:
+                    cc = 0
+            else:
+                cc = average
+        except:
+            cc = 0
+        return(cc)
 
     def scale(self, in_file, out_file, VERBOSE=False):
         """
@@ -923,7 +1034,7 @@ class RapdPlugin(multiprocessing.Process):
     def make_matrix(self, method):
         """
         Take all the combinations and make a matrix of their relationships using agglomerative
-        hierarchical clustering, hcluster. Use CC as distance.
+        hierarchical clustering, scipy.cluster.hierarchy (formerly hcluster). Use CC as distance.
         self.id_list = OrderedDict of pairs of datasets
         self.results = Dict of values extracted from aimless log
         method = linkage method: single, average, complete, weighted
@@ -1337,93 +1448,22 @@ class RapdPlugin(multiprocessing.Process):
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
-        self.logger.debug("connect_to_redis")
+        self.tprint("Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST)
 
-        redis_database = importlib.import_module('database.redis_adapter')
-        self.redis = redis_database.Database(settings=self.command["site"].REQUEST_MONITOR_SETTINGS)
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
+                                    port=self.command["site"].CONTROL_REDIS_PORT,
+                                    db=self.command["site"].CONTROL_REDIS_DB)
 
-    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, request_hash=False, output_dir="./", output_file=False):
-        """
-        Fetch data for processing from control process. Need (result_id and description) or hash
-        
-        request_type - currently only DATA_PRODUCED is supported
-        result_id - _id in the results collection, equal to process.result_id
-        description - currently available: xdsascii_hkl, unmerged_mtz, rfree_mtz
-        hash - can be used to get file
-        """
-        
-        self.logger.debug("fetch_data")
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
 
-        # Make sure we have enough to go on
-        if not ((result_id and description) or request_hash):
-            raise Exception("Unable to fetch data - need (result_id and description) or hash")
-
-        # Form request
-        request_id = str(uuid.uuid1())
-        request = {
-            "description": description,
-            "hash": request_hash,
-            "request_id": request_id,
-            "request_type": request_type,
-            "result_id": result_id,
-        }
-        
-        # Push request into redis
-        self.redis.lpush("RAPD2_REQUESTS", json.dumps(request))
-
-        # Wait for reply
-        counter = 0
-        return_key = "RAPD2_DATA_REPLY_"+request_id
-        while (counter) < DATA_REQUEST_TIMEOUT:
-            counter += 1
-            reply = self.redis.get(return_key)
-            
-            # Have a reply
-            if reply:
-                raw_metadata, raw_file = reply.split("://:")
-                metadata = json.loads(raw_metadata)
-                
-                # Check for integrity
-                my_hash = hashlib.sha1(raw_file).hexdigest()
-                if metadata.get("hash") == my_hash:
-
-                    # Write the file - data_produced files are NOT compressed
-                    if output_dir:
-                        if not os.path.exists(output_dir):
-                            os.mkdir(output_dir)
-                    if output_file:
-                        if output_dir:
-                            created_file = os.path.join(output_dir, output_file)
-                        else:
-                            created_file = output_file
-                        fullpath_created_file = os.path.abspath(created_file)
-                    elif output_dir:
-                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1], dir=output_dir)
-                    else:
-                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1])
-
-                    with open(fullpath_created_file, "w") as filehandle:
-                        filehandle.write(raw_file)
-
-                    return fullpath_created_file
-
-                # Integrity is NOT confirmed
-                else:
-                    raise Exception("Data stream corrupted - hashes do not match")
-
-            # Wait 1 second brefore re-querying    
-            time.sleep(1)
-        
-        # Reply never comes
-        else:
-            return False
-            
     def send_results(self, results):
         """Let everyone know we are working on this"""
 
         self.logger.debug("send_results")
 
-        if self.preferences.get("run_mode") == "server":
+        if self.settings.get('run_mode') == "server":
 
             self.logger.debug("Sending back on redis")
 
