@@ -54,7 +54,7 @@ def construct_command(commandline_args, logger):
     commandline_args needs to look like:
 
     class commandline_args(object):
-        clean = True | False
+        clean_up = True | False
         datafile = ""
         json = True | False
         method = "single" | "complete" | "average" | "weighted" | "centroid" | "median" | "ward"
@@ -68,7 +68,7 @@ def construct_command(commandline_args, logger):
 
     # The task to be carried out
     command = {
-        "command": "HCMERGE",
+        "command": "MERGE",
         "process_id": uuid.uuid1().get_hex(),
         "status": 0,
     }
@@ -228,14 +228,14 @@ def get_commandline():
     # Messy
     parser.add_argument("--messy",
                         action="store_false",
-                        dest="clean",
+                        dest="clean_up",
                         help="Keep intermediate files")
 
     # Clean
     parser.add_argument("--clean",
                         action="store_true",
                         default=True,
-                        dest="clean",
+                        dest="clean_up",
                         help="Clean up intermediate files")
 
     # JSON Output

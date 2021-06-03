@@ -85,6 +85,7 @@ import utils.commandline_utils as commandline_utils
 # import utils
 import utils.credits as credits
 import utils.text as rtext
+import utils.archive as archive
 import info
 
 # Software dependencies
@@ -267,7 +268,7 @@ class RapdPlugin(multiprocessing.Process):
 
     Command format:
     {
-       "command":"hcmerge",
+       "command":"MERGE",
        "directories":
            {
                "work": "hcmerge"                   # Where to perform the work
@@ -276,9 +277,35 @@ class RapdPlugin(multiprocessing.Process):
        "preferences": {}                           # Settings for calculations
        "return_address":("127.0.0.1", 50000)       # Location of control process
     }
-    """
 
-    results = {}
+    {
+        command: 'MERGE',
+        data: false,
+        preferences: {
+            exchange_dir: '/gpfs6/users/necat/rapd2/exchange_dir',
+            analysis: true,
+            json: false,
+            clean_up: false,
+            run_mode: 'server',
+            cutoff: -1,
+            description: 'Try2',
+            metric: 'I',
+            project: '60520d38c81c785a77da0e85',
+            resolution: -1},
+
+        process: {
+            parent_id: 'multiple',
+            parent_ids: [ '60566d7b7d53b48694dc4b15', '60566ec47d53b48694dc5033' ],
+            repr: 'Merge',
+            session_id: '60118d1a2ac1bf701eaf5502',
+            status: 0,
+            type: 'plugin',
+            result_id: '6085d714dcb131a4fff7ff34'
+        },
+        site_parameters: false
+        }
+
+    """
 
     def __init__(self, site, command, tprint=False, logger=False):
         """Initialize the merging processing using agglomerative hierachical clustering process"""
@@ -309,13 +336,13 @@ class RapdPlugin(multiprocessing.Process):
         self.site = site
         self.command = command
         self.settings = self.command.get('preferences')
-        self.dirs = self.command['directories'] # Needs to be toggle between commandline and server
-
+        
         # List of original data files to be merged.  Currently expected to be ASCII.HKL
-        self.datasets = self.command['input_data']['datasets'] #commandline.py
+        if self.settings.get('run_mode') == "interactive":
+            self.datasets = self.command['input_data']['datasets'] #commandline.py
+        else:
+            self.datasets = self.command['process']['parent_ids']
         
-        
-
         # Variables for holding filenames and results
         self.data_files = []            # List of data file names
         self.graphs = {}
@@ -324,21 +351,10 @@ class RapdPlugin(multiprocessing.Process):
         # dict for keeping track of file identities
         # Dict will hold prefix as key and pair of file names as value
         self.id_list = OrderedDict()
-        self.dirs['data'] = os.path.join(
-            self.command['directories']['work'], "DATA")
 
-        # Set up the results with command
-        self.results['command'] = command
-
-        # Update process with a starting status of 1
-        if self.results.get('process'):
-            self.results['process']['status'] = 1
-
-        # Create a process section of results with the id and a starting status of 1
-        else:
-            self.results['process'] = {
-                'process_id': self.command.get('process_id'),
-                'status': 1}
+        # Working Directories
+        self.dirs = self.command['directories'] 
+        self.dirs['data'] = os.path.join(self.command['directories']['work'], "DATA")
 
         # Establish setting defaults
         # Check for agglomerative clustering linkage method
@@ -391,12 +407,6 @@ class RapdPlugin(multiprocessing.Process):
             self.resolution = self.settings['resolution']
         else:
             self.resolution = 0
-
-        # Check for file cleanup
-        if self.settings.get('clean'):
-            self.clean = self.settings['clean']
-        else:
-            self.clean = True
         
         # Check whether to make all clusters or the first one that exceeds the cutoff
         if self.settings.get('all_clusters'):
@@ -489,18 +499,23 @@ class RapdPlugin(multiprocessing.Process):
         - test reflection files for acceptable format (XDS and unmerged mtz only)
         - ensure all files are the same format
         """
-        self.tprint("Preprocess: Prechecking files")
-        self.logger.debug('HCMerge::Prechecking files: %s' %
-                          str(self.datasets))
+        self.tprint("Preprocess")        
 
         # Connect to redis
         if self.settings.get('run_mode') == "server":
             self.connect_to_redis()
 
-        if not self.precheck:
-            self.tprint("Prechecking Files Off.  Skipping to File Copying.")
+        # Make sure we have the programs we need
+        self.check_dependencies()
+
+        self.construct_results()
+
+        if (not self.precheck) or (self.settings.get('run_mode') == 'server'):
+            self.tprint("Merge:: Prechecking Files Off.  Skipping to File Copying.")
         else: 
             # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
+            self.tprint("Prechecking files.")
+            self.logger.debug('Merge::Prechecking files: %s' % str(self.datasets))
             types = []
             hashset = {}
             for dataset in self.datasets:
@@ -559,10 +574,19 @@ class RapdPlugin(multiprocessing.Process):
         os.chdir(self.dirs['work'])
 
         # copy the files to be merged to the work directory
-        for count, dataset in enumerate(self.datasets):
-            hkl_filename = str(count)+'_'+dataset.rsplit('/',1)[1]
-            shutil.copy(dataset,hkl_filename)
-
+        if self.settings.get('run_mode') == "interactive":
+            for count, dataset in enumerate(self.datasets):
+                hkl_filename = str(count)+'_'+dataset.rsplit('/',1)[1]
+                shutil.copy(dataset,hkl_filename)
+                # Make a list of filenames
+                self.data_files.append(hkl_filename)
+        else:
+            for count, dataset in enumerate(self.datasets):
+                hkl_filename = str(count) + '_' + dataset + '.hkl'
+                self.fetch_data(result_id=dataset, description="xdsascii_hkl", output_dir="./", output_file=filename)
+                # Make a list of filenames
+                self.data_files.append(hkl_filename)
+        
         # convert all files to mtz format
         # copy the files to be merged to the work directory
         # for count, dataset in enumerate(self.datasets):
@@ -600,8 +624,60 @@ class RapdPlugin(multiprocessing.Process):
         #                              shell=True,
         #                              stdout=subprocess.PIPE,
         #                              stderr=subprocess.PIPE).wait()
-            # Make a list of filenames
-            self.data_files.append(hkl_filename)
+
+    def construct_results(self):
+        """Create the self.all_results dict.  This is the same as self.results in integrate plugin.py"""
+
+        # Container for actual results
+        self.all_results["results"] = {
+            "analysis":False,
+            # Archives that will live in filesystem
+            "archive_files":[],
+            # Data produced by plugin that will be stored in database
+            "data_produced":[]
+            }
+
+        # Copy over details of this run
+        self.all_results["command"] = self.command.get("command")
+        self.all_results["preferences"] = self.command.get("preferences", {})
+
+        # Describe the process
+        self.all_results["process"] = self.command.get("process", {})
+        # Status is now 1 (starting)
+        self.all_results["process"]["status"] = 1
+        # Process type is plugin
+        self.all_results["process"]["type"] = "plugin"
+
+        # Describe plugin
+        self.all_results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        # Any of these missing, dead in the water
+        for executable in ("aimless", "pointless", "gnuplot"):
+            if not find_executable(executable):
+                self.tprint("Executable for %s is not present, exiting" % executable,
+                            level=30,
+                            color="red")
+                self.results["process"]["status"] = -1
+                self.results["error"] = "Executable for %s is not present" % executable
+                self.write_json(self.results)
+                raise exceptions.MissingExecutableException(executable)
+
+        # If no gnuplot turn off printing
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+            if not find_executable("gnuplot"):
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                            level=30,
+                            color="red")
+                self.preferences["show_plots"] = False
 
     def process(self):
         """
@@ -698,10 +774,15 @@ class RapdPlugin(multiprocessing.Process):
         # Merge files in selected wedges together using POINTLESS and AIMLESS
         self.merge_wedges(wedge_files)
 
-        # Store the dicts for future use
-        self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
+        self.all_results = {'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
-                          'merged_files': self.merged_files})
+                          'merged_files': self.merged_files}
+
+        # Store the dicts for future use
+        #self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
+        #                  'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
+        #                  'merged_files': self.merged_files})
+        self.store_dicts(self.all_results)              
 
         # Make the summary text file for all merged files
         self.make_log(self.merged_files)
@@ -715,25 +796,89 @@ class RapdPlugin(multiprocessing.Process):
         Data transfer, file cleanup and other maintenance issues.
         """
 
-        # Clean up mess
-        #self.clean_up()
-
         # Send back results
         self.handle_return()
 
         self.tprint('Postprocess: Cleaning up files.')
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
-        # Copy original datasets to a DATA directory
+
+        # Transfer files to Control
+        self.transfer_files()
+
+        # Copy original datasets to a DATA directory <- Convert to using transfer_files
         commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
             shutil.move(file, self.dirs['data'])
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
-                          'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
-        # Check for postprocessing flags
-        # Clean up mess
-        if self.settings['clean']:
+                          'merged_files': self.merged_files, 'data_dir': self.dirs['data']})        
+
+        # Send back results - the final time (need to modify for all my results)
+        self.send_results(self.all_results)
+
+        # Save output
+        self.write_json(self.results)
+
+        # Housekeeping
+        #self.clean_up()
+        if self.settings.get("clean_up", False):
             self.clean_up()
+
+        # Say plugin is finished
+        self.tprint(100, "progress")
+        self.logger.debug("Merging Complete")
+
+    def create_archive(self):
+        """Create an archive file of results"""
+        self.logger.debug("create_archive")
+
+        # Do we have a directory to archive?
+        if self.archive_dir:
+
+            # Compress the directory
+            archive_result = archive.create_archive(self.archive_dir)
+            archive_result["description"] = "archive"
+
+            if archive_result:
+                self.results["results"]["archive_files"].append(archive_result)
+
+    def transfer_files(self):
+        """
+        Transfer files to a directory that the control can access
+        """
+
+        self.logger.debug("transfer_files")
+
+        if self.settings.get("exchange_dir", False):
+            # Determine and validate the place to put the data
+            target_dir = os.path.join(self.settings["exchange_dir"], os.path.split(self.dirs["work"])[1])
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            new_data_produced = []
+            for file_to_move in self.results["results"]["data_produced"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                #print "Moving %s to %s" % (file_to_move["path"], target)
+                shutil.move(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_data_produced.append(file_to_move)
+            # Replace the original with new results location
+            self.results["results"]["data_produced"] = new_data_produced
+
+            self.create_archive()
+            new_archive_files = []
+            for file_to_move in self.results["results"]["archive_files"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                # print "Moving %s to %s" % (file_to_move["path"], target)
+                shutil.move(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_archive_files.append(file_to_move)
+            # Replace the original with new results location
+            self.results["results"]["archive_files"] = new_archive_files
 
     def clean_up(self):
         """
@@ -1477,6 +1622,82 @@ class RapdPlugin(multiprocessing.Process):
             # Send results back
             self.redis.lpush("RAPD_RESULTS", json_results)
             self.redis.publish("RAPD_RESULTS", json_results)
+
+    def fetch_data(self, request_type="DATA_PRODUCED", result_id=False, description=False, request_hash=False, output_dir="./", output_file=False):
+        """
+        Fetch data for processing from control process. Need (result_id and description) or hash
+        
+        request_type - currently only DATA_PRODUCED is supported
+        result_id - _id in the results collection, equal to process.result_id
+        description - currently available: xdsascii_hkl, unmerged_mtz, rfree_mtz
+        hash - can be used to get file
+        """
+        
+        self.logger.debug("fetch_data")
+
+        # Make sure we have enough to go on
+        if not ((result_id and description) or request_hash):
+            raise Exception("Unable to fetch data - need (result_id and description) or hash")
+
+        # Form request
+        request_id = str(uuid.uuid1())
+        request = {
+            "description": description,
+            "hash": request_hash,
+            "request_id": request_id,
+            "request_type": request_type,
+            "result_id": result_id,
+        }
+        
+        # Push request into redis
+        self.redis.lpush("RAPD2_REQUESTS", json.dumps(request))
+
+        # Wait for reply
+        counter = 0
+        return_key = "RAPD2_DATA_REPLY_"+request_id
+        while (counter) < DATA_REQUEST_TIMEOUT:
+            counter += 1
+            reply = self.redis.get(return_key)
+            
+            # Have a reply
+            if reply:
+                raw_metadata, raw_file = reply.split("://:")
+                metadata = json.loads(raw_metadata)
+                
+                # Check for integrity
+                my_hash = hashlib.sha1(raw_file).hexdigest()
+                if metadata.get("hash") == my_hash:
+
+                    # Write the file - data_produced files are NOT compressed
+                    if output_dir:
+                        if not os.path.exists(output_dir):
+                            os.mkdir(output_dir)
+                    if output_file:
+                        if output_dir:
+                            created_file = os.path.join(output_dir, output_file)
+                        else:
+                            created_file = output_file
+                        fullpath_created_file = os.path.abspath(created_file)
+                    elif output_dir:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1], dir=output_dir)
+                    else:
+                        __, fullpath_created_file = tempfile.mkstemp(suffix="."+metadata.get("description").split("_")[-1])
+
+                    with open(fullpath_created_file, "w") as filehandle:
+                        filehandle.write(raw_file)
+
+                    return fullpath_created_file
+
+                # Integrity is NOT confirmed
+                else:
+                    raise Exception("Data stream corrupted - hashes do not match")
+
+            # Wait 1 second brefore re-querying    
+            time.sleep(1)
+        
+        # Reply never comes
+        else:
+            return False
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
