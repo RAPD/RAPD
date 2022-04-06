@@ -2825,7 +2825,7 @@ class RapdPlugin(Process):
                 new_data_produced.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["data_produced"] = new_data_produced
-            #pprint(self.results["results"]["data_produced"])
+            # pprint(self.results["results"]["data_produced"])
 
             self.create_archive()
             new_archive_files = []
@@ -2839,7 +2839,7 @@ class RapdPlugin(Process):
                 new_archive_files.append(file_to_move)
             # Replace the original with new results location
             self.results["results"]["archive_files"] = new_archive_files
-            #pprint(self.results["results"]["archive_files"])
+            # pprint(self.results["results"]["archive_files"])
 
 
     def clean_up(self):

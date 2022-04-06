@@ -178,6 +178,7 @@ class Launcher_Manager(Thread):
             search.append(command)
 
         # Search through launchers
+        print self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
         for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]:
             # Is launcher running?
             if x.get('job_list') in self.job_list:

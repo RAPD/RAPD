@@ -88,7 +88,7 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
 
     return target_file
 
-def get_site_tag(message, default_site):
+def get_site_tag(message, default_site=False):
     """Find and return the site_tag from the image header"""
     # Find site_tag from SNAP
     site_tag = False

@@ -22,25 +22,25 @@
     "find-remove": "^3.1.0",
     "gridfs-stream": "^1.1.1",
     "hbs": "~4.1.2",
-    "ioredis": "~4.27.1",
+    "ioredis": "~4.27.2",
     "jsonwebtoken": "^8.5.1",
     "ldapjs": "^2.2.4",
     "mkdirp": "^1.0.4",
     "moment": "^2.29.1",
-    "mongoose": "^5.12.5",
+    "mongoose": "^5.12.9",
     "morgan": "~1.10.0",
     "multer": "^1.4.2",
     "node-uuid": "^1.4.8",
-    "nodemailer": "^6.5.0",
+    "nodemailer": "^6.6.0",
     "nodemailer-smtp-transport": "^2.7.4",
     "q": "^1.5.1",
-    "redis": "^3.1.0",
+    "redis": "^3.1.2",
     "serve-favicon": "~2.5.0",
     "shasum": "^1.0.2",
-    "ws": "^7.4.4"
+    "ws": "^7.4.5"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.3",
-    "utf-8-validate": "^5.0.4"
+    "utf-8-validate": "^5.0.5"
   }
 }

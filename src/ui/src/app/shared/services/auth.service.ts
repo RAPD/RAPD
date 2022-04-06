@@ -1,12 +1,10 @@
 import { Injectable } from "@angular/core";
-// import { Headers,
-//          Http } from '@angular/http';
 import { CanActivate, Router } from "@angular/router";
 
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { Observable } from "rxjs/Observable";
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 import { GlobalsService } from "./globals.service";
@@ -62,28 +60,19 @@ export class AuthService implements CanActivate {
   public changePass(credentials: any): Observable<any> {
 
     const profile = JSON.parse(localStorage.getItem('profile'));
-
-    // const self = this;
-
-    // let creds = 'password=' + credentials.password1 + '&email=' + profile.email;
-
-    // let header = new HttpHeaders();
-    // header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
-
-    // const headers = new HttpHeaders()
-    // .set('Content-Type', 'application/x-www-form-urlencoded');
-
-    // let httpParams = new HttpParams()
-    //   .set("email", profile.email)
-    //   .set("password", credentials.password);
+    const self = this;
 
     return this.authHttp
       .post(this.globalsService.site.restApiUrl + "changepass", {
         email: profile.email,
-        password: credentials.password1
+        password: credentials.password1,
       })
-      .map((res) => this.handleChangePassReq(res))
-      .catch((error) => this.handleError(error));
+      .pipe(
+        map(res => self.handleChangePassReq(res)),
+        catchError((err) => of({success: false, message: err}))
+      );
+      // .map((res) => this.handleChangePassReq(res))
+      // .catch((error) => this.handleError(error));
   }
 
   public authenticated() {
@@ -167,34 +156,18 @@ export class AuthService implements CanActivate {
     }
   }
 
-  private handleChangePassReq(res) {
+  private handleChangePassReq(res: any) {
     // Convert to JSON
-    let res_json = res.json();
-    console.log(res_json);
+    const resJson = res.json();
+    // console.log(resJson);
 
-    if (res_json.success === true) {
+    if (resJson.success === true) {
       // Return for consumer
-      return res_json;
+      return resJson;
     } else {
       // Return for consumer
-      return res_json;
+      return resJson;
     }
-  }
-
-  private newHandleError(error: HttpErrorResponse) {
-    if (error.status === 0) {
-      // A client-side or network error occurred. Handle it accordingly.
-      console.error('An error occurred:', error.error);
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
-      console.error(
-        `Backend returned code ${error.status}, ` +
-        `body was: ${error.error}`);
-    }
-    // Return an observable with a user-facing error message.
-    return throwError(
-      'Something bad happened; please try again later.');
   }
 
   private handleError(error: HttpErrorResponse): Observable<any>  {

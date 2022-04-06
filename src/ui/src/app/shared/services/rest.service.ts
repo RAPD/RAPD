@@ -3,6 +3,8 @@ import { Injectable } from "@angular/core";
 // import { Headers, Response } from "@angular/http";
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 // import * as moment from "moment-mini";
 
 import { GlobalsService } from "./globals.service";
@@ -38,8 +40,7 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/dashboard/results")
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -49,8 +50,7 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/dashboard/logins")
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -59,11 +59,8 @@ export class RestService {
 
     return (
       this.authHttp
-        .get(
-          this.globalsService.site.restApiUrl + "/dashboard/server_activities"
-        )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .get(this.globalsService.site.restApiUrl + '/dashboard/server_activities')
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -220,21 +217,23 @@ export class RestService {
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/groups/" + group._id,
-          JSON.stringify({ group: group })
-          // { headers: header }
+          JSON.stringify({group})
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(
+          map(this.extractGroups),
+          catchError((err) => of({success: false, message: err}))
+        )
     );
   }
 
   // Delete a group from the database
   public deleteGroup(_id: string): Observable<any> {
-    console.log("deleteGroup", _id);
+    // console.log("deleteGroup", _id);
 
     return this.authHttp.delete(
       this.globalsService.site.restApiUrl + "/groups/" + _id
-    ); //.map(res => res.json());
+    )
+    .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   // Call to populate groups from LDAP server
@@ -242,8 +241,7 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/groups/populate")
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -251,12 +249,12 @@ export class RestService {
   // IMAGE METHODS
   //
   public getImageData(_id: string): Observable<Image> {
-    console.log("getImageData _id:", _id);
+    // console.log("getImageData _id:", _id);
 
     return this.authHttp.get(
       this.globalsService.site.restApiUrl + "/images/" + _id
-    );
-    // .map(res => res.json());
+    )
+    .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   public getImageJpeg(request: any): Observable<any> {
@@ -267,32 +265,26 @@ export class RestService {
 
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/image_jpeg/" + req)
-      .map(res => {
-        console.log(res);
-        // return res.json();
-      })
-      .catch(error => this.handleError(error));
+      // .map(res => {
+      //   console.log(res);
+      //   // return res.json();
+      // })
+      .pipe(catchError((err) => of({success: false, message: err})))
   }
-
   //
   // JOB methods
   //
   public submitJob(request: any): Observable<any> {
 
-    console.log('submitJob', request);
-
-    // const header = new HttpHeaders();
-    // header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
+    // console.log('submitJob', request);
 
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/jobs/submit",
           JSON.stringify({ request })
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -305,58 +297,43 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/overwatches")
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public stopOverwatch(id: string) {
-    // const header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
-
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/overwatches/stop/" + id,
           JSON.stringify({id})
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public stopAllOverwatches() {
     // console.log('stopAllOverwatches');
 
-    // const header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
-
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/overwatches/stopall",
           JSON.stringify({ id: "foo" })
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public startOverwatch(id: string) {
-    // const header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
 
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/overwatches/start/" + id,
-          JSON.stringify({ id: id })
-          // { headers: header }
+          JSON.stringify({id})
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -364,83 +341,71 @@ export class RestService {
   // PDB Methods
   //
   public getUploadedPdbsBySession(id: string): Observable<any> {
-
-    console.log("getUploadedPdbsBySession", id);
+    // console.log("getUploadedPdbsBySession", id);
 
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/pdbs/by_session/" + id)
-      .catch(error => this.handleError(error));
+      .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   //
   // PROJECT methods
   //
   public getProjects(): Observable<any> {
-    // TODO :Observable<Project[]> {
-    console.log("getProjects");
+    // console.log("getProjects");
 
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/projects")
-      .catch(error => this.handleError(error));
+      .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   public getProjectsBySession(id: string): Observable<any> {
-    console.log("getProjectsBySession", id);
+    // console.log("getProjectsBySession", id);
 
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/projects/by_session/" + id)
-      .catch(error => this.handleError(error));
+      .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   public getProject(id: string): Observable<any> {
-    console.log("getProject", id);
+    // console.log("getProject", id);
 
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/projects/" + id)
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public submitProject(project: Project): Observable<any> {
-    console.log("submitProject", project);
-    console.log(
-      this.globalsService.site.restApiUrl + "/projects/" + project._id
-    );
-
-    let header = new HttpHeaders();
-    header.append("Content-Type", "application/json");
+    // console.log("submitProject", project);
+    // console.log(
+    //   this.globalsService.site.restApiUrl + "/projects/" + project._id
+    // );
 
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/projects/" + project._id,
           JSON.stringify({project})
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   // Delete a project from the database
   public deleteProject(_id: string): Observable<any> {
-    console.log("deleteProject", _id);
+    // console.log("deleteProject", _id);
 
     return (
       this.authHttp
         .delete(this.globalsService.site.restApiUrl + "/projects/" + _id)
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public addResultToProject(data: any): Observable<any> {
-    console.log("addResultToProject");
-
-    // let header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
+    // console.log("addResultToProject");
 
     return (
       this.authHttp
@@ -450,10 +415,8 @@ export class RestService {
             project_id: data._id,
             result: data.result,
           })
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -464,32 +427,29 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/results/" + _id)
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public getResultDetail(_id: string): Observable<any> {
-    console.log("getResultDetail", _id);
+    // console.log("getResultDetail", _id);
 
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/result_details/" + _id)
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   public getMultipleResultDetails(ids: string[]): Observable<any> {
-    console.log("getMultipleResultDetail", ids);
+    // console.log("getMultipleResultDetail", ids);
 
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/result_details/multiple", {
           params: {ids:JSON.stringify(ids)},
         })
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
@@ -502,20 +462,22 @@ export class RestService {
     return (
       this.authHttp
         .get(this.globalsService.site.restApiUrl + "/runs/" + _id)
-        // .map(res => res.run)
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   //
   // SESSIONS
   //
-  public getSessions(): Observable<Session[]> {
-    console.log("getSessions");
+  public getSessions(): Observable<Session[]> | Observable<any>{
+    // console.log("getSessions");
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/sessions")
       .map(this.extractSessions)
-      .catch(error => this.handleError(error));
+      .pipe(
+        map(this.extractSessions),
+        catchError((err) => of({success: false, message: err}))
+      )
   }
 
   private extractSessions(res:any, error:any) {
@@ -526,45 +488,40 @@ export class RestService {
 
   // Submit a session to be saved in the database
   public submitSession(session: Session): Observable<any> {
-    console.log("submitSession");
-
-    // let header = new HttpHeaders();
-    // header.append("Content-Type", "application/json"); // 'application/x-www-form-urlencoded'
+    // console.log("submitSession");
 
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/sessions/" + session._id,
           JSON.stringify({session})
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   // Delete a user from the database
   public deleteSession(_id: string): Observable<any> {
-    console.log("deleteSession", _id);
+    // console.log("deleteSession", _id);
 
     return this.authHttp.delete(
       this.globalsService.site.restApiUrl + "/sessions/" + _id
-    ); // .map(res => res.json());
+    )
+    .pipe(catchError((err) => of({success: false, message: err})))
   }
 
   //
   // USERS
   //
-  public getUsers(): Observable<User[]> {
-    console.log("getUsers");
-
-    // let header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
+  public getUsers(): Observable<User[]> | Observable<any>{
+    // console.log("getUsers");
 
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/users")
-      .map(this.extractUsers)
-      .catch(error => this.handleError(error));
+      .pipe(
+        map(this.extractUsers),
+        catchError((err) => of({success: false, message: err}))
+      )
   }
 
   private extractUsers(res: any, error: any) {
@@ -573,55 +530,35 @@ export class RestService {
 
   // Submit a user to be saved in the database
   public submitUser(user: User): Observable<any> {
-    console.log("submitUser", user);
-    console.log(this.globalsService.site.restApiUrl + "/users/" + user._id);
-
-    // let header = new HttpHeaders();
-    // header.append("Content-Type", "application/json");
+    // console.log("submitUser", user);
+    // console.log(this.globalsService.site.restApiUrl + "/users/" + user._id);
 
     return (
       this.authHttp
         .put(
           this.globalsService.site.restApiUrl + "/users/" + user._id,
           JSON.stringify({user})
-          // { headers: header }
         )
-        // .map(res => res.json())
-        .catch(error => this.handleError(error))
+        .pipe(catchError((err) => of({success: false, message: err})))
     );
   }
 
   // Delete a user from the database
   public deleteUser(_id: string): Observable<any> {
-    console.log("deleteUser", _id);
+    // console.log("deleteUser", _id);
 
     return this.authHttp.delete(
       this.globalsService.site.restApiUrl + "/users/" + _id
-    );
-    // .map(res => res.json());
+    )
+    .pipe(catchError((err) => of({success: false, message: err})))
   }
 
-  public getGroups(): Observable<Group[]> {
+  public getGroups(): Observable<Group[]> | Observable<any>{
     return this.authHttp
       .get(this.globalsService.site.restApiUrl + "/groups")
-      .map(this.extractGroups)
-      .catch(error => this.handleError(error));
-  }
-
-  // Generic error handler for connection problems
-  private handleError(error: any) {
-    // return Observable.of({
-    //   message: error.toString(),
-    //   success: false,
-    // });
-
-    // console.log(error);
-
-    return Observable.create((observer: any) => {
-      observer.next({
-        message: error.message,
-        success: false,
-      });
-    });
+      .pipe(
+        map(this.extractGroups),
+        catchError((err) => of({success: false, message: err}))
+      )
   }
 }

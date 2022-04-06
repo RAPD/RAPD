@@ -14,27 +14,30 @@ import { AuthService } from '../../services/auth.service';
 export class ChangepassDialogComponent implements OnInit {
 
   submitted: boolean = false;
-  error_message: String = '';
-  changepass_form: FormGroup;
+  errorMessage: string = '';
+  changepassForm: FormGroup = new FormGroup({
+    password1: new FormControl(),
+    password2: new FormControl(),
+  });
 
-  constructor(private auth_service: AuthService,
+  constructor(private authService: AuthService,
               public dialogRef: MatDialogRef<ChangepassDialogComponent>) { }
 
   ngOnInit() {
 
-    this.changepass_form = new FormGroup({
-      password1: new FormControl(),
-      password2: new FormControl()
-    })
+    // this.changepassForm = new FormGroup({
+    //   password1: new FormControl(),
+    //   password2: new FormControl(),
+    // })
   }
 
   onSubmit() {
 
     this.submitted = true;
 
-    this.auth_service.changePass(this.changepass_form.value);
+    this.authService.changePass(this.changepassForm.value);
 
-    this.auth_service.changePass(this.changepass_form.value).subscribe(params => {
+    this.authService.changePass(this.changepassForm.value).subscribe(params => {
       console.log('onSubmit >>', params);
 
       // if (params.success === true) {
@@ -42,7 +45,7 @@ export class ChangepassDialogComponent implements OnInit {
       // Close dialog
       this.dialogRef.close(params);
       // } else {
-      //   this.error_message = params.message;
+      //   this.errorMessage = params.message;
       // }
       this.submitted = false;
     });
@@ -53,7 +56,7 @@ export class ChangepassDialogComponent implements OnInit {
   }
 
   passMatch() {
-    return this.changepass_form.value.password1 === this.changepass_form.value.password2;
+    return this.changepassForm.value.password1 === this.changepassForm.value.password2;
   }
 
 }

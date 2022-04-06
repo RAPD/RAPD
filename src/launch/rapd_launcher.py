@@ -201,14 +201,16 @@ class Launcher(object):
         """
 
         # Get IP Address
-        self.ip_address = utils.site.get_ip_address()
-        #print self.ip_address
+        if self.site.SITE == "LOCALHOST":
+            self.ip_address = "127.0.0.1"
+        else:
+            self.ip_address = utils.site.get_ip_address()
         if self.logger:
             self.logger.debug("Found ip address to be %s", self.ip_address)
 
         # Save typing
         launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
-
+        print launchers
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
@@ -227,8 +229,7 @@ class Launcher(object):
                 print "  There are no launcher adapters registered for this ip address"
             # IP Address in launchers, but not the input tag
             else:
-                print text.error + "There is a launcher adapter registered for thi\
-s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
+                print text.error + "There is a launcher adapter registered for this IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
                 print "  Available tags for this IP address:"
                 for tag in possible_tags:
                     print "    %s" % tag

@@ -4,7 +4,7 @@
   </button>
   <h2>Please Change Password</h2>
 </div>
-<form [formGroup]="changepass_form" (ngSubmit)="onSubmit()">
+<form [formGroup]="changepassForm" (ngSubmit)="onSubmit()">
   <p>
     <mat-form-field>
       <input matInput
@@ -33,12 +33,12 @@
     </mat-progress-bar>
   </p>
   <p>
-    {{error_message}}
+    {{errorMessage}}
   </p>
   <p style="text-align:center;">
     <button
       type="submit"
-      [disabled]="!changepass_form.valid || !passMatch()"
+      [disabled]="!changepassForm.valid || !passMatch()"
       mat-raised-button
       color="primary">
       Change

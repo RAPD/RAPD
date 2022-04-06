@@ -37,7 +37,7 @@ from multiprocessing import Pool, Manager, cpu_count
 from multiprocessing.pool import ThreadPool
 from multiprocessing.managers import BaseManager
 from utils.site import get_ip_address
-from queue import Queue
+from Queue import Queue
 from threading import Thread
 
 import traceback
