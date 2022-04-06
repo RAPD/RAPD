@@ -489,7 +489,7 @@ class RapdPlugin(Process):
 
         # Check if pair are in different folders, then make symlink for Labelit.
         if self.image2:
-          if os.path.dirname(self.image1['fullname']) != os.path.dirname(self.image2['fullname']):
+          if not os.path.dirname(self.image1['fullname']) == os.path.dirname(self.image2['fullname']):
             try:
                 os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
                 os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))

@@ -40,15 +40,14 @@ def connect_redis_manager_HA(name="remote_master"):
 
 def connect_remote_redis():
 
-    #pool = redis.ConnectionPool(host="164.54.212.169",
     red = redis.Redis(host="164.54.212.169",
             port=6379,
             db=0)
     # Save the pool for a clean exit.
-    
     return red
-    #return redis.Redis(connection_pool=pool)
 
+def connect_rapd2_redis():
+    return redis.Redis(host="164.54.212.158")
 
 def connect_sercat_redis():
 
@@ -68,7 +67,7 @@ def connect_ft_redis():
   
 def connect_beamline():
     # C is 56, E is 125
-    pool = redis.ConnectionPool(host="164.54.212.56",
+    pool = redis.ConnectionPool(host="164.54.212.125",
             port=6379,
             db=0)
     # Save the pool for a clean exit.
@@ -162,7 +161,7 @@ image_data = {u'tau': None, u'run_id': u'5f85df00f46833117fb04f61', u'period': 0
 #print log_name[:log_name.rfind(".")]
 
 #results_json = None
-red = connect_remote_redis()
+#red = connect_remote_redis()
 #results_json = redis.get('Phaser_3428')
 
 
@@ -175,14 +174,26 @@ if not results_json:
     print 'gh'
 else:
     print 'gh1'
-"""
+
+red = connect_beamline()
+print red.get('EIGER_PREFIX_SV')
+#print red.get('RUN_PREFIX_SV')
+#print red.get('DET_DIST_SV')
+#print red.get('DET_THETA_SV')
+#print red.get('EIGER_SV')
+#print red.get('EIGER_DET_OP_SV')
+#print red.keys('*EIGER*')
+#print red.keys('*DET*')
+#print red.get('ENERGY_SV')
+print red.get('EIGER_DIRECTORY_SV')
+#print red.keys('*TIME*')
 
 #from mmtbx.command_line import mtz2map
 #from utils.xutils import calc_maps
 #os.chdir('/gpfs6/users/necat/rapd2/integrate/2020-10-10/2010100103_2/rapd_pdbquery_2010100103_2_1_free/Phaser_4QEQ')
 #mtz2map.run(['4QEQ.1.mtz', '4QEQ.1.pdb'])
 #utils.xutils.calc_maps(mtz_file='4QEQ.1.mtz', pdb_file='4QEQ.1.pdb')
-
+"""
 """
 #result = json.loads(MR_results1)
 result = MR_results1
@@ -818,7 +829,90 @@ if os.path.isfile(look_for_file) == True:
 else:
     print 'gh2'
 print glob.glob('%s/*.cbf'%look_for_file[:look_for_file.rfind('/')+1])
+
+command = {u'preferences': {u'json': False, u'cleanup': False, u'run_mode': u'server'}, 
+           u'process': {u'image2_id': False, u'status': 0, u'source': u'server', u'session_id': u'6032dafff468330310782adf', u'parent_id': False, 
+                        u'image1_id': u'6032dc0df468330310782c6a', u'result_id': u'6032dc0df468330310782c6b'}, 
+           u'directories': {u'data_root_dir': u'/gpfs2/users/emory/Dunham_E_5648', u'work': u'/gpfs6/users/necat/rapd2/single/2021-02-21/CMD_4_4_PAIR:2', 
+                            u'launch_dir': u'/gpfs6/users/necat/rapd2', u'plugin_directories': [u'sites.plugins', u'plugins']}, 
+           u'command': u'INDEX', 
+           u'image1': {u'tau': None, u'run_id': None, u'period': 0.2, u'rapd_detector_id': u'necat_dectris_eiger16m', u'sample_mounter_position': u'G4', 
+                       u'excluded_pixels': None, u'threshold': 6331.0, u'osc_start': 135.0, u'axis': u'omega', u'image_prefix': u'CMD_4_4_PAIR', u'size1': 4150, 
+                       u'size2': 4371, u'osc_range': 0.5, u'site_tag': u'NECAT_E', u'beam_x': 2054.4, u'sensor_thickness': 0.45, u'detector': u'Eiger-16M', 
+                       u'count_cutoff': 502255, u'trim_file': None, u'md2_aperture': 0.05, u'n_excluded_pixels': 1198784, u'x_beam_size': 0.05, 
+                       u'data_root_dir': u'/gpfs2/users/emory/Dunham_E_5648', u'y_beam_size': 0.02, u'twotheta': 0.0, 
+                       u'directory': u'/epu/rdma/gpfs2/users/emory/Dunham_E_5648/images/haan/snaps/CMD_4_4_PAIR_0_000002', u'beam_y': 2194.27, 
+                       u'wavelength': 0.97918, u'gain': None, u'date': u'2021-02-20T18:07:13.440534', u'run_number_in_template': True, 
+                       u'detector_sn': u'E-32-0108', u'pixel_size': 0.075, u'y_beam': 154.08, u'distance': 350.0, u'run_number': 0, 
+                       u'image_template': u'CMD_4_4_PAIR_0_??????.cbf', u'transmission': 28.1, u'collect_mode': u'SNAP', u'flat_field': None, 
+                       u'flux': 1405000000000, u'time': 0.1999969, u'x_beam': 164.57025, 
+                       u'fullname': u'/gpfs2/users/emory/Dunham_E_5648/images/haan/snaps/CMD_4_4_PAIR_0_000002.cbf', 
+                       u'_id': u'6032dc0df468330310782c6a', u'ring_current': 101.8, u'image_number': 2}, 
+           u'site_parameters': {u'DETECTOR_DISTANCE_MAX': 1000.0, u'BEAM_CENTER_Y': [154.64591768967472, -0.002128702601888507, 1.6853682723685666e-06, -6.043716204571221e-10], 
+                                                                                     u'BEAM_APERTURE_SHAPE': u'circle', u'DETECTOR_DISTANCE_MIN': 150.0, 
+                                                                                     u'BEAM_CENTER_DATE': u'2020-02-04', u'DIFFRACTOMETER_OSC_MIN': 0.05, 
+                                                                                     u'BEAM_CENTER_X': [165.1427628756774, -0.0014361166886983285, -1.728236304090641e-06, 3.2731939791152326e-09], 
+                                                                                     u'BEAM_SIZE_Y': 0.02, u'BEAM_SIZE_X': 0.05, u'DETECTOR_TIME_MIN': 0.05, u'BEAM_FLUX': 5000000000000.0, 
+                                                                                     u'BEAM_SHAPE': u'ellipse'},
+           u'image2': {u'tau': None, u'run_id': None, u'period': 0.2, u'rapd_detector_id': u'necat_dectris_eiger16m', u'sample_mounter_position': u'G4', 
+                       u'excluded_pixels': None, u'threshold': 6331.0, u'osc_start': 135.0, u'axis': u'omega', u'image_prefix': u'CMD_4_4_PAIR', u'size1': 4150, 
+                       u'size2': 4371, u'osc_range': 0.5, u'site_tag': u'NECAT_E', u'beam_x': 2054.4, u'sensor_thickness': 0.45, u'detector': u'Eiger-16M', 
+                       u'count_cutoff': 502255, u'trim_file': None, u'md2_aperture': 0.05, u'n_excluded_pixels': 1198784, u'x_beam_size': 0.05, 
+                       u'data_root_dir': u'/gpfs2/users/emory/Dunham_E_5648', u'y_beam_size': 0.02, u'twotheta': 0.0, 
+                       u'directory': u'/epu/rdma/gpfs2/users/emory/Dunham_E_5648/images/haan/snaps/CMD_4_4_PAIR_0_000002', u'beam_y': 2194.27, 
+                       u'wavelength': 0.97918, u'gain': None, u'date': u'2021-02-20T18:07:13.440534', u'run_number_in_template': True, 
+                       u'detector_sn': u'E-32-0108', u'pixel_size': 0.075, u'y_beam': 154.08, u'distance': 350.0, u'run_number': 0, 
+                       u'image_template': u'CMD_4_4_PAIR_0_??????.cbf', u'transmission': 28.1, u'collect_mode': u'SNAP', u'flat_field': None, 
+                       u'flux': 1405000000000, u'time': 0.1999969, u'x_beam': 164.57025, 
+                       u'fullname': u'/gpfs2/users/emory/Dunham_E_5648/images/haan/snaps/CMD_4_4_PAIR_0_000002.cbf', 
+                       u'_id': u'6032dc0df468330310782c6a', u'ring_current': 101.8, u'image_number': 1}, 
+           }
+preferences = command.get("preferences")
+preferences.update({"distl_res_inner" : 30.0,
+                    "distl_res_outer" : 3.0,})
+image1 = command.get("image1")
+image2 = False
+test = False
+distl_server = ("164.54.212.32", 8125)
+
+from threading import Thread
+from utils.processes import local_subprocess
+#from multiprocessing import Queue as mp_Queue
+import urllib2
+
+def process_distl_server():
+        
+
+        
+        l = [image1]
+        print l[0].get("fullname")
+        if image2:
+            l.append(image2)
+        for i in range(len(l)):
+            if test:
+                job = Thread(target=local_subprocess,
+                             kwargs={"command": 'ls'})
+            else:
+                url = "http://%s:%d/spotfinder/distl.signal_strength?distl.image=%s&distl.bins.verbose=False&distl.res.outer=%.1f&distl.res.inner=%.1f" \
+                    %(distl_server[0], 
+                      distl_server[1], 
+                      l[i].get("fast_fullname", l[i].get("fullname")), 
+                      preferences.get("distl_res_outer", 3.0), 
+                      preferences.get("distl_res_inner", 30.0))
+                
+               
+                Response = urllib2.urlopen(url)
+                raw = Response.read()
+                Response.close()
+                result = {'stdout': raw}
+                #print result
+        
+    
+process_distl_server()
 """
+url = "http://164.54.212.32:8125/spotfinder/distl.signal_strength?distl.image=/gpfs6/users/necat/rapd2/pair/2021-02-21/KH02_2_FL_CHL27_PAIR:1+2/KH02_2_FL_CHL27_PAIR_0_000001.cbf&distl.bins.verbose=False&distl.res.outer=3.0&distl.res.inner=30.0"
+url = url.replace("+", "%2b")
+print url
 
 """
 #ram_path = '/epu/rdma/gpfs2/users/necat/necat_E_4938/images/Surajit/snaps/NE20_2_1000mm_PAIR_0_000002/NE20_2_1000mm_PAIR_0_000002.cbf'
@@ -838,6 +932,8 @@ trim_path = dirname.replace('/ramdisk', '').replace('/epu/rdma', '').replace('/e
 new_path = os.path.join(trim_path[:trim_path.rfind('/')], filename)
 print new_path
 """
+
+
 #ram_path =  '/epu2/rdma/gpfs5/users/necat/capel/images/eiger2/snaps/test2a_PAIR_0_000010/test2a_PAIR_0_000010.cbf'
 #json.dumps([gpfs_path, ram_path])
 #red.lpush('images_collected_C', json.dumps([gpfs_path, ram_path]))
@@ -895,7 +991,12 @@ print new_path
 #print red.lrange('run_data:NECAT_E', 0, -1)
 
 #print red.llen('current_run_C')
+red = connect_rapd2_redis()
 
+#while red.llen('run_info_C'):
+#    info = red.rpop('run_info_C')
+#    red2.lpush('run_info_C', info)
+"""
 print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('images_collected:NECAT_E')
@@ -917,4 +1018,5 @@ print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
 #print red.llen('RAPD_QSUB_JOBS_2')
 #red.delete('RAPD_QSUB_JOBS_2')
-
+print red.llen('RAPD_RESULTS')
+"""

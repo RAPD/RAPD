@@ -235,10 +235,10 @@ class RapdPlugin(Process):
         #if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
 
-        # Are ram_nodes needed anymore with RDMA??
-        self.ram_use = self.preferences.get('ram_integrate', False)
-        if self.ram_use == True:
-            self.ram_nodes = self.preferences['ram_nodes']
+        # Are ram_nodes needed anymore with RDMA?? -->> NO!
+        #self.ram_use = self.preferences.get('ram_integrate', False)
+        #if self.ram_use == True:
+        #    self.ram_nodes = self.preferences['ram_nodes']
 
         # Setup initial shell_launcher
         # Load the subprocess adapter
@@ -257,15 +257,19 @@ class RapdPlugin(Process):
                 # Based on the command, pick a batch queue on the cluster. Added to input kwargs
                 self.batch_queue = {'batch_queue': computer_cluster.check_queue(self.command["command"])}
                 self.computer_cluster = computer_cluster
-                if self.ram_use == True:
-                    self.jobs = len(self.ram_nodes[0])
-                    self.procs = 8
-                else:
-                    # Set self.jobs and self.procs based on available cluster resources
-                    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
-                    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
-                    #self.jobs = 20
-                    #self.procs = 8
+                # Set self.jobs and self.procs based on available cluster resources
+                self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
+                #self.jobs = 20
+                #self.procs = 8
+                #if self.ram_use == True:
+                #    self.jobs = len(self.ram_nodes[0])
+                #    self.procs = 8
+                #else:
+                #    # Set self.jobs and self.procs based on available cluster resources
+                #    #self.procs, self.jobs = computer_cluster.get_nproc_njobs()
+                #    self.procs, self.jobs = computer_cluster.get_resources(self.command["command"])
+                #    #self.jobs = 20
+                #    #self.procs = 8
             else:
                 if self.logger:
                     self.logger.debug('The cluster_adapter could not be loaded, defaulting to shell launching!!!')
@@ -876,7 +880,7 @@ class RapdPlugin(Process):
         else:
             self.results["results"]["pdbquery"] = False
 
-    def ram_total(self, xdsinput):
+    def ram_total_OLD(self, xdsinput):
         """
         This function controls processing by XDS when the complete data
         is present and distributed to ramdisks on the cluster
@@ -1681,7 +1685,7 @@ class RapdPlugin(Process):
 
         return
 
-    def xds_ram(self, first_node):
+    def xds_ram_OLD(self, first_node):
         """
         Launches xds_par via ssh on the first_node.
         This ensures that xds runs properly when trying to use
