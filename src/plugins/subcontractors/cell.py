@@ -30,12 +30,12 @@ from multiprocessing import Process, Queue
 import os
 import shutil
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 # RAPD imports
 from agents.rapd_agent_phaser import RunPhaser
-import parse as Parse
-import summary as Summary
+from . import parse as Parse
+from . import summary as Summary
 from utils.communicate import rapd_send
 import utils.xutils as Utils
 
@@ -164,7 +164,7 @@ class PDBQuery(Process):
                 #Sometimes I get an error in urlopen saying it can't resolve the output from the PDB.
                 try:
                     #l0.extend(urllib2.urlopen(urllib2.Request("http://www.rcsb.org/pdb/rest/search",data=querycell)).read().split())
-                    l0.extend(urllib2.urlopen(urllib2.Request("http://www.rcsb.org/pdb/rest/search", data=querycell), timeout=10).read().split())
+                    l0.extend(urllib.request.urlopen(urllib.request.Request("http://www.rcsb.org/pdb/rest/search", data=querycell), timeout=10).read().split())
                 except:
                     pass
                 return l0
@@ -179,17 +179,17 @@ class PDBQuery(Process):
                         _d_[l1[x]] = [float(self.cell2[l2[y][x]])-float(self.cell2[l2[y][x]])*self.percent/2,
                                       float(self.cell2[l2[y][x]])+float(self.cell2[l2[y][x]])*self.percent/2]
                     # Send to Frank thru urllib2
-                    response = urllib2.urlopen(urllib2.Request("http://remote.nec.aps.anl.gov:3030/pdb/rest/search/", data=json.dumps(_d_))).read()
+                    response = urllib.request.urlopen(urllib.request.Request("http://remote.nec.aps.anl.gov:3030/pdb/rest/search/", data=json.dumps(_d_))).read()
                     j = json.loads(response)
-                    for k in j.keys():
+                    for k in list(j.keys()):
                         j[k]["Name"] = j[k].pop("struct.pdbx_descriptor")
                     # print j
                     _d0_.update(j)
                 return _d0_
 
             def limitOut(inp):
-                l = inp.keys()[:i+1]
-                for p in inp.keys():
+                l = list(inp.keys())[:i+1]
+                for p in list(inp.keys()):
                     if l.count(p) == 0:
                         del inp[p]
                 return inp
@@ -225,8 +225,8 @@ class PDBQuery(Process):
             while counter < 25:
                 #l = connect_rcsb(l)
                 d = connect_frank(d)
-                if len(d.keys()) != 0:
-                    for line in d.keys():
+                if len(list(d.keys())) != 0:
+                    for line in list(d.keys()):
                         # remove anything bigger than 4 letters
                         if len(line) > 4:
                             del d[line]
@@ -238,13 +238,13 @@ class PDBQuery(Process):
                             d = limitOut(d)
                     else:
                         d = limitOut(d)
-                if len(d.keys()) < i:
+                if len(list(d.keys())) < i:
                     counter += 1
                     self.percent += 0.01
                     self.logger.debug("Not enough PDB results. Going for more...")
                 else:
                     break
-            if len(d.keys()) > 0:
+            if len(list(d.keys())) > 0:
                 self.cell_output = d
             else:
                 self.cell_output = {}
@@ -314,11 +314,11 @@ class PDBQuery(Process):
             }
 
             # Save these codes in a separate list so they can be separated in the Summary.
-            self.common = d.keys()
+            self.common = list(d.keys())
 
             # Remove PDBs from self.common if they were already caught by unit cell dimensions.
-            for line in d.keys():
-                if self.cell_output.keys().count(line):
+            for line in list(d.keys()):
+                if list(self.cell_output.keys()).count(line):
                     del d[line]
                     self.common.remove(line)
             self.cell_output.update(d)
@@ -343,7 +343,7 @@ class PDBQuery(Process):
             self.pids[inp["name"]] = queue.get()
 
         try:
-            for code in self.cell_output.keys():
+            for code in list(self.cell_output.keys()):
               #for code in ["4ER2"]:
                 l = False
                 copy = 1
@@ -369,8 +369,8 @@ class PDBQuery(Process):
                     #Need full path for copying pdb files to folders.
                     pdb_info = Utils.getPDBInfo(self, os.path.join(os.getcwd(), f))
                     #Prune if only one chain present, b/c "all" and "A" will be the same.
-                    if len(pdb_info.keys()) == 2:
-                        for key in pdb_info.keys():
+                    if len(list(pdb_info.keys())) == 2:
+                        for key in list(pdb_info.keys()):
                             if key != "all":
                                 del pdb_info[key]
                     copy = pdb_info["all"]["NMol"]
@@ -379,7 +379,7 @@ class PDBQuery(Process):
                     # If pdb_info["all"]["res"] == 0.0:
                     if pdb_info["all"]["SC"] < 0.2:
                         # Only run on chains that will fit in the AU.
-                        l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
+                        l = [chain for chain in list(pdb_info.keys()) if pdb_info[chain]["res"] != 0.0]
                 #More mols in AU
                 elif float(self.laue) < float(lg_pdb):
                     pdb_info = Utils.getPDBInfo(self, f, True, True)
@@ -420,7 +420,7 @@ class PDBQuery(Process):
             info = Utils.getPDBInfo(self, pdb, False)
             command = "phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN " % (pdb, self.datafile)
             command += "refinement.main.number_of_macro_cycles=1 nproc=2"
-            chains = [chain for chain in info.keys() if chain != "all"]
+            chains = [chain for chain in list(info.keys()) if chain != "all"]
             for chain in chains:
                 command += ' refine.adp.tls="chain %s"' % chain
             if self.test == False:
@@ -490,7 +490,7 @@ class PDBQuery(Process):
             timed_out = False
             timer = 0
             if self.jobs != {}:
-                jobs = self.jobs.keys()
+                jobs = list(self.jobs.keys())
                 while len(jobs) != 0:
                     for job in jobs:
                         if job.is_alive() == False:
@@ -526,19 +526,19 @@ class PDBQuery(Process):
                             timed_out = True
                             break
                 if timed_out:
-                    for j in self.jobs.values():
-                        if self.pids.has_key(j):
+                    for j in list(self.jobs.values()):
+                        if j in self.pids:
                             if self.cluster_use:
                                 # TODO
                                 # BLspec.killChildrenCluster(self,self.pids[j])
                                 pass
                             else:
                                 Utils.killChildren(self, self.pids[j])
-                        if self.phaser_results.has_key(j) == False:
+                        if (j in self.phaser_results) == False:
                             self.phaser_results[j] = {"AutoMR results": Parse.setPhaserFailed("Timed out")}
                     if self.verbose:
                         self.logger.debug("PDBQuery timed out.")
-                        print "PDBQuery timed out."
+                        print("PDBQuery timed out.")
             if self.verbose:
                 self.logger.debug("PDBQuery.run_queue finished.")
 
@@ -583,7 +583,7 @@ class PDBQuery(Process):
                 shutil.copy("%s.bz2" % tar, self.working_dir)
 
             if self.cell_output:
-                for pdb in self.phaser_results.keys():
+                for pdb in list(self.phaser_results.keys()):
                     pdb_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR pdb")
                     mtz_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR mtz")
                     adf_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR adf")
@@ -608,7 +608,7 @@ class PDBQuery(Process):
                             else:
                                 self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": "None"})
                     #Save everthing into one dict
-                    if pdb in self.cell_output.keys():
+                    if pdb in list(self.cell_output.keys()):
                         self.phaser_results[pdb].update(self.cell_output[pdb])
                     else:
                         self.phaser_results[pdb].update(self.cell_output[pdb[:pdb.rfind("_")]])
@@ -687,10 +687,10 @@ class PDBQuery(Process):
         self.logger.debug("Total elapsed time: %s seconds" % t)
         self.logger.debug(50*"-")
         if self.output == None:
-            print 50*"-"
-            print "\nRAPD PDBQuery complete."
-            print "Total elapsed time: %s seconds" % t
-            print 50*"-"
+            print(50*"-")
+            print("\nRAPD PDBQuery complete.")
+            print("Total elapsed time: %s seconds" % t)
+            print(50*"-")
 
     def html_summary(self):
         """

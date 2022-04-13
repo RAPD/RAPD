@@ -31,10 +31,10 @@ import os
 import time
 
 # RAPD imports
-from cell import PDBQuery
-from precession import LabelitPP
-import parse as Parse
-import summary as Summary
+from .cell import PDBQuery
+from .precession import LabelitPP
+from . import parse as Parse
+from . import summary as Summary
 from utils.communicate import rapd_send
 import utils.xutils as Utils
 
@@ -69,7 +69,7 @@ class AutoStats(Process):
         self.verbose = True
 
         #Check if precession photo info included in command_input
-        if self.command_input[0].has_key("run"):
+        if "run" in self.command_input[0]:
             self.pp = True
         else:
             self.pp = False
@@ -309,7 +309,7 @@ class AutoStats(Process):
         try:
             if os.path.exists("phaser2.log"):
                 data = Parse.ParseOutputPhaserNCS(self, open("phaser2.log", "r").readlines())
-                if len(data["CID"].keys()) > 0:
+                if len(list(data["CID"].keys())) > 0:
                     self.ncs_results = {"PhaserNCS results":data}
                 else:
                     self.ncs_results = False
@@ -327,7 +327,7 @@ class AutoStats(Process):
         try:
             timed_out = False
             timer = 0
-            jobs = self.jobs_output.keys()
+            jobs = list(self.jobs_output.keys())
             if jobs != ["None"]:
                 counter = len(jobs)
                 while counter != 0:
@@ -351,8 +351,8 @@ class AutoStats(Process):
                 if timed_out:
                     if self.verbose:
                         self.logger.debug("AutoStat timed out.")
-                        print "AutoStat timed out."
-                    for pid in self.pids.values():
+                        print("AutoStat timed out.")
+                    for pid in list(self.pids.values()):
                         # jobs are not sent to cluster
                         Utils.killChildren(self, pid)
                     for job in jobs:
@@ -375,14 +375,14 @@ class AutoStats(Process):
         if self.verbose:
             self.logger.debug("AutoStats::print_info")
         try:
-            print "\nRAPD now using Phenix"
-            print "======================="
-            print "RAPD developed using Phenix"
-            print "Reference: Adams PD, et al.(2010) Acta Cryst. D66:213-221"
-            print "Website: http://www.phenix-online.org/ \n"
-            print "RAPD developed using Xtriage and Fest"
-            print "Reference: Zwart PH, et al. (2005)CCP4 Newsletter Winter:Contribution 7."
-            print "Website: http://www.phenix-online.org/documentation/xtriage.htm\n"
+            print("\nRAPD now using Phenix")
+            print("=======================")
+            print("RAPD developed using Phenix")
+            print("Reference: Adams PD, et al.(2010) Acta Cryst. D66:213-221")
+            print("Website: http://www.phenix-online.org/ \n")
+            print("RAPD developed using Xtriage and Fest")
+            print("Reference: Zwart PH, et al. (2005)CCP4 Newsletter Winter:Contribution 7.")
+            print("Website: http://www.phenix-online.org/documentation/xtriage.htm\n")
             self.logger.debug("RAPD now using Phenix")
             self.logger.debug("=======================")
             self.logger.debug("RAPD developed using Phenix")
@@ -442,11 +442,11 @@ class AutoStats(Process):
         # Get rapd_agent_cell results back
         try:
             cell_results = self.cell_output.get()
-            if cell_results.has_key("status"):
+            if "status" in cell_results:
                 if cell_results["status"] == "FAILED":
                     failed = True
                 del cell_results["status"]
-            if cell_results.has_key("Output files"):
+            if "Output files" in cell_results:
                 cell_out = cell_results["Output files"]
                 del cell_results["Output files"]
         except:
@@ -456,11 +456,11 @@ class AutoStats(Process):
         try:
             if self.pp:
                 pp_results = self.pp_output.get()
-                if pp_results.has_key("status"):
+                if "status" in pp_results:
                     if pp_results["status"] == "FAILED":
                         failed = True
                     del pp_results["status"]
-                if pp_results.has_key("Output files"):
+                if "Output files" in pp_results:
                     pp_out = pp_results["Output files"]
                     del pp_results["Output files"]
             else:
@@ -522,10 +522,10 @@ class AutoStats(Process):
         self.logger.debug("RAPD AutoStat complete.")
         self.logger.debug("Total elapsed time: %s seconds" % t)
         self.logger.debug("-------------------------------------")
-        print "\n-------------------------------------"
-        print "RAPD AutoStat complete."
-        print "Total elapsed time: %s seconds" % t
-        print "-------------------------------------"
+        print("\n-------------------------------------")
+        print("RAPD AutoStat complete.")
+        print("Total elapsed time: %s seconds" % t)
+        print("-------------------------------------")
 
     def plot_xtriage(self):
         """

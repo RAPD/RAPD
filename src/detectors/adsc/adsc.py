@@ -35,7 +35,7 @@ import threading
 import time
 import os
 import re
-import xmlrpclib
+import xmlrpc.client
 import atexit
 from rapd_site import secret_settings as secrets
 from rapd_utils import date_adsc_to_sql
@@ -44,11 +44,11 @@ from utils.text import json
 from bson.objectid import ObjectId
 
 def print_dict(in_dict):
-    keys = in_dict.keys()
+    keys = list(in_dict.keys())
     keys.sort()
     for key in keys:
-        print key,'::',in_dict[key]
-    print ''
+        print(key,'::',in_dict[key])
+    print('')
 
 months = { 'Jan' : '01',
            'Feb' : '02',
@@ -340,7 +340,7 @@ def Q315ReadHeader(image, run_id=None, place_in_run=None, logger=False):
                       'run_id'       : run_id,
                       'place_in_run' : place_in_run}
 
-        for label,pat in header_items.iteritems():
+        for label,pat in header_items.items():
             pattern = re.compile(pat[0], re.MULTILINE)
             matches = pattern.findall(header)
             if len(matches) > 0:
@@ -433,7 +433,7 @@ def Hf4mReadHeader(image,mode=None,run_id=None,place_in_run=None,logger=False):
     if logger:
         logger.debug('Hf4mReadHeader %s' % image)
     else:
-        print 'Hf4mReadHeader %s' % image
+        print('Hf4mReadHeader %s' % image)
 
     def mmorm(x):
         d = float(x)
@@ -469,7 +469,7 @@ def Hf4mReadHeader(image,mode=None,run_id=None,place_in_run=None,logger=False):
             if logger:
                 logger.exception('Error opening %s' % image)
             else:
-                print 'Error opening %s' % image
+                print('Error opening %s' % image)
             time.sleep(0.1)
 
     try:
@@ -491,7 +491,7 @@ def Hf4mReadHeader(image,mode=None,run_id=None,place_in_run=None,logger=False):
                       'size2'        : 2290,
                       'twotheta'     : 0.0}
 
-        for label,pat in header_items.iteritems():
+        for label,pat in header_items.items():
             # print label
             pattern = re.compile(pat[0], re.MULTILINE)
             matches = pattern.findall(header)
@@ -516,7 +516,7 @@ def Hf4mReadHeader(image,mode=None,run_id=None,place_in_run=None,logger=False):
         if logger:
             logger.exception('Error reading the header for image %s' % image)
         else:
-            print 'Error reading the header for image %s' % image
+            print('Error reading the header for image %s' % image)
 
 
 

@@ -61,7 +61,7 @@ import utils.global_vars as rglobals
 from utils.text import json
 import utils.xutils as xutils
 from utils.processes import local_subprocess, mp_pool, mp_manager
-import info
+from . import info
 
 # NE-CAT REST PDB server
 #PDBQ_SERVER = rglobals.PDBQ_SERVER
@@ -455,12 +455,12 @@ class RapdPlugin(Thread):
         # Determine which SG's to run MR.
         run_sg = xutils.get_sub_groups(self.laue, "phaser")
         # Prune if only one chain present, b/c 'all' and 'A' will be the same.
-        if len(self.pdb_info.keys()) == 2:
-            for key in self.pdb_info.keys():
+        if len(list(self.pdb_info.keys())) == 2:
+            for key in list(self.pdb_info.keys()):
                 if key != 'all':
                     del self.pdb_info[key]
         # Only launch is greater than 20% solvent content
-        for chain in self.pdb_info.keys():
+        for chain in list(self.pdb_info.keys()):
             if self.pdb_info[chain]['SC'] > 0.2:
                 #if pdb_info[chain]["res"] != 0.0:
                 # Set copy to minimum of 1
@@ -514,9 +514,9 @@ class RapdPlugin(Thread):
         # Save number of jobs launched for correct status reply
         if not full:
             if self.computer_cluster:
-                self.calculate_status_increment(len(self.jobs.keys()))
+                self.calculate_status_increment(len(list(self.jobs.keys())))
             else:
-                self.calculate_status_increment(len(self.jobs.keys())*2)
+                self.calculate_status_increment(len(list(self.jobs.keys()))*2)
 
     def postprocess_phaser(self, job_name, results):
         """fix Phaser results and pass back"""
@@ -587,9 +587,9 @@ class RapdPlugin(Thread):
         timed_out = False
         timer = 0
         if full:
-            jobs = [job for job in self.jobs.keys() if self.jobs[job]['name'][-1] == '1']
+            jobs = [job for job in list(self.jobs.keys()) if self.jobs[job]['name'][-1] == '1']
         else:
-            jobs = [job for job in self.jobs.keys() if self.jobs[job]['name'][-1] == '0']
+            jobs = [job for job in list(self.jobs.keys()) if self.jobs[job]['name'][-1] == '0']
 
         # Run loop to see when jobs finish
         while len(jobs):
@@ -613,8 +613,8 @@ class RapdPlugin(Thread):
         if timed_out:
             if self.verbose:
                 self.logger.debug('MR timed out.')
-                print 'MR timed out.'
-            for job in self.jobs.keys():
+                print('MR timed out.')
+            for job in list(self.jobs.keys()):
                 if self.computer_cluster:
                     # Kill job on cluster:
                     self.computer_cluster.kill_job(self.jobs[job].get('pid'))
@@ -623,7 +623,7 @@ class RapdPlugin(Thread):
                     job.terminate()
                 # Get the job info
                 info = self.jobs.pop(job)
-                print 'Timeout Phaser on %s'%info['name']
+                print('Timeout Phaser on %s'%info['name'])
                 self.logger.debug('Timeout Phaser on %s'%info['name'])
                 # Send timeout result to postprocess
                 self.postprocess_phaser(info['name'], {"solution": False,
@@ -654,8 +654,8 @@ class RapdPlugin(Thread):
         self.logger.debug("check_solution")
 
         solution = False
-        keys0 = [key for key in self.phaser_results.keys() if key[-1] == '0']
-        keys1 = [key for key in self.phaser_results.keys() if key[-1] == '1']
+        keys0 = [key for key in list(self.phaser_results.keys()) if key[-1] == '0']
+        keys1 = [key for key in list(self.phaser_results.keys()) if key[-1] == '1']
         for key in keys0:
             sol = self.phaser_results[key].get('results').get('solution', False)
             if sol not in ('No solution','Timed out','NA', False, None):
@@ -894,7 +894,7 @@ class RapdPlugin(Thread):
 
         print_header_line()
 
-        for sg in self.results['results']['mr_results'].keys():
+        for sg in list(self.results['results']['mr_results'].keys()):
             # Get the result in question
             my_result = self.results['results']['mr_results'][sg]
 
@@ -908,7 +908,7 @@ class RapdPlugin(Thread):
         
          # If running in JSON mode, print to terminal
         if self.preferences.get("run_mode") == "json":
-            print json_results
+            print(json_results)
 
         # Output to terminal?
         #if self.preferences.get("json", False):

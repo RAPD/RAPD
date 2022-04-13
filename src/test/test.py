@@ -48,7 +48,7 @@ import unittest
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
-import test_sets
+from . import test_sets
 import utils.global_vars as rglobals
 import utils.log
 import utils.site as site
@@ -118,7 +118,7 @@ def run_processing(target, plugin, tprint, verbose=True):
 
     # Read in the results
     tprint("    Comparing results", 10, "white")
-    print "cwd", os.getcwd()
+    print("cwd", os.getcwd())
     result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
     result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
 
@@ -143,14 +143,14 @@ def check_for_data(target, tprint):
         os.makedirs(target_dir)
     target_archive = os.path.join(TEST_CACHE, target_def["location"])
 
-    print target_def
-    print target_dir
-    print target_archive
+    print(target_def)
+    print(target_dir)
+    print(target_archive)
 
     # Are there any files in the target directory?
     data_dir_glob = os.path.join(target_dir, "data/*")
     files = glob.glob(data_dir_glob)
-    print files
+    print(files)
     if not files:
     # if not os.path.exists(target_dir):
         tprint("  Data directory empty", level=10, color="white")
@@ -296,7 +296,7 @@ def main():
     # Handle the all setting for plugins
     if "all" in commandline_args.plugins:
         plugins = []
-        for plugin in test_sets.PLUGINS.keys():
+        for plugin in list(test_sets.PLUGINS.keys()):
             if not plugin == "all":
                 plugins.append(plugin)
     else:
@@ -383,7 +383,7 @@ def get_commandline():
                         help="Use colors in CLI")
 
     # Test data sets
-    keys = test_sets.DATA_SETS.keys()
+    keys = list(test_sets.DATA_SETS.keys())
     keys.sort()
     targets = "\n".join(keys)
     parser.add_argument("-t", "--targets",
@@ -395,7 +395,7 @@ def get_commandline():
 \n" + targets + "\n")
 
     # Plugins to test
-    plugins = test_sets.PLUGINS.keys()
+    plugins = list(test_sets.PLUGINS.keys())
     plugins.sort()
     plugins = "\n".join(plugins)
     parser.add_argument("-p", "--plugins",

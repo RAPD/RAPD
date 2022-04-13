@@ -44,7 +44,7 @@ from bson.objectid import ObjectId
 # The default settings for each beamline; Your modifications of rapd_site.py should
 # have created the correct information in the imports here
 #
-from rapd_site import secret_settings, secret_settings_general
+from .rapd_site import secret_settings, secret_settings_general
 
 
 #the extra time the RunWatcher will wait for an image file to appear
@@ -648,9 +648,9 @@ class BeamManager(object):
                 if self._is_pair(i-1, i):
                     my_info[last_key] += (image_metadata,)
                 else:
-                    if my_info.has_key(str(image_metadata['distance'])):
+                    if str(image_metadata['distance']) in my_info:
                         for number in range(1, 10000):
-                            if not my_info.has_key(str(image_metadata['distance'])+'_'+str(number)):
+                            if str(image_metadata['distance'])+'_'+str(number) not in my_info:
                                 last_key = str(image_metadata['distance'])+'_'+str(number)
                                 my_info[last_key] = (image_metadata,)
 
@@ -767,8 +767,8 @@ def connectCluster(inp,job=True):
   if job:
     command = 'qsub -j y -terse -cwd -b y '
     command += inp
-    print command
-    print 'Job ID:'
+    print(command)
+    print('Job ID:')
   else:
     command = inp
   #Use this to say job is beam center calculation.
@@ -783,7 +783,7 @@ def connectCluster(inp,job=True):
   stdin,stdout,stderr = client.exec_command('cd %s\n%s%s'%(os.getcwd(),st,command))
   #stdin,stdout,stderr = client.exec_command('cd %s\n%s'%(os.getcwd(),command))
   for line in stdout:
-    print line.strip()
+    print(line.strip())
     if bc:
       return(line.strip())
   client.close()
@@ -917,7 +917,7 @@ def processClusterSercat(self,inp,output=False):
   except AttributeError:
     running = False
 
-  print inp
+  print(inp)
   if len(inp) == 1:
     command = inp
   elif len(inp) == 2:

@@ -119,7 +119,7 @@ class FileGenerator(object):
     def __init__(self, args=False):
         """Initialize the BaseFileGenerator instance"""
 
-        print args
+        print(args)
 
         self.args = args
 
@@ -144,14 +144,14 @@ class FileGenerator(object):
         if self.args.plugin:
             self.plugin_file = self.find_plugin(self.args.plugin)
             if self.args.verbose:
-                print "Creating UI component for %s" % self.plugin_file
+                print("Creating UI component for %s" % self.plugin_file)
 
         # No plugin specified
         else:
             plugin_error = True
 
         if plugin_error:
-            print text.red + "You must enter a plugin or plugin directory to create a UI component for" + text.stop
+            print(text.red + "You must enter a plugin or plugin directory to create a UI component for" + text.stop)
 
         # Get the data type, plugin type, ID, and version for the plugin
         self.data_type, self.plugin_type, self.plugin_id, self.plugin_version = self.get_plugin_details(self.plugin_file)
@@ -212,14 +212,14 @@ class FileGenerator(object):
         if self.args.test:
             command += "--dry-run"
         if self.args.verbose:
-            print "Running %s" % command
+            print("Running %s" % command)
         p1 = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         output = p1.communicate()[0]
         # print output
         # Look for ERROR in output
         if "ERROR" in output:
             if self.args.test:
-                print  "Error generating component", "\n"+output+"\n"
+                print("Error generating component", "\n"+output+"\n")
             else:
                 raise IOError("Error generating component", "\n"+output)
             
@@ -281,9 +281,9 @@ class FileGenerator(object):
 
         # Print file for edification
         if self.args.verbose:
-            print "\nNew file %s" % ts_file
+            print("\nNew file %s" % ts_file)
             for line in open(tmp_file_name, "r").readlines():
-                print "  ", line.rstrip()
+                print("  ", line.rstrip())
 
         # Move the new file to replace the naked file
         if not self.args.test:
@@ -317,8 +317,8 @@ class FileGenerator(object):
 
         # Print file for edification
         if self.args.verbose:
-            print "\nNew file %s" % html_file
-            print html_lines
+            print("\nNew file %s" % html_file)
+            print(html_lines)
 
     def add_to_app(self, component_name, ts_file):
         """
@@ -358,9 +358,9 @@ class FileGenerator(object):
 
         # Print file for edification
         if self.args.verbose:
-            print "\napp.module.ts"
+            print("\napp.module.ts")
             for line in open(tmp_file_name, "r").readlines():
-                print "  ", line.rstrip()
+                print("  ", line.rstrip())
 
         # Move the new file to replace the naked file
         if not self.args.test:
@@ -401,9 +401,9 @@ class FileGenerator(object):
 
         # Print file for edification
         if self.args.verbose:
-            print "\n%s" % index_ts
+            print("\n%s" % index_ts)
             for line in open(tmp_file_name, "r").readlines():
-                print "  ", line.rstrip()
+                print("  ", line.rstrip())
 
         # Move the new file to replace the naked file
         if not self.args.test:
@@ -444,7 +444,7 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    print commandline_args
+    print(commandline_args)
 
     filename = False 
 
@@ -455,6 +455,6 @@ def main():
 
 if __name__ == "__main__":
 
-    print "rapd_generate_rapd_file.py"
+    print("rapd_generate_rapd_file.py")
 
     main()

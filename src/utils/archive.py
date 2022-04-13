@@ -175,7 +175,7 @@ def create_manifest(directory, write=True):
 
     if write:
         with open(directory + "/files.sha", "w") as output_file:
-            for key, val in records.iteritems():
+            for key, val in records.items():
                 output_file.write("%s  %s\n" % (val, key))
 
     # Return the dict
@@ -187,5 +187,5 @@ def get_hash(filename):
 
 
 if __name__ == "__main__":
-    print create_archive('/gpfs6/users/necat/rapd2/integrate/2018-03-23/yuan_bin3_7sk_sah_p07_w3_10/yuan_bin3_7sk_sah_p07_w3_10_1')
+    print(create_archive('/gpfs6/users/necat/rapd2/integrate/2018-03-23/yuan_bin3_7sk_sah_p07_w3_10/yuan_bin3_7sk_sah_p07_w3_10_1'))
     #create_manifest("./", True)

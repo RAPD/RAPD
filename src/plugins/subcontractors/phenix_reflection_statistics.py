@@ -79,7 +79,7 @@ def parse_raw_output(raw_output, logger=False):
             if os.path.exists(raw_output):
                 raw_output = open(raw_output, "r").readlines()
             else:
-                print "Sorry, I think you are inputing a file name, but I cannot find the file"
+                print("Sorry, I think you are inputing a file name, but I cannot find the file")
                 raise ValueError(
                     "Sorry, I think you are inputing a file name, but I cannot find the file")
 
@@ -192,18 +192,18 @@ def parse_raw_output(raw_output, logger=False):
         # Miller array info for this summary
         elif line.startswith("Miller array info"):
             miller_array_labels[summary_number] = line.split(":")[2].split(",")
-            print "    miller_array_labels", miller_array_labels
+            print("    miller_array_labels", miller_array_labels)
 
         # Observation type for this summary
         elif line.startswith("Observation type"):
             observation_type[summary_number] = line.split(":")[1].strip()
-            print "    observation_type", observation_type
+            print("    observation_type", observation_type)
 
         # Unit cell for this summary
         elif line.startswith("Unit cell: ("):
             unit_cell[summary_number] = [float(i) for i in line.replace(
                 "Unit cell: (", "").replace(")", "").split(",")]
-            print "    unit_cell", unit_cell
+            print("    unit_cell", unit_cell)
 
         # Space group for this summary
         elif line.startswith("Space group:"):
@@ -211,50 +211,50 @@ def parse_raw_output(raw_output, logger=False):
                 "Space group: ", "").split("(")[0].strip()
             space_group_number[summary_number] = int(line.replace(
                 "Space group: ", "").split("(")[1].strip()[4:-1])
-            print "    space_goup", space_group
-            print "    space_goup_number", space_group_number
+            print("    space_goup", space_group)
+            print("    space_goup_number", space_group_number)
 
         # Systematic absences:
         elif line.startswith("Systematic absences:"):
             systematic_absences[summary_number] = int(line.split()[2])
-            print "    systematic_absences", systematic_absences
+            print("    systematic_absences", systematic_absences)
 
         # Centric reflections:
         elif line.startswith("Centric reflections:"):
             centric_reflections[summary_number] = int(line.split()[2])
-            print "    centric_reflections", centric_reflections
+            print("    centric_reflections", centric_reflections)
 
         # Resolution range:
         elif line.startswith("Resolution range:"):
             resolution_range[summary_number] = [
                 float(i) for i in line.replace("Resolution range:", "").split()]
-            print "    resolution_range", resolution_range
+            print("    resolution_range", resolution_range)
 
         # Completeness in resolution range:
         elif line.startswith("Completeness in resolution range:"):
             completeness[summary_number] = float(line.split(":")[1])
-            print "    completeness", completeness
+            print("    completeness", completeness)
 
         # Completeness with d_max=infinity:
         elif line.startswith("Completeness with d_max=infinity:"):
             completeness_infinity[summary_number] = float(line.split(":")[1])
-            print "    completeness_infinity", completeness_infinity
+            print("    completeness_infinity", completeness_infinity)
 
         # Wavelength:
         elif line.startswith("Wavelength:"):
             wavelength[summary_number] = float(line.split(":")[1])
-            print "    wavelength", wavelength
+            print("    wavelength", wavelength)
 
         # Space group of the intensities:
         elif line.startswith("Space group of the intensities:"):
             space_group_intensities[summary_number] = line.split(":")[
                 1].strip()
-            print "    space_group_intensities", space_group_intensities
+            print("    space_group_intensities", space_group_intensities)
 
         # Space group of the metric:
         elif line.startswith("Space group of the metric:"):
             space_group_metric[summary_number] = line.split(":")[1].strip()
-            print "    space_group_metric", space_group_metric
+            print("    space_group_metric", space_group_metric)
 
         # Completeness table
         elif line.startswith("Completeness of "):
@@ -340,7 +340,7 @@ def parse_raw_output(raw_output, logger=False):
 
             # The average line
             elif line.strip().startswith("average: "):
-                print sline
+                print(sline)
                 record = False
                 perfect_mero_twin_table[summary_number]["average_<I^2>/(<I>)^2"] = float(
                     sline[1])
@@ -1066,6 +1066,6 @@ def parse_raw_output(raw_output, logger=False):
 
 if __name__ == "__main__":
 
-    print sys.argv
+    print(sys.argv)
     raw_output = run(data_file=sys.argv[1])
     parse_raw_output(raw_output=raw_output)

@@ -28,8 +28,8 @@ import os
 import time
 
 # RAPD imports
-import parse as Parse
-import summary as Summary
+from . import parse as Parse
+from . import summary as Summary
 from utils.communicate import rapd_send
 import utils.xutils as Utils
 
@@ -42,7 +42,7 @@ class RunXOalign(Process):
         #Setting up data input
         self.header                             = self.input[2]
         self.header2                            = False
-        if self.input[3].has_key('distance'):
+        if 'distance' in self.input[3]:
             self.header2                            = self.input[3]
         self.controller_address                 = self.input[-1]
 
@@ -205,10 +205,10 @@ class RunXOalign(Process):
     self.logger.debug('RAPD XOalign complete.')
     self.logger.debug('Total elapsed time: %s seconds'%t)
     self.logger.debug('-------------------------------------')
-    print '\n-------------------------------------'
-    print 'RAPD XOalign complete.'
-    print 'Total elapsed time: %s seconds'%t
-    print '-------------------------------------'
+    print('\n-------------------------------------')
+    print('RAPD XOalign complete.')
+    print('Total elapsed time: %s seconds'%t)
+    print('-------------------------------------')
 
   def htmlSummaryXOalign(self):
     """

@@ -48,7 +48,7 @@ def run_process(input_args, output=False):
     command, verbose = input_args
 
     if verbose:
-        print command
+        print(command)
     if output:
         job = subprocess.Popen(shlex.split(command),
                                stdout=subprocess.PIPE,
@@ -180,7 +180,7 @@ class hdf5_to_cbf_converter(object):
         """Actually convert the images"""
 
         if self.verbose:
-            print "Converting images %d - %d" % (start_image, end_image)
+            print("Converting images %d - %d" % (start_image, end_image))
 
         # The base eiger2cbf command
         command0 = "eiger2cbf %s" % self.master_file
@@ -210,7 +210,7 @@ class hdf5_to_cbf_converter(object):
             # Multiple processors
             else:
                 #if active:
-                print "Employing multiple threads"
+                print("Employing multiple threads")
 
                 # Construct commands to run in parallel
                 number_of_images = end_image - start_image + 1
@@ -302,7 +302,7 @@ class hdf5_to_cbf_converter(object):
         #number_of_images = int(stdout.split("\n")[-2])
         number_of_images = int(stdout.split("\n")[-2])
         if self.verbose:
-            print "Number of images: %d" % number_of_images
+            print("Number of images: %d" % number_of_images)
         return number_of_images
 
     def calculate_expected_files(self):
@@ -347,16 +347,16 @@ class hdf5_to_cbf_converter(object):
         if len(to_make_set) == 0:
 
             if self.verbose:
-                print "Requested files already present"
+                print("Requested files already present")
 
         elif len(to_make_set) > 0:
 
-            for k, g in groupby(enumerate(to_make_list), lambda (i, x):i - x):
-                self.ranges_to_make.append(map(itemgetter(1), g))
+            for k, g in groupby(enumerate(to_make_list), lambda i_x:i_x[0] - i_x[1]):
+                self.ranges_to_make.append(list(map(itemgetter(1), g)))
 
         if len(not_to_make_list) > 0:
-            for k, g in groupby(enumerate(not_to_make_list), lambda (i, x):i - x):
-                self.ranges_not_to_make.append(map(itemgetter(1), g))
+            for k, g in groupby(enumerate(not_to_make_list), lambda i_x1:i_x1[0] - i_x1[1]):
+                self.ranges_not_to_make.append(list(map(itemgetter(1), g)))
 
 def get_prefix(img_path):
     """Return the image prefix"""
@@ -371,7 +371,7 @@ def main(args):
     """
 
     args = get_commandline()
-    print args
+    print(args)
     # Convert from NameSpace to Python dict
     input_args = vars(args)
     # Launch converter

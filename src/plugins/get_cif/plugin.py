@@ -43,7 +43,7 @@ import os
 import shutil
 import subprocess
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 # Used for PDBe searches
 from mysolr import Solr
 
@@ -152,7 +152,7 @@ class RapdPlugin(multiprocessing.Process):
                     color="blue")
 
         #for pdb_code in self.command["input_data"]["pdb_codes"]:
-        self.pdbs_to_download = self.repository.check_for_pdbs(self.command["input_data"]["pdb_codes"]).keys()
+        self.pdbs_to_download = list(self.repository.check_for_pdbs(self.command["input_data"]["pdb_codes"]).keys())
 
     def check_in_pdbq_OLD(self):
         """Check if input PDB codes are in the PDBQ database"""
@@ -164,7 +164,7 @@ class RapdPlugin(multiprocessing.Process):
         for pdb_code in self.command["input_data"]["pdb_codes"]:
 
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
+            response = urllib.request.urlopen(urllib.request.Request("%s/entry/%s" % \
                        (rglobals.PDBQ_SERVER, pdb_code))).read()
 
             # Decode search result
@@ -266,14 +266,14 @@ class NECATRepository():
         """Check if it is up"""
         try:
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
+            response = urllib.request.urlopen(urllib.request.Request("%s/entry/%s" % \
                        (self.server, '1E1O'))).read()
     
             # Decode search result
             #entry = json.loads(response)
             return True
 
-        except urllib2.URLError as pdbq_error:
+        except urllib.error.URLError as pdbq_error:
             if self.tprint:
                 self.tprint("  Error connecting to NE-CAT PDBQ server %s" % pdbq_error,
                             level=30,
@@ -291,12 +291,12 @@ class NECATRepository():
 
         try:
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
+            response = urllib.request.urlopen(urllib.request.Request("%s/entry/%s" % \
                        (self.server, pdb_str))).read()
             # Decode search result
             entry = json.loads(response)
 
-        except urllib2.URLError as pdbq_error:
+        except urllib.error.URLError as pdbq_error:
             if self.tprint:
                 self.tprint("  Error connecting to PDBQ server %s" % pdbq_error,
                             level=30,
@@ -330,12 +330,12 @@ class NECATRepository():
             try:
                 # Query pdbq server
                 ## Change to comma separated (https://rapd.nec.aps.anl.gov/pdbq/entry/1Z7E,1QRV)
-                response = urllib2.urlopen(urllib2.Request("%s/entry/%s" % \
+                response = urllib.request.urlopen(urllib.request.Request("%s/entry/%s" % \
                            (self.server, pdb_code))).read()
                 # Decode search result
                 entry = json.loads(response)
     
-            except urllib2.URLError as pdbq_error:
+            except urllib.error.URLError as pdbq_error:
                 if self.tprint:
                     self.tprint("  Error connecting to PDBQ server %s" % pdbq_error,
                                 level=30,
@@ -365,7 +365,7 @@ class NECATRepository():
             return fname
         else:
             try:
-                response = urllib2.urlopen(urllib2.Request(\
+                response = urllib.request.urlopen(urllib.request.Request(\
                             "%s/entry/get_cif/%s" % \
                             (self.server, pdb_code.lower()))\
                             , timeout=60).read()
@@ -379,7 +379,7 @@ class NECATRepository():
                 
                 return fname
     
-            except urllib2.HTTPError as http_error:
+            except urllib.error.HTTPError as http_error:
                 if self.tprint:
                     self.tprint("      %s when fetching %s" % (http_error, pdb_code),
                                 level=50,
@@ -390,14 +390,14 @@ class NECATRepository():
         """search for PDBs within unit cell range."""
         # Query server
         #print "%s/search/" % rglobals.PDBQ_SERVER
-        response = urllib2.urlopen(urllib2.Request("%s/cell_search/" % \
+        response = urllib.request.urlopen(urllib.request.Request("%s/cell_search/" % \
                    self.server, data=json.dumps(search_params))).read()
 
         # Decode search result
         search_results = json.loads(response)
 
         # Create handy description key
-        for k in search_results.keys():
+        for k in list(search_results.keys()):
             search_results[k]["description"] = \
                 search_results[k].pop("struct.pdbx_descriptor")
 
@@ -417,11 +417,11 @@ class RCSBRepository():
         """Check if it is up"""
         try:
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("%s/describeHet?chemicalID=NAG" % \
+            response = urllib.request.urlopen(urllib.request.Request("%s/describeHet?chemicalID=NAG" % \
                        self.server,)).read()
             return True
 
-        except urllib2.URLError as pdbq_error:
+        except urllib.error.URLError as pdbq_error:
             if self.tprint:
                 self.tprint("  Error connecting to RCSB PDBQ server %s" % pdbq_error,
                             level=30,
@@ -432,7 +432,7 @@ class RCSBRepository():
         """Check if PDB file in PDB repository and pass back molecular description"""
         output_dict = {}
         # check if we already ran some of the PDB codes.
-        check = self.results.keys()
+        check = list(self.results.keys())
         for pdb_code in pdb_list:
             # Make sure we are in upper case
             pdb_code = pdb_code.upper()
@@ -442,7 +442,7 @@ class RCSBRepository():
             else:
                 try:
                     # Query pdbq server
-                    response = urllib2.urlopen(urllib2.Request("%s/describeMol?structureId=%s" % \
+                    response = urllib.request.urlopen(urllib.request.Request("%s/describeMol?structureId=%s" % \
                                (self.server, pdb_code)),timeout=5).readlines()
                     # save a list with all the mol names
                     name = [ line[line.find('"')+1:line.rfind('"')] for line in response if line.count('<polymerDescription description') ]
@@ -503,8 +503,8 @@ class RCSBRepository():
         #self.logger.debug(querycell)
         #Sometimes I get an error in urlopen saying it can't resolve the output from the PDB.
         try:
-            search_results = urllib2.urlopen(urllib2.Request('%s/search'%self.server, data=querycell)).read().split()
-        except urllib2.HTTPError:
+            search_results = urllib.request.urlopen(urllib.request.Request('%s/search'%self.server, data=querycell)).read().split()
+        except urllib.error.HTTPError:
             search_results = []
 
         # Get the molecular descriptions

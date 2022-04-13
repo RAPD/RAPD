@@ -1,4 +1,4 @@
-import os, re, sys, urllib2
+import os, re, sys, urllib.request, urllib.error, urllib.parse
 
 # Available DISTL servers (scyld)
 _HOSTS = ['164.54.208.135']
@@ -31,10 +31,10 @@ _LOOKUPS = [('file',re.compile("\s*File \:\s*([\w\d\.\_]*)\s*", re.MULTILINE),la
 
 def run_distl(image):
   command = _BASEURL%(_HOSTS[0],_PORTS[0],image)
-  Response = urllib2.urlopen(command)
+  Response = urllib.request.urlopen(command)
   raw = Response.read()
   Response.close()
-  print raw
+  print(raw)
 
 def main():
   import argparse
@@ -43,7 +43,7 @@ def main():
   parser.add_argument('inp' ,nargs='*', type=str, help='image_path')
   args = vars(parser.parse_args())
   if len(args['inp']) == 0:
-    image = raw_input('image path?: ')
+    image = input('image path?: ')
   else:
     image = args['inp'][0]
   run_distl(image)

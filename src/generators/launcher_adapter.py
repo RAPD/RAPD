@@ -42,9 +42,9 @@ import sys
 import uuid
 
 # RAPD imports
-import info
-from base import FileGenerator as CommandlineFileGenerator
-from base import split_text_blob
+from . import info
+from .base import FileGenerator as CommandlineFileGenerator
+from .base import split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils

@@ -201,7 +201,7 @@ class Launcher_Manager(Thread):
         Keyword arguments:
         command -- command from redis
         """
-        print "push_command"
+        print("push_command")
         #pprint(command)
 
         # Split up the command
@@ -216,7 +216,7 @@ class Launcher_Manager(Thread):
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
 
         if message['command'].startswith('INTEGRATE'):
-            print 'type: %s'%message['preferences']['xdsinp']
+            print('type: %s'%message['preferences']['xdsinp'])
 
         if launcher:
             # Update preferences to be in server run mode

@@ -342,7 +342,7 @@ class ClusterServer:
         while True:
             s.listen(5)
             try:
-                print 'MODE', self.mode
+                print('MODE', self.mode)
                 conn, addr = s.accept()
                 tmp = Handler(conn=conn,
                               addr=addr,
@@ -408,7 +408,7 @@ class Handler(threading.Thread, Communicate):
     def run(self):
         self.logger.debug('Handler::run')
         self.logger.debug(self.mode)
-        print 'run'
+        print('run')
 
         #if we are looking at a socket connection for the incoming message
         if not self.mode == 'file':
@@ -937,9 +937,9 @@ def get_command_line():
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "vq:",)
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         # print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
+        print(str(err)) # will print something like "option -a not recognized"
         sys.exit(2)
 
     for o,a in opts:

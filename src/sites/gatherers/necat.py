@@ -211,12 +211,12 @@ class Gatherer(object):
         self.logger.debug(self.ip_address)
 
         # Now grab the file locations, beamline from settings
-        if self.site.GATHERERS.has_key(self.ip_address):
+        if self.ip_address in self.site.GATHERERS:
             self.tag = self.site.GATHERERS[self.ip_address]
             # Make sure we enforce uppercase for tag
             self.tag = self.tag.upper()
         else:
-            print "ERROR - no settings for this host"
+            print("ERROR - no settings for this host")
             self.tag = "test"
             # sys.exit(9)
 
@@ -317,7 +317,7 @@ def main():
 
     # Handle no site file
     if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print(text.error+"Could not determine a site file. Exiting."+text.stop)
         sys.exit(9)
 
     # Import the site settings
@@ -325,7 +325,7 @@ def main():
 
     # Single process lock?
     if lock_file(SITE.GATHERER_LOCK_FILE):
-        print 'another instance of rapd.gather is running... exiting now'
+        print('another instance of rapd.gather is running... exiting now')
         sys.exit(9)
 
     # Set up logging

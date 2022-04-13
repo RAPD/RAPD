@@ -57,8 +57,8 @@ from utils.r_numbers import try_int, try_float
 try:
     sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
 except KeyError as e:
-    print "\nError importing smartie from CCP4."
-    print "Environmental variable %s not set. Exiting." % e
+    print("\nError importing smartie from CCP4.")
+    print("Environmental variable %s not set. Exiting." % e)
     exit(9)
 import smartie
 
@@ -1000,10 +1000,10 @@ def main():
     the commandline
     """
 
-    print "main"
+    print("main")
 
     args = get_commandline()
-    print args
+    print(args)
 
     # res = parse_aimless(args.file)
     # pprint(res)
@@ -1014,7 +1014,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Parse an aimless log file"

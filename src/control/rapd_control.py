@@ -75,12 +75,12 @@ def main():
     site = False
     if commandline_args.site:
         site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
+    elif "RAPD_SITE" in environmental_vars:
         site = environmental_vars["RAPD_SITE"]
 
     # If no site, error
     if site == False:
-        print text.error+"Could not determine a site. Exiting."+text.stop
+        print(text.error+"Could not determine a site. Exiting."+text.stop)
         sys.exit(9)
 
     # Determine the site_file
@@ -88,7 +88,7 @@ def main():
 
     # Error out if no site_file to import
     if site_file == False:
-        print text.error+"Could not find a site file. Exiting."+text.stop
+        print(text.error+"Could not find a site file. Exiting."+text.stop)
         sys.exit(9)
 
     # Import the site settings
@@ -97,7 +97,7 @@ def main():
 
     # Single process lock?
     if lock_file(SITE.CONTROL_LOCK_FILE):
-        print 'another instance of rapd.control is running... exiting now'
+        print('another instance of rapd.control is running... exiting now')
         sys.exit(9)
 
     # Set up logging

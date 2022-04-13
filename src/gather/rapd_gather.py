@@ -92,13 +92,13 @@ def main():
 
     # If no commandline site, look to environmental args
     if site == None:
-        if environmental_vars.has_key("RAPD_SITE"):
+        if "RAPD_SITE" in environmental_vars:
             site = environmental_vars["RAPD_SITE"]
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=site)
     if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print(text.error+"Could not determine a site file. Exiting."+text.stop)
         sys.exit(9)
 
 
@@ -131,12 +131,12 @@ def main():
         time.sleep(0.5)
         exit_code = gatherer_process.poll()
         if not exit_code == None:
-            print text.error+"Gatherer exited on start. Exiting."+text.stop
+            print(text.error+"Gatherer exited on start. Exiting."+text.stop)
             sys.exit(9)
 
     # Unable to find a gatherer for this site
     else:
-        print text.error+"Could not find a gatherer for this site %s. Exiting." % site +text.stop
+        print(text.error+"Could not find a gatherer for this site %s. Exiting." % site +text.stop)
         sys.exit(9)
 
 if __name__ == '__main__':

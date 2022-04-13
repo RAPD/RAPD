@@ -66,7 +66,7 @@ def connectionErrorWrapper(func):
                 break
             except redis.exceptions.ConnectionError as e:
                 # Pause for specified time
-                print "try %d" % attempts
+                print("try %d" % attempts)
                 time.sleep(ATTEMPT_PAUSE)
         else:
             args[0]._raise_ConnectionError(error)
@@ -250,7 +250,7 @@ class Database:
                     # redis module reconnects automatically as needed.
                     # socket_timeout is not set to a higher value because it blocks.
                 except redis.exceptions.ConnectionError as e:
-                    print "except"
+                    print("except")
                     if self.logger:
                         self.logger.debug("Connection error {}".format(e))
                     time.sleep(1)
@@ -314,7 +314,7 @@ class Database:
                     break
                 except redis.sentinel.MasterNotFoundError as e:
                     # Pause for specified time
-                    print "try %d" % attempts
+                    print("try %d" % attempts)
                     time.sleep(ATTEMPT_PAUSE)
             else:
                 self._raise_ConnectionError(e)
@@ -337,7 +337,7 @@ class Database:
                     break
                 except redis.sentinel.SlaveNotFoundError as e:
                     # Pause for specified time
-                    print "try %d" % attempts
+                    print("try %d" % attempts)
                     time.sleep(ATTEMPT_PAUSE)
             else:
                 self._raise_ConnectionError(e)
@@ -437,7 +437,7 @@ class Database:
         # Retrieve values
         values = self.redis.mget(keys)
 
-        return (dict(zip(keys,values)) if return_dict else values)
+        return (dict(list(zip(keys,values))) if return_dict else values)
 
     # def mget(self, keys, return_dict=False):
     #     """
@@ -510,7 +510,7 @@ class Database:
         # self.logger.debug("{} mapping:{}".format(tools.cm_name(), mapping))
 
         # Get the mapping ready
-        mapping = {k: str(v) for k, v in mapping.items()}
+        mapping = {k: str(v) for k, v in list(mapping.items())}
 
         # Set in redis
         self.redis.mset(mapping)
@@ -973,7 +973,7 @@ def main():
     the commandline
     """
 
-    print "main"
+    print("main")
 
     # commandline_args = get_commandline()
     # print commandline_args
@@ -997,7 +997,7 @@ def main():
         # print RC.get("foo")
         # RC.set("foo", counter)
         # print RC.get_message(ps)
-        print RC.lpush("fool", "bar%d" % counter)
+        print(RC.lpush("fool", "bar%d" % counter))
         
         counter += 1
 

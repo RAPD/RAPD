@@ -28,7 +28,7 @@ import time
 from functools import wraps
 import threading
 import pprint
-import Queue
+import queue
 
 __version__ = "1.0.1"
 
@@ -55,7 +55,7 @@ class SentinelWatcher(threading.Thread):
                  password=False,
                  on_error=None):
 
-        print "SentinelWatcher.__init__ host:%s port:%d name:%s password:%s" % (host,port,name,password)
+        print("SentinelWatcher.__init__ host:%s port:%d name:%s password:%s" % (host,port,name,password))
 
         threading.Thread.__init__(self)
         self.host = host
@@ -70,7 +70,7 @@ class SentinelWatcher(threading.Thread):
 
     def run(self):
 
-        print "SentinelWatcher.run"
+        print("SentinelWatcher.run")
 
         # Connect to sentinel
         self.sentinel = redis.Redis(self.host,self.port)
@@ -88,7 +88,7 @@ class SentinelWatcher(threading.Thread):
                 if self.on_error:
                     self.on_error()
 
-        print "Exiting SentinelWatcher main loop"
+        print("Exiting SentinelWatcher main loop")
 
 class SentinelListener(threading.Thread):
     """
@@ -103,7 +103,7 @@ class SentinelListener(threading.Thread):
                  password=False,
                  on_master=None):
 
-        print "SentinelListener.__init__ host:%s port:%d name:%s password:%s" % (host,port,name,password)
+        print("SentinelListener.__init__ host:%s port:%d name:%s password:%s" % (host,port,name,password))
 
         threading.Thread.__init__(self)
         self.host = host
@@ -118,7 +118,7 @@ class SentinelListener(threading.Thread):
 
     def run(self):
 
-        print "SentinelListener.run"
+        print("SentinelListener.run")
 
         # Connect to sentinel
         self.sentinel = redis.Redis(self.host,self.port)
@@ -134,11 +134,11 @@ class SentinelListener(threading.Thread):
                 # print "[SentinelListener]",time.time(),message
                 if message["channel"] == "+switch-master":
                     name,old_ip,old_port,new_ip,new_port = message["data"].split()
-                    print "NEW MASTER"
+                    print("NEW MASTER")
                     if self.on_master:
                         self.on_master()
             time.sleep(0.1)
-        print "Exiting SentinelListener main loop"
+        print("Exiting SentinelListener main loop")
 
 
 class PipelineConnection(redis.client.StrictPipeline):
@@ -155,7 +155,7 @@ def executePipelineCommand(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         nodeFunc = getattr(self.get_pipeline_connection(), func.__name__)
-        print nodeFunc,args,kwargs
+        print(nodeFunc,args,kwargs)
         try:
             return nodeFunc(*args, **kwargs)
         except redis.ConnectionError:
@@ -185,12 +185,12 @@ def executeRedisPubsubCommand(func):
             return nodeFunc(*args, **kwargs)
         # This is error observed from loss of connection from get_message
         except AttributeError:
-            print "AttributeError"
+            print("AttributeError")
             return None
 
         #master_conn is down or has gone down in the middle of this transaction
         except (redis.ConnectionError):
-            print "redis.ConnectionError"
+            print("redis.ConnectionError")
             return None
 
     return wrapper
@@ -215,31 +215,31 @@ def executeRedisCommand(func):
 
         # master_conn is not up
         except (AttributeError):
-            print "AttributeError"
+            print("AttributeError")
             if self.status == "starting":
-                print "Still in startup"
+                print("Still in startup")
                 # Stash the command
-                print "Stashing %s" % (str((func.__name__,args,kwargs)))
+                print("Stashing %s" % (str((func.__name__,args,kwargs))))
                 self.command_queue.put((func.__name__,args,kwargs),False)
             elif self.status == "down":
-                print "Connection down"
+                print("Connection down")
                 # Stash the command
-                print "Stashing %s" % (str((func.__name__,args,kwargs)))
+                print("Stashing %s" % (str((func.__name__,args,kwargs))))
                 self.command_queue.put((func.__name__,args,kwargs),False)
             return False
 
         # master_conn is down or has gone down in the middle of this transaction
         except (redis.ConnectionError):
-            print "redis.ConnectionError",self.status
+            print("redis.ConnectionError",self.status)
             if self.status == "down":
-                print "Connection is down"
+                print("Connection is down")
                 # Stash the command
-                print "Stashing %s" % (str((func.__name__,args,kwargs)))
+                print("Stashing %s" % (str((func.__name__,args,kwargs))))
                 self.command_queue.put((func.__name__,args,kwargs),False)
             elif self.status == "up":
-                print "Connection went down"
+                print("Connection went down")
                 # Stash the command
-                print "Stashing %s" % (str((func.__name__,args,kwargs)))
+                print("Stashing %s" % (str((func.__name__,args,kwargs))))
                 self.command_queue.put((func.__name__,args,kwargs),False)
             return False
 
@@ -258,7 +258,7 @@ class RedisManager():
         self.verbose = verbose
 
         if self.verbose:
-            print "RedisManager.__init__"
+            print("RedisManager.__init__")
 
         self.sentinel_host =   False
         self.sentinel_port =   False
@@ -274,7 +274,7 @@ class RedisManager():
         self.sentinel_listener = False
         self.status =            "starting" #starting,up,down
 
-        self.command_queue = Queue.Queue(MAXSIZE)
+        self.command_queue = queue.Queue(MAXSIZE)
 
         # If passed in sentinel information, add it
         if (sentinel_host and sentinel_port):
@@ -292,8 +292,8 @@ class RedisManager():
                      master_password="foobared"):
 
         if self.verbose:
-            print "RedisManager.add_sentinel host:%s port:%d name:%s pass:%s" % (
-                  master_password,sentinel_port,master_name,master_password)
+            print("RedisManager.add_sentinel host:%s port:%d name:%s pass:%s" % (
+                  master_password,sentinel_port,master_name,master_password))
 
         # Save sentinel info
         self.sentinel_host =    sentinel_host
@@ -307,8 +307,8 @@ class RedisManager():
         # Make sure it is a sentinel
         s_info = self.sentinel.info()
         if s_info["redis_mode"] != "sentinel":
-            print "Error - %s:%d is not a sentinel instance" % (sentinel_host,
-                  sentinel_port)
+            print("Error - %s:%d is not a sentinel instance" % (sentinel_host,
+                  sentinel_port))
             raise redis.ConnectionError("%s:%d is not a sentinel instance" %
                   (host,port))
 
@@ -346,15 +346,15 @@ class RedisManager():
     def get_sentinel_info(self):
 
         if self.verbose:
-            print "RedisManager.get_sentinel_info"
+            print("RedisManager.get_sentinel_info")
 
         if not self.sentinel:
-            raise(AttributeError("RedisManager has no sentinel"))
+            raise AttributeError
 
         try:
             sentinel_info = self.sentinel.info()
         except redis.exceptions.ConnectionError:
-            print "Cannot contact sentinel"
+            print("Cannot contact sentinel")
             status = self.connect_to_alternate_sentinel()
             if status:
                 return self.get_sentinel_info()
@@ -366,10 +366,10 @@ class RedisManager():
     def connect_to_alternate_sentinel(self):
 
         if self.verbose:
-            print "RedisManager.connect_to_alternate_sentinel"
+            print("RedisManager.connect_to_alternate_sentinel")
 
         if not self.sentinel:
-            raise(AttributeError("RedisManager has no sentinel"))
+            raise AttributeError
 
         status = False
 
@@ -386,10 +386,10 @@ class RedisManager():
     def get_alternate_sentinels(self):
 
         if self.verbose:
-            print "RedisManager.get_alternate_sentinels"
+            print("RedisManager.get_alternate_sentinels")
 
         if not self.sentinel:
-            raise(AttributeError("RedisManager has no sentinel"))
+            raise AttributeError
 
         self.sentinels = []
         try:
@@ -408,7 +408,7 @@ class RedisManager():
         instance
         """
 
-        print "RedisManager.on_master_down"
+        print("RedisManager.on_master_down")
 
         # Set the status
         if self.status != "down":
@@ -422,17 +422,17 @@ class RedisManager():
                 try:
                     status = self.reconnect_master_connection()
                 except redis.ConnectionError:
-                    print "Error connecting to master. Will try %d more times" % (RECONNECT_TRIES-counter)
+                    print("Error connecting to master. Will try %d more times" % (RECONNECT_TRIES-counter))
                     status = False
                 if status:
-                    print "Reconnected - breaking loop"
+                    print("Reconnected - breaking loop")
                     break
 
                 counter += 1
                 time.sleep(RECONNECT_PAUSE)
 
             if self.status == "down":
-                print "Unable to reconnect after %d seconds" % (RECONNECT_PAUSE*RECONNECT_TRIES)
+                print("Unable to reconnect after %d seconds" % (RECONNECT_PAUSE*RECONNECT_TRIES))
 
 
 
@@ -443,7 +443,7 @@ class RedisManager():
         """
 
         if self.verbose:
-            print "RedisManager.reconnect_master_connection"
+            print("RedisManager.reconnect_master_connection")
 
         # Look for pubsub subscriptions
         patterns = False
@@ -458,13 +458,13 @@ class RedisManager():
         self.master_conn = False
 
         if not self.sentinel:
-            raise(AttributeError("RedisManager has no sentinel"))
+            raise AttributeError
 
         # Get the master address from the sentinel
         try:
             master_address = self.sentinel.sentinel_get_master_addr_by_name(self.master_name)
         except redis.exceptions.ConnectionError:
-            print "Cannot contact sentinel"
+            print("Cannot contact sentinel")
             status = self.connect_to_alternate_sentinel()
             if status:
                 return self.get_master_connection()
@@ -472,7 +472,7 @@ class RedisManager():
                 raise redis.exceptions.ConnectionError("Cannot connect to alternate sentinel instance")
 
         # Connect to master
-        print "Connecting to master"
+        print("Connecting to master")
         if self.master_password:
             self.master_conn = RedisConnection(master_address[0],master_address[1],password=self.master_password)
         else:
@@ -480,25 +480,25 @@ class RedisManager():
         try:
             self.master_conn.ping()
         except redis.ConnectionError:
-            print "Cannot connect to master"
+            print("Cannot connect to master")
             self.master_conn = False
             self.status = "down"
             raise redis.ConnectionError
 
         # Make pubsub connection
-        print "Connecting to pubsub"
+        print("Connecting to pubsub")
         self.pubsub_conn = PubsubConnection(connection_pool=self.master_conn.connection_pool)
         #                                    ignore_subscribe_messages=True)
 
 
         # Resubscribe
         if patterns:
-            for pattern, handler in patterns.iteritems():
-                print pattern, handler
+            for pattern, handler in patterns.items():
+                print(pattern, handler)
                 self.psubscribe(pattern, handler)
         if channels:
-            for channel, handler in channels.iteritems():
-                print channel, handler
+            for channel, handler in channels.items():
+                print(channel, handler)
                 self.psubscribe(channel, handler)
 
         self.status = "up"
@@ -509,7 +509,7 @@ class RedisManager():
             while not self.command_queue.empty():
                 # Get a command FIFO
                 command = self.command_queue.get(False)
-                print ">>>",command,"<<<"
+                print(">>>",command,"<<<")
                 func = getattr(self, command[0])
                 func(*command[1],**command[2])
 
@@ -519,7 +519,7 @@ class RedisManager():
     def get_master_connection(self):
 
         if self.verbose:
-            print "RedisManager.get_master_connection"
+            print("RedisManager.get_master_connection")
 
         # Have a connection - return it
         if self.status == "up":
@@ -547,7 +547,7 @@ class RedisManager():
         """
 
         if self.verbose:
-            print "RedisManager.get_pubsub_connection"
+            print("RedisManager.get_pubsub_connection")
 
         # Have a connection - return it
         if self.status == "up":
@@ -576,7 +576,7 @@ class RedisManager():
         """
 
         if self.verbose:
-            print "RedisManager.close"
+            print("RedisManager.close")
 
         # Stop the sentinel_watcher and then join the thread
         self.sentinel_watcher.GO = False
@@ -1665,9 +1665,9 @@ class RedisManager():
 
 if __name__ == "__main__":
 
-  print "Testing pysent v%s" % __version__
-  print "----------------"+"-"*len(__version__)
-  print "Usage: pysent.py [host] [port] [name] [password]\n"
+  print("Testing pysent v%s" % __version__)
+  print("----------------"+"-"*len(__version__))
+  print("Usage: pysent.py [host] [port] [name] [password]\n")
 
   host = "127.0.0.1"
   port = 36379
@@ -1684,15 +1684,15 @@ if __name__ == "__main__":
     name = args[3]
   if len(args) == 5:
     password = args[4]
-  print "Will connect to %s at %s on port %d" % (name,host,port)
+  print("Will connect to %s at %s on port %d" % (name,host,port))
 
   Manager = RedisManager(verbose=True)
   Manager.add_sentinel(host,port,name,password)
 
-  print dir(Manager)
+  print(dir(Manager))
 
-  print Manager.set("test","foo1")
-  print Manager.get("test")
+  print(Manager.set("test","foo1"))
+  print(Manager.get("test"))
 
   #PS = Manager.get_pubsub_connection()
   Manager.psubscribe("*")
@@ -1701,9 +1701,9 @@ if __name__ == "__main__":
   while True:
       message = Manager.get_message()
       if message:
-          print message
+          print(message)
       time.sleep(1)
-  print "Exited loop"
+  print("Exited loop")
 
   sys.exit(0)
 

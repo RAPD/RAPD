@@ -332,7 +332,7 @@ def print_sites(left_buffer=""):
     sites = utils.site.get_site_files()
 
     for site in sites:
-        print left_buffer + os.path.basename(site)
+        print(left_buffer + os.path.basename(site))
 
 def print_detectors(left_buffer="", show_py=False):
     """
@@ -346,7 +346,7 @@ def print_detectors(left_buffer="", show_py=False):
         else:
             detector_name = os.path.basename(detector)
 
-        print left_buffer + detector_name
+        print(left_buffer + detector_name)
 
 def analyze_data_sources(sources,
                          mode="index",

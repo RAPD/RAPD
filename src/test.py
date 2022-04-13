@@ -122,7 +122,7 @@ def clear_cluster():
             #    l.append(split[0])
             
     for pid in l:
-        print pid
+        print(pid)
         os.system('qdel %s'%pid)
 
 
@@ -912,7 +912,7 @@ process_distl_server()
 """
 url = "http://164.54.212.32:8125/spotfinder/distl.signal_strength?distl.image=/gpfs6/users/necat/rapd2/pair/2021-02-21/KH02_2_FL_CHL27_PAIR:1+2/KH02_2_FL_CHL27_PAIR_0_000001.cbf&distl.bins.verbose=False&distl.res.outer=3.0&distl.res.inner=30.0"
 url = url.replace("+", "%2b")
-print url
+print(url)
 
 """
 #ram_path = '/epu/rdma/gpfs2/users/necat/necat_E_4938/images/Surajit/snaps/NE20_2_1000mm_PAIR_0_000002/NE20_2_1000mm_PAIR_0_000002.cbf'

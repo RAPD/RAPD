@@ -287,7 +287,7 @@ def ParseOutputLabelit(self, inp, iteration=0):
     # Check for errors
     for line_number, line in enumerate(inp):
         tmp.append(line)
-        print line
+        print(line)
 
         if len(line) > 1:
             if line.startswith('distl_minimum_number_spots'):
@@ -2364,12 +2364,12 @@ def ParseOutputXtriage_NEW(self,inp):
           for i in range(2,4):
             if len(temp[line+i].split()) > 0:
               law = temp[line+i].split()[1]
-              if twin_info.has_key(law):
+              if law in twin_info:
                 twin_info[law].update({'sg':sg})
         except:
           self.logger.exception('Warning. Missing Coset info.')
     else:
-        for key in twin_info.keys():
+        for key in list(twin_info.keys()):
             twin_info[key].update({'sg':'NA'})
 
   for line in junk[10:20]:
@@ -2562,13 +2562,13 @@ def ParseOutputXtriage(self,inp):
           for i in range(2,4):
             if len(temp[line+i].split()) > 0:
               law = temp[line+i].split()[1]
-              if twin_info.has_key(law):
+              if law in twin_info:
                 twin_info[law].update({'sg':sg})
         except:
           self.logger.exception('Warning. Missing Coset info.')
     else:
       crap = {'sg':'NA'}
-      for key in twin_info.keys():
+      for key in list(twin_info.keys()):
         twin_info[key].update(crap)
   for line in junk[10:20]:
     if len(line.split()) == 7:
@@ -2883,13 +2883,13 @@ def parse_xtriage_output(raw_output):
                 for i in range(2, 4):
                     if len(output_lines[line+i].split()) > 0:
                         law = output_lines[line+i].split()[1]
-                        if twin_info.has_key(law):
+                        if law in twin_info:
                             twin_info[law].update({"sg":sg})
                 #   except:
                 #     self.logger.exception("Warning. Missing Coset info.")
         else:
             crap = {"sg":"NA"}
-            for key in twin_info.keys():
+            for key in list(twin_info.keys()):
                 twin_info[key].update(crap)
 
 
@@ -3852,7 +3852,7 @@ def ParseOutputXOalign(self,log):
     if line.count('Solutions for Datum positions:'):
       #alignment.append(line[line.find(':')+1:-1].strip(' ').split(',  '))
       a = line[line.find(':')+1:-1].strip(' ').split(',  ')
-      if conv.keys().count(a[0]):
+      if list(conv.keys()).count(a[0]):
         a1 = []
         for axis in a:
           a1.append(conv[axis])

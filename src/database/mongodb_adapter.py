@@ -76,11 +76,11 @@ def get_object_id(value):
 def traverse_and_objectidify(input_object):
     """Traverses an object and looks for object_ids to turn into ObjectIds"""
 
-    print "traverse_and_objectidify"
+    print("traverse_and_objectidify")
     pprint(input_object)
 
     if isinstance(input_object, dict):
-        for key, val in input_object.iteritems():
+        for key, val in input_object.items():
             if isinstance(val, str):
                 if isinstance(key, str):
                     if "_id" in key:
@@ -377,7 +377,7 @@ class Database(object):
         plugin_result["timestamp"] = now
 
         # Make sure we are all ObjectIds - _ids in process dict
-        for key, val in plugin_result["process"].iteritems():
+        for key, val in plugin_result["process"].items():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
 
@@ -862,7 +862,7 @@ class Database(object):
     def retrieve_file(self, result_id=False, description=False, hash=False):
         """Retrieve & return a file from gridFS"""
         
-        print "retrieve_file result_id=%s description=%s hash=%s" % (result_id, description, hash)
+        print("retrieve_file result_id=%s description=%s hash=%s" % (result_id, description, hash))
 
         self.logger.debug("retrieve_file result_id=%s description=%s hash=%s", result_id, description, hash)
 
@@ -912,7 +912,7 @@ class Database(object):
 
 if __name__ == "__main__":
 
-    print "rapd_mongodb_adapter.py.__main__"
+    print("rapd_mongodb_adapter.py.__main__")
 
     test_dict = {
         "_id":"59e627aa799305396a42f1fc",
@@ -927,7 +927,7 @@ if __name__ == "__main__":
     }
 
     pprint(test_dict)
-    print "\n"
+    print("\n")
     res_dict = traverse_and_objectidify(test_dict)
     print("\n")
     pprint(res_dict)

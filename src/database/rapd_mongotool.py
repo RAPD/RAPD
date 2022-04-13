@@ -53,7 +53,7 @@ def check_database_connection(mongouri):
     mongouri -- the MongoDB connection string in URI format
     """
 
-    print "Checking the RAPD database connection for %s" % mongouri
+    print("Checking the RAPD database connection for %s" % mongouri)
 
     try:
         client = pymongo.MongoClient(mongouri)
@@ -61,16 +61,16 @@ def check_database_connection(mongouri):
 
         db = client.rapd
 
-        print text.green+"  Able to connect to MongoDB"+text.stop
+        print(text.green+"  Able to connect to MongoDB"+text.stop)
 
     # Cannot connect
     except pymongo.errors.ServerSelectionTimeoutError as error:
         # print error
         # print(dir(error))
         if "Host is down" in error.message:
-            print text.red+"Unable to connect to MongoDB at %s:%s - host is down" % (hostname, port)+text.stop
+            print(text.red+"Unable to connect to MongoDB at %s:%s - host is down" % (hostname, port)+text.stop)
         elif "Connection refused" in error.message:
-            print text.red+"Unable to connect to MongoDB at %s:%s - port could be wrong" % (hostname, port)+text.stop
+            print(text.red+"Unable to connect to MongoDB at %s:%s - port could be wrong" % (hostname, port)+text.stop)
 
         sys.exit(9)
 
@@ -89,7 +89,7 @@ def check_database_version(mongouri):
     mongouri -- the MongoDB connection string in URI format
     """
 
-    print "Checking the RAPD database version"
+    print("Checking the RAPD database version")
 
     client = pymongo.MongoClient(mongouri)
 
@@ -103,7 +103,7 @@ def check_database_version(mongouri):
     # Naive db
     except TypeError as error:
         if error.message.startswith("'Collection' object is not callable. If you meant to call th"):
-            print text.blue+"Looks like a new installation of RAPD database"+text.stop
+            print(text.blue+"Looks like a new installation of RAPD database"+text.stop)
         return 0
 
 # def create_version_collection(hostname, port, username, password):
@@ -294,8 +294,8 @@ def main():
     Orchestrate command-line running
     """
 
-    print "\nrapd_create_mongodb.py v%s" % CURRENT_VERSION
-    print "============================="
+    print("\nrapd_create_mongodb.py v%s" % CURRENT_VERSION)
+    print("=============================")
 
     # Get the host information
     args = get_commandline()
@@ -310,19 +310,19 @@ def main():
 
     # No versioning found
     if database_version in (0, None):
-        print "  No versioning found"
+        print("  No versioning found")
         # perform_naive_install(hostname, port, username, password)
 
     # Version is current
     elif database_version == CURRENT_VERSION:
-        print text.green+"  RAPD database version %s is current." % database_version + text.stop
+        print(text.green+"  RAPD database version %s is current." % database_version + text.stop)
         # For Development
         # perform_naive_install(hostname, port, username, password)
 
     if args.add_group:
-        print "Adding a group..."
-        groupname = raw_input("  Name: ")
-        institution = raw_input("  Institution: ")
+        print("Adding a group...")
+        groupname = input("  Name: ")
+        institution = input("  Institution: ")
 
         new_group = {
             "created":     datetime.datetime.now(),
@@ -334,13 +334,13 @@ def main():
 
     # Add a user
     if args.add_user:
-        print "Adding a user..."
+        print("Adding a user...")
 
-        username = raw_input("  Name: ")
-        email = raw_input("  Email: ")
-        group = raw_input("  Group: ")
-        role = raw_input("  Role (site_admin, group_admin, user): ")
-        password = raw_input("  Password: ")
+        username = input("  Name: ")
+        email = input("  Email: ")
+        group = input("  Group: ")
+        role = input("  Role (site_admin, group_admin, user): ")
+        password = input("  Password: ")
 
         # Password encryption
         hashed = bcrypt.hashpw(password, bcrypt.gensalt(14))
@@ -363,7 +363,7 @@ def main():
 
     # Version is not understood
     else:
-        print text.error+"RAPD database version %s is NOT understood." % database_version + text.stop
+        print(text.error+"RAPD database version %s is NOT understood." % database_version + text.stop)
 
 if __name__ == '__main__':
 

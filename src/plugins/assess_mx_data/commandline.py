@@ -119,7 +119,7 @@ def construct_command(commandline_args):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Launch assess_mx_data plugin"
@@ -307,7 +307,7 @@ def main():
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
-    for key, val in environmental_vars.iteritems():
+    for key, val in environmental_vars.items():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
@@ -321,7 +321,7 @@ def main():
     site = False
     if commandline_args.site:
         site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
+    elif "RAPD_SITE" in environmental_vars:
         site = environmental_vars["RAPD_SITE"]
 
     # Construct the command

@@ -355,7 +355,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Read header from Rayonix MX300HS"

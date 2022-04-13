@@ -24,7 +24,7 @@ __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjpy@anl.gov"
 __status__ = "Development"
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from multiprocessing import Process
 from utils.processes import local_subprocess
@@ -48,7 +48,7 @@ def process_distl_server(IP,
     # Pass "+" signs correctly
     url = url.replace("+", "%2b")
     # Run URL and get response
-    response = urllib2.urlopen(url)
+    response = urllib.request.urlopen(url)
     raw = response.read()
     response.close()
     # Save out as logfile

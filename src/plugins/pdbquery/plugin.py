@@ -66,7 +66,7 @@ from utils.text import json
 import utils.xutils as xutils
 from utils.processes import local_subprocess, mp_pool, mp_manager
 
-import info
+from . import info
 
 # NE-CAT REST PDB server
 PDBQ_SERVER = rglobals.PDBQ_SERVER
@@ -279,7 +279,7 @@ class RapdPlugin(Thread):
 
     def update_status(self):
         """Update the status of the run."""
-        iter = 90/len(self.cell_output.keys())
+        iter = 90/len(list(self.cell_output.keys()))
         self.status += iter
         if self.status > 90:
             self.status = 90
@@ -414,7 +414,7 @@ class RapdPlugin(Thread):
         # Query the server for information and add to self.cell_output
         cif_check = self.repository.check_for_pdbs(self.command["input_data"].get("pdbs"))
         self.cell_output.update(cif_check)
-        self.custom_structures = cif_check.keys()
+        self.custom_structures = list(cif_check.keys())
 
     def query_pdbq(self):
         """
@@ -454,8 +454,8 @@ class RapdPlugin(Thread):
 
         def limit_pdbq_results(pdbq_results, limit):
             """Filter repeats out of query"""
-            entries_beyond_limit = pdbq_results.keys()[:limit+1]
-            for p in pdbq_results.keys():
+            entries_beyond_limit = list(pdbq_results.keys())[:limit+1]
+            for p in list(pdbq_results.keys()):
                 if p in entries_beyond_limit:
                     del pdbq_results[p]
             return pdbq_results
@@ -507,7 +507,7 @@ class RapdPlugin(Thread):
 
             # Handle results
             if pdbq_results:
-                for line in pdbq_results.keys():
+                for line in list(pdbq_results.keys()):
                     # Remove anything bigger than 4 letters
                     if len(line) > 4:
                         del pdbq_results[line]
@@ -534,16 +534,16 @@ class RapdPlugin(Thread):
             # Test mode = only one PDB
             if self.test:
                 my_pdbq_results = {
-                    pdbq_results.keys()[0]: pdbq_results[pdbq_results.keys()[0]],
-                    pdbq_results.keys()[1]: pdbq_results[pdbq_results.keys()[1]],
-                    pdbq_results.keys()[2]: pdbq_results[pdbq_results.keys()[2]],
+                    list(pdbq_results.keys())[0]: pdbq_results[list(pdbq_results.keys())[0]],
+                    list(pdbq_results.keys())[1]: pdbq_results[list(pdbq_results.keys())[1]],
+                    list(pdbq_results.keys())[2]: pdbq_results[list(pdbq_results.keys())[2]],
                     }
                 pdbq_results = my_pdbq_results
-            self.search_results = pdbq_results.keys()
+            self.search_results = list(pdbq_results.keys())
             self.cell_output.update(pdbq_results)
 
             self.tprint("  %d relevant PDB files found on the PDBQ server" % \
-                        len(pdbq_results.keys()),
+                        len(list(pdbq_results.keys())),
                         level=50,
                         color="white")
         else:
@@ -565,7 +565,7 @@ class RapdPlugin(Thread):
 
         # Save these codes in a separate list so they can be separated in the Summary.
         common_contaminants = info.CONTAMINANTS.copy()
-        self.common_contaminants = common_contaminants.keys()
+        self.common_contaminants = list(common_contaminants.keys())
 
         # Remove PDBs from self.common if they were already caught by unit cell dimensions.
         for contaminant in self.common_contaminants:
@@ -576,10 +576,10 @@ class RapdPlugin(Thread):
         # Test mode = only one PDB
         if self.test:
             my_contaminants = {
-                common_contaminants.keys()[0]: common_contaminants[common_contaminants.keys()[0]]
+                list(common_contaminants.keys())[0]: common_contaminants[list(common_contaminants.keys())[0]]
                 }
             common_contaminants = my_contaminants
-            self.common_contaminants = common_contaminants.keys()
+            self.common_contaminants = list(common_contaminants.keys())
 
         # Put contaminants in list to be screened
         self.tprint("  %d contaminants added to screen" % len(common_contaminants),
@@ -627,7 +627,7 @@ class RapdPlugin(Thread):
                               }
 
         # Run through the pdbs
-        for pdb_code in self.cell_output.keys():
+        for pdb_code in list(self.cell_output.keys()):
 
             self.tprint("    %s" % pdb_code, level=30, color="white")
 
@@ -675,8 +675,8 @@ class RapdPlugin(Thread):
                                             matthews=True,
                                             chains=True)
                     # Prune if only one chain present, b/c "all" and "A" will be the same.
-                    if len(pdb_info.keys()) == 2:
-                        for key in pdb_info.keys():
+                    if len(list(pdb_info.keys())) == 2:
+                        for key in list(pdb_info.keys()):
                             if key != "all":
                                 del pdb_info[key]
                     copy = pdb_info["all"]["NMol"]
@@ -685,7 +685,7 @@ class RapdPlugin(Thread):
                     # If pdb_info["all"]["res"] == 0.0:
                     if pdb_info["all"]["SC"] < 0.2:
                         # Only run on chains that will fit in the AU.
-                        l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
+                        l = [chain for chain in list(pdb_info.keys()) if pdb_info[chain]["res"] != 0.0]
     
                 # More mols in AU
                 elif float(self.laue) < float(lg_pdb):
@@ -978,7 +978,7 @@ class RapdPlugin(Thread):
 
         timed_out = False
         timer = 0
-        jobs = self.jobs.keys()
+        jobs = list(self.jobs.keys())
 
         # Run loop to see when jobs finish
         while len(jobs):
@@ -1002,7 +1002,7 @@ class RapdPlugin(Thread):
         if timed_out:
             if self.verbose:
                 self.logger.debug('PDBQuery timed out.')
-            for job in self.jobs.keys():
+            for job in list(self.jobs.keys()):
                 if self.computer_cluster:
                     # Kill job on cluster:
                     self.computer_cluster.kill_job(self.jobs[job].get('pid'))
@@ -1082,7 +1082,7 @@ class RapdPlugin(Thread):
             """Calculate the ongest field in a set of results"""
             longest_field = 0
             for pdb_code in pdb_codes:
-                if self.cell_output.has_key(pdb_code):
+                if pdb_code in self.cell_output:
                     length = len(self.cell_output[pdb_code]["description"])
                     if length > longest_field:
                         longest_field = length
@@ -1136,7 +1136,7 @@ class RapdPlugin(Thread):
 
                 # Run through the codes
                 for pdb_code in pdb_codes:
-                    if self.phaser_results.has_key(pdb_code):
+                    if pdb_code in self.phaser_results:
                         # Get the result in question
                         my_result = self.phaser_results[pdb_code]["results"]
     
@@ -1150,7 +1150,7 @@ class RapdPlugin(Thread):
         
          # If running in JSON mode, print to terminal
         if self.preferences.get("run_mode") == "json":
-            print json_results
+            print(json_results)
 
         # Output to terminal?
         #if self.preferences.get("json", False):

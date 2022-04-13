@@ -103,18 +103,18 @@ class INP2DICT(object):
                     if key not in exp_deps:
                         xds_dict[key] = value
 
-        print "XDSINP = {"
-        for key, val in xds_dict.iteritems():
-            print "    \"%s\": \"%s\"," % (key, str(val))
+        print("XDSINP = {")
+        for key, val in xds_dict.items():
+            print("    \"%s\": \"%s\"," % (key, str(val)))
 
-        print "    }"
+        print("    }")
 
         # The OrderedDict
-        print "XDSINP =  OrderedDict(["
-        for key, val in xds_dict.iteritems():
-            print "    (\"%s\", \"%s\")," % (key, str(val))
+        print("XDSINP =  OrderedDict([")
+        for key, val in xds_dict.items():
+            print("    (\"%s\", \"%s\")," % (key, str(val)))
 
-        print "    ])"
+        print("    ])")
         # with open(self.xdsdict, "w") as file:
         #     json.dump(xds_dict, file)
 

@@ -162,13 +162,13 @@ def main():
     site = False
     if commandline_args.site:
         site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
+    elif "RAPD_SITE" in environmental_vars:
         site = environmental_vars["RAPD_SITE"]
 
     # If no site, error
     if site == False:
         #print text.error+"Could not determine a site. Exiting."+text.stop
-        print "Could not determine a site. Exiting."
+        print("Could not determine a site. Exiting.")
         sys.exit(9)
 
     # Determine the site_file
@@ -177,7 +177,7 @@ def main():
     # Error out if no site_file to import
     if site_file == False:
         #print text.error+"Could not find a site file. Exiting."+text.stop
-        print "Could not find a site file. Exiting."
+        print("Could not find a site file. Exiting.")
         sys.exit(9)
 
     # Import the site settings

@@ -573,7 +573,7 @@ def summaryShelx(self):
     for p in l:
       shelxd +='%13s<th>%s</th>\n'%('',p)
     shelxd +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
-    for line in self.shelxd_dict.keys():
+    for line in list(self.shelxd_dict.keys()):
       inv_sg = Utils.convertSG(self,Utils.checkInverse(self,Utils.convertSG(self,line))[0],True)
       if self.shelx_nosol == False:
         if self.shelx_sg in (line,inv_sg):
@@ -750,7 +750,7 @@ def summaryXtriage(self):
       for p in l:
         xtriage +='%13s<th>%s</th>\n'%('',p)
       xtriage +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-      peaks = xtriage_pat.keys()
+      peaks = list(xtriage_pat.keys())
       peaks.sort()
       for i in range(len(peaks)):
         if xtriage_pts:
@@ -763,7 +763,7 @@ def summaryXtriage(self):
           xtriage +='%13s<td>%s</td>\n'%('',p)
         xtriage +='%11s</tr>\n'%''
       xtriage +="%9s</tbody>\n%7s</table>\n" % ('','')
-      if len(xtriage_pts_info.keys()) != 0:
+      if len(list(xtriage_pts_info.keys())) != 0:
         xtriage +='%7s<h4 class="results">If the observed pseudo-translationals are crystallographic, then the following info is possible.</h4>\n'%''
         xtriage +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="xtriage_pts">\n'%''
         xtriage +='%9s<thead align="left">\n%11s<tr>\n'%('','')
@@ -771,7 +771,7 @@ def summaryXtriage(self):
         for p in l:
           xtriage +='%13s<th>%s</th>\n'%('',p)
         xtriage +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-        for key in xtriage_pts_info.keys():
+        for key in list(xtriage_pts_info.keys()):
           xtriage +='%11s<tr class="gradeD">\n'%''
           l = [xtriage_pts_info[key].get('space group'),xtriage_pts_info[key].get('operator'),xtriage_pts_info[key].get('cell')]
           for p in l:
@@ -790,7 +790,7 @@ def summaryXtriage(self):
         for p in l:
           xtriage +='%13s<th>%s</th>\n'%('',p)
         xtriage +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-        for law in xtriage_twin_info.keys():
+        for law in list(xtriage_twin_info.keys()):
           l = [law,xtriage_twin_info[law].get('type'),xtriage_twin_info[law].get('axis'),xtriage_twin_info[law].get('sg'),
                xtriage_twin_info[law].get('r_obs'),xtriage_twin_info[law].get('britton'),xtriage_twin_info[law].get('h-test'),
                xtriage_twin_info[law].get('ml')]
@@ -837,7 +837,7 @@ def summaryMolrep(self):
       for p in l:
         molrep +='%13s<td>%s</td>\n'%('',p)
       molrep +='%11s</tr>\n'%''
-      peaks = molrep_pk.keys()
+      peaks = list(molrep_pk.keys())
       peaks.remove('origin')
       peaks.sort()
       for x in range(len(peaks)):
@@ -889,7 +889,7 @@ def summaryCell(self,inp='phaser'):
     for i in range(2):
       f = []
       p = []
-      for k in self.phaser_results.keys():
+      for k in list(self.phaser_results.keys()):
         if i == 0:
           for r in l2:
             if k.count(r):
@@ -1060,7 +1060,7 @@ def summaryCell(self,inp='phaser'):
       percent = str(self.percent*100)
     opdb  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
     #Get keys from pdbs that actually ran thru Phaser
-    if self.phaser_results.keys() == ['None']:
+    if list(self.phaser_results.keys()) == ['None']:
       opdb +='%7s<h4 class="results">There are no structures in the PDB with similar unit cell dimensions</h4>\n'%''
     else:
       if inp == 'pdbquery':
@@ -1071,7 +1071,7 @@ def summaryCell(self,inp='phaser'):
           opdb +='%7s<h4 class="results">There are no structures deposited in the PDB with unit cell dimensions within +- %s %%</h4>\n'%('',percent)
       else:
         tncs = False
-        for sg in self.phaser_results.keys():
+        for sg in list(self.phaser_results.keys()):
           if self.phaser_results[sg].get('AutoMR results').get('AutoMR tNCS'):
             tncs = True
         if tncs:
@@ -1089,7 +1089,7 @@ def summaryCell(self,inp='phaser'):
         opdb +='%13s<th>%s</th>\n'%('',p)
       opdb +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
       #For cell analysis
-      keys = self.phaser_results.keys()
+      keys = list(self.phaser_results.keys())
       if inp == 'phaser':
         keys = self.phaser_jobs
         keys.sort()
@@ -1186,7 +1186,7 @@ def summaryCell_OLD(self,inp='phaser'):
     if self.percent:
       percent = str(self.percent*100)
     #Get keys from pdbs that actually ran thru Phaser
-    if self.phaser_results.keys() != ['None']:
+    if list(self.phaser_results.keys()) != ['None']:
       opdb  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
       if inp != 'phaser':
         if percent:
@@ -1198,7 +1198,7 @@ def summaryCell_OLD(self,inp='phaser'):
           opdb +='%7s<h4 class="results">Structures with similar unit cell dimensions</h4>\n'%''
       else:
         tncs = False
-        for sg in self.phaser_results.keys():
+        for sg in list(self.phaser_results.keys()):
           if self.phaser_results[sg].get('AutoMR results').get('AutoMR tNCS'):
             tncs = True
         if tncs:
@@ -1216,7 +1216,7 @@ def summaryCell_OLD(self,inp='phaser'):
         opdb +='%13s<th>%s</th>\n'%('',p)
       opdb +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
       #For cell analysis
-      keys = self.phaser_results.keys()
+      keys = list(self.phaser_results.keys())
       if inp == 'phaser':
         keys = self.phaser_jobs
         keys.sort()
@@ -1227,7 +1227,7 @@ def summaryCell_OLD(self,inp='phaser'):
       elif inp == 'pdbquery':
         f = []
         p = []
-        for r in self.phaser_results.keys():
+        for r in list(self.phaser_results.keys()):
           if self.phaser_results[r]['AutoMR results']['AutoMR gain'] in ('No solution','Timed out','NA','DL Failed'):
             f.append(r)
           else:
@@ -1422,7 +1422,7 @@ def summarySTAC_OLD(self):
     d = {'(1.0;0.0;0.0)':'a*','(0.0;1.0;0.0)':'b*','(0.0;0.0;1.0)':'c*'}
     for v in ('v1','v2'):
       for x,line in enumerate(eval(v)):
-        for d1 in (d.keys()):
+        for d1 in (list(d.keys())):
           if line.startswith(d1):
             eval(v).remove(line)
             eval(v).insert(x,d[d1])
@@ -1557,7 +1557,7 @@ def summaryXOalign(self):
   for p in l1:
     xoalign +='%13s<th>%s</th>\n'%('',p)
   xoalign +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
-  k = self.xoalign_results.keys()
+  k = list(self.xoalign_results.keys())
   for x in range(len(k)):
     if len(self.xoalign_results[k[x]].get('solution')) == 1:
       xoalign +='%11s<tr class="gradeC">\n'%''
@@ -1618,7 +1618,7 @@ def summaryLabelitBC(self):
   pprint(self.labelit_results)
 
   try:
-    if self.labelit_results.has_key('best'):
+    if 'best' in self.labelit_results:
       x = 2
     else:
       x = 1
@@ -1724,7 +1724,7 @@ def summaryLabelitBC(self):
     labelit +='            </tr>\n'
     labelit +='          </thead>\n'
     labelit +='          <tbody align="center">\n'
-    runs = self.labelit_results.keys()
+    runs = list(self.labelit_results.keys())
     for run in runs:
       if run.startswith('bc'):
         if type(self.labelit_results[run].get("labelit_results")) == dict:

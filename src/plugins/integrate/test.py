@@ -47,7 +47,7 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import plugin
+from . import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""

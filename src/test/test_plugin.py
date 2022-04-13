@@ -198,12 +198,12 @@ def run_rapd_phaser(work_dir, logfile=False):
     
     #Thread(target=run_phaser_pdbquery, kwargs=job_description).start()
     job, pid, output_id = run_phaser(**job_description)
-    print job
+    print(job)
     #print job.ready()
     while not job.ready():
-        print 'sleeping...'
+        print('sleeping...')
         time.sleep(1)
-    print job.successful()
+    print(job.successful())
     #print dir(job)
     #print pid
     #print job.get()
@@ -224,7 +224,7 @@ def run_calc_ADF(work_dir, logfile=False):
     adf_results = xutils.calc_ADF_map(data_file=data_file,
                                mtz=mtz,
                                pdb=pdb)
-    print adf_results
+    print(adf_results)
     
 def get_logger(log_path):
     """Setup logger for plugin"""

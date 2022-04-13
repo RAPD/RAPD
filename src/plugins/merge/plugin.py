@@ -74,7 +74,7 @@ from cctbx.sgtbx import space_group_symbols
 from scipy.cluster.hierarchy import linkage, dendrogram, to_tree
 #from hcluster import linkage, dendrogram
 
-import cPickle as pickle  # For storing dicts as pickle files for later use
+import pickle as pickle  # For storing dicts as pickle files for later use
 
 # RAPD imports
 #import plugins.assess_integrated_data.plugin as assess_integrated_data_plugin
@@ -85,7 +85,7 @@ import utils.commandline_utils as commandline_utils
 # import utils
 import utils.credits as credits
 import utils.text as rtext
-import info
+from . import info
 
 # Software dependencies
 VERSIONS = {
@@ -138,7 +138,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
     strict
     user_spacegroup
     """
-    print 'HCMerge::Joining of %s using pointless.' % str(in_files)
+    print('HCMerge::Joining of %s using pointless.' % str(in_files))
     command = []
     command.append('pointless hklout '+out_file +
                    '_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
@@ -160,7 +160,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
     comfile = open(out_file+'_pointless.sh', 'w')
     comfile.writelines(command)
     comfile.close()
-    os.chmod('./'+out_file+'_pointless.sh', 0755)
+    os.chmod('./'+out_file+'_pointless.sh', 0o755)
     # p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
     p = subprocess.Popen(cmd_prefix+' ./'+out_file+'_pointless.sh',
                          shell=True,
@@ -174,7 +174,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
             pass
 #            print 'HCMerge::Error Messages from %s pointless log. %s' % (out_file, str(p))
         if any(x in p[1] for x in pointless_error):
-            print 'HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files)
+            print('HCMerge::Different symmetries. Placing %s in best spacegroup.' % str(in_files))
             for hklin in in_files:
                 cmd = []
                 cmd.append('pointless hklin '+hklin +
@@ -186,7 +186,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE).communicate()
             if 'WARNING: Cannot combine reflection lists with different symmetry' in p[1]:
-                print 'HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files)
+                print('HCMerge::Still different symmetries after best spacegroup.  Reducing %s to P1.' % str(in_files))
                 for hklin in in_files:
                     cmd = []
                     hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
@@ -198,7 +198,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
                     cmdfile = open('p1_pointless.sh', 'w')
                     cmdfile.writelines(cmd)
                     cmdfile.close()
-                    os.chmod('./p1_pointless.sh', 0755)
+                    os.chmod('./p1_pointless.sh', 0o755)
                     p1 = subprocess.Popen('p1_pointless.sh',
                                           shell=True,
                                           stdout=subprocess.PIPE,
@@ -219,7 +219,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
         if line.startswith('FATAL ERROR'):
             # Go to the next line for error message
             if 'ERROR: cannot decide on which Laue group to select\n' in plog[num+1]:
-                print 'HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.'
+                print('HCMerge::Cannot automatically choose a Laue group.  Forcing solution 1.')
                 for num, itm in enumerate(command):
                     if itm == 'eof\n':
                         command.insert(num, 'choose solution 1\n')
@@ -233,7 +233,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE).wait()
             if 'ERROR: cannot combine files belonging to different crystal systems' in plog[num+1]:
-                print 'HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files)
+                print('HCMerge:: Forcing P1 due to different crystal systems in %s.' % str(in_files))
                 for hklin in in_files:
                     cmd = []
                     hklout = hklin.rsplit('.', 1)[0]+'p1.mtz'
@@ -245,7 +245,7 @@ def combine(in_files, out_file, cmd_prefix, strict, force, user_spacegroup):
                     cmdfile = open('p1_pointless.sh', 'w')
                     cmdfile.writelines(cmd)
                     cmdfile.close()
-                    os.chmod('./p1_pointless.sh', 0755)
+                    os.chmod('./p1_pointless.sh', 0o755)
                     p1 = subprocess.Popen('p1_pointless.sh',
                                           shell=True,
                                           stdout=subprocess.PIPE,
@@ -474,7 +474,7 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 pkl_file = self.datasets
                 self.rerun(pkl_file)
-        except ValueError, Argument:
+        except ValueError as Argument:
             self.logger.error('HCMerge::Failure to Run.')
             self.logger.exception(Argument)
 
@@ -639,7 +639,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("Process: Calculating CCs.")
         # grab intensity arrays from either combined mtz in strict mode or individual HKL pairs in sloppy
         if self.strict:
-            for pair in self.id_list.keys():
+            for pair in list(self.id_list.keys()):
                 self.results[pair] = {}
                 if os.path.isfile(pair+'_pointless.mtz'):
                     # First, get batch information from pointless mtz file
@@ -656,12 +656,12 @@ class RapdPlugin(multiprocessing.Process):
                             'HCMerge::%s_pointless.mtz has only one run. CC defaults to 0.' % pair)
                         self.results[pair]['CC'] = 0
         if self.metric == 'UC':
-            for pair in self.id_list.keys():
+            for pair in list(self.id_list.keys()):
                 self.results[pair] = {}
                 self.results[pair]['CC'] = self.get_cc_cell(self.id_list[pair])
                 self.logger.debug('Correlation by Unit Cell Variation of %s: %s' % (pair, str(self.results[pair]['CC'])))
         else:
-            for pair in self.id_list.keys():
+            for pair in list(self.id_list.keys()):
                 self.results[pair] = {}
                 int_array1,int_array2 = self.get_int(self.id_list[pair])
                 self.results[pair]['CC'] = self.get_cc(int_array1, int_array2)
@@ -986,7 +986,7 @@ class RapdPlugin(multiprocessing.Process):
         comfile = open(in_file+'_aimless.sh', 'w')
         comfile.writelines(command)
         comfile.close()
-        os.chmod(in_file+'_aimless.sh', 0755)
+        os.chmod(in_file+'_aimless.sh', 0o755)
         p = subprocess.Popen(self.cmd_prefix+' ./'+in_file+'_aimless.sh',
                              shell=True,
                              stdout=subprocess.PIPE,
@@ -1044,7 +1044,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint('Process::Generate Relationship Matrix using method %s' % method)
         self.logger.info('HCMerge::make_matrix using method %s' % method)
         Y = []  # The list of distances, our equivalent of pdist
-        for pair in self.id_list.keys():
+        for pair in list(self.id_list.keys()):
             # grab keys with stats of interest, but ensure that keys go in numerical order
             cc = 1 - self.results[pair]['CC']
             Y.append(cc)
@@ -1078,7 +1078,7 @@ class RapdPlugin(multiprocessing.Process):
                 # Dict holding clusters using node ID as key
                 most_wedges[cnt] = [int(item[0]), int(item[1])], item[2]
         # iteratively go through dict values and reduce to original leaves
-        for i in most_wedges.values():
+        for i in list(most_wedges.values()):
             # use set because it is faster than list
             while set(i[0]).intersection(set(node_list.keys())):
                 self.replace_wedges(i[0], node_list)
@@ -1101,7 +1101,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::Replace Wedges: %s' % wedges)
         for count, item in enumerate(wedges):
-            if item in node_dict.keys():
+            if item in list(node_dict.keys()):
                 wedges[count] = node_dict[item][0]
                 wedges.append(node_dict[item][1])
         return wedges
@@ -1149,7 +1149,7 @@ class RapdPlugin(multiprocessing.Process):
                 self.merged_files.append(new_prefix)
         else:
             #in_files, out_file, cmd_prefix, strict, force, user_spacegroup
-            pool_arguments.append((next(wedge_files.itervalues())[0], self.prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup))
+            pool_arguments.append((next(iter(wedge_files.values()))[0], self.prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup))
             r = pool.map(combine_wrapper, pool_arguments)
             #combine_all = combine(self.data_files, self.prefix, self.cmd_prefix, self.strict, self.force, self.user_spacegroup)
                 
@@ -1160,9 +1160,9 @@ class RapdPlugin(multiprocessing.Process):
             self.graphs[self.prefix], self.results[self.prefix] = aimless.parse_aimless(
                 self.prefix+'_scaled.log')
             self.results[self.prefix]['files'] = next(
-                wedge_files.itervalues())[0]
+                iter(wedge_files.values()))[0]
             self.results[self.prefix]['CC'] = 1 - \
-                next(wedge_files.itervalues())[1]
+                next(iter(wedge_files.values()))[1]
             self.merged_files.append(self.prefix)
 
     def make_dendrogram(self, matrix, resolution):
@@ -1225,14 +1225,14 @@ class RapdPlugin(multiprocessing.Process):
             wedges[key] = value
         
         # Create an array of keys to put file strings in proper numerical order
-        wedge_keys =  wedges.keys()
+        wedge_keys =  list(wedges.keys())
 #        wedge_keys = self.id_list.keys()
         wedge_keys.sort(key=lambda x: int(x))
         # print wedge_keys
 
         # Figure out the longest wedge name
         longest = 0
-        for file_name in wedges.values():
+        for file_name in list(wedges.values()):
             length = len(file_name)
             if length > longest:
                 longest = length
@@ -1350,7 +1350,7 @@ class RapdPlugin(multiprocessing.Process):
                     row.append(self.results[file][item])
             table.append(row)
         # flip columns and rows since rows are so long
-        table = zip(*table)
+        table = list(zip(*table))
         out_file = self.prefix + '.log'
         out = open(out_file, 'w')
         table_print = MakeTables()
@@ -1379,7 +1379,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::UnPickling Dicts')
         tmp = pickle.load(open(file, 'rb'))
-        for itm, val in tmp.iteritems():
+        for itm, val in tmp.items():
             setattr(self, itm, val)
 
     def rerun(self, pkl_file):
@@ -1431,7 +1431,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Output to terminal?
         if self.settings.get("json", True):
-            print json_string
+            print(json_string)
 
         # Always write a file
         os.chdir(self.dirs['work'])
@@ -1514,9 +1514,9 @@ class MakeTables:
 
         for row in table:
             # left col
-            print >> out, row[0].ljust(col_paddings[0] + 1),
+            print(row[0].ljust(col_paddings[0] + 1), end=' ', file=out)
             # rest of the cols
             for i in range(1, len(row)):
                 col = str(row[i]).rjust(col_paddings[i] + 2)
-                print >> out, col,
-            print >> out
+                print(col, end=' ', file=out)
+            print(file=out)

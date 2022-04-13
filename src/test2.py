@@ -284,12 +284,12 @@ job_description = {
 
 #Thread(target=run_phaser_pdbquery, kwargs=job_description).start()
 job, pid, output_id = run_phaser(**job_description)
-print job
+print(job)
 #print job.ready()
 while not job.ready():
-    print 'sleeping...'
+    print('sleeping...')
     time.sleep(1)
-print job.successful()
+print(job.successful())
 #print dir(job)
 #print pid
 #print job.get()

@@ -1,6 +1,6 @@
 
 # Standard imports
-from __future__ import division
+
 import os
 import re
 import struct
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         test_image = sys.argv[1]
-        print "Have image input from command line %s" % test_image
+        print("Have image input from command line %s" % test_image)
 
     header = read_header(test_image)
     import pprint

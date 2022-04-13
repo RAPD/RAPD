@@ -163,7 +163,7 @@ def read_header(image,
         # "size2": 2527}
         }
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         # print label
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
@@ -221,7 +221,7 @@ def main(args):
     tmp_dir = False
 
     if test_image.endswith(".h5"):
-        print "HDF5 file  - converting"
+        print("HDF5 file  - converting")
 
         tmp_dir = tempfile.mkdtemp()
 

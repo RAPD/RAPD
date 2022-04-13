@@ -30,7 +30,7 @@ import importlib
 import json
 # import multiprocessing
 from multiprocessing import Process, Queue
-from Queue import Queue as tqueue
+from queue import Queue as tqueue
 import os
 from pprint import pprint
 import random
@@ -439,9 +439,9 @@ def run_phaser_OLD(data_file,
     """
 
     if phaser:
-        print "Have phaser module"
+        print("Have phaser module")
     else:
-        print "Missing phaser module"
+        print("Missing phaser module")
         return False
 
     # Change to work_dir
@@ -529,14 +529,14 @@ def run_phaser_OLD(data_file,
         r = phaser.runMR_AUTO(i)
         if r.Success():
             if r.foundSolutions():
-                print "Phaser has found MR solutions"
+                print("Phaser has found MR solutions")
                 #print "Top LLG = %f" % r.getTopLLG()
                 #print "Top PDB file = %s" % r.getTopPdbFile()
             else:
-                print "Phaser has not found any MR solutions"
+                print("Phaser has not found any MR solutions")
         else:
-            print "Job exit status FAILURE"
-            print r.ErrorName(), "ERROR :", r.ErrorMessage()
+            print("Job exit status FAILURE")
+            print(r.ErrorName(), "ERROR :", r.ErrorMessage())
 
         with open('phaser.log', 'w') as log:
             log.write(r.logfile())
@@ -546,7 +546,7 @@ def run_phaser_OLD(data_file,
             log.close()
 
     for i in  dir(r):
-        print i
+        print(i)
 
     if r.foundSolutions():
         rfz = None
@@ -623,7 +623,7 @@ def run_phaser_OLD(data_file,
                          "message": "No solution"}
 
     # Print the result so it can be seen in the rapd._phaser.log if needed
-    print phaser_result
+    print(phaser_result)
 
     # Key should be deleted once received, but set the key to expire in 24 hours just in case.
     redis.setex(output_id, 86400, json.dumps(phaser_result))
@@ -666,9 +666,9 @@ def run_phaser_module(data_file,
     """
 
     if phaser:
-        print "Have phaser module"
+        print("Have phaser module")
     else:
-        print "Missing phaser module"
+        print("Missing phaser module")
         return False
 
     # Change to work_dir
@@ -756,14 +756,14 @@ def run_phaser_module(data_file,
         r = phaser.runMR_AUTO(i)
         if r.Success():
             if r.foundSolutions():
-                print "Phaser has found MR solutions"
+                print("Phaser has found MR solutions")
                 #print "Top LLG = %f" % r.getTopLLG()
                 #print "Top PDB file = %s" % r.getTopPdbFile()
             else:
-                print "Phaser has not found any MR solutions"
+                print("Phaser has not found any MR solutions")
         else:
-            print "Job exit status FAILURE"
-            print r.ErrorName(), "ERROR :", r.ErrorMessage()
+            print("Job exit status FAILURE")
+            print(r.ErrorName(), "ERROR :", r.ErrorMessage())
 
         with open('phaser.log', 'w') as log:
             log.write(r.logfile())
@@ -773,7 +773,7 @@ def run_phaser_module(data_file,
             log.close()
 
     for i in  dir(r):
-        print i
+        print(i)
 
     if r.foundSolutions():
         rfz = None
@@ -850,7 +850,7 @@ def run_phaser_module(data_file,
                          "message": "No solution"}
 
     # Print the result so it can be seen in the rapd._phaser.log if needed
-    print phaser_result
+    print(phaser_result)
 
     # Key should be deleted once received, but set the key to expire in 24 hours just in case.
     redis.setex(output_id, 86400, json.dumps(phaser_result))
@@ -976,8 +976,8 @@ def run_phaser_shell(data_file,
     # p.wait()
     stdout, stderr = p.communicate()
 
-    print stdout
-    print stderr
+    print(stdout)
+    print(stderr)
 
     # Parse
     phaser_output = parse_phaser_output(stdout.split("\n"))
@@ -1135,16 +1135,16 @@ def run_phaser_module_ORIG(data_file,
         i0.setMUTE(True)
         # i0.setVERB(True)
         r1 = phaser.runNCS(i0)
-        print dir(r1)
-        print r1.logfile()
+        print(dir(r1))
+        print(r1.logfile())
         # for l in r1.loggraph():
         #    print l
-        print r1.loggraph().size()
-        print r1.output_strings
+        print(r1.loggraph().size())
+        print(r1.output_strings)
         #print r1.hasTNCS()
         #print r1.summary()
-        print r1.warnings()
-        print r1.ErrorMessage()
+        print(r1.warnings())
+        print(r1.ErrorMessage())
         #print r1.getCentricE4()
         if r1.Success():
             return(r1.loggraph())
@@ -1160,9 +1160,9 @@ def run_phaser_module_ORIG(data_file,
         i0.setREFL_DATA(r.getDATA())
         i0.setMUTE(True)
         r1 = phaser.runANO(i0)
-        print r1.loggraph().__dict__.keys()
-        print r1.loggraph().size()
-        print r1.logfile()
+        print(list(r1.loggraph().__dict__.keys()))
+        print(r1.loggraph().size())
+        print(r1.logfile())
         """
         o = phaser.Output()
         redirect_str = StringIO()
@@ -1171,7 +1171,7 @@ def run_phaser_module_ORIG(data_file,
         """
 
         if r1.Success():
-            print 'SUCCESS'
+            print('SUCCESS')
             return(r1)
 
     # MAIN
@@ -1292,9 +1292,9 @@ def run_phaser_module_OLD(data_file, inp=False):
         i0.setMUTE(True)
         # i0.setVERB(True)
         r1 = phaser.runNCS(i0)
-        print r1.logfile()
-        print r1.loggraph().size()
-        print r1.loggraph().__dict__.keys()
+        print(r1.logfile())
+        print(r1.loggraph().size())
+        print(list(r1.loggraph().__dict__.keys()))
         #print r1.getCentricE4()
         if r1.Success():
             return(r1)
@@ -1310,9 +1310,9 @@ def run_phaser_module_OLD(data_file, inp=False):
         i0.setREFL_DATA(r.getDATA())
         i0.setMUTE(True)
         r1 = phaser.runANO(i0)
-        print r1.loggraph().__dict__.keys()
-        print r1.loggraph().size()
-        print r1.logfile()
+        print(list(r1.loggraph().__dict__.keys()))
+        print(r1.loggraph().size())
+        print(r1.logfile())
         """
         o = phaser.Output()
         redirect_str = StringIO()
@@ -1321,7 +1321,7 @@ def run_phaser_module_OLD(data_file, inp=False):
         """
 
         if r1.Success():
-            print 'SUCCESS'
+            print('SUCCESS')
             return(r1)
 
     # Setup which modules are run
@@ -1381,7 +1381,7 @@ def get_target_resolution_module(data_file, structure_file):
     Returns the phaser target resolution using the shell to call phaser
     """
 
-    print "get_target_resolution_module", data_file, structure_file
+    print("get_target_resolution_module", data_file, structure_file)
 
     # Handle multiple reflection file types
     column_labels = {
@@ -1474,4 +1474,4 @@ def get_target_resolution(data_file, structure_file):
 if __name__ == "__main__":
 
     target_resolution = get_target_resolution("thaum1_01s-01d_1_free.mtz", "5fgx.cif")
-    print "target_resolution: %d" % target_resolution
+    print("target_resolution: %d" % target_resolution)

@@ -536,7 +536,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         #figure out which host we are on
         host = os.uname()[1]
         #now grab the file locations, beamline from settings
-        if settings.has_key(host):
+        if host in settings:
             self.marcollect,self.xf_status,self.beamline = settings[host]
         else:
             self.marcollect,self.xf_status,self.beamline = settings['default']
@@ -764,7 +764,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                             self.beamline))
             self.connection.commit()
 
-        except _mysql_exceptions.IntegrityError , (errno, strerror):
+        except _mysql_exceptions.IntegrityError as xxx_todo_changeme:
+            (errno, strerror) = xxx_todo_changeme.args
             if errno == 1062:
                 self.logger.exception('This run_status is already in the database')
                 if self.beamline == 'T':
@@ -803,7 +804,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
             else:
                 self.logger.exception('ERROR : unknown IntegrityError exception in Database::AddMarcollect')
 
-        except _mysql_exceptions.OperationalError , (errno, strerror):
+        except _mysql_exceptions.OperationalError as xxx_todo_changeme1:
+            (errno, strerror) = xxx_todo_changeme1.args
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
                 self.Connect2SQL()
@@ -815,7 +817,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
 
         #add the runs even if we have an error with adding the marcollect
         results = []
-        for run in data['Runs'].keys():
+        for run in list(data['Runs'].keys()):
             results.append(self.AddRun(data['Runs'][run]))
 
         if True in results:
@@ -870,7 +872,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
             self.connection.commit()
             return(True)
 
-        except _mysql_exceptions.IntegrityError , (errno, strerror):
+        except _mysql_exceptions.IntegrityError as xxx_todo_changeme2:
+            (errno, strerror) = xxx_todo_changeme2.args
             if errno == 1062:
                 self.logger.exception('Run is already in the database')
                 if self.beamline == 'T':
@@ -917,7 +920,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                 self.logger.exception('ERROR : unknown IntegrityError exception in RAPD_ADSC_Server::AddRun')
             return(False)
 
-        except _mysql_exceptions.OperationalError , (errno, strerror):
+        except _mysql_exceptions.OperationalError as xxx_todo_changeme3:
+            (errno, strerror) = xxx_todo_changeme3.args
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
                 self.Connect2SQL()
@@ -1074,13 +1078,15 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                               self.beamline))
             self.connection.commit()
 
-        except _mysql_exceptions.IntegrityError , (errno, strerror):
+        except _mysql_exceptions.IntegrityError as xxx_todo_changeme4:
+            (errno, strerror) = xxx_todo_changeme4.args
             if errno == 1062:
                 self.logger.exception('xf_status is already in the database')
             else:
                 self.logger.exception('ERROR : unknown IntegrityError exception in RAPD_ADSC_Server::AddXFStatus')
 
-        except _mysql_exceptions.OperationalError , (errno, strerror):
+        except _mysql_exceptions.OperationalError as xxx_todo_changeme5:
+            (errno, strerror) = xxx_todo_changeme5.args
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
                 self.Connect2SQL()

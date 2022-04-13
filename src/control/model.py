@@ -247,7 +247,7 @@ class Model(object):
         if hasattr(self.site, 'ALT_IMAGE_LOCATION') and hasattr(self.site, 'ALT_IMAGE_SERVER_NAME'):
             self.logger.debug("Starting image path server")
             self.alt_image_path_server = {}
-            for site_id in self.detectors.keys():
+            for site_id in list(self.detectors.keys()):
                 if hasattr(self.detectors[site_id], self.site.ALT_IMAGE_SERVER_NAME):
                     self.alt_image_path_server[site_id] = eval('self.detectors[site_id].%s()'%self.site.ALT_IMAGE_SERVER_NAME)
 
@@ -384,11 +384,11 @@ class Model(object):
     def send_command(self, command, channel="RAPD_JOBS"):
         """Send a command over redis for processing"""
 
-        print "send_command"
+        print("send_command")
         pprint(command)
 
         self.redis.lpush(channel, json.dumps(command))
-        print "Command sent"
+        print("Command sent")
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
@@ -461,7 +461,7 @@ class Model(object):
                 if place_in_run == 1:
                     # Grab extra data for the image and add to the header
                     if self.site_adapter:
-                        if self.site_adapter.settings.has_key(site_tag.upper()):
+                        if site_tag.upper() in self.site_adapter.settings:
                             site_data = self.site_adapter.get_image_data(site_tag.upper())
                         else:
                             site_data = self.site_adapter.get_image_data()
@@ -537,7 +537,7 @@ class Model(object):
 
             # Grab extra data for the image and add to the header
             if self.site_adapter:
-                if self.site_adapter.settings.has_key(site_tag.upper()):
+                if site_tag.upper() in self.site_adapter.settings:
                     site_data = self.site_adapter.get_image_data(site_tag.upper())
                 else:
                     site_data = self.site_adapter.get_image_data()
@@ -599,7 +599,7 @@ class Model(object):
         """
 
         # Look in local store of information
-        for run_id, run in self.recent_runs.iteritems():
+        for run_id, run in self.recent_runs.items():
             if run_data.get("run_id", 0) == run_id:
                 if boolean:
                     return True
@@ -639,7 +639,7 @@ class Model(object):
         """
 
         # Query local runs in reverse chronological order
-        for run_id, run in self.recent_runs.iteritems():
+        for run_id, run in self.recent_runs.items():
             # print 'run_id:%s'%run_id
             # print 'run: %s'%run
             #self.logger.debug('run_id:%s'%run_id)
@@ -831,7 +831,7 @@ class Model(object):
             if self.site.ALT_IMAGE_LOCATION:
                 fn = False
                 if self.alt_image_path_server:
-                    if self.alt_image_path_server.has_key(tag):
+                    if tag in self.alt_image_path_server:
                         if hasattr(self.alt_image_path_server[tag], 'get_alt_path'):
                             fn = self.alt_image_path_server[tag].get_alt_path(inp.get('fullname'))
                 else:

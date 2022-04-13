@@ -247,7 +247,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug("connect_to_redis_old")
 
-        print "Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST
+        print("Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST)
 
         # Create a pool connection
         pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
@@ -357,7 +357,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("handle_return")
 
         run_mode = self.preferences.get("run_mode")
-        print "run_mode", run_mode
+        print("run_mode", run_mode)
 
         # Print results to the terminal
         if run_mode == "interactive":
@@ -393,7 +393,7 @@ class RapdPlugin(multiprocessing.Process):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Test echo plugin"
@@ -428,7 +428,7 @@ def main(args):
 def test_fetch():
     """Test fetch_data function"""
 
-    print "Testing fetch_data plugin function"
+    print("Testing fetch_data plugin function")
 
     # Create an object to spoof site
     import types
@@ -452,26 +452,26 @@ def test_fetch():
     # Test no dir no filename
     filename = P.fetch_data(result_id="test", description="xdsascii_hkl")
     if filename:
-        print "Successful fetch to file %s" % filename
+        print("Successful fetch to file %s" % filename)
     else:
-        print "FAILURE"
+        print("FAILURE")
 
     # Test no filename
     filename = P.fetch_data(result_id="test", description="xdsascii_hkl", output_dir="foo")
     if filename:
-        print "Successful fetch to file %s" % filename
+        print("Successful fetch to file %s" % filename)
     else:
-        print "FAILURE"
+        print("FAILURE")
 
-    print "Now we should get an error"
+    print("Now we should get an error")
     filename = P.fetch_data(description="xdsascii_hkl", output_dir="foo")
 
     # Test no filename
     filename = P.fetch_data(result_id="test", description="xdsascii_hkl", output_dir="foo", output_file="bar.hkl")
     if filename:
-        print "Successful fetch to file %s" % filename
+        print("Successful fetch to file %s" % filename)
     else:
-        print "FAILURE"
+        print("FAILURE")
 
 if __name__ == "__main__":
 

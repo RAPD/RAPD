@@ -32,8 +32,8 @@ def color(requested_color="default"):
     return getattr(main_module, requested_color)
 
 
-aring = unichr(197).encode('utf-8')
-deg = unichr(176).encode('utf-8')
+aring = chr(197).encode('utf-8')
+deg = chr(176).encode('utf-8')
 
 class json(object):
     """Provide methods like the systme json, but wrapped for rapd"""
@@ -53,10 +53,10 @@ if __name__ == "__main__":
 
     input_obj = {1:ObjectId('111111111111111111111111'),2:OrderedDict({1:'one'})}
 
-    print "input object:", input_obj
+    print("input object:", input_obj)
 
     d_res = json.dumps(input_obj)
-    print "\ndumped string:", d_res
+    print("\ndumped string:", d_res)
 
     l_res = json.loads(d_res)
-    print "\nloaded object:", l_res
+    print("\nloaded object:", l_res)

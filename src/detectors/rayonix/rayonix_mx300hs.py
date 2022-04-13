@@ -77,7 +77,7 @@ if __name__ == "__main__":
     # Commandline for image
     if len(sys.argv) > 1:
         test_image = sys.argv[1]
-        print "Image read from command line %s" % test_image
+        print("Image read from command line %s" % test_image)
 
 
     header = read_header(test_image)

@@ -47,7 +47,7 @@ from distutils.spawn import find_executable
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import plugin
+from . import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
@@ -177,7 +177,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Parse image file header"
@@ -216,7 +216,7 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print("main")
 
     if args.verbose:
         verbosity = 2

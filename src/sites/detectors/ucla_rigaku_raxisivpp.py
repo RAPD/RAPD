@@ -189,7 +189,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Parse image file header"
@@ -222,7 +222,7 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print("main")
 
     if args.file:
         test_image = os.path.abspath(args.file)

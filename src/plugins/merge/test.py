@@ -51,7 +51,7 @@ from distutils.version import LooseVersion, StrictVersion
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
-import plugin
+from . import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""

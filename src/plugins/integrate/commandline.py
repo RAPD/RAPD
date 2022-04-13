@@ -316,7 +316,7 @@ def main():
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
-    for key, val in environmental_vars.iteritems():
+    for key, val in environmental_vars.items():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
@@ -335,7 +335,7 @@ def main():
 
     # List detectors?
     if commandline_args.listdetectors:
-        print "\n" + text.info + "Available detectors:" + text.stop
+        print("\n" + text.info + "Available detectors:" + text.stop)
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
 
@@ -372,7 +372,7 @@ def main():
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
+    elif "RAPD_SITE" in environmental_vars:
         site = environmental_vars["RAPD_SITE"]
 
     if commandline_args.detector:
@@ -398,13 +398,13 @@ def main():
     if not detector:
         detector = detector_utils.get_detector_file(data_files["data_files"][0])
         if isinstance(detector, dict):
-            if detector.has_key("site"):
+            if "site" in detector:
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
                 site_module = importlib.import_module(site_file)
                 detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
-            elif detector.has_key("detector"):
+            elif "detector" in detector:
                 site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
@@ -442,7 +442,7 @@ def main():
 
     logger.debug("First image header: %s", image_0_data)
     tprint(arg="\nFirst image header", level=10, color="blue")
-    keys = image_0_data.keys()
+    keys = list(image_0_data.keys())
     keys.sort()
     tprint(arg="  %s" % image_0_data["fullname"], level=10, color="white")
     for key in keys:
@@ -455,7 +455,7 @@ def main():
 
     logger.debug("Run data: %s", run_data)
     tprint(arg="\nRun data", level=10, color="blue")
-    keys = run_data.keys()
+    keys = list(run_data.keys())
     keys.sort()
     for key in keys:
         tprint(arg="    arg:%-22s  val:%s" % (key, run_data[key]), level=10, color="white")

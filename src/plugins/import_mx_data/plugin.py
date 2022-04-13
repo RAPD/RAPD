@@ -63,7 +63,7 @@ from distutils.spawn import find_executable
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as rcredits
-import info
+from . import info
 from utils import exceptions
 
 # Software dependencies
@@ -117,7 +117,7 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint = tprint
         # Dead end if no tprint passed
         else:
-            def func(*args, *kwargs):
+            def func(*args, **kwargs):
                 pass
             self.tprint = func
 
@@ -245,7 +245,7 @@ class RapdPlugin(multiprocessing.Process):
 
             # Output to terminal?
             if self.preferences.get("json", False):
-                print json_string
+                print(json_string)
 
             # Always write a file
             os.chdir(self.working_dir)
@@ -265,7 +265,7 @@ class RapdPlugin(multiprocessing.Process):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Test import_mx_data plugin"

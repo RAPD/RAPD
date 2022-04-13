@@ -32,7 +32,7 @@ import shutil
 import time
 
 # RAPD imports
-import parse as Parse
+from . import parse as Parse
 from utils.communicate import rapd_send
 from utils.modules import load_module
 import utils.xutils as Utils
@@ -82,7 +82,7 @@ class LabelitPP(Process):
         self.multiproc = True
         # For rerunning Labelit when it does not index correctly with a pair.
         self.cycle = 0
-        if self.input[0].has_key("run"):
+        if "run" in self.input[0]:
             #Variables I call in more than one place
             self.total = self.input[0].get("run").get("total")
             #For determining detector type. Should move to rapd_site probably.
@@ -389,10 +389,10 @@ class LabelitPP(Process):
         self.logger.debug("Total elapsed time: %s seconds" % t)
         self.logger.debug("-------------------------------------")
         if self.output == None:
-            print "\n-------------------------------------"
-            print "RAPD labelit.precession_photo complete."
-            print "Total elapsed time: %s seconds" % t
-            print "-------------------------------------"
+            print("\n-------------------------------------")
+            print("RAPD labelit.precession_photo complete.")
+            print("Total elapsed time: %s seconds" % t)
+            print("-------------------------------------")
 
     def run_queue(self, run_before=False):
         """
@@ -404,7 +404,7 @@ class LabelitPP(Process):
             timed_out = False
             timer = 0
             rerun = False
-            jobs = self.pp_jobs.keys()
+            jobs = list(self.pp_jobs.keys())
             if jobs != ["None"]:
                 counter = len(jobs)
                 while counter != 0:
@@ -425,7 +425,7 @@ class LabelitPP(Process):
                     if self.output == None:
                         if self.verbose:
                             if round(timer%1, 1) in (0.0, 1.0):
-                                print "Waiting for Labelit.precession_photo to finish %s seconds"%timer
+                                print("Waiting for Labelit.precession_photo to finish %s seconds"%timer)
                     if self.labelitpp_timer:
                         if timer >= self.labelitpp_timer:
                             timed_out = True
@@ -435,8 +435,8 @@ class LabelitPP(Process):
                 if timed_out:
                     if self.verbose:
                         self.logger.debug("Labelitpp timed out.")
-                        print "Labelitpp timed out."
-                    for pid in self.pids.values():
+                        print("Labelitpp timed out.")
+                    for pid in list(self.pids.values()):
                         # TODO
                         if False: # self.cluster_use:
                             pass
@@ -473,7 +473,7 @@ class LabelitPP(Process):
         sg_dict = {}
         sym = "0"
         try:
-            for run in self.labelit_results.keys():
+            for run in list(self.labelit_results.keys()):
                 if type(self.labelit_results[run].get("labelit_results")) == dict:
                     # Check for pseudotranslation
                     if self.labelit_results[run].get("labelit_results").get("pseudotrans") == True:
@@ -494,10 +494,10 @@ class LabelitPP(Process):
                 if sg_list1[x] == numpy.amax(sg_list1):
                     # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
                     if str(sg_list1[x]) == "1.0":
-                        sol_dict[rms_list1[x]] = self.labelit_results.keys()[x]
+                        sol_dict[rms_list1[x]] = list(self.labelit_results.keys())[x]
                     else:
-                        sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
-            l = sol_dict.keys()
+                        sol_dict[metric_list1[x]] = list(self.labelit_results.keys())[x]
+            l = list(sol_dict.keys())
             l.sort()
             #Best Labelit_results key
             highest = sol_dict[l[0]]
@@ -539,14 +539,14 @@ class LabelitPP(Process):
         if self.verbose:
             self.logger.debug("LabelitPP::print_info")
         try:
-            print "======================="
-            print "RAPD developed using Labelit"
-            print "Reference:  J. Appl. Cryst. 37, 399-409 (2004)"
-            print "Website:    http://adder.lbl.gov/labelit/ \n"
-            print "RAPD developed using Mosflm"
-            print "Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26"
-            print "Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/"
-            print "======================="
+            print("=======================")
+            print("RAPD developed using Labelit")
+            print("Reference:  J. Appl. Cryst. 37, 399-409 (2004)")
+            print("Website:    http://adder.lbl.gov/labelit/ \n")
+            print("RAPD developed using Mosflm")
+            print("Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26")
+            print("Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/")
+            print("=======================")
             self.logger.debug("=======================")
             self.logger.debug("RAPD developed using Labelit")
             self.logger.debug("Reference:  J. Appl. Cryst. 37, 399-409 (2004)")

@@ -51,7 +51,7 @@ from distutils.spawn import find_executable
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
-import plugin
+from . import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
@@ -93,9 +93,11 @@ def compare_results(result1, result2, tprint):
 
     # A little example
     tprint("    DISTL", 10, "white")
-    assert result1["results"]["distl_results"]["good Bragg spots"] == \ 
-           result2["results"]["distl_results"]["good Bragg spots"] 
-
+    #assert result1["results"]["distl_results"]["good Bragg spots"] == \ 
+    #       result2["results"]["distl_results"]["good Bragg spots"] 
+    r1 = result1["results"]["distl_results"]["good Bragg spots"]
+    r2 = result2["results"]["distl_results"]["good Bragg spots"]
+    assert r1 == r2
     return True
 
 def main(args):

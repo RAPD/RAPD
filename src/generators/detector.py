@@ -40,8 +40,8 @@ import argparse
 # import time
 
 # RAPD imports
-from base import FileGenerator as CommandlineFileGenerator
-from base import split_text_blob
+from .base import FileGenerator as CommandlineFileGenerator
+from .base import split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils
@@ -296,7 +296,7 @@ def main():
 
     commandline_args = get_commandline()
 
-    print commandline_args
+    print(commandline_args)
 
     file_generator = FileGenerator(commandline_args)
     file_generator.run()

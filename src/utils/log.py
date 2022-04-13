@@ -88,11 +88,11 @@ def verbose_print(arg,
         if newline:
             if color:
                 if close:
-                    print text.color(color) + arg + text.stop
+                    print(text.color(color) + arg + text.stop)
                 else:
-                    print text.color(color) + arg
+                    print(text.color(color) + arg)
             else:
-                print arg
+                print(arg)
         else:
             if color:
                 if close:
@@ -177,8 +177,8 @@ def get_logger(logfile_dir="/var/log",
 
 if __name__ == "__main__":
 
-    print "log.py"
-    print "======"
+    print("log.py")
+    print("======")
 
     PRINTER = get_terminal_printer(verbosity=3)
     PRINTER("Testing, should print", level=1)

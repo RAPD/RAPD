@@ -299,6 +299,6 @@ def main():
 
 if __name__ == "__main__":
 
-    print "rapd_generate_rapd_file.py"
+    print("rapd_generate_rapd_file.py")
 
     main()

@@ -864,7 +864,7 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    print commandline_args
+    print(commandline_args)
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=commandline_args.site)

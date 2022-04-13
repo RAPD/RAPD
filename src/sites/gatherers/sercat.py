@@ -76,7 +76,7 @@ class Gatherer(object):
         """
         Setup and start the SercatGatherer
         """
-        print "__init__"
+        print("__init__")
         # Get the logger Instance
         # self.logger = logging.getLogger("RAPDLogger")
         self.logger = utils.log.get_logger(logfile_dir=site.LOGFILE_DIR,
@@ -106,7 +106,7 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
-        print "run"
+        print("run")
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
@@ -118,14 +118,14 @@ class Gatherer(object):
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
         
-        print "  Will publish new runs on run_data:%s" % self.tag
-        print "  Will push new runs onto runs_data:%s" % self.tag
+        print("  Will publish new runs on run_data:%s" % self.tag)
+        print("  Will push new runs onto runs_data:%s" % self.tag)
         self.logger.debug("  Will publish new runs on run_data:%s" % self.tag)
         self.logger.debug("  Will push new runs onto runs_data:%s" % self.tag)
         
         if self.tag == 'SERCAT_BM':
-            print "  Will publish new images on image_collected:%s" % self.tag
-            print "  Will push new images onto images_collected:%s" % self.tag
+            print("  Will publish new images on image_collected:%s" % self.tag)
+            print("  Will push new images onto images_collected:%s" % self.tag)
             self.logger.debug("  Will publish new images on image_collected:%s" % self.tag)
             self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
@@ -211,13 +211,13 @@ class Gatherer(object):
         self.logger.debug(self.ip_address)
 
         # Now grab the file locations, beamline from settings
-        if self.site.GATHERERS.has_key(self.ip_address):
+        if self.ip_address in self.site.GATHERERS:
             self.image_data_file, self.run_data_file, self.tag = self.site.GATHERERS[self.ip_address]
 
             # Make sure we enforce uppercase for tag
             self.tag = self.tag.upper()
         else:
-            print "ERROR - no settings for this host"
+            print("ERROR - no settings for this host")
             self.tag = "test"
             # sys.exit(9)
 
@@ -445,7 +445,7 @@ def main():
 
     # Handle no site file
     if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print(text.error+"Could not determine a site file. Exiting."+text.stop)
         sys.exit(9)
 
     # Import the site settings

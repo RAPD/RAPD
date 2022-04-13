@@ -275,7 +275,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Output to terminal?
         if self.preferences.get("json", False):
-            print json_string
+            print(json_string)
 
         # Always write a file
         os.chdir(self.command["directories"]["work"])
@@ -687,7 +687,7 @@ class RapdPlugin(multiprocessing.Process):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Test assess_integrated_data plugin"

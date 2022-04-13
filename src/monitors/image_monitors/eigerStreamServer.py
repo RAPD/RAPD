@@ -47,7 +47,7 @@ class ServerTask(threading.Thread):
         open ZMQ pull socket
         return receiver object
         """
-        print "[INFO] MAKE SURE STREAM INTERFACE IS ACTIVATED"
+        print("[INFO] MAKE SURE STREAM INTERFACE IS ACTIVATED")
 
         context = zmq.Context()
         receiver = context.socket(zmq.PULL)

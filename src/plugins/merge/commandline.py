@@ -109,7 +109,7 @@ def construct_command(commandline_args, logger):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Launch HCMerge plugin with filelist or pickle file"
@@ -278,7 +278,7 @@ def get_commandline():
         # Read in text file with each file on a separate line
         args.datasets = open(args.datasets[0], 'rb').readlines()
         # Remove entries created from the blank lines in the file.  Compensating for returns at end of file.
-        args.datasets = filter(lambda x: x != '\n', args.datasets)
+        args.datasets = [x for x in args.datasets if x != '\n']
         # Remove empty space on either side of the filenames
         args.datasets = [os.path.abspath(x.strip()) for x in args.datasets]
 
@@ -308,7 +308,7 @@ def get_commandline():
         if [i for i in method_list if i in args.method]:
             args.method = args.method
     except:
-        print 'Unrecognized method.'
+        print('Unrecognized method.')
         sys.exit()
 
     try:
@@ -328,7 +328,7 @@ def get_commandline():
         if [i for i in rerun_list if i in args.start_point]:
             args.start_point = args.start_point
     except:
-        print 'Unrecognized option for rerunning HCMerge.'
+        print('Unrecognized option for rerunning HCMerge.')
         sys.exit()
 
     try:
@@ -336,7 +336,7 @@ def get_commandline():
         if [i for i in run_mode_list if i in args.run_mode]:
             args.run_mode = args.run_mode
     except:
-        print 'Unrecognized run mode.'
+        print('Unrecognized run mode.')
         sys.exit()
 
     return args
@@ -396,7 +396,7 @@ def main():
 
     logger.debug("" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
-    for key, val in environmental_vars.iteritems():
+    for key, val in environmental_vars.items():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" %
                (key, val), level=10, color="default")

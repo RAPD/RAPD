@@ -45,7 +45,7 @@ import functools
 import logging
 from multiprocessing import Process, Event, Pool
 from multiprocessing import Queue as mp_Queue
-from Queue import Queue
+from queue import Queue
 from threading import Thread
 import numpy
 import os
@@ -58,10 +58,10 @@ import sys
 import time
 import importlib
 import stat
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 # RAPD imports
-import info
+from . import info
 import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
@@ -313,7 +313,7 @@ class RapdPlugin(Process):
         self.strategy = self.preferences.get("strategy_type", "best")
 
         # Check to see if XOALign should run.
-        if self.image1.has_key("mk3_phi") and self.image1.has_key("mk3_kappa"):
+        if "mk3_phi" in self.image1 and "mk3_kappa" in self.image1:
             self.minikappa = True
         else:
             self.minikappa = False
@@ -925,7 +925,7 @@ class RapdPlugin(Process):
             raddose = Parse.ParseOutputRaddose(self.raddose_log)
             self.raddose_results = {"raddose_results" : raddose}
         except OSError as E:
-              print E
+              print(E)
               self.raddose_results = {"raddose_results" : {'dose':100000}}
 
     def check_best(self, iteration=0, best_version="3.2.0"):
@@ -1115,7 +1115,7 @@ class RapdPlugin(Process):
             if runbefore == False:
                 counter = 2
                 while counter > 0:
-                    for job in jobs.keys():
+                    for job in list(jobs.keys()):
                         if jobs[job].is_alive() == False:
                             del jobs[job]
                             start, ran = self.find_best_strat(d['log'+l[int(job)][1]].replace('log', 'plt'))
@@ -1359,7 +1359,7 @@ class RapdPlugin(Process):
             ("signal_mean", "Mean Intensity Signal"),
             ])
 
-        for key, val in distl_labels.iteritems():
+        for key, val in distl_labels.items():
             result = []
             for distl_result in self.distl_results:
                 result.append(distl_result.get(key))
@@ -1471,7 +1471,7 @@ Distance | % Transmission", level=98, color="white")
                     out = {"None":"No Best Strategy.",
                            "neg B":"Adjusting resolution",
                            "isotropic B":"Isotropic B detected"}
-                    if out.has_key(data):
+                    if data in out:
                         self.error_best_post(iteration, out[data], anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
 
@@ -1627,7 +1627,7 @@ Distance | % Transmission", level=98, color="white")
                                 break
                             # If Best failed...
                             else:
-                                print "  failed"
+                                print("  failed")
                                 if self.multiproc == False:
                                     self.process_strategy(i+1)
                                 set_best_results(i, x)
@@ -1705,7 +1705,7 @@ Distance | % Transmission", level=98, color="white")
 
         # All runs in error state
         error_count = 0
-        for iteration, result in self.labelit_results.iteritems():
+        for iteration, result in self.labelit_results.items():
             if result["labelit_results"] in ("ERROR", "TIMEOUT", "FAILED"):
                 error_count += 1
         if error_count == len(self.labelit_results):
@@ -1727,7 +1727,7 @@ Distance | % Transmission", level=98, color="white")
             self.best_anom_failed = True
         else:
             # Run through all the results - compile them
-            for iteration, result in self.labelit_results.iteritems():
+            for iteration, result in self.labelit_results.items():
                 if isinstance(result["labelit_results"], dict):
                     labelit_result = result.get("labelit_results")
                     # Check for pseudotranslation in any Labelit run
@@ -1759,14 +1759,14 @@ Distance | % Transmission", level=98, color="white")
                 if sg_list1[index] == numpy.amax(sg_list1):
                     # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
                     if sg_list1[index] == 1.0:
-                        sol_dict[rms_list1[index]] = self.labelit_results.keys()[index]
+                        sol_dict[rms_list1[index]] = list(self.labelit_results.keys())[index]
                     else:
-                        sol_dict[metric_list1[index]] = self.labelit_results.keys()[index]
+                        sol_dict[metric_list1[index]] = list(self.labelit_results.keys())[index]
 
             # print "sol_dict"
             # pprint(sol_dict)
 
-            sol_dict_keys = sol_dict.keys()
+            sol_dict_keys = list(sol_dict.keys())
             sol_dict_keys.sort()
 
             # Best Labelit_results key
@@ -1927,13 +1927,13 @@ Distance | % Transmission", level=98, color="white")
 
         # Output to terminal?
         if self.preferences.get("json", False):
-            print json_string
+            print(json_string)
 
         # Output to an fd?
         if self.preferences.get("json_fd", False):
             # Output to terminal if stdout
             if int(self.preferences.get("json_fd")) == 1:
-                print json_string
+                print(json_string)
             # Output to fd
             else:
                 with os.fdopen(int(self.preferences.get("json_fd")), "w") as f:
@@ -2342,7 +2342,7 @@ class RunLabelit(Thread):
         # If self.cluster_use == True, you can specify a batch queue on your cluster.
         self.batch_queue = params.get("batch_queue", {})
         # I don't like this so I may move this later!!
-        if not len(self.batch_queue.keys()):
+        if not len(list(self.batch_queue.keys())):
             # Setup a Queue.Queue for local_subprocess
             self.queue_type = ''
         else:
@@ -2458,7 +2458,7 @@ class RunLabelit(Thread):
                         newline=False)
 
         binning = True
-        if self.image1.has_key('binning'):
+        if 'binning' in self.image1:
             binning = self.image1.get('binning')
 
         if self.test == False:
@@ -2649,7 +2649,7 @@ rerunning.\n" % spot_count)
         labelit_input = []
 
         # Check if user specific unit cell
-        unit_cell_defaults = dict(zip(["a", "b", "c", "alpha", "beta", "gamma"], [False]*6))
+        unit_cell_defaults = dict(list(zip(["a", "b", "c", "alpha", "beta", "gamma"], [False]*6)))
         counter = 0
         for parameter in unit_cell_defaults:
             parameter_pref = self.preferences.get(parameter, 0.0)
@@ -2939,7 +2939,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 # Postprocess the labelit job
                 self.postprocess_labelit(raw_result=result)
                 # All jobs have finished
-                if not len(self.jobids.keys()):
+                if not len(list(self.jobids.keys())):
                     # print "All jobs done"
                     kill_jobs = False
                     break
@@ -2952,7 +2952,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
 
         if kill_jobs:
             # Make sure all jobs are killed
-            for i, pid in self.jobids.iteritems():
+            for i, pid in self.jobids.items():
                 self.results[i] = {"labelit_results": "FAILED"}
                 self.kill_job(pid, self.logger)
 

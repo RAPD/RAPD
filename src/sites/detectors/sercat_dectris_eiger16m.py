@@ -433,7 +433,7 @@ def base_read_header(image,
         # "size2": 2527}
         }
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         # print label
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
@@ -510,7 +510,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
@@ -532,7 +532,7 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print("main")
 
     if args.file:
         test_image = os.path.abspath(args.file)

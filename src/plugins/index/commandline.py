@@ -62,7 +62,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     image_numbers = []
     image_template = ""
     h5 = ""
-    for _, header in image_headers.iteritems():
+    for _, header in image_headers.items():
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
         if "hdf5_source" in header:
@@ -88,7 +88,7 @@ def construct_command(image_headers, commandline_args, detector_module):
         }
 
     # Image data
-    images = image_headers.keys()
+    images = list(image_headers.keys())
     images.sort()
     counter = 0
     for image in images:
@@ -360,8 +360,8 @@ def print_headers(tprint, image_headers):
 
     tprint(arg="\nImage headers", level=20, color="blue")
     count = 0
-    for fullname, header in image_headers.iteritems():
-        keys = header.keys()
+    for fullname, header in image_headers.items():
+        keys = list(header.keys())
         keys.sort()
         if count > 0:
             tprint(arg="", level=20, color="white")
@@ -415,7 +415,7 @@ def main():
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
-    for key, val in environmental_vars.iteritems():
+    for key, val in environmental_vars.items():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
@@ -466,13 +466,13 @@ def main():
     if len(data_files) == 0 and commandline_args.test == False:
         if logger:
             logger.exception("No files input for indexing.")
-        raise Exception, "No files input for indexing."
+        raise Exception("No files input for indexing.")
 
     # Too much data?
     if len(data_files) > 2:
         if logger:
             logger.exception("Too many files for indexing. 1 or 2 images accepted")
-        raise Exception, "Too many files for indexing. 1 or 2 images accepted"
+        raise Exception("Too many files for indexing. 1 or 2 images accepted")
 
     # Get site - commandline wins over the environmental variable
     site = False
@@ -482,7 +482,7 @@ def main():
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
+    elif "RAPD_SITE" in environmental_vars:
         site = environmental_vars["RAPD_SITE"]
 
     # Detector is defined by the user
@@ -495,13 +495,13 @@ def main():
     if not detector:
         detector = detector_utils.get_detector_file(data_files["files"][0])
         if isinstance(detector, dict):
-            if detector.has_key("site"):
+            if "site" in detector:
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
                 site_module = importlib.import_module(site_file)
                 detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
-            elif detector.has_key("detector"):
+            elif "detector" in detector:
                 site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)

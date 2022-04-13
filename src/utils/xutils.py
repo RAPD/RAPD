@@ -92,7 +92,7 @@ xds_bravais_types = {
 
 # Reverse lookup for
 intl_to_xds_bravais_type = {}
-for key, val in xds_bravais_types.iteritems():
+for key, val in xds_bravais_types.items():
     for sg in val:
         if not sg in intl_to_xds_bravais_type:
             intl_to_xds_bravais_type[sg] = ()
@@ -183,7 +183,7 @@ intl2std =   { 'None' : 'None',
                '212' : 'P4332',
                '213' : 'P4132' }
 
-std2intl = dict((value,key) for key, value in intl2std.iteritems())
+std2intl = dict((value,key) for key, value in intl2std.items())
 
 std_sgs = ['None','P1','C2','P2','P21','F222','I222','I212121','C222','C2221','P222',
            'P2221','P21212','P212121','I4','I41','I422','I4122','P4','P41','P42','P43',
@@ -196,11 +196,11 @@ std_sgs = ['None','P1','C2','P2','P21','F222','I222','I212121','C222','C2221','P
 #  Some utility functions
 #
 def print_dict(in_dict):
-    keys = in_dict.keys()
+    keys = list(in_dict.keys())
     keys.sort()
     for key in keys:
-        print key,'::',in_dict[key]
-    print ''
+        print(key,'::',in_dict[key])
+    print('')
 
 months = { 'Jan' : '01',
            'Feb' : '02',
@@ -644,7 +644,7 @@ def checkInverse(self, inp):
                    '180': ['181'],
                    '212': ['213']
                    }
-    if subgroups.has_key(inp):
+    if inp in subgroups:
         sg = subgroups[inp]
         return(sg)
     else:
@@ -959,9 +959,9 @@ def convertSG_OLD(self, inp, reverse=False):
                   'P1211'    : 'P21'}
 
     if reverse:
-        for letters, number in std2intl.items():
+        for letters, number in list(std2intl.items()):
             if number == inp:
-                if mono.has_key(letters):
+                if letters in mono:
                     sg = mono[letters]
                 else:
                     sg = letters
@@ -1063,9 +1063,9 @@ def convert_spacegroup(inp, reverse=False):
             "P1211": "P21"}
 
     if reverse:
-        for letters, number in std2intl.items():
+        for letters, number in list(std2intl.items()):
             if number == inp:
-                if mono.has_key(letters):
+                if letters in mono:
                     sg = mono[letters]
                 else:
                     sg = letters
@@ -1108,7 +1108,7 @@ def convertUnicode(self,inp=False):
     inp0 = self.datafile
   else:
     inp0 = inp
-  if type(inp0) == unicode:
+  if type(inp0) == str:
     #out = str(inp0)
     out = inp0.encode('utf8')
   else:
@@ -1120,7 +1120,7 @@ def convert_unicode(inp):
   Convert unicode to Python string for Phenix.
   """
 
-  if isinstance(inp, unicode):
+  if isinstance(inp, str):
     out = inp.encode('utf8')
   else:
     out = inp
@@ -2114,7 +2114,7 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
   try:
     if inp == False:
       inp = self.datafile
-    if type(inp) == unicode:
+    if type(inp) == str:
       inp = convertUnicode(self,inp)
     if os.path.basename(inp).upper()[-3:] == 'SCA':
       fixSCA(self,inp)
@@ -2286,11 +2286,11 @@ def get_pdb_info_OLD(cif_file, dres, matthews=True, cell_analysis=False, data_fi
     d = {}
     l = []
     
-    print cif_file
-    print dres
-    print matthews
-    print cell_analysis
-    print data_file
+    print(cif_file)
+    print(dres)
+    print(matthews)
+    print(cell_analysis)
+    print(data_file)
 
     # Read in the file
     cif_file = convert_unicode(cif_file)
@@ -2614,7 +2614,7 @@ def getRes_OLD(self,inp=False):
   try:
     if inp == False:
       inp = self.datafile
-    if type(inp) == unicode:
+    if type(inp) == str:
       inp = convertUnicode(self,inp)
     data = mtz.object(inp)
     return(float(data.max_min_resolution()[-1]))
@@ -2677,7 +2677,7 @@ def getWavelength(self,inp=False):
   try:
     if inp == False:
       inp = self.datafile
-    if type(inp) == unicode:
+    if type(inp) == str:
       inp = convertUnicode(self,inp)
     data = mtz.object(inp)
     for i in range(len(data.crystals())):
@@ -2804,9 +2804,9 @@ def makeSeqFile(self):
   seq = self.preferences.get('request').get('sequence')
   f = open('seq.pir','w')
   if seq == '':
-    print >>f, "> dummy sequence\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA*\n"
+    print("> dummy sequence\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA*\n", file=f)
   else:
-    print >>f, "> sequence\n%s*\n"%seq
+    print("> sequence\n%s*\n"%seq, file=f)
   f.close()
   """
   except:
@@ -2951,29 +2951,29 @@ def processLocal(inp, logger=False, output=False):
 
 def readMarHeader(inp):
   import re,struct
-  print 'got here'
+  print('got here')
   format = '<'
   f = open(inp,'rb')
   parameters = {}
   offset = 1024
   #f.seek(offset+80)
   f.seek(2464)
-  print f.read(512)
+  print(f.read(512))
 
   f.seek(offset+640)
   rawdata = f.read(4)
-  print struct.unpack(format+'i',rawdata)[0]/1000.
+  print(struct.unpack(format+'i',rawdata)[0]/1000.)
 
   f.seek(offset+696)
   rawdata = f.read(4)
   start_xtal_to_detector = struct.unpack(format+'i',rawdata)[0]/1000.
-  print start_xtal_to_detector
+  print(start_xtal_to_detector)
 
   f.seek(1676)
   rawdata = f.read(8)
   integration, exposure = struct.unpack(format+'ii',rawdata)
-  print integration* 0.001
-  print exposure* 0.001
+  print(integration* 0.001)
+  print(exposure* 0.001)
 
 
 
@@ -3066,9 +3066,9 @@ def runPhaserModule_OLD(self, inp=False):
       i0.setMUTE(True)
       #i0.setVERB(True)
       r1 = phaser.runNCS(i0)
-      print r1.logfile()
-      print r1.loggraph().size()
-      print r1.loggraph().__dict__.keys()
+      print(r1.logfile())
+      print(r1.loggraph().size())
+      print(list(r1.loggraph().__dict__.keys()))
       #print r1.getCentricE4()
       if r1.Success():
         return(r1)
@@ -3084,9 +3084,9 @@ def runPhaserModule_OLD(self, inp=False):
       i0.setREFL_DATA(r.getDATA())
       i0.setMUTE(True)
       r1 = phaser.runANO(i0)
-      print r1.loggraph().__dict__.keys()
-      print r1.loggraph().size()
-      print r1.logfile()
+      print(list(r1.loggraph().__dict__.keys()))
+      print(r1.loggraph().size())
+      print(r1.logfile())
       """
       o = phaser.Output()
       redirect_str = StringIO()
@@ -3095,7 +3095,7 @@ def runPhaserModule_OLD(self, inp=False):
       """
 
       if r1.Success():
-        print 'SUCCESS'
+        print('SUCCESS')
         return(r1)
 
     #Setup which modules are run
@@ -3586,10 +3586,10 @@ def subGroups(self,inp1,inp2='shelx'):
                    '209': ['209','210'],
                    '211': ['211','214'] }
     sg2 = False
-    if subgroups.has_key(inp1):
+    if inp1 in subgroups:
       sg = inp1
     else:
-      for line in subgroups.items():
+      for line in list(subgroups.items()):
         if line[1].count(inp1):
           sg = line[0]
     #Returns Laue group number
@@ -3597,10 +3597,10 @@ def subGroups(self,inp1,inp2='shelx'):
       return(sg)
     else:
       if inp2 == 'shelx':
-        if subgroups2.has_key(sg):
+        if sg in subgroups2:
           sg2 = subgroups2[sg]
       else:
-        if subgroups3.has_key(sg):
+        if sg in subgroups3:
           sg2 = subgroups3[sg]
       if sg2:
         return(sg2)
@@ -3690,10 +3690,10 @@ def get_sub_groups(input_sg, mode="laue"):
         input_sg = str(input_sg)
 
     # Look up Laue group of input SG
-    if subgroups1.has_key(input_sg):
+    if input_sg in subgroups1:
         simple_sg = input_sg
     else:
-        for line in subgroups1.items():
+        for line in list(subgroups1.items()):
             if line[1].count(input_sg):
                 simple_sg = line[0]
                 break
@@ -3704,11 +3704,11 @@ def get_sub_groups(input_sg, mode="laue"):
     # Otherwise it expects a list of SG's back
     elif mode == "shelx":
         # SHELX SG's
-        if subgroups2.has_key(simple_sg):
+        if simple_sg in subgroups2:
             sg2 = subgroups2[simple_sg]
     else:
         # Phaser SG's
-        if subgroups3.has_key(simple_sg):
+        if simple_sg in subgroups3:
             sg2 = subgroups3[simple_sg]
     if sg2:
         return sg2

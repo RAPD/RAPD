@@ -77,14 +77,14 @@ def main(args):
 
     # Allowed mode?
     if mode not in MODES:
-        print "rapd.generate helps make rapd files"
+        print("rapd.generate helps make rapd files")
         if mode in ("--help", "help", "-h"):
-            print "  For help with a particular command use `rapd.generate <command> -h`"
-            print "  Available commands:"
+            print("  For help with a particular command use `rapd.generate <command> -h`")
+            print("  Available commands:")
         else:
-            print "%s is not an understood type. Your choices:" % mode
+            print("%s is not an understood type. Your choices:" % mode)
         for allowed_mode in MODES:
-            print "      %s" % allowed_mode
+            print("      %s" % allowed_mode)
 
         sys.exit(9)
 
@@ -124,7 +124,7 @@ def get_commandline():
     args = sys.argv[:]
 
     if len(args) < 2:
-        print text.red + "The specified command is invalid. For available options, see `rapd.generate help`." + text.stop
+        print(text.red + "The specified command is invalid. For available options, see `rapd.generate help`." + text.stop)
         args = ["help"]
 
     else:

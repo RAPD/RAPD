@@ -158,7 +158,7 @@ class DirectoryHandler(threading.Thread):
                     # trim_dirs(wdd=wdd)
                     # Break out of the loop
                     break
-                except pyinotify.WatchManagerError, err:
+                except pyinotify.WatchManagerError as err:
                     self.logger.exception(err, err.wmd)
                     count = count + 1
                     time.sleep(1)
@@ -238,7 +238,7 @@ class Gatherer(object):
             Exit pyinotify properly when program exits
             """
             self.logger.debug("Attempting to gracefully shut down")
-            watch_manager.rm_watch(wdd.values())
+            watch_manager.rm_watch(list(wdd.values()))
             notifier.stop()
         atexit.register(exit_gracefully)
 
@@ -251,7 +251,7 @@ class Gatherer(object):
         counter = 0
         try:
             while True:
-                print counter
+                print(counter)
                 newdir = self.redis_beamline.get(DATA_DIR)
                 if (newdir != current_dir):
                     have = False
@@ -292,12 +292,12 @@ class Gatherer(object):
         self.logger.debug("IP Address: %s" % self.ip_address)
 
         # Now grab the file locations, beamline from settings
-        if self.site.GATHERERS.has_key(self.ip_address):
+        if self.ip_address in self.site.GATHERERS:
             self.tag = self.site.GATHERERS[self.ip_address]
             # Make sure we enforce uppercase for tag
             self.tag = self.tag.upper()
         else:
-            print "ERROR - no settings for this host"
+            print("ERROR - no settings for this host")
             self.tag = "test"
 
     def connect(self):
@@ -354,7 +354,7 @@ def main():
 
     # Handle no site file 
     if site_file == False: 
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print(text.error+"Could not determine a site file. Exiting."+text.stop)
         sys.exit(9) 
 
     # Import the site settings 

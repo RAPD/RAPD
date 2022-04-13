@@ -83,7 +83,7 @@ import plugins.pdbquery.plugin
 import utils.xutils as xutils
 from detectors.detector_utils import get_resolution_at_edge
 
-import info
+from . import info
 
 # Software dependencies
 VERSIONS = {
@@ -1534,7 +1534,7 @@ class RapdPlugin(Process):
         if 'image_template' in self.image_data:
             self.image_template = self.image_data['image_template']
         else:
-            raise RuntimeError, '"image_template" not defined in input data.'
+            raise RuntimeError('"image_template" not defined in input data.')
 
         file_template = os.path.join(self.image_data['directory'], self.image_template)
     	# Count the number of '?' that need to be padded in a image filename.
@@ -2892,7 +2892,7 @@ class RapdPlugin(Process):
 
         # Output to terminal?
         if self.preferences.get("json", False):
-            print json_string
+            print(json_string)
 
         # Write a file
         with open(os.path.join(self.dirs["work"],"result.json"), "w") as outfile:

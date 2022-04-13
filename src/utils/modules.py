@@ -74,7 +74,7 @@ def load_module(seek_module, directories=False, logger=False):
             # module = importlib.import_module(directory+"."+seek_module)
             module = importlib.import_module(seek_module)
         except ImportError as e:
-            print e
+            print(e)
 
     if module == None:
         raise Exception("No module found for: '%s'" % seek_module)

@@ -29,4 +29,4 @@ __status__ = "Development"
 if __name__ == "__main__":
 
     import version
-    print version.RAPD_VERSION
+    print(version.RAPD_VERSION)

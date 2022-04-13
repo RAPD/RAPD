@@ -145,8 +145,8 @@ def connectCluster(inp, job=True):
   if job:
     command = 'qsub -j y -terse -cwd -b y '
     command += inp
-    print command
-    print 'Job ID:'
+    print(command)
+    print('Job ID:')
   else:
     command = inp
   #Use this to say job is beam center calculation.
@@ -161,7 +161,7 @@ def connectCluster(inp, job=True):
   stdin,stdout,stderr = client.exec_command('cd %s\n%s%s'%(os.getcwd(),st,command))
   #stdin,stdout,stderr = client.exec_command('cd %s\n%s'%(os.getcwd(),command))
   for line in stdout:
-    print line.strip()
+    print(line.strip())
     if bc:
       return(line.strip())
   client.close()

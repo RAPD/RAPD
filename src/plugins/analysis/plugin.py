@@ -41,7 +41,7 @@ from distutils.spawn import find_executable
 import logging
 from multiprocessing import Process, Queue
 from threading import Thread
-from Queue import Queue as tqueue
+from queue import Queue as tqueue
 import os
 from pprint import pprint
 import shutil
@@ -67,7 +67,7 @@ from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
 from utils.processes import local_subprocess
-import info
+from . import info
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
 
@@ -416,7 +416,7 @@ calculation",
         """Monitor running jobs and finsh them when they complete."""
         timed_out = False
         timer = 0
-        jobs = self.jobs.keys()
+        jobs = list(self.jobs.keys())
         if jobs != ['None']:
             counter = len(jobs)
             while counter != 0:
@@ -445,7 +445,7 @@ calculation",
             if timed_out:
                 if self.verbose:
                     self.logger.debug('AutoStat timed out.')
-                    print 'AutoStat timed out.'
+                    print('AutoStat timed out.')
                 
                 pids = [self.jobs[job].get('pid') for job in self.jobs]
                 for pid in pids:
@@ -564,7 +564,7 @@ calculation",
         for convert_executable in convert_executables:
             # print "Trying %s" % convert_executable
             if find_executable(convert_executable):
-                for label, size in crop_sizes.iteritems():
+                for label, size in crop_sizes.items():
                     command = [convert_executable,
                                "molrep_rf.ps",
                                "-crop",
@@ -581,8 +581,8 @@ calculation",
                     jobs[job] = {'name': label,
                                  'pid': results_queue[label].get()}
                 # Wait for jobs to complete and gather results
-                while len(jobs.keys()):
-                    for job in jobs.keys():
+                while len(list(jobs.keys())):
+                    for job in list(jobs.keys()):
                         if not job.is_alive():
                             label = jobs[job].get('name')
                             del jobs[job]
@@ -743,7 +743,7 @@ calculation",
 
         # If running in JSON mode, print to terminal
         if self.preferences.get("run_mode") == "json":
-            print json_results
+            print(json_results)
 
     def print_xtriage_results(self):
         """Print out the xtriage results"""
@@ -780,7 +780,7 @@ calculation",
             self.tprint("  #   p-value   origin peak     origin      x      y      z",
                         level=99,
                         color="white")
-            for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
+            for peak_id, peak_data in xtriage_results["Patterson peaks"].items():
                 self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"\
                     .format(peak_id,
                             peak_data["p-val"],
@@ -960,7 +960,7 @@ calculation",
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Test analysis plugin"

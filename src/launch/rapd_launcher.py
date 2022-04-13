@@ -175,7 +175,7 @@ class Launcher(object):
         Keyword arguments:
         command -- command from redis
         """
-        print "handle_command"
+        print("handle_command")
         pprint(command)
 
         # Split up the command
@@ -224,15 +224,15 @@ class Launcher(object):
 
             # No launchers for this IP address
             if len(possible_tags) == 0:
-                print "  There are no launcher adapters registered for this ip address"
+                print("  There are no launcher adapters registered for this ip address")
             # IP Address in launchers, but not the input tag
             else:
-                print text.error + "There is a launcher adapter registered for thi\
-s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
-                print "  Available tags for this IP address:"
+                print(text.error + "There is a launcher adapter registered for thi\
+s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag))
+                print("  Available tags for this IP address:")
                 for tag in possible_tags:
-                    print "    %s" % tag
-                print text.stop
+                    print("    %s" % tag)
+                print(text.stop)
 
             # Exit in error state
             sys.exit(9)
@@ -308,7 +308,7 @@ def main():
     # Determine the tag - commandline wins
     if commandline_args.tag:
         tag = commandline_args.tag
-    elif environmental_vars.has_key("RAPD_LAUNCHER_TAG"):
+    elif "RAPD_LAUNCHER_TAG" in environmental_vars:
         tag = environmental_vars["RAPD_LAUNCHER_TAG"]
     else:
         tag = ""
@@ -316,7 +316,7 @@ def main():
     #print glob.glob('/tmp/rapd2/lock/*')
     # Single process lock?
     if lock_file(SITE.LAUNCHER_LOCK_FILE):
-        print 'another instance of rapd.launcher is running... exiting now'
+        print('another instance of rapd.launcher is running... exiting now')
         sys.exit(9)
 
     # Set up logging level

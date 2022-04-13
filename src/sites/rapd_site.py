@@ -462,7 +462,7 @@ def necat_determine_flux(header_in, beamline,logger):
     header_out['gauss_y'] = '0.01'
 
     #very old headers may be missing
-    if not 'md2_aperture' in header_in.keys():
+    if not 'md2_aperture' in list(header_in.keys()):
         if beamline == 'C':
             header_in['md2_aperture'] = '70'
         else:
@@ -738,10 +738,10 @@ def TransferPucksToBeamline(beamline,puck_contents):
     Make puck files to be read by console
     """
     puck_dir = secret_settings_general['puck_dir'][beamline]
-    puck = puck_contents.keys()[0]
+    puck = list(puck_contents.keys())[0]
     output_file = puck_dir+puck+'/puck_contents.txt'
-    print 'TransferPucksToBeamline dir: %s' % output_file
-    contents = puck_contents.values()[0]
+    print('TransferPucksToBeamline dir: %s' % output_file)
+    contents = list(puck_contents.values())[0]
     output = open(output_file,'w')
     if type(contents) is str:
         for i in range(16):
@@ -757,7 +757,7 @@ def TransferMasterPuckListToBeamline(beamline,allpucks):
     """
     puck_dir = secret_settings_general['puck_dir'][beamline]
     output_file = puck_dir+'/allpucks.txt'
-    print 'TransferMasterPuckListToBeamline dir: %s' % output_file
+    print('TransferMasterPuckListToBeamline dir: %s' % output_file)
     output = open(output_file,'w')
     for puck in allpucks:
         output.write('%s %s\n'%(puck['PuckID'],puck['select']))
@@ -874,7 +874,7 @@ def TransferToUI(type,settings,result,trip,logger):
     if type == 'single':
         dest_dir = os.path.join(settings['ui_user_dir'],trip['username'],str(trip['trip_id']),'single/')
         if dest_dir:
-          if result.has_key('summary_short'):
+          if 'summary_short' in result:
             if result['summary_short'] != 'None':
                 counter = 0
                 while (not os.path.exists(result['summary_short'])):
@@ -887,37 +887,37 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['summary_short'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'short.php'])))+")")
                 sftp.put(result['summary_short'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'short.php'])))
 
-                if result.has_key('summary_long'):
+                if 'summary_long' in result:
                     if result['summary_long'] != 'None':
                         logger.debug("sftp.put("+str(result['summary_long'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'long.php'])))+")")
                         sftp.put(result['summary_long'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'long.php'])))
 
-                if result.has_key('best_plots'):
+                if 'best_plots' in result:
                     if result['best_plots'] not in (None,'None','FAILED'):
                         logger.debug("sftp.put("+str(result['best_plots'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'plots.php'])))+")")
                         sftp.put(result['best_plots'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'plots.php'])))
 
-                if result.has_key('image_raw'):
+                if 'image_raw' in result:
                     if result['image_raw'] not in (None,'0'):
                         #make sure the file is complete
                         logger.debug("sftp.put("+str(result['image_raw'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_000_090.tif'])))+")")
                         sftp.put(result['image_raw'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_000_090.tif'])))
                         time.sleep(2)
 
-                if result.has_key('image_preds'):
+                if 'image_preds' in result:
                     if result['image_preds'] not in  (None,'0'):
                         #make sure the file is complete
                         logger.debug("sftp.put("+str(result['image_preds'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_100_090.tif'])))+")")
                         sftp.put(result['image_preds'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_100_090.tif'])))
 
-        if result.has_key('summary_stac'):
+        if 'summary_stac' in result:
             if result['summary_stac'] != "None":
                 logger.debug("sftp.put("+str(result['summary_stac'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))+")")
                 sftp.put(result['summary_stac'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))
 
     elif type == 'single-orphan':
         dest_dir = os.path.join(settings['ui_user_dir'],'orphans/single/')
-        if result.has_key('summary_short'):
+        if 'summary_short' in result:
             if result['summary_short']:
                 counter = 0
                 while (not os.path.exists(result['summary_short'])):
@@ -929,22 +929,22 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['summary_short'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'short.php'])))+")")
                 sftp.put(result['summary_short'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'short.php'])))
 
-        if result.has_key('summary_long'):
+        if 'summary_long' in result:
             if result['summary_long']:
                 logger.debug("sftp.put("+str(result['summary_long'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'long.php'])))+")")
                 sftp.put(result['summary_long'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'long.php'])))
 
-        if result.has_key('summary_stac'):
+        if 'summary_stac' in result:
             if result['summary_stac'] not in (None,'None','FAILED'):
                 logger.debug("sftp.put("+str(result['summary_stac'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))+")")
                 sftp.put(result['summary_stac'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))
 
-        if result.has_key('best_plots'):
+        if 'best_plots' in result:
             if result['best_plots'] not in (None,'None','FAILED'):
                 logger.debug("sftp.put("+str(result['best_plots'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'plots.php'])))+")")
                 sftp.put(result['best_plots'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'plots.php'])))
 
-        if result.has_key('image_raw'):
+        if 'image_raw' in result:
             if result['image_raw'] not in (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_raw']).st_mtime) < 0.5):
@@ -952,7 +952,7 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['image_raw'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_000_090.tif'])))+")")
                 sftp.put(result['image_raw'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'pyr_000_090.tif'])))
 
-        if result.has_key('image_preds'):
+        if 'image_preds' in result:
             if result['image_preds'] not in (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_preds']).st_mtime) < 0.5):
@@ -967,7 +967,7 @@ def TransferToUI(type,settings,result,trip,logger):
         dest_dir = os.path.join(settings['ui_user_dir'],trip['username'],str(trip['trip_id']),'pair/')
         logger.debug('Destination: %s'%dest_dir)
 
-        if result.has_key('summary_short'):
+        if 'summary_short' in result:
             if (result['summary_short'] not in (None,'None','0')):
                 counter = 0
                 while (not os.path.exists(result['summary_short'])):
@@ -979,41 +979,41 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['summary_short'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'short.php'])))+")")
                 sftp.put(result['summary_short'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'short.php'])))
 
-        if result.has_key('summary_long'):
+        if 'summary_long' in result:
             if (result['summary_long'] not in (None,'None','0')):
                 logger.debug("sftp.put("+str(result['summary_long'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'long.php'])))+")")
                 sftp.put(  result['summary_long'],  os.path.join(dest_dir,'_'.join((str(result['pair_result_id']),'long.php')))  )
 
-        if result.has_key('summary_stac'):
+        if 'summary_stac' in result:
             logger.debug('STAC summary: %s' % result['summary_stac'])
             if (result['summary_stac'] not in (None,'None','0')):
                 logger.debug("sftp.put("+str(result['summary_stac'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'stac.php'])))+")")
                 sftp.put(result['summary_stac'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'stac.php'])))
 
-        if result.has_key('best_plots'):
+        if 'best_plots' in result:
             if (result['best_plots'] not in (None,'None','0')):
                 logger.debug("sftp.put("+str(result['best_plots'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'plots.php'])))+")")
                 sftp.put(result['best_plots'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'plots.php'])))
 
-        if result.has_key('image_raw_1'):
+        if 'image_raw_1' in result:
             if (result['image_raw_1'] not in (None,'None','0')):
                 #make sure the file is complete
                 logger.debug("sftp.put("+str(result['image_raw_1'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_000_090.tif'])))+")")
                 sftp.put(result['image_raw_1'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_000_090.tif'])))
 
-        if result.has_key('image_preds_1'):
+        if 'image_preds_1' in result:
             if (result['image_preds_1'] not in (None,'None','0')):
                 #make sure the file is complete
                 logger.debug("sftp.put("+str(result['image_preds_1'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_100_090.tif'])))+")")
                 sftp.put(result['image_preds_1'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_100_090.tif'])))
 
-        if result.has_key('image_raw_2'):
+        if 'image_raw_2' in result:
             if (result['image_raw_2'] not in  (None,'None','0')):
                 #make sure the file is complete
                 logger.debug("sftp.put("+str(result['image_raw_2'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_200_090.tif'])))+")")
                 sftp.put(result['image_raw_2'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_200_090.tif'])))
 
-        if result.has_key('image_preds_2'):
+        if 'image_preds_2' in result:
             if (result['image_preds_2'] not in  (None,'None','0')):
                 #make sure the file is complete
                 logger.debug("sftp.put("+str(result['image_preds_2'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_300_090.tif'])))+")")
@@ -1021,7 +1021,7 @@ def TransferToUI(type,settings,result,trip,logger):
 
     elif type == 'pair-orphan':
         dest_dir = os.path.join(settings['ui_user_dir'],'orphans/pair/')
-        if result.has_key('summary_short'):
+        if 'summary_short' in result:
             if result['summary_short']:
                 counter = 0
                 while (not os.path.exists(result['summary_short'])):
@@ -1033,22 +1033,22 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['summary_short'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'short.php'])))+")")
                 sftp.put(result['summary_short'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'short.php'])))
 
-        if result.has_key('summary_long'):
+        if 'summary_long' in result:
             if result['summary_long']:
                 logger.debug("sftp.put("+str(result['summary_long'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'long.php'])))+")")
                 sftp.put(result['summary_long'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'long.php'])))
 
-        if result.has_key('summary_stac'):
+        if 'summary_stac' in result:
             if result['summary_stac'] != "None":
                 logger.debug("sftp.put("+str(result['summary_stac'])+","+str(os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))+")")
                 sftp.put(result['summary_stac'],os.path.join(dest_dir,'_'.join([str(result['single_result_id']),'stac.php'])))
 
-        if result.has_key('best_plots'):
+        if 'best_plots' in result:
             if result['best_plots']:
                 logger.debug("sftp.put("+str(result['best_plots'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'plots.php'])))+")")
                 sftp.put(result['best_plots'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'plots.php'])))
 
-        if result.has_key('image_raw_1'):
+        if 'image_raw_1' in result:
             if result['image_raw_1'] not in  (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_raw_1']).st_mtime) < 0.5):
@@ -1056,7 +1056,7 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['image_raw_1'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_000_090.tif'])))+")")
                 sftp.put(result['image_raw_1'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_000_090.tif'])))
 
-        if result.has_key('image_preds_1'):
+        if 'image_preds_1' in result:
             if result['image_preds_1'] not in  (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_preds_1']).st_mtime) < 0.5):
@@ -1064,7 +1064,7 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['image_preds_1'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_100_090.tif'])))+")")
                 sftp.put(result['image_preds_1'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_100_090.tif'])))
 
-        if result.has_key('image_raw_2'):
+        if 'image_raw_2' in result:
             if result['image_raw_2'] not in  (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_raw_2']).st_mtime) < 0.5):
@@ -1072,7 +1072,7 @@ def TransferToUI(type,settings,result,trip,logger):
                 logger.debug("sftp.put("+str(result['image_raw_2'])+","+str(os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_200_090.tif'])))+")")
                 sftp.put(result['image_raw_2'],os.path.join(dest_dir,'_'.join([str(result['pair_result_id']),'pyr_200_090.tif'])))
 
-        if result.has_key('image_preds_2'):
+        if 'image_preds_2' in result:
             if result['image_preds_2'] not in  (None,'0'):
                 #make sure the file is complete
                 while ((time.time() - os.stat(result['image_preds_2']).st_mtime) < 0.5):
@@ -1531,7 +1531,7 @@ def TransferToUI(type,settings,result,trip,logger):
     ##########################################################################################################################
     elif type == 'download':
         dest_dir = os.path.join(settings['ui_user_dir'],trip['username'],str(trip['trip_id']),'download/')
-        if result.has_key('archive'):
+        if 'archive' in result:
             if result['archive']:
                 counter = 0
                 while (not os.path.exists(result['archive'])):

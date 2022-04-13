@@ -73,7 +73,7 @@ from plugins.subcontractors.aimless import parse_aimless
 import plugins.subcontractors.phenix_reflection_statistics as phenix_reflection_statistics
 # import utils
 import utils.credits as rcredits
-import info
+from . import info
 from utils import exceptions
 from utils.xray_importer import get_rapd_file_type
 
@@ -295,7 +295,7 @@ class RapdPlugin(multiprocessing.Process):
         self.redis = redis_database.Database(settings=self.db_settings, 
                                              logger=self.logger)
 
-        print self.redis.keys("*")
+        print(self.redis.keys("*"))
 
     def send_results(self):
         """Let everyone know we are working on this"""
@@ -319,7 +319,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Output to terminal?
         if self.preferences.get("json", False):
-            print json_string
+            print(json_string)
 
         # Always write a file
         os.chdir(self.command["directories"]["work"])
@@ -722,7 +722,7 @@ class RapdPlugin(multiprocessing.Process):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Test assess_mx_data plugin"

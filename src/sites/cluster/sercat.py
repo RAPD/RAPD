@@ -236,7 +236,7 @@ def process_cluster_drmaa(self, inp, output=False):
     # Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     s.exit()
 
-    print "Job finished"
+    print("Job finished")
 
 def mp_job(func):
     """
@@ -319,24 +319,24 @@ def process_cluster(command,
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
       #print fname
       with open(fname,'w') as f:
-          print >>f, '#!/bin/bash'
-          print >>f, '#PBS -S /bin/bash'
-          print >>f, '#PBS -j oe'
-          print >>f, '#PBS -d %s'%work_dir
-          print >>f, '#PBS -v %s'%v
+          print('#!/bin/bash', file=f)
+          print('#PBS -S /bin/bash', file=f)
+          print('#PBS -j oe', file=f)
+          print('#PBS -d %s'%work_dir, file=f)
+          print('#PBS -v %s'%v, file=f)
           #print >>f, '#PBS -V'
           # print >>f, '#PBS -v PBS_O_SHELL=/bin/bash'
-          print >>f, '#PBS -q %s'%batch_queue
+          print('#PBS -q %s'%batch_queue, file=f)
           if name:
-              print >>f, '#PBS -N %s'%name
+              print('#PBS -N %s'%name, file=f)
           if logfile:
               if logfile.count('/'):
-                  print >>f, '#PBS -o %s'%logfile
+                  print('#PBS -o %s'%logfile, file=f)
               else:
-                  print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
-          print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
-          print >>f, '/bin/bash\n'
-          print >>f, command+'\n\n'
+                  print('#PBS -o %s'%os.path.join(work_dir,logfile), file=f)
+          print('#PBS -l nodes=1:ppn=%s'%nproc, file=f)
+          print('/bin/bash\n', file=f)
+          print(command+'\n\n', file=f)
           f.close()
 
     os.chmod(fname, stat.S_IRWXU)
@@ -369,7 +369,7 @@ def process_cluster(command,
                   break
           time.sleep(1)
           counter += 1
-        print "Job finished"
+        print("Job finished")
     except:
         if logger:
             logger.debug('qsub.py was killed, but the launched job will continue to run')
@@ -435,7 +435,7 @@ def process_cluster_beorun(inp):
     if pid != False:
       pid.put(job.pid)
     job.wait()
-    print "Job finished"
+    print("Job finished")
 
 def check_qsub_job(job):
   """
@@ -451,5 +451,5 @@ def check_qsub_job(job):
 
 def kill_job(job):
     output = subprocess.check_output(['/usr/bin/qdel', job])
-    print 'killed job: %s'%job
+    print('killed job: %s'%job)
     time.sleep(1)

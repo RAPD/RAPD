@@ -26,7 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-import from collections import OrderedDict
+from collections import OrderedDict
 # import datetime
 # import glob
 import json
@@ -161,12 +161,12 @@ class Gatherer(object):
         self.logger.debug("IP Address:",self.ip_address)
 
         # Now grab the file locations, beamline from settings
-        if self.site.GATHERERS.has_key(self.ip_address):
+        if self.ip_address in self.site.GATHERERS:
             self.tag = self.site.GATHERERS[self.ip_address]
             # Make sure we enforce uppercase for tag
             self.tag = self.tag.upper()
         else:
-            print "ERROR - no settings for this host"
+            print("ERROR - no settings for this host")
             self.tag = "test"
 
     def connect(self):
@@ -298,7 +298,7 @@ def main():
 
     # Handle no site file 
     if site_file == False: 
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print(text.error+"Could not determine a site file. Exiting."+text.stop)
         sys.exit(9) 
 
     # Import the site settings 

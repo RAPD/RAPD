@@ -34,7 +34,7 @@ import os
 import time
 from multiprocessing import Process
 from multiprocessing import Queue as mp_Queue
-from Queue import Queue as t_Queue
+from queue import Queue as t_Queue
 from threading import Thread
 
 # RAPD imports
@@ -193,5 +193,5 @@ if __name__ == "__main__":
                    mp_event=event,
                    timeout=False,)
     time.sleep(2)
-    print 'event cleared'
+    print('event cleared')
     event.clear()

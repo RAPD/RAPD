@@ -143,8 +143,8 @@ def calculate_flux(header, site_params):
     """
     Calculate the flux as a function of transmission and aperture size.
     """
-    print header
-    print site_params
+    print(header)
+    print(site_params)
     beam_size_x = site_params.get('BEAM_SIZE_X')
     beam_size_y = site_params.get('BEAM_SIZE_Y')
     aperture = header.get('md2_aperture')
@@ -321,7 +321,7 @@ def base_read_header_OLD(image,
         # "size2": 2527}
         }
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         # print label
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
@@ -389,7 +389,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
@@ -411,7 +411,7 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print("main")
 
     if args.file:
         test_image = os.path.abspath(args.file)
@@ -428,8 +428,8 @@ def main(args):
 
     # No file
     else:
-        print "data root dir:", get_data_root_dir(test_image)
-        print "is run:", is_run_from_imagename(test_image)
+        print("data root dir:", get_data_root_dir(test_image))
+        print("is run:", is_run_from_imagename(test_image))
 
 if __name__ == "__main__":
 

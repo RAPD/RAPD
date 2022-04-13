@@ -84,8 +84,8 @@ class LocalSubprocess(Thread):
                  result_queue=False,
                  tag=False):
 
-        print "LocalSubprocess command: %s" % command
-        print "                logfile: %s" % logfile
+        print("LocalSubprocess command: %s" % command)
+        print("                logfile: %s" % logfile)
 
         self.stdout = None
         self.stderr = None
@@ -100,12 +100,12 @@ class LocalSubprocess(Thread):
 
     def run(self):
 
-        print "LocalSubprocess.run"
+        print("LocalSubprocess.run")
 
         if not self.command:
             self.command = 'ls'
         command = self.command.split(" ")
-        print os.getcwd()
+        print(os.getcwd())
 
         p = subprocess.Popen(command,
                              shell=True,
@@ -114,19 +114,19 @@ class LocalSubprocess(Thread):
 
         self.stdout, self.stderr = p.communicate()
 
-        print "STDOUT"
-        print self.stdout
-        print "STDERR"
-        print self.stderr
+        print("STDOUT")
+        print(self.stdout)
+        print("STDERR")
+        print(self.stderr)
 
         if self.logfile:
-            print "LocalSubprocess.logfile"
+            print("LocalSubprocess.logfile")
             with open(self.logfile, "w") as out_file:
                 out_file.write(self.stdout)
                 out_file.write(self.stderr)
 
         done = True
-        print "LocalSubprocess.done"
+        print("LocalSubprocess.done")
 
 # myclass = MyClass()
 # myclass.start()
@@ -159,7 +159,7 @@ class QueueManager(BaseManager):
         #self.queue_server = manager.get_server()
         #self.queue_server.serve_forever()
         self.queue_server = manager.start()
-        print dir(queue)
+        print(dir(queue))
         
         
         #print dir(manager)
@@ -191,7 +191,7 @@ def mp_manager_TEST():
     m = QueueManager(address=(get_ip_address(), 20100), authkey=None)
     #m.start()
     s = m.get_server()
-    print dir(s)
+    print(dir(s))
     stop_timer = threading.Timer(1, lambda:s.stop_event.set())
     QueueManager.register('stop', callable=lambda:stop_timer.start())
     s.serve_forever()
@@ -235,7 +235,7 @@ def local_subprocess(command,
                      stderr=PIPE,
                      shell=True,
                      bufsize=-1)
-    elif isinstance(command, basestring):
+    elif isinstance(command, str):
         # If command is a string and no shell.
         proc = Popen(shlex.split(command), 
                      stdout=PIPE,

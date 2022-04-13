@@ -1,4 +1,6 @@
-"""
+"""Site description for SERCAT ID beamline"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016-2018 Cornell University
@@ -22,20 +24,24 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standar imports
 import sys
 
 # RAPD imports
 from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
-ID = "NECAT_E"
+ID = "SERCAT_BM"
 
 # The secrets file - do not put in github repo!
-SECRETS_FILE = "sites.secrets_necat_e_test"
+SECRETS_FILE = "sites.secrets_sercat_bm"
 
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
-read_secrets(SECRETS_FILE, sys.modules[__name__])
+try:
+    read_secrets(SECRETS_FILE, sys.modules[__name__])
+except:
+    pass
 
 # X-ray source characteristics
 # Flux of the beam
@@ -91,8 +97,33 @@ CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
-DETECTOR = "NECAT_ADSC_Q315_TEST"
-DETECTOR_SUFFIX = ".img"
+DETECTOR = "SERCAT_RAYONIX_MX300HS"
+DETECTOR_SUFFIX = ""
+
+# Launcher settings
+LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
+
+# Directories to look for rapd agents
+RAPD_AGENT_DIRECTORIES = ("sites.agents",
+                          "agents")
+# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
+# the same file in src/agents
+
+
+# Directories to look for launcher adapters
+RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
+                                     "sites.launcher_adapters")
+# Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
+# the same file in launch/launcher_adapters
+
+# Cluster settings
+CLUSTER_ADAPTER = "sites.cluster.sercat"
+# Set to False if there is no cluster adapter
+
+# Data gatherer settings
+# The data gatherer for this site, in the src/sites/gatherers directory
+GATHERER = "sercat.py"
+GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 
 # Monitor for collected images
 IMAGE_MONITOR = "sites.image_monitors.necat_e"
@@ -130,9 +161,28 @@ REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 ##
 ## Aggregators
 ## Be extra careful when modifying
+CONTROL_DATABASE_SETTINGS = {
+    "CONTROL_DATABASE":CONTROL_DATABASE,
+    "DATABASE_NAME_DATA":CONTROL_DATABASE_DATA,
+    "DATABASE_NAME_USERS":CONTROL_DATABASE_USERS,
+    "DATABASE_NAME_CLOUD":CONTROL_DATABASE_CLOUD,
+    "DATABASE_HOST":CONTROL_DATABASE_HOST,
+    "DATABASE_PORT":CONTROL_DATABASE_PORT,
+    "DATABASE_USER":CONTROL_DATABASE_USER,
+    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD
+}
+
+
+LAUNCHER_SETTINGS = {
+    "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
+    "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
+    "LOCK_FILE":LAUNCHER_LOCK_FILE,
+    "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
+}
 
 LAUNCH_SETTINGS = {
-    "LAUNCH_ADDRESSES":LAUNCH_ADDRESSES
+    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES,
+    "LAUNCHER":(LAUNCHER_REGISTER[0][0], LAUNCHER_SPECIFICATIONS[LAUNCHER_REGISTER[0][2]]["port"])
 }
 
 BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
@@ -163,7 +213,7 @@ RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
 
 CLOUD_MONITOR_SETTINGS = {
     "CLOUD_HANDLER_DIRECTORIES" : CLOUD_HANDLER_DIRECTORIES,
-    "LAUNCH_ADDRESSES" : LAUNCH_ADDRESSES,
+#    "LAUNCHER_IDS" : LAUNCHER_IDS,
     "DETECTOR_SUFFIX" : DETECTOR_SUFFIX,
     "UI_HOST" : UI_HOST,
     "UI_PORT" : UI_PORT,

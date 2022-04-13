@@ -470,7 +470,7 @@ def main():
     the commandline
     """
 
-    print "main"
+    print("main")
 
     args = get_commandline()
 
@@ -479,7 +479,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"

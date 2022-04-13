@@ -151,7 +151,7 @@ class Registrar(object):
         # Redis is down
         except redis.exceptions.ConnectionError:
 
-            print "Redis appears to be down"
+            print("Redis appears to be down")
 
     def register(self, custom_vars={}):
         """
@@ -190,7 +190,7 @@ class Registrar(object):
         try:
             # Put entry in the redis db
             #red.hmset("OW:"+self.uuid, entry)
-            for k, v in entry.iteritems():
+            for k, v in entry.items():
                 red.hset("OW:"+self.uuid, k, v)
 
             # Expire the current entry in N seconds
@@ -203,7 +203,7 @@ class Registrar(object):
             if not self.ow_id == None:
                 # Put entry in the redis db
                 #red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
-                for k, v in entry.iteritems():
+                for k, v in entry.items():
                     red.hset("OW:"+self.uuid+":"+self.ow_id, k, v)
 
                 # Expire the current entry in N seconds
@@ -220,7 +220,7 @@ class Registrar(object):
         # Redis is down
         except redis.exceptions.ConnectionError:
 
-            print "Redis appears to be down"
+            print("Redis appears to be down")
 
     def update(self, custom_vars={}):
         """
@@ -251,7 +251,7 @@ class Registrar(object):
             red.hset("OW:"+self.uuid, "timestamp", time.time())
 
             # Update any custom_vars
-            for k, v in custom_vars.iteritems():
+            for k, v in custom_vars.items():
                 red.hset("OW:"+self.uuid, k, v)
 
             # Expire the current entry in N seconds
@@ -266,7 +266,7 @@ class Registrar(object):
                 red.hset("OW:"+self.uuid+":"+self.ow_id, "timestamp", time.time())
 
                 # Update any custom_vars
-                for k, v in custom_vars.iteritems():
+                for k, v in custom_vars.items():
                     red.hset("OW:"+self.uuid+":"+self.ow_id, k, v)
 
                 # Expire the current entry in N seconds
@@ -283,7 +283,7 @@ class Registrar(object):
         # Redis is down
         except redis.exceptions.ConnectionError:
 
-            print "Redis appears to be down"
+            print("Redis appears to be down")
 
     def connect(self):
         """Connect to the central redis Instance"""
@@ -385,7 +385,7 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
-        print "kill_managed_process"
+        print("kill_managed_process")
         # Small wait to all children to terminate without errors.
         time.sleep(2)
 
@@ -435,7 +435,7 @@ class Overwatcher(Registrar):
         exit_code = self.managed_process.poll()
         if exit_code != None:
             if not help:
-                print text.error+"Managed process exited on start. Exiting."+text.stop
+                print(text.error+"Managed process exited on start. Exiting."+text.stop)
                 self.update(custom_vars={"status":"error"})
             sys.exit(9)
 
@@ -485,7 +485,7 @@ class Overwatcher(Registrar):
                 except redis.exceptions.ConnectionError:
                     connection_errors += 1
                     if connection_errors > 12:
-                        print "Too many connection errors. Exiting."
+                        print("Too many connection errors. Exiting.")
                         break
         except KeyboardInterrupt:
             pass
@@ -546,7 +546,7 @@ class Overwatcher(Registrar):
         # If there is an instruction, delete it as we have retrieved it
         if instruction:
             red.delete("OW:%s:instruction" % self.uuid)
-            print "Have instruction:", instruction
+            print("Have instruction:", instruction)
             if instruction["command"] == "stop":
                 self.kill_managed_process()
             elif instruction["command"] == "start":
@@ -648,7 +648,7 @@ def main():
 
     # Make sure there is a managed_process in parsed_args
     if parsed_args.managed_file == None:
-        print text.error+"Need a file to manage. Exiting.\n"+text.stop
+        print(text.error+"Need a file to manage. Exiting.\n"+text.stop)
         sys.exit(9)
 
     # Get the environmental variables
@@ -656,23 +656,23 @@ def main():
     # print environmental_vars
 
     if parsed_args.help:
-        print "\n"
+        print("\n")
         SITE = None
     else:
         # Environmental var for site if no commandline
         site = parsed_args.site
         if site == None:
-            if environmental_vars.has_key("RAPD_SITE"):
+            if "RAPD_SITE" in environmental_vars:
                 site = environmental_vars["RAPD_SITE"]
 
         # Determine the site
         site_file = utils.site.determine_site(site_arg=site)
         if site_file == False:
-            print text.error+"Could not determine a site file. Exiting."+text.stop
+            print(text.error+"Could not determine a site file. Exiting."+text.stop)
             sys.exit(9)
 
         # Import the site settings
-        print "Importing %s" % site_file
+        print("Importing %s" % site_file)
         SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args

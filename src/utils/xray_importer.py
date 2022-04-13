@@ -388,21 +388,21 @@ def main():
 
     for input_file_name in datafiles:
 
-        print "\nInput file name: %s" % input_file_name
+        print("\nInput file name: %s" % input_file_name)
 
         datafile = reflection_file_reader.any_reflection_file(file_name=input_file_name)
 
-        print "  CCTBX file type", datafile.file_type()
-        print "  columns:", get_columns(datafile)
+        print("  CCTBX file type", datafile.file_type())
+        print("  columns:", get_columns(datafile))
 
         # Get the RAPD file type
         rapd_file_type = get_rapd_file_type(input_file_name)
 
-        print "  RAPD file type:", rapd_file_type
+        print("  RAPD file type:", rapd_file_type)
 
-        print "  Formats possible to be converted to:"
+        print("  Formats possible to be converted to:")
         for conversion in get_conversions(rapd_file_type):
-            print "    %s" % conversion
+            print("    %s" % conversion)
 
         # Testing code
         # if rapd_file_type == "xds_corrected":
@@ -645,14 +645,14 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
 def print_file_types():
     """Prints a list of file types understood by RAPD"""
 
-    print "%35s  %35s  %s" % ("RAPD", "CCTBX", "Columns")
-    print "%35s  %35s  %s" % ("======", "=======", "="*80)
+    print("%35s  %35s  %s" % ("RAPD", "CCTBX", "Columns"))
+    print("%35s  %35s  %s" % ("======", "=======", "="*80))
 
-    file_types = RAPD_FILE_SIGNATURES.keys()
+    file_types = list(RAPD_FILE_SIGNATURES.keys())
     file_types.sort()
     for file_type in file_types:
         cctbx_file_type, columns = RAPD_FILE_SIGNATURES[file_type]
-        print "%35s  %35s  %s" % (file_type, cctbx_file_type, str(columns))
+        print("%35s  %35s  %s" % (file_type, cctbx_file_type, str(columns)))
 
 def print_file_conversions(source_file_type=False, columns=False):
     """
@@ -667,18 +667,18 @@ def print_file_conversions(source_file_type=False, columns=False):
     if source_file_type:
         rapd_file_types = (source_file_type,)
     else:
-        rapd_file_types = RAPD_FILE_SIGNATURES.keys()
+        rapd_file_types = list(RAPD_FILE_SIGNATURES.keys())
         rapd_file_types.sort()
 
 
-    print "Available file conversions"
+    print("Available file conversions")
     for rapd_file_type in rapd_file_types:
-        print rapd_file_type
+        print(rapd_file_type)
         for conversion in get_conversions(rapd_file_type):
             if columns:
-                print "          >> %s   %s" % (conversion, RAPD_FILE_SIGNATURES[conversion][1])
+                print("          >> %s   %s" % (conversion, RAPD_FILE_SIGNATURES[conversion][1]))
             else:
-                print "          >> %s" % conversion
+                print("          >> %s" % conversion)
 #
 # Low-level functions
 #
@@ -798,7 +798,7 @@ def get_rapd_file_type(file_name):
     cctbx_file_type = reflection_file.file_type()
 
     # Look for signature
-    for rapd_file_type, signature in RAPD_FILE_SIGNATURES.iteritems():
+    for rapd_file_type, signature in RAPD_FILE_SIGNATURES.items():
         signature_file_type, cols = signature
         if cctbx_file_type == signature_file_type and columns == cols:
             break
@@ -810,7 +810,7 @@ def get_rapd_file_type(file_name):
 def get_conversions(rapd_file_type):
     """ """
     conversions = []
-    for conversion, possible in RAPD_CONVERSIONS.iteritems():
+    for conversion, possible in RAPD_CONVERSIONS.items():
         if conversion[0] == rapd_file_type:
             if possible:
                 conversions.append(conversion[1])

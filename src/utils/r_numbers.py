@@ -80,7 +80,7 @@ def main():
     the commandline
     """
 
-    print "main"
+    print("main")
 
 if __name__ == "__main__":
 

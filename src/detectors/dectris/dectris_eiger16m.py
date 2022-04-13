@@ -165,7 +165,7 @@ def read_header(image,
         # "size2": 2527}
         }
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         # print label
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
@@ -173,7 +173,7 @@ def read_header(image,
             parameters[label] = pat[1](matches[-1])
         else:
             parameters[label] = None
-    if parameters.has_key('size1'):
+    if 'size1' in parameters:
         if parameters['size1'] == 4150:
             parameters['detector'] = 'Eiger-16M'
 
@@ -228,7 +228,7 @@ def main(args):
     tmp_dir = False
 
     if test_image.endswith(".h5"):
-        print "HDF5 file  - converting"
+        print("HDF5 file  - converting")
 
         tmp_dir = tempfile.mkdtemp()
 

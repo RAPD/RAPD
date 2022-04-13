@@ -65,7 +65,7 @@ def parse_raw_output(raw_output, logger=False):
             if os.path.exists(raw_output):
                 raw_output = open(raw_output, "r").readlines()
             else:
-                print "Sorry, I think you are inputing a file name, but I cannot find the file"
+                print("Sorry, I think you are inputing a file name, but I cannot find the file")
                 raise ValueError("Sorry, I think you are inputing a file name, but I cannot find the file")
 
     output_lines = []
@@ -333,13 +333,13 @@ def parse_raw_output(raw_output, logger=False):
                 for i in range(2, 4):
                     if len(output_lines[line+i].split()) > 0:
                         law = output_lines[line+i].split()[1]
-                        if twin_info.has_key(law):
+                        if law in twin_info:
                             twin_info[law].update({"sg":sg})
                 #   except:
                 #     self.logger.exception("Warning. Missing Coset info.")
         else:
             crap = {"sg":"NA"}
-            for key in twin_info.keys():
+            for key in list(twin_info.keys()):
                 twin_info[key].update(crap)
 
 

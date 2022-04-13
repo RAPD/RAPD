@@ -46,7 +46,7 @@ from cctbx.array_family import flex
 from cctbx.sgtbx import space_group_symbols
 from hcluster import linkage,dendrogram
 
-import cPickle as pickle # For storing dicts as pickle files for later use
+import pickle as pickle # For storing dicts as pickle files for later use
 
 
 class MergeMany(Process):
@@ -100,73 +100,73 @@ class MergeMany(Process):
             # centroid: the centroid/UPGMC algorithm. (alias)
             # median: the median/WPGMC algorithm. (alias)
             # ward: the Ward/incremental algorithm. (alias)
-        if self.settings.has_key('method'):
+        if 'method' in self.settings:
             self.method = self.settings['method']
         else:
             self.method = 'complete'
 
         # Check for cutoff value
-        if self.settings.has_key('cutoff'):
+        if 'cutoff' in self.settings:
             self.cutoff = self.settings['cutoff'] # CC 1/2 value passed in by user
         else:
             self.cutoff = 0.95
 
         # Check for filename for merged dataset
-        if self.settings.has_key('prefix'):
+        if 'prefix' in self.settings:
             self.prefix = self.settings['prefix']
         else:
             self.prefix = 'merged'
 
         # Check for user-defined spacegroup
-        if self.settings.has_key('user_spacegroup'):
+        if 'user_spacegroup' in self.settings:
             self.user_spacegroup = self.settings['user_spacegroup']
         else:
             self.user_spacegroup = 0 # Default to None
 
         # Check for user-defined high resolution cutoff
-        if self.settings.has_key('resolution'):
+        if 'resolution' in self.settings:
             self.resolution = self.settings['resolution']
         else:
             self.resolution = 0 # Default high resolution limit to 0
 
         # Check for file cleanup
-        if self.settings.has_key('cleanup_files'):
+        if 'cleanup_files' in self.settings:
             self.cleanup_files = self.settings['cleanup_files']
         else:
             self.cleanup_files = True
 
         # Check whether to make all clusters or the first one that exceeds the cutoff
-        if self.settings.has_key('all_clusters'):
+        if 'all_clusters' in self.settings:
             self.all_clusters=self.settings['all_clusters']
         else:
             self.all_clusters = False
 
         # Check whether to add labels to the dendrogram
-        if self.settings.has_key('labels'):
+        if 'labels' in self.settings:
             self.labels=self.settings['labels']
         else:
             self.labels = False
 
         # Check whether to start at the beginning or skip to a later step
-        if self.settings.has_key('start_point'):
+        if 'start_point' in self.settings:
             self.start_point=self.settings['start_point']
         else:
             self.start_point= 'start'
 
         # Check whether to skip prechecking files during preprocess
-        if self.settings.has_key('precheck'):
+        if 'precheck' in self.settings:
             self.precheck=self.settings['precheck']
         else:
             self.precheck = True
 
         # Set resolution for dendrogram image
-        if self.settings.has_key('dpi'):
+        if 'dpi' in self.settings:
             self.dpi=self.settings['dpi']
         else:
             self.dpi = 100
 
         # Check on number of processors
-        if self.settings.has_key('nproc'):
+        if 'nproc' in self.settings:
             self.nproc = self.settings['nproc']
         else:
             try:
@@ -176,7 +176,7 @@ class MergeMany(Process):
                 self.nproc = 1
 
         # Check on whether job should be run on a cluster
-        if self.settings.has_key('cluster_use'):
+        if 'cluster_use' in self.settings:
             if self.settings['cluster_use'] == True:
                 self.cmd_prefix = 'qsub -N combine -sync y'
             else:
@@ -201,7 +201,7 @@ class MergeMany(Process):
                 pkl_file = self.datasets
                 self.rerun(pkl_file)
             self.postprocess()
-        except ValueError, Argument:
+        except ValueError as Argument:
             self.logger.error('HCMerge::Failure to Run.')
             self.logger.exception(Argument)
 
@@ -279,7 +279,7 @@ class MergeMany(Process):
                 comfile = open(out_file+'_import.sh','w')
                 comfile.writelines(command)
                 comfile.close()
-                os.chmod('./'+out_file+'_import.sh',0755)
+                os.chmod('./'+out_file+'_import.sh',0o755)
 
                 p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
                                  shell=True,
@@ -330,7 +330,7 @@ class MergeMany(Process):
             jobNum = endjobNum
 
         # When POINTLESS is complete, calculate correlation coefficient
-        for pair in self.id_list.keys():
+        for pair in list(self.id_list.keys()):
             self.results[pair] = {}
             if os.path.isfile(pair+'_pointless.mtz'):
                 # First, get batch information from pointless log file
@@ -440,7 +440,7 @@ class MergeMany(Process):
         comfile = open(out_file+'_pointless.sh','w')
         comfile.writelines(command)
         comfile.close()
-        os.chmod('./'+out_file+'_pointless.sh',0755)
+        os.chmod('./'+out_file+'_pointless.sh',0o755)
 #            p = subprocess.Popen('qsub -N combine -sync y ./'+out_file+'_pointless.sh',shell=True).wait()
         p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_pointless.sh',
                              shell = True,
@@ -473,7 +473,7 @@ class MergeMany(Process):
                         cmdfile = open('p1_pointless.sh','w')
                         cmdfile.writelines(cmd)
                         cmdfile.close()
-                        os.chmod('./p1_pointless.sh',0755)
+                        os.chmod('./p1_pointless.sh',0o755)
                         p1 = subprocess.Popen('p1_pointless.sh',
                                              shell = True,
                                              stdout = subprocess.PIPE,
@@ -518,7 +518,7 @@ class MergeMany(Process):
                         cmdfile = open('p1_pointless.sh','w')
                         cmdfile.writelines(cmd)
                         cmdfile.close()
-                        os.chmod('./p1_pointless.sh',0755)
+                        os.chmod('./p1_pointless.sh',0o755)
                         p1 = subprocess.Popen('p1_pointless.sh',
                                              shell = True,
                                              stdout = subprocess.PIPE,
@@ -660,7 +660,7 @@ class MergeMany(Process):
         comfile = open(in_file+'_aimless.sh','w')
         comfile.writelines(command)
         comfile.close()
-        os.chmod(in_file+'_aimless.sh',0755)
+        os.chmod(in_file+'_aimless.sh',0o755)
         p = subprocess.Popen(self.cmd_prefix+' ./'+in_file+'_aimless.sh',
                              shell=True,
                              stdout = subprocess.PIPE,
@@ -854,7 +854,7 @@ class MergeMany(Process):
 
         self.logger.info('HCMerge::make_matrix using method %s' % method)
         Y = [] # The list of distances, our equivalent of pdist
-        for pair in self.id_list.keys():
+        for pair in list(self.id_list.keys()):
             # grab keys with stats of interest, but ensure that keys go in numerical order
             cc = 1 - self.results[pair]['CC']
             Y.append(cc)
@@ -887,7 +887,7 @@ class MergeMany(Process):
                 # Dict holding clusters using node ID as key
                 most_wedges[cnt] = [int(item[0]),int(item[1])], item[2]
         # iteratively go through dict values and reduce to original leaves
-        for i in most_wedges.values():
+        for i in list(most_wedges.values()):
             # use set because it is faster than list
             while set(i[0]).intersection(set(node_list.keys())):
                 self.replace_wedges(i[0],node_list)
@@ -910,7 +910,7 @@ class MergeMany(Process):
 
         self.logger.debug('HCMerge::Replace Wedges: %s' % wedges)
         for count,item in enumerate(wedges):
-            if item in node_dict.keys():
+            if item in list(node_dict.keys()):
                 wedges[count] = node_dict[item][0]
                 wedges.append(node_dict[item][1])
         return wedges
@@ -947,7 +947,7 @@ class MergeMany(Process):
                 self.results[new_prefix]['CC'] = 1 - wedge_files[itm][1]
                 self.merged_files.append(new_prefix)
         else:
-            combine_all = Process(target=self.combine,args=(next(wedge_files.itervalues())[0],self.prefix))
+            combine_all = Process(target=self.combine,args=(next(iter(wedge_files.values()))[0],self.prefix))
             combine_all.start()
             combine_all.join()
             # Scale the files with aimless
@@ -955,8 +955,8 @@ class MergeMany(Process):
             scale.start()
             scale.join()
             self.results[self.prefix],self.graphs[self.prefix] = self.parse_aimless(self.prefix)
-            self.results[self.prefix]['files'] = next(wedge_files.itervalues())[0]
-            self.results[self.prefix]['CC'] = 1 - next(wedge_files.itervalues())[1]
+            self.results[self.prefix]['files'] = next(iter(wedge_files.values()))[0]
+            self.results[self.prefix]['CC'] = 1 - next(iter(wedge_files.values()))[1]
             self.merged_files.append(self.prefix)
 
     def make_dendrogram(self, matrix, resolution):
@@ -1018,7 +1018,7 @@ class MergeMany(Process):
                     row.append(self.results[file][item])
             table.append(row)
         # flip columns and rows since rows are so long
-        table = zip(*table)
+        table = list(zip(*table))
         out_file = self.prefix + '.log'
         out = open(out_file, 'w')
         table_print = MakeTables()
@@ -1069,7 +1069,7 @@ class MergeMany(Process):
 
         self.logger.debug('HCMerge::UnPickling Dicts')
         tmp = pickle.load(open(file,'rb'))
-        for itm,val in tmp.iteritems():
+        for itm,val in tmp.items():
         	setattr(self, itm, val)
 
     def rerun(self, pkl_file):
@@ -1130,13 +1130,13 @@ class MergeMany(Process):
             e = "The directory %s could not be created (it may already exist)" %(
                 os.path.join(path, prefix + "_" + str(directory_number)))
 
-        for i in xrange(starting_number, ending_number + 1):
+        for i in range(starting_number, ending_number + 1):
             temp_dir = os.path.join(path, prefix + "_" + str(i))
             try:
                 if not os.path.exists(temp_dir):
                     os.mkdir(temp_dir)
                     return os.path.join(os.getcwd(), temp_dir)
-            except Exception, e: pass
+            except Exception as e: pass
         raise ValueError("Unable to create directory %s " %(temp_dir)+ "\nError message is: %s " %(str(e)))
 
 
@@ -1166,12 +1166,12 @@ class MakeTables:
 
         for row in table:
             # left col
-            print >> out, row[0].ljust(col_paddings[0] + 1),
+            print(row[0].ljust(col_paddings[0] + 1), end=' ', file=out)
             # rest of the cols
             for i in range(1, len(row)):
                 col = str(row[i]).rjust(col_paddings[i] + 2)
-                print >> out, col,
-            print >> out
+                print(col, end=' ', file=out)
+            print(file=out)
 
 
 if __name__ == '__main__':
@@ -1240,7 +1240,7 @@ if __name__ == '__main__':
         # Read in text file with each file on a separate line
         datasets = open(files[0],'rb').readlines()
         # Remove entries created from the blank lines in the file.  Compensating for returns at end of file.
-        datasets = filter(lambda x: x != '\n',datasets)
+        datasets = [x for x in datasets if x != '\n']
         # Remove empty space on either side of the filenames
         datasets = [os.path.abspath(x.strip()) for x in datasets]
 
@@ -1272,21 +1272,21 @@ if __name__ == '__main__':
         if options.spacegroup:
             settings['user_spacegroup'] = space_group_symbols(options.spacegroup).number()
     except:
-        print 'Unrecognized space group symbol.'
+        print('Unrecognized space group symbol.')
         sys.exit()
     try:
         method_list = ['single', 'complete', 'average', 'weighted']
         if [i for i in method_list if i in options.method]:
             settings['method'] = options.method
     except:
-        print 'Unrecognized method.'
+        print('Unrecognized method.')
         sys.exit()
     try:
         rerun_list = ['start', 'clustering', 'dendrogram']
         if [i for i in rerun_list if i in options.start_point]:
             settings['start_point'] = options.start_point
     except:
-        print 'Unrecognized option for rerunning HCMerge.'
+        print('Unrecognized option for rerunning HCMerge.')
         sys.exit()
     # Deal with negative integers and what happens if cpu_count() raises NotImplementedError
     if options.nproc <= 0:

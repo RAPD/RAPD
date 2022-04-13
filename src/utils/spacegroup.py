@@ -76,7 +76,7 @@ xds_bravais_types = {
 
 # Reverse lookup for
 intl_to_xds_bravais_type = {}
-for key, val in xds_bravais_types.iteritems():
+for key, val in xds_bravais_types.items():
     for sg in val:
         if not sg in intl_to_xds_bravais_type:
             intl_to_xds_bravais_type[sg] = ()
@@ -217,7 +217,7 @@ intl2std_extra = intl2std.update({
     "155.2": "H32",     #155
 })
 
-std2intl = dict((value,key) for key, value in intl2std.iteritems())
+std2intl = dict((value,key) for key, value in intl2std.items())
 
 std_sgs = ['None','P1','C2','P2','P21','F222','I222','I212121','C222','C2221','P222',
            'P2221','P21212','P212121','I4','I41','I422','I4122','P4','P41','P42','P43',
@@ -302,7 +302,7 @@ symbol_to_number, ccp4_to_number = build_ccp4_symmetry_table()
 
 # Reverse lookup for
 number_to_ccp4 = {}
-for key, val in ccp4_to_number.iteritems():
+for key, val in ccp4_to_number.items():
     number_to_ccp4[val] = key
 
 def get_subgroups(inp):

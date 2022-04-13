@@ -231,7 +231,7 @@ def read_header(image, run_id=None, place_in_run=None):
                   "place_in_run" : place_in_run,
                   "count_cutoff": 65535}
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
         if len(matches) > 0:

@@ -269,7 +269,7 @@ def read_header_base(image, run_id=None, place_in_run=None):
                   "run_id": run_id,
                   "place_in_run": place_in_run}
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
         if len(matches) > 0:

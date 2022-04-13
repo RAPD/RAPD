@@ -63,13 +63,13 @@ base_parser.add_argument("--overwatch_id",
 
 if __name__ == "__main__":
 
-    print "commandline.py"
-    print "=============="
+    print("commandline.py")
+    print("==============")
 
     parser = argparse.ArgumentParser(parents=[base_parser],
                                      description="Testing")
     returned_args = parser.parse_args()
-    print "%10s  %-10s" % ("var", "val")
-    print "%10s  %-10s" % ("=======", "=======")
+    print("%10s  %-10s" % ("var", "val"))
+    print("%10s  %-10s" % ("=======", "======="))
     for pair in returned_args._get_kwargs():
-        print "%10s  %-10s" % pair
+        print("%10s  %-10s" % pair)

@@ -396,7 +396,7 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    print commandline_args
+    print(commandline_args)
 
     filename = False #"foo.py"
 
@@ -405,11 +405,11 @@ def main():
     else:
         file_generator = BaseFileGenerator(commandline_args)
 
-    print file_generator
+    print(file_generator)
     file_generator.run()
 
 if __name__ == "__main__":
 
-    print "rapd_generate_rapd_file.py"
+    print("rapd_generate_rapd_file.py")
 
     main()

@@ -33,7 +33,7 @@ def copy_attrs(source, target):
     """Copy all the public attrs from one object to local scope"""
 
     # Get the attributes
-    keys = source.__dict__.keys()
+    keys = list(source.__dict__.keys())
     # Run through the attributes
     for key in keys:
         # Ignore private
@@ -45,7 +45,7 @@ def read_secrets(secrets_file, target):
     try:
         secrets = importlib.import_module(secrets_file)
     except ImportError:
-        print "ERROR - unable to import %s" % secrets_file
+        print("ERROR - unable to import %s" % secrets_file)
         sys.exit(9)
 
     copy_attrs(secrets, target)
@@ -176,7 +176,7 @@ def determine_site(site_arg=False):
 
 def verbose_print(arg, level, verbosity=1):
     if level <= verbosity:
-        print arg
+        print(arg)
 
 
 def get_environmental_variables(pre="RAPD"):
@@ -189,7 +189,7 @@ def get_environmental_variables(pre="RAPD"):
 
     environmental_variables = {}
 
-    for key, value in os.environ.iteritems():
+    for key, value in os.environ.items():
         if key.startswith(pre):
             environmental_variables[key] = value
 
@@ -197,8 +197,8 @@ def get_environmental_variables(pre="RAPD"):
 
 if __name__ == "__main__":
 
-    print "sites.py"
-    print "============="
+    print("sites.py")
+    print("=============")
 
     terminal_print = functools.partial(verbose_print, verbosity=2)
     determine_site()

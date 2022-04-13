@@ -43,7 +43,7 @@ from iotbx.detectors import ImageFactory
 # RAPD imports
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.text as text
-import detector_list
+from . import detector_list
 
 
 parameters_to_get = (
@@ -114,27 +114,27 @@ def print_detector_info(image):
         i = ImageFactory(image)
     except IOError as e:
         if "no format support found for" in e.message:
-            print "No format support for %s" % image_basename
+            print("No format support for %s" % image_basename)
             return False
         else:
-            print e
+            print(e)
             return False
     except AttributeError as e:
         if "object has no attribute 'detectorbase'" in e.message:
-            print "No format support for %s" % image_basename
+            print("No format support for %s" % image_basename)
             return False
         else:
-            print text.red + e.message + text.stop
+            print(text.red + e.message + text.stop)
             return False
 
 
-    print "\nInformation from iotbx ImageFactory"
-    print "====================================="
-    print "%20s::%s" % ("image", image_basename)
-    print "%20s::%s" % ("vendortype", str(i.vendortype))
+    print("\nInformation from iotbx ImageFactory")
+    print("=====================================")
+    print("%20s::%s" % ("image", image_basename))
+    print("%20s::%s" % ("vendortype", str(i.vendortype)))
     # print "%20s" % "Parameters"
-    for key, val in i.parameters.iteritems():
-        print "%20s::%s" % (key, val)
+    for key, val in i.parameters.items():
+        print("%20s::%s" % (key, val))
 
 def print_detector_info2(image):
     """
@@ -146,10 +146,10 @@ def print_detector_info2(image):
     # adds parameters (iotbx)
     temp = instance.get_detectorbase()
 
-    print "\nInformation from dxtbx Registry"
-    print "================================="
-    for key, val in temp.parameters.iteritems():
-        print "%20s::%s" % (key, val)
+    print("\nInformation from dxtbx Registry")
+    print("=================================")
+    for key, val in temp.parameters.items():
+        print("%20s::%s" % (key, val))
 
 def get_detector_files():
     """
@@ -213,7 +213,7 @@ def get_detector_file(image):
         # print i.vendortype
         # print i.parameters["DETECTOR_SN"]
     except (IOError, AttributeError, RuntimeError):
-        print error
+        print(error)
         return False
 
     # print ">>>%s<<<" % i.vendortype
@@ -283,7 +283,7 @@ def load_detector(detector):
 
     # No module found == bad
     if detector_file == False:
-        raise Exception, "No detector file found for %s" % detector
+        raise Exception("No detector file found for %s" % detector)
     else:
         module = importlib.import_module(detector_file)
         return module
@@ -329,24 +329,24 @@ def reorder_input(inp0, inp1):
     
     # put into list if not otherwise
     if isinstance(inp0, dict):
-        temp0 = [(key, value) for key, value in inp0.iteritems()]
+        temp0 = [(key, value) for key, value in inp0.items()]
         temp0.sort()
         # print converted
-        print '-------inp0-------'
+        print('-------inp0-------')
         for line in temp0:
-            print line, ','
+            print(line, ',')
             #print '(%s, %s),'%tuple(line)
     else:
         temp0 = inp0
         temp0.sort()
 
     if isinstance(inp1, dict):
-        temp1 = [(key, value) for key, value in inp1.iteritems()]
+        temp1 = [(key, value) for key, value in inp1.items()]
         temp1.sort()
         # print converted
-        print '-------inp1-------'
+        print('-------inp1-------')
         for line in temp1:
-            print line, ','
+            print(line, ',')
     else:
         temp1 = inp1
         temp1.sort()
@@ -368,16 +368,16 @@ def reorder_input(inp0, inp1):
     
     
     if len(temp0[0]) > 0 and len(temp1[0]) > 0:
-        print '\n-------new params-------'
+        print('\n-------new params-------')
         # If the same keywords are used, then inp1 takes priority
         for x, l0 in enumerate(temp0):
             for y, l1 in enumerate(temp1):
                 # if keyword is the same
                 if l0[0] == l1[0]:
                     if l0[1].strip() != l1[1].strip():
-                        print l1, ','
+                        print(l1, ',')
         for x in range(len(unt1)):
-            print "('UNTRUSTED_RECTANGLE%s', '%s'),"%((len(unt0)+1+x), unt1[x])
+            print("('UNTRUSTED_RECTANGLE%s', '%s'),"%((len(unt0)+1+x), unt1[x]))
 
 def print_hdf5_file_structure(file_name) :
     """
@@ -395,25 +395,25 @@ def print_hdf5_item_structure(g, offset='    ') :
     Taken from https://confluence.slac.stanford.edu/display/PSDM/How+to+access+HDF5+data+from+Python#HowtoaccessHDF5datafromPython-Example1:Basicoperations
     """
     if   isinstance(g,h5py.File) :
-        print g.file, '(File)', g.name
+        print(g.file, '(File)', g.name)
 
     elif isinstance(g,h5py.Dataset) :
         if g.parent.name == "/entry/sample/goniometer":
-            print '(Dataset)', g.name, '    len =', g.shape, '    value =', g.value #, g.dtype
+            print('(Dataset)', g.name, '    len =', g.shape, '    value =', g.value) #, g.dtype
         else:
-            print '(Dataset)', g.name, '    len =', g.shape #, g.dtype
+            print('(Dataset)', g.name, '    len =', g.shape) #, g.dtype
 
     elif isinstance(g,h5py.Group) :
-        print '(Group)', g.name
+        print('(Group)', g.name)
 
     else :
-        print 'WORNING: UNKNOWN ITEM IN HDF5 FILE', g.name
+        print('WORNING: UNKNOWN ITEM IN HDF5 FILE', g.name)
         sys.exit ( "EXECUTION IS TERMINATED" )
 
     if isinstance(g, h5py.File) or isinstance(g, h5py.Group) :
-        for key,val in dict(g).iteritems() :
+        for key,val in dict(g).items() :
             subg = val
-            print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
+            print(offset, key, end=' ') #,"   ", subg.name #, val, subg.len(), type(subg),
             print_hdf5_item_structure(subg, offset + '    ')
 
 def print_hdf5_header_info(file_name):
@@ -422,14 +422,14 @@ def print_hdf5_header_info(file_name):
 
     header = read_hdf5_header(file_name)
 
-    print "\n Information from HDF5 file"
-    print "============================"
+    print("\n Information from HDF5 file")
+    print("============================")
 
-    keys = header.keys()
+    keys = list(header.keys())
     keys.sort()
     for key in keys:
-        print "%20s::%s" % (key, header[key])
-    print ""
+        print("%20s::%s" % (key, header[key]))
+    print("")
 
 def read_hdf5_header(file_name) :
     """Searched the HDF5 file header for information and returns a dict"""
@@ -451,7 +451,7 @@ def interrogate_hdf5_item_structure(key, g, header) :
 
     if isinstance(g, h5py.File) or isinstance(g, h5py.Group):
         # print "file"
-        for new_key, val in dict(g).iteritems():
+        for new_key, val in dict(g).items():
             # print new_key, val
             subg = val
             #print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
@@ -464,7 +464,7 @@ def get_resolution_at_edge(xdsinp):
     import math
     
     for line in xdsinp:
-        print line
+        print(line)
         
     """
     if self.vendortype.startswith('ADSC'):
@@ -534,30 +534,30 @@ def main(test_images):
         print_detector_info(test_image)
         print_detector_info2(test_image)
 
-        print "\nRAPD detector registry"
-        print "========================"
+        print("\nRAPD detector registry")
+        print("========================")
         detector = get_detector_file(test_image)
         if detector:
-            print "%20s::%s" % ("detector", detector)
+            print("%20s::%s" % ("detector", detector))
 
         else:
-            print "%20s::%s" % ("detector", "unknown")
-            print "RAPD uses (vendortype, DETECTOR_SN) as a key for its detector registry"
+            print("%20s::%s" % ("detector", "unknown"))
+            print("RAPD uses (vendortype, DETECTOR_SN) as a key for its detector registry")
         # except:
         #     print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
 
         if isinstance(detector, dict):
-            print "\nHeader information"
-            print "===================="
-            if detector.has_key("detector"):
+            print("\nHeader information")
+            print("====================")
+            if "detector" in detector:
                 SITE = False
                 detector_target = detector.get("detector")
                 detector_module = load_detector(detector_target)
             header = detector_module.read_header(test_image)
-            keys = header.keys()
+            keys = list(header.keys())
             keys.sort()
             for key in keys:
-                print "%20s::%s" % (key, header[key])
+                print("%20s::%s" % (key, header[key]))
 
         if tmp_dir:
             shutil.rmtree(tmp_dir)
@@ -571,7 +571,7 @@ if __name__ == "__main__":
         test_images = sys.argv[1:]
         main(test_images)
     else:
-        print text.red + "No input image" + text.stop
+        print(text.red + "No input image" + text.stop)
         sys.exit(9)
     """
     import detectors.rigaku.raxis as inp0

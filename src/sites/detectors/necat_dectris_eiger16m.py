@@ -156,12 +156,12 @@ class FileLocation():
     def hold_data(self, dir):
         """Make sure dataset is not deleted during processing."""
         self.ft_redis.sadd('working', dir)
-        print 'holding: %s' %self.ft_redis.smembers('working')
+        print('holding: %s' %self.ft_redis.smembers('working'))
 
     def release_data(self, img_path):
         """Allow dataset in RAMDISK to be deleted."""
         self.ft_redis.srem('working', self.get_redis_key(img_path))
-        print 'release: %s' %self.ft_redis.smembers('working')
+        print('release: %s' %self.ft_redis.smembers('working'))
 
 def parse_file_name(fullname):
     """
@@ -397,7 +397,7 @@ def base_read_header(image,
         # "size2": 2527}
         }
 
-    for label, pat in header_items.iteritems():
+    for label, pat in header_items.items():
         # print label
         pattern = re.compile(pat[0], re.MULTILINE)
         matches = pattern.findall(header)
@@ -490,7 +490,7 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
+    print("get_commandline")
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
@@ -512,7 +512,7 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print("main")
 
     if args.file:
         test_image = os.path.abspath(args.file)
@@ -529,7 +529,7 @@ def main(args):
     pprint(header)
 
     # Test is_run_from_imagename
-    print "is_run_from_imagename:", is_run_from_imagename(test_image)
+    print("is_run_from_imagename:", is_run_from_imagename(test_image))
 
 if __name__ == "__main__":
 

@@ -276,7 +276,7 @@ def main():
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("" + text.info + "Environmental variables" + text.stop)
     tprint("\nEnvironmental variables", level=10, color="blue")
-    for key, val in environmental_vars.iteritems():
+    for key, val in environmental_vars.items():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 

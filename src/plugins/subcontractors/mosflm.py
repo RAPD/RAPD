@@ -106,8 +106,8 @@ def parse_strategy(inp, anom=False):
     }
 
 if __name__ == "__main__":
-    print "mosflm"
+    print("mosflm")
     input_file = sys.argv[1]
-    print "Reading %s" % input_file
+    print("Reading %s" % input_file)
     input_lines = open(input_file, "r").read()
     parse_strategy(input_lines)

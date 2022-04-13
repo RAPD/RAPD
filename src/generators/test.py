@@ -77,9 +77,9 @@ class FileGenerator(CommandlineFileGenerator):
             if not self.args.file:
                 # Determine output file name from target
                 if self.args.target:
-                    print self.args.target
+                    print(self.args.target)
                     full_path = os.path.abspath(self.args.target).split("/")
-                    print full_path
+                    print(full_path)
                     self.args.file = "test_" + "_".join(full_path[full_path.index("src")+1:])
 
         # Run the inherited version
@@ -306,7 +306,7 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    print commandline_args
+    print(commandline_args)
 
     file_generator = FileGenerator(commandline_args)
     file_generator.run()

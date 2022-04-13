@@ -440,7 +440,8 @@ class Database(object):
 
             return(image_dict, True)
 
-        except pymysql.IntegrityError, (errno, strerror):
+        except pymysql.IntegrityError as xxx_todo_changeme:
+            (errno, strerror) = xxx_todo_changeme.args
             self.close_connection(connection, cursor)
             if errno == 1062:
                 self.logger.warning('%s is already in the database' % data['fullname'])
@@ -509,7 +510,7 @@ class Database(object):
         if self.logger:
           self.logger.debug('Database::getImageIDByFullname %s' % fullname)
         else:
-          print 'Database::getImageIDByFullname %s' % fullname
+          print('Database::getImageIDByFullname %s' % fullname)
 
         try:
             query1 = 'SELECT image_id FROM images WHERE fullname=%s LIMIT 1'
@@ -876,7 +877,7 @@ class Database(object):
             do_and = False
 
             #update setting_id
-            if in_dict.has_key('setting_id'):
+            if 'setting_id' in in_dict:
                 self.logger.debug('Updating current table using setting_id %d' % in_dict['setting_id'])
                 command += 'setting_id=%s'
                 value_array.append(in_dict['setting_id'])
@@ -884,7 +885,7 @@ class Database(object):
                 do_and = True
 
             #update data_root_dir
-            if in_dict.has_key('data_root_dir'):
+            if 'data_root_dir' in in_dict:
                 self.logger.debug('Updating current table using data_root_dir %s' % in_dict['data_root_dir'])
                 #cursor.execute("UPDATE current SET data_root_dir=%s WHERE site=%s",(in_dict['data_root_dir'],in_dict['site']))
                 if (do_and):
@@ -894,7 +895,7 @@ class Database(object):
                 do_and = True
 
             #update puckset_id
-            if in_dict.has_key('puckset_id'):
+            if 'puckset_id' in in_dict:
                 self.logger.debug('Updating current table using puckset_id %d' % in_dict['puckset_id'])
                 if (do_and):
                     command += ','
@@ -1039,7 +1040,7 @@ class Database(object):
                                              params=(reference_data_id,))[0]
 
         runs_dict = {}
-        for key, value in reference_data_dict.iteritems():
+        for key, value in reference_data_dict.items():
             if key.startswith('result_id_') and value:
                 query = '''SELECT integrate_results.repr as repr,integrate_results.spacegroup as spacegroup,integrate_results.work_dir as work_dir,
                                   runs.phi as phi_start,runs.phi+runs.width*runs.total as phi_end
@@ -1053,7 +1054,7 @@ class Database(object):
 
         #print runs_dict
         out_array = []
-        for tmp_dict in runs_dict.itervalues():
+        for tmp_dict in runs_dict.values():
             mat_file = os.path.join(tmp_dict['work_dir'],'reference.mat')
             #fullname = os.path.join(tmp_dict['directory'],'_'.join((tmp_dict['prefix'],str(tmp_dict['run_number']),str(tmp_dict['start_image_number']).zfill(3)))+'.img')
             phi_start = tmp_dict['phi_start']
@@ -1110,8 +1111,8 @@ class Database(object):
             # Get the defaults for this site_id
             query = "SELECT * FROM settings WHERE site=%s AND data_root_dir=%s ORDER BY setting_id DESC LIMIT 1"
 
-            print query
-            print site_id
+            print(query)
+            print(site_id)
             settings_dict = self.make_dicts(query=query,
                                             params=(site_id, "DEFAULTS"),
                                             json_compatible=True)[0]
@@ -1368,7 +1369,7 @@ class Database(object):
         #Get a nuanced version of the type of single result this is
         if (settings['reference_data_id'] > 0):
             my_type = 'ref_strat'
-        elif settings.has_key('request'):
+        elif 'request' in settings:
             my_type = settings['request']['request_type']
         else:
             my_type ='original'
@@ -1616,7 +1617,7 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key("best_results_norm"):
+                if "best_results_norm" in results:
                 #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
                     if results["best_results_norm"] == 'FAILED':
@@ -1703,7 +1704,7 @@ class Database(object):
                     tmp_insert_values = ["NONE"]
 
                     #MOSFLM STRATEGY
-                    if results.has_key('Mosflm strategy results'):
+                    if 'Mosflm strategy results' in results:
                         if results['Mosflm strategy results'] == 'FAILED':
                             tmp_command_front += """,
                                                                mosflm_norm_status"""
@@ -1770,7 +1771,7 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key("best_results_anom"):
+                if "best_results_anom" in results:
                     self.logger.debug('Best ANOM results present')
                     if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
@@ -1853,7 +1854,7 @@ class Database(object):
                     tmp_insert_values = ["NONE"]
 
                     #MOSFLM STRATEGY
-                    if ((results.has_key('Mosflm ANOM strategy results')) and (results['Mosflm ANOM strategy results']['strategy anom run number'] != 'skip')):
+                    if (('Mosflm ANOM strategy results' in results) and (results['Mosflm ANOM strategy results']['strategy anom run number'] != 'skip')):
                         self.logger.debug('Has key Mosflm ANOM results')
                         if results['Mosflm ANOM strategy results'] == 'FAILED':
                             tmp_command_front += """,
@@ -1922,7 +1923,7 @@ class Database(object):
             #NOW the html, image and stac files
             try:
                 #Add stac summary only if there is a stac run
-                if (info.has_key('mk3_phi')):
+                if ('mk3_phi' in info):
                     summary_stac = results['Output files']['Stac summary html']
                 else:
                     summary_stac = 'None'
@@ -2166,7 +2167,7 @@ class Database(object):
         #set the request type
         if (settings['reference_data_id'] > 0):
              my_type = 'ref_strat'
-        elif settings.has_key('request'):
+        elif 'request' in settings:
             my_type = settings['request']['request_type']
         else:
             my_type ='original'
@@ -2461,7 +2462,7 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key("best_results_norm"):
+                if "best_results_norm" in results:
                 #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
                     if results["best_results_norm"] == 'FAILED':
@@ -2548,7 +2549,7 @@ class Database(object):
                     tmp_insert_values = ["NONE"]
 
                     #MOSFLM STRATEGY
-                    if results.has_key('Mosflm strategy results'):
+                    if 'Mosflm strategy results' in results:
                         if results['Mosflm strategy results'] == 'FAILED':
                             tmp_command_front += """,
                                                                mosflm_norm_status"""
@@ -2615,7 +2616,7 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key("best_results_anom"):
+                if "best_results_anom" in results:
                     self.logger.debug('Best ANOM results present')
                     if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
@@ -2698,7 +2699,7 @@ class Database(object):
                     tmp_insert_values = ["NONE"]
 
                     #MOSFLM STRATEGY
-                    if results.has_key('Mosflm ANOM strategy results'):
+                    if 'Mosflm ANOM strategy results' in results:
                         self.logger.debug('Has key Mosflm ANOM results')
                         if results['Mosflm ANOM strategy results'] == 'FAILED':
                             tmp_command_front += """,
@@ -2767,7 +2768,7 @@ class Database(object):
             #NOW the html and image files
             try:
                 #Add stac summary only if there is a stac run
-                if (info1.has_key('mk3_phi')):
+                if ('mk3_phi' in info1):
                     summary_stac = results['Output files']['Stac summary html']
                 else:
                     summary_stac = 'None'
@@ -2991,7 +2992,7 @@ class Database(object):
           self.logger.debug(info)
           self.logger.debug(results)
         else:
-          print 'Database::addQuickanalysisResult'
+          print('Database::addQuickanalysisResult')
 
         try:
             #connect to the database
@@ -3135,7 +3136,7 @@ class Database(object):
         self.logger.debug('Database::addXia2Result DRD:%s' % dirs['data_root_dir'])
 
         #Determine the type of run this is
-        if settings.has_key('request'):
+        if 'request' in settings:
             my_type = settings['request']['request_type']
         else:
             my_type ='original'
@@ -3240,7 +3241,7 @@ class Database(object):
                         if i[2] != 's':
                             proc_time += ':'
                     #handle rD values
-                    if not results['summary'].has_key('rD_analysis'):
+                    if 'rD_analysis' not in results['summary']:
                         results['summary']['rD_analysis'] = 0
                         results['summary']['rD_conclusion'] = 0
 
@@ -3421,7 +3422,7 @@ class Database(object):
         self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
 
         #Determine the type of run this is
-        if settings.has_key('request'):
+        if 'request' in settings:
             my_type = settings['request']['request_type']
         else:
             my_type ='original'
@@ -3433,7 +3434,7 @@ class Database(object):
         my_template = info["image_data"]["fullname"][:-7]+"###.img"
 
         #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
+        if ('request' in settings):
             request_id = settings['request']['cloud_request_id']
         else:
             request_id = 0
@@ -3512,7 +3513,7 @@ class Database(object):
                     tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
 
                 #The final result
-                elif (results.has_key('files')):
+                elif ('files' in results):
                     tmp_command = ''',
                                                           integrate_status=%s,
                                                           parsed=%s,
@@ -3537,7 +3538,7 @@ class Database(object):
                                           results['files']['downloadable'] ]
 
 
-                    if results['files'].has_key('ANOM_sca'):
+                    if 'ANOM_sca' in results['files']:
                         tmp_command += ''',
                                                                   unmerged_sca_file=%s,
                                                                   sca_file=%s'''
@@ -3670,7 +3671,7 @@ class Database(object):
         self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
 
         #Determine the type of run this is
-        if settings.has_key('request'):
+        if 'request' in settings:
             if (settings['request']['request_type'] == "start-fastin"):
                 my_type = "refastint"
                 my_pipeline = "fastint"
@@ -3686,7 +3687,7 @@ class Database(object):
         my_repr = info["original"]["repr"] + "_" + str(settings["request"]["frame_start"]) + "-" + str(settings["request"]["frame_finish"])
 
         #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
+        if ('request' in settings):
             request_id = settings['request']['cloud_request_id']
         else:
             request_id = 0
@@ -3769,7 +3770,7 @@ class Database(object):
                     tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
 
                 #The final result
-                elif (results.has_key('files')):
+                elif ('files' in results):
                     tmp_command = ''',
                                                           integrate_status=%s,
                                                           parsed=%s,
@@ -3796,7 +3797,7 @@ class Database(object):
                                           results['files']['downloadable'] ]
 
 
-                    if results['files'].has_key('ANOM_sca'):
+                    if 'ANOM_sca' in results['files']:
                         tmp_command += ''',
                                                                   unmerged_sca_file=%s,
                                                                   sca_file=%s'''
@@ -3926,7 +3927,7 @@ class Database(object):
         self.logger.debug(shell_dict)
 
         #filter NaNs out of dict
-        for k,v in shell_dict.iteritems():
+        for k,v in shell_dict.items():
             if (v == 'NaN'):
                 shell_dict[k] = 0
 
@@ -4006,7 +4007,7 @@ class Database(object):
         self.logger.debug('Database::addSimpleMergeResult DRD:%s' % dirs['data_root_dir'])
 
         #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
+        if ('request' in settings):
             request_id = settings['request']['cloud_request_id']
         else:
             request_id = 0
@@ -4294,7 +4295,7 @@ class Database(object):
         self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
 
         #Determine the type of run this is
-        if settings.has_key('request'):
+        if 'request' in settings:
             my_type = settings['request']['request_type']
         else:
             my_type ='original'
@@ -4418,7 +4419,7 @@ class Database(object):
                         if i[2] != 's':
                             proc_time += ':'
                     #handle rD values
-                    if not results['summary'].has_key('rD_analysis'):
+                    if 'rD_analysis' not in results['summary']:
                         results['summary']['rD_analysis'] = 0
                         results['summary']['rD_conclusion'] = 0
 
@@ -4669,7 +4670,7 @@ class Database(object):
             #Handle the individual results
             successful = False
             mr_results = results['Cell analysis results']
-            for spacegroup in mr_results.keys():
+            for spacegroup in list(mr_results.keys()):
                 if mr_results[spacegroup]['AutoMR results']['AutoMR nosol'] == 'False':
                     successful = True
                     #Add the solution
@@ -4890,7 +4891,7 @@ class Database(object):
 
             #ShelxC section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (sad_result_dict):
                         shelxc_result_id = self.addShelxcResult(shelx_results=results['Shelx results'],
@@ -4910,7 +4911,7 @@ class Database(object):
 
             #ShelxD section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (sad_result_dict):
                         shelxd_result_id = self.addShelxdResult(shelx_results    = results['Shelx results'],
@@ -4933,7 +4934,7 @@ class Database(object):
 
             #ShelxE section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (sad_result_dict):
                         shelxe_result_id = self.addShelxeResult(shelx_results=results['Shelx results'],
@@ -4955,7 +4956,7 @@ class Database(object):
 
             #Autosol section
             try:
-                if results.has_key('AutoSol results'):
+                if 'AutoSol results' in results:
                     if(results.get('AutoSol results') not in ['None', None, "FAILED"]):
                         #If this is an update to a run
                         if (sad_result_dict):
@@ -4977,7 +4978,7 @@ class Database(object):
 
             #Cell analysis section
             try:
-                if(results.has_key('Cell analysis results')):
+                if('Cell analysis results' in results):
                   if(not results['Cell analysis results'] in ('FAILED',None,'None')):
                     self.addCellAnalysisResults(cell_analysis_results=results['Cell analysis results'],
                                                 sad_result_id=sad_result_id)
@@ -5215,7 +5216,7 @@ class Database(object):
             cursor.execute(command,insert_values)
 
             #Now add the sites
-            if (shelx_results.has_key('shelxe_sites')):
+            if ('shelxe_sites' in shelx_results):
                 #delete sites for this shelxe_result_id
                 command = "DELETE FROM shelxe_sites WHERE shelxe_result_id=%s"
                 cursor.execute(command,(shelxe_result_id,))
@@ -5428,7 +5429,7 @@ class Database(object):
 
             #ShelxC section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (mad_result_dict):
                         shelxc_result_id = self.addShelxcResult(shelx_results=results['Shelx results'],
@@ -5448,7 +5449,7 @@ class Database(object):
 
             #ShelxD section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (mad_result_dict):
                         shelxd_result_id = self.addShelxdResult(shelx_results    = results['Shelx results'],
@@ -5471,7 +5472,7 @@ class Database(object):
 
             #ShelxE section
             try:
-                if (results.has_key('Shelx results')):
+                if ('Shelx results' in results):
                     #If this is an update to a run
                     if (mad_result_dict):
                         shelxe_result_id = self.addShelxeResult(shelx_results=results['Shelx results'],
@@ -5493,7 +5494,7 @@ class Database(object):
 
             #Autosol section
             try:
-                if results.has_key('AutoSol results'):
+                if 'AutoSol results' in results:
                     self.logger.debug(results.get('AutoSol results'))
                     if(results.get('AutoSol results') not in ['None', None, "FAILED"]):
                         #If this is an update to a run
@@ -5516,7 +5517,7 @@ class Database(object):
 
             #Cell analysis section
             try:
-                if(results.has_key('Cell analysis results')):
+                if('Cell analysis results' in results):
                   if(not results['Cell analysis results'] in ('FAILED',None,'None')):
                     self.addCellAnalysisResults(cell_analysis_results=results['Cell analysis results'],
                                                 sad_result_id=mad_result_id)
@@ -5585,7 +5586,7 @@ class Database(object):
             #connect to the database
             connection,cursor = self.get_db_connection()
 
-            for pdb,cell_analysis_result in cell_analysis_results.iteritems():
+            for pdb,cell_analysis_result in cell_analysis_results.items():
 
                 if (cell_analysis_result['AutoMR results']['AutoMR nosol'] == 'False'):
                     command = "INSERT INTO cell_analysis_results ( "
@@ -5657,7 +5658,7 @@ class Database(object):
 
             #Cell analysis section
             try:
-                if(results.has_key('Cell analysis results')):
+                if('Cell analysis results' in results):
                   if(not results['Cell analysis results'] in ('FAILED',None,'None')):
                     self.addCellAnalysisResults(cell_analysis_results=results['Cell analysis results'],
                                                 result_id=result_id)
@@ -5940,7 +5941,7 @@ class Database(object):
         if (len(my_dicts) > 0):
             dict = my_dicts[-1]
             dict["basename"] = os.path.basename(fullname)
-            for k,v in dict.iteritems():
+            for k,v in dict.items():
                 if (not v):
                     dict[k] = 0
             return(dict)
@@ -5965,9 +5966,9 @@ class Database(object):
             self.logger.exception('Error in getWavelengthFromRunId')
             wavelength = False
 
-        print "1"
+        print("1")
         self.close_connection(connection, cursor)
-        print "2"
+        print("2")
 
         return(wavelength)
 
@@ -6203,7 +6204,8 @@ class Database(object):
             self.close_connection(connection, cursor)
             return(run_id)
 
-        except pymysql.IntegrityError, (errno, strerror):
+        except pymysql.IntegrityError as xxx_todo_changeme1:
+            (errno, strerror) = xxx_todo_changeme1.args
             if errno == 1062:
                 self.logger.debug("Run is already in the database")
                 self.close_connection(connection, cursor)
@@ -6388,7 +6390,7 @@ class Database(object):
         """
         self.logger.debug('getRunIdByInfo run_data:%s' % str(run_data))
 
-        if (not run_data.has_key("run_number")):
+        if ("run_number" not in run_data):
             run_data["run_number"] = run_data['image_prefix'].split('_')[-1]
 
         query = "SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s"
@@ -7080,7 +7082,7 @@ class Database(object):
                             order by single_results.timestamp''')
         for row in cursor.fetchall():
             if (0.5 < (1-0.7*math.e**(-4/row[0])-1.5*row[2]-0.2*row[1])):
-                print ('%s  %6.2f %4.2f  %4.2f' % (str(row[3]),row[6],row[4],row[5]))
+                print(('%s  %6.2f %4.2f  %4.2f' % (str(row[3]),row[6],row[4],row[5])))
         self.close_connection(connection, cursor)
 
     ##################################################################################################################
@@ -7147,13 +7149,13 @@ class Database(object):
 
         # Assemble the dict(s) into an array
         colnames = [desc[0] for desc in cursor.description]
-        rowdicts = [dict(zip(colnames,row)) for row in cursor.fetchall()]
+        rowdicts = [dict(list(zip(colnames,row))) for row in cursor.fetchall()]
         self.close_connection(connection, cursor)
 
         # Do the results need to be JSON compatible?
         if json_compatible:
             for rowdict in rowdicts:
-                for key, value in rowdict.iteritems():
+                for key, value in rowdict.items():
                     if isinstance(value, datetime.datetime):
                         rowdict[key] = value.isoformat()
 
@@ -7164,4 +7166,4 @@ class Database(object):
 
 if __name__ == "__main__":
 
-    print "rapd_mysql_adapter.py.__main__"
+    print("rapd_mysql_adapter.py.__main__")
