@@ -13,19 +13,19 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^5.0.0",
+    "@angular/animations": "^13.3.11",
     "@angular/cdk": "7.0.2",
-    "@angular/common": "^5.0.0",
-    "@angular/compiler": "^5.0.0",
-    "@angular/core": "^5.0.0",
+    "@angular/common": "^13.3.11",
+    "@angular/compiler": "^13.3.11",
+    "@angular/core": "^13.3.11",
     "@angular/flex-layout": "5.0.0-beta.13",
-    "@angular/forms": "^5.0.0",
+    "@angular/forms": "^13.3.11",
     "@angular/http": "^5.0.0",
     "@angular/material": "7.0.2",
-    "@angular/platform-browser": "^5.0.0",
-    "@angular/platform-browser-dynamic": "^5.0.0",
-    "@angular/platform-server": "^5.0.0",
-    "@angular/router": "^5.0.0",
+    "@angular/platform-browser": "^13.3.11",
+    "@angular/platform-browser-dynamic": "^13.3.11",
+    "@angular/platform-server": "^13.3.11",
+    "@angular/router": "^13.3.11",
     "@swimlane/ngx-datatable": "^11.1.5",
     "angular2-jwt": "0.2.0",
     "auth-jwt": "^1.0.0",
@@ -43,8 +43,8 @@
     "zone.js": "^0.8.17"
   },
   "devDependencies": {
-    "@angular/cli": "^7.0.3",
-    "@angular/compiler-cli": "^5.0.0",
+    "@angular/cli": "^14.1.2",
+    "@angular/compiler-cli": "^13.3.11",
     "@types/hammerjs": "^2.0.35",
     "@types/jasmine": "2.5.54",
     "@types/node": "~8.0.26",
@@ -61,7 +61,7 @@
     "protractor": "~5.1.2",
     "ts-node": "~3.3.0",
     "tslint": "~5.7.0",
-    "typescript": "^2.5.3",
+    "typescript": "^4.6.4",
     "webpack-dev-server": "^3.1.1"
   }
 }
