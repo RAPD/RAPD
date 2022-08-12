@@ -1,8 +1,8 @@
 import { Component,
          Inject,
          OnInit } from "@angular/core";
-import { FormControl,
-         FormGroup,
+import { UntypedFormControl,
+         UntypedFormGroup,
          Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
@@ -24,7 +24,7 @@ export class MrDialogComponent implements OnInit {
   public submitted: boolean = false;
   public submitError: string = "";
   public model: any;
-  public mrForm: FormGroup;
+  public mrForm: UntypedFormGroup;
   public uploader: FileUploader;
 
   // Projects for the group that owns the session
@@ -49,12 +49,12 @@ export class MrDialogComponent implements OnInit {
     console.log(this.data);
 
     // Create form
-    this.mrForm = new FormGroup({
-      description: new FormControl("", Validators.required),
-      number_molecules: new FormControl(0),
-      pdb_id: new FormControl(this.data.preferences.pdb_id || ""),
-      project: new FormControl("", Validators.required),
-      selected_pdb: new FormControl(0),
+    this.mrForm = new UntypedFormGroup({
+      description: new UntypedFormControl("", Validators.required),
+      number_molecules: new UntypedFormControl(0),
+      pdb_id: new UntypedFormControl(this.data.preferences.pdb_id || ""),
+      project: new UntypedFormControl("", Validators.required),
+      selected_pdb: new UntypedFormControl(0),
     });
     this.onChanges();
 

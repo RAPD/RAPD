@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { UntypedFormControl, UntypedFormGroup, Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
@@ -18,15 +18,15 @@ export class SadDialogComponent implements OnInit {
   public submitted: boolean = false;
   public submitError: string = "";
 
-  public sadForm: FormGroup = new FormGroup({
-    description: new FormControl("", Validators.required),
-    element: new FormControl("Se"),
-    hires_cutoff: new FormControl("0"),
-    number_atoms: new FormControl(0),
-    number_disulfides: new FormControl(0),
-    number_trials: new FormControl(1024),
-    project: new FormControl("", Validators.required),
-    sequence: new FormControl(0),
+  public sadForm: UntypedFormGroup = new UntypedFormGroup({
+    description: new UntypedFormControl("", Validators.required),
+    element: new UntypedFormControl("Se"),
+    hires_cutoff: new UntypedFormControl("0"),
+    number_atoms: new UntypedFormControl(0),
+    number_disulfides: new UntypedFormControl(0),
+    number_trials: new UntypedFormControl(1024),
+    project: new UntypedFormControl("", Validators.required),
+    sequence: new UntypedFormControl(0),
   });
 
   // Form appearance

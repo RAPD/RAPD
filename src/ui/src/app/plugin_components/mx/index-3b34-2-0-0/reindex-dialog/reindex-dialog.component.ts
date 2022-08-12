@@ -1,8 +1,8 @@
 import { Component,
          Inject,
          OnInit } from '@angular/core';
-import { FormGroup,
-         FormControl,
+import { UntypedFormGroup,
+         UntypedFormControl,
          Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -20,7 +20,7 @@ export class ReindexDialogComponent implements OnInit {
   submitted: boolean = false;
   submit_error:string = '';
   model: any;
-  reindex_form: FormGroup;
+  reindex_form: UntypedFormGroup;
 
   sample_types = [
     {val:"protein",label:"Protein"},
@@ -61,22 +61,22 @@ export class ReindexDialogComponent implements OnInit {
       this.model.spacegroup = 0;
     }
 
-    this.reindex_form = new FormGroup({
-      beam_search: new FormControl(this.model.beam_search,
+    this.reindex_form = new UntypedFormGroup({
+      beam_search: new UntypedFormControl(this.model.beam_search,
                                    [Validators.min(0), Validators.max(10)]),
-      best_complexity: new FormControl(),
-      mosflm_end: new FormControl(this.model.mosflm_end,
+      best_complexity: new UntypedFormControl(),
+      mosflm_end: new UntypedFormControl(this.model.mosflm_end,
                                   [Validators.min(0), Validators.max(360)]),
-      mosflm_rot: new FormControl(this.model.mosflm_rot,
+      mosflm_rot: new UntypedFormControl(this.model.mosflm_rot,
                                   [Validators.min(0), Validators.max(360)]),
-      mosflm_seg: new FormControl(),
-      mosflm_start: new FormControl(this.model.mosflm_start,
+      mosflm_seg: new UntypedFormControl(),
+      mosflm_start: new UntypedFormControl(this.model.mosflm_start,
                                     [Validators.min(0), Validators.max(360)]),
-      sample_type: new FormControl(),
-      solvent_content: new FormControl(this.model.solvent_content,
+      sample_type: new UntypedFormControl(),
+      solvent_content: new UntypedFormControl(this.model.solvent_content,
                                        [Validators.min(0), Validators.max(1)]),
-      spacegroup: new FormControl(),
-      strategy_type: new FormControl(),
+      spacegroup: new UntypedFormControl(),
+      strategy_type: new UntypedFormControl(),
     });
   }
 

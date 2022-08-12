@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup,
-         FormControl } from '@angular/forms';
+import { UntypedFormGroup,
+         UntypedFormControl } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material/dialog';
 
@@ -19,7 +19,7 @@ export class GroupDialogComponent implements OnInit {
   error_message: string;
   @Input() group: Group;
   model: Group;
-  group_form: FormGroup;
+  group_form: UntypedFormGroup;
 
   constructor(private admin_service: RestService,
               public globals_service: GlobalsService,
@@ -31,14 +31,14 @@ export class GroupDialogComponent implements OnInit {
 
     this.model = Object.assign({}, this.group);
 
-    this.group_form = new FormGroup({
-      groupname: new FormControl(),
-      institution: new FormControl(),
-      role: new FormControl(),
-      uid: new FormControl(),
-      uidNumber: new FormControl(),
-      gidNumber: new FormControl(),
-      status: new FormControl()
+    this.group_form = new UntypedFormGroup({
+      groupname: new UntypedFormControl(),
+      institution: new UntypedFormControl(),
+      role: new UntypedFormControl(),
+      uid: new UntypedFormControl(),
+      uidNumber: new UntypedFormControl(),
+      gidNumber: new UntypedFormControl(),
+      status: new UntypedFormControl()
     });
   }
 

@@ -5,7 +5,7 @@ import {
   OnInit,
   ViewContainerRef
 } from "@angular/core";
-import { FormControl, FormGroup } from "@angular/forms";
+import { UntypedFormControl, UntypedFormGroup } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 
 import { DialogNewProjectComponent } from "../../../shared/components/dialog-new-project/dialog-new-project.component";
@@ -23,7 +23,7 @@ export class DialogSelectProjectComponent implements OnInit {
   public submitError: string;
   public submitted: boolean = false;
   public model: any = { _id: "" };
-  public projectForm: FormGroup;
+  public projectForm: UntypedFormGroup;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -43,8 +43,8 @@ export class DialogSelectProjectComponent implements OnInit {
     );
 
     // Create the form group
-    this.projectForm = new FormGroup({
-      _id: new FormControl(),
+    this.projectForm = new UntypedFormGroup({
+      _id: new UntypedFormControl(),
     });
     this.onChanges();
   }

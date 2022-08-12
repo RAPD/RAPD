@@ -1,6 +1,6 @@
 // import { CdkTextareaAutosize } from "@angular/cdk/text-field";
 import { Component, Input, NgZone, OnInit, ViewChild } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { UntypedFormControl, UntypedFormGroup, Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { take } from "rxjs/operators";
 
@@ -15,7 +15,7 @@ export class SequenceDialogComponent implements OnInit {
 
   public submitError: string = "";
 
-  public sequenceForm: FormGroup;
+  public sequenceForm: UntypedFormGroup;
   // @ViewChild("autosize") public autosize: CdkTextareaAutosize;
 
   constructor(
@@ -24,10 +24,10 @@ export class SequenceDialogComponent implements OnInit {
   ) {}
 
   public ngOnInit() {
-    this.sequenceForm = new FormGroup({
-      description: new FormControl(""),
-      name: new FormControl("", Validators.required),
-      sequence: new FormControl("", Validators.required)
+    this.sequenceForm = new UntypedFormGroup({
+      description: new UntypedFormControl(""),
+      name: new UntypedFormControl("", Validators.required),
+      sequence: new UntypedFormControl("", Validators.required)
     });
   }
 

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup,
-         FormControl,
+import { UntypedFormGroup,
+         UntypedFormControl,
          Validators } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material/dialog';
@@ -21,7 +21,7 @@ export class UserDialogComponent implements OnInit {
   @Input() user: User;
   model: User;
   @Input() groups: Group[];
-  user_form: FormGroup;
+  user_form: UntypedFormGroup;
 
   constructor(private rest_service: RestService,
               public dialogRef: MatDialogRef<UserDialogComponent>) { }
@@ -29,13 +29,13 @@ export class UserDialogComponent implements OnInit {
   ngOnInit() {
     // console.log(this.user);
     this.model = Object.assign({}, this.user);
-    this.user_form = new FormGroup({
-      email: new FormControl(),
-      username: new FormControl(),
-      role: new FormControl(),
-      group0: new FormControl(),
-      group1: new FormControl(),
-      group2: new FormControl()
+    this.user_form = new UntypedFormGroup({
+      email: new UntypedFormControl(),
+      username: new UntypedFormControl(),
+      role: new UntypedFormControl(),
+      group0: new UntypedFormControl(),
+      group1: new UntypedFormControl(),
+      group2: new UntypedFormControl()
     });
   }
 

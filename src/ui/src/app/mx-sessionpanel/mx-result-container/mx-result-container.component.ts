@@ -18,12 +18,11 @@ for (let key in mx) {
 }
 
 @Component({
-  selector: 'app-mx-result-container',
-  templateUrl: './mx-result-container.component.html',
-  styleUrls: ['./mx-result-container.component.css'],
-  providers: [ MxResultslistPanelComponent,
-               MxResultPanelComponent ],
-  entryComponents: mx_values
+    selector: 'app-mx-result-container',
+    templateUrl: './mx-result-container.component.html',
+    styleUrls: ['./mx-result-container.component.css'],
+    providers: [MxResultslistPanelComponent,
+        MxResultPanelComponent]
 })
 export class MxResultContainerComponent {
 

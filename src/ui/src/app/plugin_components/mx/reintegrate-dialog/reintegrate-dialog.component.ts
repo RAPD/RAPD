@@ -1,8 +1,8 @@
 import { Component,
          Inject,
          OnInit } from "@angular/core";
-import { FormControl,
-         FormGroup,
+import { UntypedFormControl,
+         UntypedFormGroup,
          Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
@@ -23,7 +23,7 @@ export class ReintegrateDialogComponent implements OnInit {
   public submitted: boolean = false;
   public submit_error: string = "";
   public model: any;
-  public reintegrateForm: FormGroup;
+  public reintegrateForm: UntypedFormGroup;
 
   public sample_types = [
     { val: "protein", label: "Protein" },
@@ -84,17 +84,17 @@ export class ReintegrateDialogComponent implements OnInit {
       endFrame = parseInt(repr.slice(repr.indexOf("[")+1,repr.indexOf("]")).split("-")[1], 10);
     }
 
-    this.reintegrateForm = new FormGroup({
-      description: new FormControl(""),
-      end_frame: new FormControl(endFrame),
-      hi_res: new FormControl(this.data.preferences.hi_res || undefined),
-      low_res: new FormControl(this.data.preferences.low_res || null),
-      project: new FormControl("", Validators.required),
-      rounds_polishing: new FormControl(this.data.preferences.rounds_polishing || 1),
-      sample_type: new FormControl(),
-      spacegroup: new FormControl(this.data.preferences.spacegroup || 0),
-      spacegroup_decider: new FormControl(this.data.preferences.spacegroup_decider || "auto"),
-      start_frame: new FormControl(this.data.preferences.start_frame || 1),
+    this.reintegrateForm = new UntypedFormGroup({
+      description: new UntypedFormControl(""),
+      end_frame: new UntypedFormControl(endFrame),
+      hi_res: new UntypedFormControl(this.data.preferences.hi_res || undefined),
+      low_res: new UntypedFormControl(this.data.preferences.low_res || null),
+      project: new UntypedFormControl("", Validators.required),
+      rounds_polishing: new UntypedFormControl(this.data.preferences.rounds_polishing || 1),
+      sample_type: new UntypedFormControl(),
+      spacegroup: new UntypedFormControl(this.data.preferences.spacegroup || 0),
+      spacegroup_decider: new UntypedFormControl(this.data.preferences.spacegroup_decider || "auto"),
+      start_frame: new UntypedFormControl(this.data.preferences.start_frame || 1),
     });
 
     // Handle changes of the form

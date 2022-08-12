@@ -1,8 +1,8 @@
 import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
-import { FormGroup,
-         FormControl } from '@angular/forms';
+import { UntypedFormGroup,
+         UntypedFormControl } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 
@@ -18,8 +18,8 @@ import { GlobalsService } from '../../shared/services/globals.service';
 export class LoginDialogComponent implements OnInit {
 
   mode: string;
-  login_form: FormGroup;
-  lostpass_form: FormGroup;
+  login_form: UntypedFormGroup;
+  lostpass_form: UntypedFormGroup;
   submitted: boolean;
   show_request_success: boolean;
   returnedParams: any;
@@ -35,14 +35,14 @@ export class LoginDialogComponent implements OnInit {
 
     this.mode = 'login';
 
-    this.login_form = new FormGroup({
-       email: new FormControl(),
-       uid: new FormControl(),
-       password: new FormControl(),
+    this.login_form = new UntypedFormGroup({
+       email: new UntypedFormControl(),
+       uid: new UntypedFormControl(),
+       password: new UntypedFormControl(),
     });
 
-    this.lostpass_form= new FormGroup({
-      email: new FormControl(),
+    this.lostpass_form= new UntypedFormGroup({
+      email: new UntypedFormControl(),
     });
   }
 

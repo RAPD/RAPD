@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from "@angular/core";
 
-import { FormControl, FormGroup } from "@angular/forms";
+import { UntypedFormControl, UntypedFormGroup } from "@angular/forms";
 
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 
@@ -23,7 +23,7 @@ export class DialogNewProjectComponent implements OnInit {
   @Input() project: Project;
   @Input() public dialog_title: string;
   public model: Project;
-  public project_form: FormGroup;
+  public project_form: UntypedFormGroup;
 
   constructor(
     private globalsService: GlobalsService,
@@ -41,12 +41,12 @@ export class DialogNewProjectComponent implements OnInit {
     // console.log(this.project);
 
     // Create the form group
-    this.project_form = new FormGroup({
-      description: new FormControl(),
+    this.project_form = new UntypedFormGroup({
+      description: new UntypedFormControl(),
       // group: new FormControl(),
-      project_type: new FormControl(),
-      session: new FormControl(this.globalsService.currentSessionId),
-      title: new FormControl(),
+      project_type: new UntypedFormControl(),
+      session: new UntypedFormControl(this.globalsService.currentSessionId),
+      title: new UntypedFormControl(),
     });
   }
 

@@ -1,8 +1,8 @@
 import { Component,
   Inject,
   OnInit } from "@angular/core";
-import { FormControl,
-  FormGroup,
+import { UntypedFormControl,
+  UntypedFormGroup,
   Validators } from "@angular/forms";
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBar } from "@angular/material/snack-bar";
@@ -21,12 +21,12 @@ export class MergeDialogComponent implements OnInit {
   public submitted: boolean = false;
   public submitError: string = "";
   public metric: string = "CC";
-  public mergeForm: FormGroup = new FormGroup({
-    cutoff: new FormControl("Automatic"),
-    description: new FormControl("", Validators.required),
-    metric: new FormControl("CC", Validators.required),
-    project: new FormControl("", Validators.required),
-    resolution: new FormControl("Automatic"),
+  public mergeForm: UntypedFormGroup = new UntypedFormGroup({
+    cutoff: new UntypedFormControl("Automatic"),
+    description: new UntypedFormControl("", Validators.required),
+    metric: new UntypedFormControl("CC", Validators.required),
+    project: new UntypedFormControl("", Validators.required),
+    resolution: new UntypedFormControl("Automatic"),
   });
 
   // Projects for the group that owns the session

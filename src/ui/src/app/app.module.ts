@@ -109,130 +109,97 @@ export function tokenGetter() {
 }
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    //
-    MaintoolbarComponent,
-    WelcomepanelComponent,
-    PageNotFoundComponent,
-    DashboardComponent,
-    SummaryPanelComponent,
-    OverwatchesPanelComponent,
-    ActivitiesPanelComponent,
-    SessionspanelComponent,
-    ProjectspanelComponent,
-    AdminpanelComponent,
-    SequenceDialogComponent,
-    TaskspanelComponent,
-    //
-    MxSessionpanelComponent,
-    MxResultContainerComponent,
-    MxResultslistPanelComponent,
-    MxResultPanelComponent,
-    //
-    Highlight,
-    UnauthorizedpanelComponent,
-    UserDialogComponent,
-    GroupDialogComponent,
-    SessionDialogComponent,
-    LoginDialogComponent,
-    ChangepassDialogComponent,
-    CommunicateDialogComponent,
-    //
-    Index3b34200Component,
-    IntegrateBd11200Component,
-    AnalysisF068200Component,
-    Pdbquery9a2e200Component,
-    Hcmerge4cba100Component,
-    Mrc33b200Component,
-    // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
-    //
-    HeaderDialogComponent,
-    MxImageComponent,
-    ReindexDialogComponent,
-    ReintegrateDialogComponent,
-    MergeDialogComponent,
-    MrDialogComponent,
-    SadDialogComponent,
-    //
-    LogCardComponent,
-    RunDialogComponent,
-    DialogSelectProjectComponent,
-    DialogNewProjectComponent,
-    DialogUglymolComponent,
-    ErrorDialogComponent,
-    ConfirmDialogComponent,
-    UploadDialogComponent,
-    Hcmerge4cba100Component,
-  ],
-  imports: [
-    BrowserModule,
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    // JwtModule.forRoot({
-    //   config: {
-    //     tokenGetter: tokenGetter,
-    //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')),
-    //     // blacklistedRoutes: ['localhost:3001/auth/']
-    //   }
-    // }),
-    BrowserAnimationsModule,
-    RapdMaterialModule,
-    FlexLayoutModule,
-    NgxDatatableModule,
-    ChartsModule,
-    ProjectsModule,
-    AppRoutingModule,
-    FileUploadModule
-  ],
-  providers: [
-    appRoutingProviders,
-    LoginGuard,
-    AuthService,
-    RestService,
-    WebsocketService,
-    SessionService,
-    RequestsService,
-    GlobalsService,
-    Site,
-    // Replacement for AUTH_PROVIDERS
-    { provide: HTTP_INTERCEPTORS, useClass: JwtHttpInterceptor, multi: true }
-  ],
-  entryComponents: [
-    AppComponent,
-    // General components
-    ErrorDialogComponent,
-    ConfirmDialogComponent,
-    // Admin task components
-    ChangepassDialogComponent,
-    DialogNewProjectComponent,
-    DialogSelectProjectComponent,
-    DialogUglymolComponent,
-    GroupDialogComponent,
-    LoginDialogComponent,
-    SequenceDialogComponent,
-    SessionDialogComponent,
-    UserDialogComponent,
-    // Plugin components
-    AnalysisF068200Component,
-    Index3b34200Component,
-    IntegrateBd11200Component,
-    Pdbquery9a2e200Component,
-    Hcmerge4cba100Component,
-    Mrc33b200Component,
-    // INSERT POINT FOR PLUGIN COMPONENTS ENTRYCOMPONENTS
-    // Plugin helpers
-    HeaderDialogComponent,
-    ReindexDialogComponent,
-    ReintegrateDialogComponent,
-    MergeDialogComponent,
-    MrDialogComponent,
-    RunDialogComponent,
-    SadDialogComponent,
-    UploadDialogComponent,
-  ],
-  bootstrap: [AppComponent]
+    declarations: [
+        AppComponent,
+        //
+        MaintoolbarComponent,
+        WelcomepanelComponent,
+        PageNotFoundComponent,
+        DashboardComponent,
+        SummaryPanelComponent,
+        OverwatchesPanelComponent,
+        ActivitiesPanelComponent,
+        SessionspanelComponent,
+        ProjectspanelComponent,
+        AdminpanelComponent,
+        SequenceDialogComponent,
+        TaskspanelComponent,
+        //
+        MxSessionpanelComponent,
+        MxResultContainerComponent,
+        MxResultslistPanelComponent,
+        MxResultPanelComponent,
+        //
+        Highlight,
+        UnauthorizedpanelComponent,
+        UserDialogComponent,
+        GroupDialogComponent,
+        SessionDialogComponent,
+        LoginDialogComponent,
+        ChangepassDialogComponent,
+        CommunicateDialogComponent,
+        //
+        Index3b34200Component,
+        IntegrateBd11200Component,
+        AnalysisF068200Component,
+        Pdbquery9a2e200Component,
+        Hcmerge4cba100Component,
+        Mrc33b200Component,
+        // INSERT POINT FOR PLUGIN COMPONENTS DECLARATION
+        //
+        HeaderDialogComponent,
+        MxImageComponent,
+        ReindexDialogComponent,
+        ReintegrateDialogComponent,
+        MergeDialogComponent,
+        MrDialogComponent,
+        SadDialogComponent,
+        //
+        LogCardComponent,
+        RunDialogComponent,
+        DialogSelectProjectComponent,
+        DialogNewProjectComponent,
+        DialogUglymolComponent,
+        ErrorDialogComponent,
+        ConfirmDialogComponent,
+        UploadDialogComponent,
+        Hcmerge4cba100Component,
+    ],
+    imports: [
+        BrowserModule,
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        HttpClientModule,
+        // JwtModule.forRoot({
+        //   config: {
+        //     tokenGetter: tokenGetter,
+        //     whitelistedDomains: [/^null$/], //  ['localhost:3000'], // new Array(new RegExp('^null$')),
+        //     // blacklistedRoutes: ['localhost:3001/auth/']
+        //   }
+        // }),
+        BrowserAnimationsModule,
+        RapdMaterialModule,
+        FlexLayoutModule,
+        NgxDatatableModule,
+        ChartsModule,
+        ProjectsModule,
+        AppRoutingModule,
+        FileUploadModule
+    ],
+    providers: [
+        appRoutingProviders,
+        LoginGuard,
+        AuthService,
+        RestService,
+        WebsocketService,
+        SessionService,
+        RequestsService,
+        GlobalsService,
+        Site,
+        // Replacement for AUTH_PROVIDERS
+        { provide: HTTP_INTERCEPTORS, useClass: JwtHttpInterceptor, multi: true }
+    ],
+    bootstrap: [AppComponent]
 })
 export class AppModule {}

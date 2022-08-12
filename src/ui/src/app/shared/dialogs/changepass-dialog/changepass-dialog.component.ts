@@ -1,7 +1,7 @@
 import { Component,
          OnInit } from '@angular/core';
-import { FormGroup,
-         FormControl } from '@angular/forms';
+import { UntypedFormGroup,
+         UntypedFormControl } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { AuthService } from '../../services/auth.service';
@@ -15,16 +15,16 @@ export class ChangepassDialogComponent implements OnInit {
 
   submitted: boolean = false;
   error_message: String = '';
-  changepass_form: FormGroup;
+  changepass_form: UntypedFormGroup;
 
   constructor(private auth_service: AuthService,
               public dialogRef: MatDialogRef<ChangepassDialogComponent>) { }
 
   ngOnInit() {
 
-    this.changepass_form = new FormGroup({
-      password1: new FormControl(),
-      password2: new FormControl()
+    this.changepass_form = new UntypedFormGroup({
+      password1: new UntypedFormControl(),
+      password2: new UntypedFormControl()
     })
   }
 

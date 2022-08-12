@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material/dialog';
 
@@ -20,7 +20,7 @@ export class SessionDialogComponent implements OnInit {
   @Input() session: Session;
   model: Session;
   @Input() groups: Group[];
-  session_form: FormGroup;
+  session_form: UntypedFormGroup;
 
   constructor(private globals_service: GlobalsService,
               private admin_service: RestService,
@@ -35,10 +35,10 @@ export class SessionDialogComponent implements OnInit {
     if (this.model.group === null) {
       this.model.group = {_id:''};
     }
-    this.session_form = new FormGroup({
-      group: new FormControl(),
-      site: new FormControl(),
-      data_root_dir: new FormControl(),
+    this.session_form = new UntypedFormGroup({
+      group: new UntypedFormControl(),
+      site: new UntypedFormControl(),
+      data_root_dir: new UntypedFormControl(),
       // session_type: new FormControl()
     });
   }
