@@ -2,7 +2,7 @@
 
 # This file is part of RAPD
 
-# Copyright (C) 2016-2017, Cornell University
+# Copyright (C) 2016-2023, Cornell University
 # All rights reserved.
 
 # RAPD is free software: you can redistribute it and/or modify
@@ -17,103 +17,53 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__created__="2017-02-09"
+__created__="2022-12-01"
 __maintainer__="Frank Murphy"
-__email__="fmurphy@anl.gov"
+__email__="fvm3@cornell.edu"
 __status__="Development"
 
-THIS_DIR=$(cd $(dirname $0); pwd)
+INSTALL_DIR=$(cd $(dirname $0); pwd)
 THIS_FILE=$(basename $0)
-SRC_DIR=$THIS_DIR"/sources"
-# ROOT_DIR=$(cd $THIS_DIR/..; pwd)
-PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
-RAPD_VERSION=$(grep RAPD_VERSION $THIS_DIR/../src/version.py | cut -d'"' -f2)
+PREFIX=`echo $INSTALL_DIR | sed -e "s%/install%%"`
+RAPD_VERSION=$(grep RAPD_VERSION $INSTALL_DIR/../src/version.py | cut -d'"' -f2)
+CCTBXPYTHON=$(which cctbx.python)
+BIN_DIR=$PREFIX"/bin"
+SRC_DIR=$PREFIX"/src/"
+# ROOT_DIR=$(cd $INSTALL_DIR/..; pwd)
 
-BATCH=0
-SKIP=0
-FORCE=0
-OVERWRITE=0
-INSTALL_CCTBX=1
-INSTALL_SCRIPTS=1
 INSTALL_INIT=1
 INSTALL_PYTHON=1
-PLATFORM=$(uname -s)
-NPROC=-1
+INSTALL_SCRIPTS=1
+DEBUG=0
+FORCE=0
+VERBOSE=0
 
 # Handle command line
-while getopts "bcfhimosty:n:" x; do
+while getopts "dfhv" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
 
 Installs RAPD v$RAPD_VERSION
-
-    -b           batch mode
-    -c           cleanup
+    -d           debug
     -f           no error if install prefix already exists
-    -h           print this help message and exit
-    -m           skip installed modules query
-    -n:#         number of processors to use
-    -o           overwrite cctbx
-
-    Install or reinstall
-    -t           cctbx
-    -i           initialization scripts
-    -y           RAPD python
-    -s           scripts
-
+    -v           verbose
 "
-            exit 2
+            exit 0
             ;;
-        b)
-            BATCH=1
+
+        d)
+            DEBUG=1
             ;;
-        m)
-            SKIP=1
-            ;;
+        
         f)
             FORCE=1
             ;;
-        o)
-            OVERWRITE=1
+
+        v)
+            VERBOSE=1
             ;;
 
-        n)
-            NPROC=$OPTARG
-            ;;
-
-        # Clean up the source directories
-        c)
-            printf "Cleaning up!\n"
-            cd sources
-            rm -rf phenix/phenix*
-            printf "Finished.\n"
-            exit 0
-            ;;
-        t)
-            INSTALL_CCTBX=1
-            INSTALL_INIT=0
-            INSTALL_PYTHON=0
-            INSTALL_SCRIPTS=0
-            ;;
-        i)
-            INSTALL_CCTBX=0
-            INSTALL_INIT=1
-            INSTALL_PYTHON=0
-            INSTALL_SCRIPTS=0
-            ;;
-        y)
-            INSTALL_CCTBX=0
-            INSTALL_INIT=0
-            INSTALL_PYTHON=1
-            INSTALL_SCRIPTS=0
-            ;;
-        s)
-            INSTALL_CCTBX=0
-            INSTALL_INIT=0
-            INSTALL_PYTHON=0
-            INSTALL_SCRIPTS=1
-            ;;
         ?)
             printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
             exit 1
@@ -121,216 +71,165 @@ Installs RAPD v$RAPD_VERSION
     esac
 done
 
-# First test for installed modules
-if [[ $PLATFORM == "Linux" ]]; then
-
-  if [[ $NPROC == -1 ]]; then
-    NPROC=$(grep -c ^processor /proc/cpuinfo)
-  fi
-
-  # ROOT user?
-  USER=$(whoami)
-  if [[ $USER == "root" ]]; then
-    printf "\033[91mInstalling as root not supported! Sorry.\033[0m\n\n"
-    exit 1
-  fi
-
-  # Cent OS
-  if [ -f /etc/centos-release ]; then
-
-    LINUX_FLAVOR="CentOS"
-    CENTOS_VERSION_MAJOR=`cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1`
-
-    if [ $CENTOS_VERSION_MAJOR == "6" ]; then
-      MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
-    elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
-      MODULES_LIST="gcc-c++ make bzip2 bzip2-devel wget subversion git ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python bzip2-devel"
-    fi
-
-    function isinstalled {
-      if yum list installed "$@" >/dev/null 2>&1; then
-        true
-      else
-        false
-      fi
-    }
-    printf "\033[94mChecking installed packages required for $LINUX_FLAVOR $CENTOS_VERSION_MAJOR \033[0m\n"
-
-    error=0
-    missing_packages=""
-    for package in `echo $MODULES_LIST`
-    do
-      if isinstalled $package; then
-        echo "  $package installed";
-      else
-        echo "  $package not installed";
-        missing_packages="$missing_packages $package"
-        error=1
-      fi
-    done
-    if [ $error == 1 ]; then
-      printf "\033[91mERROR: missing package[s]!\033[0m\n"
-      printf "The following packages need to be installed: $missing_packages \n"
-      if [ $SKIP == 0 ]; then
-        printf "Use the -s option to bypass this\n"
-        exit 1
-      fi
-    fi
-
-  # Ubuntu
-  elif [ -f /etc/lsb-release ]; then
-
-    OS=$(awk '/DISTRIB_ID=/' /etc/*-release | sed 's/DISTRIB_ID=//' | tr '[:upper:]' '[:lower:]')
-
-    if [[ $OS == "ubuntu" ]]; then
-
-      LINUX_FLAVOR="Ubuntu"
-
-      printf "\033[94mChecking installed packages required for $LINUX_FLAVOR \033[0m\n"
-
-      MODULES_LIST="wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev"
-
-      function isinstalled {
-        dpkg -l "$@" > /dev/null 2>&1
-        INSTALLED=$?
-        if [ $INSTALLED == '0' ]; then
-          true
-        else
-          false
-        fi
-      }
-
-      for package in `echo $MODULES_LIST`
-      do
-        if isinstalled $package; then
-          echo "  $package installed";
-        else
-          echo "  $package not installed";
-          missing_packages="$missing_packages $package"
-          error=1
-        fi
-      done
-      if [[ $error == 1 ]]; then
-        printf "\033[91mERROR: missing package[s]!\033[0m\n"
-        printf "The following packages need to be installed: $missing_packages \n"
-        if [ $SKIP == 0 ]; then
-          printf "Use the -s option to bypass this\n"
-          exit 1
-        fi
-      fi
-    fi
-  fi
-
-elif [[ $PLATFORM == "Darwin" ]]; then
-  printf "\033[94mPerforming installation on Mac OS \033[0m\n"
-
-  if [[ $NPROC == -1 ]]; then
-    NPROC=$(sysctl -n hw.ncpu)
-  fi
-  
+# Debug printing
+if [ $DEBUG == 1 ]; then
+  echo ""
+  echo "RAPD_VERSION $RAPD_VERSION"
+  echo "INSTALL_DIR  $INSTALL_DIR"
+  echo "BIN_DIR      $BIN_DIR"
+  echo "SRC_DIR      $SRC_DIR"
+  echo "THIS_FILE    $THIS_FILE"
+  echo "PREFIX       $PREFIX"
+  echo "CCTBXPYTHON  $CCTBXPYTHON"
+  echo ""
+  echo "INSTALL_INIT    $INSTALL_INIT"
+  echo "INSTALL_PYTHON  $INSTALL_PYTHON"
+  echo "INSTALL_SCRIPTS $INSTALL_SCRIPTS"
+  echo ""
+  echo "DEBUG           $DEBUG"
+  echo "FORCE           $FORCE"
+  echo "VERBOSE         $VERBOSE"
+  echo ""
 fi
 
-if [[ $BATCH == 0 ]] # interactive mode
-then
-  printf "
-Welcome to RAPD2
-
-RAPD2 will be installed into this location:
-$PREFIX
-  - Press ENTER to confirm the location
-  - Press CTRL-C to abort the installation
+printf "RAPD2 will be installed into: $PREFIX
+  - Press ENTER to confirm the location or
+    enter another destination
+  - Enter q abort the installation
 
 [$PREFIX] >>> "
-  read user_prefix
-  if [[ $user_prefix != "" ]]; then
+read user_prefix
+if [[ $user_prefix == "q" ]]; then
+  printf "Exiting.\n"
+  exit 0
+fi
+if [[ $user_prefix == "" ]]; then
+  user_prefix=$PREFIX
+fi
+if [[ ! -d "$user_prefix" ]]; then
+  printf "Directory $user_prefix does not exist\n"
+  printf "Exiting \n"
+  exit 9
+fi
+
+PREFIX=$user_prefix
+printf "Installing in $PREFIX \n"
+
+
+if [ $INSTALL_PYTHON == 1 ]; then
+ 
+  # Create the bin directory
+  if [ ! -d $BIN_DIR ]
+  then
+    mkdir $BIN_DIR
+  fi
+  cd $BIN_DIR
+
+  # Create rapd.python
+  printf "  Creating rapd.python\n"
+  if [[ ! -e "$CCTBXPYTHON" ]]; then
+    printf "\033[91mERROR: cctbx.python not present\n"
+    printf "This is a reequireement to install & run rapd2\033[0m\n"
     exit 9
-#      case "$user_prefix" in
-#          *\ * )
-#              echo "ERROR: Cannot install into directories with spaces" >&2
-#              exit 1
-#              ;;
-#          *)
-#              eval PREFIX="$user_prefix"
-#              ;;
-#      esac
   fi
-fi # ! BATCH
 
-# Check for directory already existing
-if [[ ($FORCE == 0) && (-e $PREFIX/share) ]]; then
-  printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
-  printf "Use -f option to override\033[0m\n" >&2
-  exit 1
-fi
+  # shellrealpath from cctbx.python
+  # ----------------------------------------------------------------------------
+  # The shellrealpath function resolves an absolute physical path of its
+  # first argument and stores it in a global shell variable RESULT.
+  # The function returns nonzero for unreadable or invalid symlinks
+  # and resets the RESULT to an empty string.
+  shellrealpath() {
+      local ORGDIR="$PWD"
+      local TARGET="$1"
+      RESULT=""
+      # This test fails for a symlink loop.  We can do without resolution
+      # of symlinks that point to existing unreadable files.
+      [ -r "$TARGET" ] || return $?
+      # Check if the readlink command exists.
+      type readlink >/dev/null || return $?
+      while true; do
+          cd "$(dirname "$TARGET")"
+          TARGET="$(basename "$TARGET")"
+          if [ -L "$TARGET" ]; then
+              TARGET="$(readlink "$TARGET")"
+              continue
+          fi
+          RESULT="$(pwd -P)/$TARGET"
+          break
+      done
+      cd "$ORGDIR"
+  }
+  MY_LIBTBX_PREFIX="$(shellrealpath "$CCTBXPYTHON" && cd "$(dirname "$RESULT")/.." && pwd)"
+  sed -e 's/cctbx.python/rapd.python/' \
+      -e "s,LIBTBX_PREFIX=.*,LIBTBX_PREFIX=$MY_LIBTBX_PREFIX," \
+      -e '/export LIBTBX_PYEXE/a\'$'\n''export PYTHONPATH="/Users/fmurphy/workspace/rapd/src:${PATH}"' \
+      $CCTBXPYTHON > ./rapd.python
+  chmod +x rapd.python
 
-# Make the target directory
-# echo $ROOT_DIR
-# echo $PREFIX
-# exit 0
+  cd $INSTALL_DIR
 
-## Installing into directory not the currently cloned tree?
-#if [ ! -e $PREFIX ]; then
-#  mkdir -p $PREFIX
-#  if (( $? )); then
-#      echo "ERROR: Could not create directory: $PREFIX" >&2
-#      exit 1
-#  fi
-#fi
-#PREFIX=$(cd $PREFIX; pwd)
+  # Modules
+  printf "  Installing python modules needed by RAPD\n"
 
-## Install the rapd src tree
-#if [[ $ROOT_DIR != $PREFIX ]]; then
-#  rsync -a $ROOT_DIR/* $PREFIX/.
-#fi
-
-if [ $INSTALL_CCTBX == 1 ]; then
-
-  printf "$PREFIX/share/cctbx"
-
-  if [[ ( -e $PREFIX/share/cctbx ) && ( OVERWRITE == 0 ) ]]; then
-    printf "\n\033[94mIt appears cctbx is already installed for RAPD - skipping\033[0m\n"
+  if [ $VERBOSE == 1 ]; then
+    pip install -vr requirements.txt
   else
-    printf "\n\033[94mInstalling cctbx \033[0m\n"
-
-    CCTBX_PREFIX_TGT=$PREFIX"/share/cctbx"
-    rm -rf $CCTBX_PREFIX_TGT
-    mkdir -p $CCTBX_PREFIX_TGT
-    cd $CCTBX_PREFIX_TGT
-
-    # Get the bootstrap installer
-    # cp $SRC_DIR/cctbx/bootstrap.py .
-    printf "  Downloading CCTBX bootstrap script"
-    wget --no-check-certificate https://raw.githubusercontent.com/RAPD/cctbx_project/master/libtbx/auto_build/bootstrap.py
-
-    # Install CCTBX
-    printf "  Installing CCTBX"
-    python bootstrap.py --builder=cctbx --enable-shared --nproc=$NPROC -v
-    # Try phaser
-    python bootstrap.py --builder=phaser --nproc=$NPROC -v
-
-    if [ ! $? -eq 0 ]
-    then
-      echo "Could not install cctbx" >&2
-      exit 1
-    fi
-
-    # Correct CCTBX to handle Eiger CBFs
-    printf "  Adding Eiger CBFs to CCTBX"
-    RAPD_HOME=$PREFIX
-    export RAPD_HOME
-    cd $THIS_DIR
-    ./eigerize_cctbx.sh $CCTBX_PREFIX_TGT
-
+    pip install -r requirements.txt
   fi
 
-  printf "\033[92mCCTBX install complete.\033[0m\n"
+  # rapd.pip install crypto
+  # if [[ $PLATFORM == "Darwin" ]]; then
+  #   rapd.pip install pyopenssl
+  # fi
+  # rapd.pip install pycrypto
+  # rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
+  # rapd.pip install pyasn1
+  # rapd.pip install redis
+  # rapd.pip install pymysql
+  # rapd.pip install pymongo
+  # rapd.pip install drmaa
+  # rapd.pip install paramiko
+  # rapd.pip install fabio
+  # # rapd.pip install scipy
+  # rapd.pip install mysolr
+  # # Get the up arrow working in the CLI
+  # if [[ $PLATFORM == "Linux" ]]; then
+  #   if [[ $LINUX_FLAVOR == "CentOS" ]]; then
+  #     if [[ $CENTOS_VERSION_MAJOR == "7" ]]; then
+  #       if [ ! -e /lib64/libncurses.so ]; then
+  #         if [ "$EUID" -ne 0 ]; then
+  #           printf "\033[31mreadline python module needs /lib64/libncurses.so\n \033[0m"
+  #           printf "\033[31mYou can enable readline with the following commands\n\033[0m"
+  #           printf "  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so\n"
+  #           printf "  > rapd.pip install readline\n"
+  #         else
+  #           printf "  Making libncurses softlink to enable readline"
+  #           ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
+  #           rapd.pip install readline
+  #         fi
+  #       else
+  #         rapd.pip install readline
+  #       fi
+  #     else
+  #       rapd.pip install readline
+  #     fi
+  #   else
+  #     rapd.pip install readline
+  #   fi
+  # else
+  #   rapd.pip install readline
+  # fi
+
+  cd $INSTALL_DIR
+  printf "\033[92mRAPD python module install complete.\033[0m\n"
 fi
+
 
 if [ $INSTALL_INIT == 1 ]; then
   printf "\n\033[94mInstalling initialization scripts \033[0m\n"
 
   # Create the rapd.shrc script
-  BINDIR=$PREFIX"/bin"
   printf "  Creating rapd.shrc\n"
   cd $PREFIX
   if [[ -e $PREFIX"/rapd.shrc" ]]; then
@@ -338,16 +237,10 @@ if [ $INSTALL_INIT == 1 ]; then
   fi
   echo "# $PREFIX/rapd.shrc -- bash initialization script for RAPD2" > rapd.shrc
   echo "#" >> rapd.shrc
-  echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
-  echo "" >> rapd.shrc
-  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
-  echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
-  echo "" >> rapd.shrc
-  echo "# Setup paths for cctbx" >> rapd.shrc
-  echo "source $PREFIX/share/cctbx/build/setpaths.sh" >> rapd.shrc
+  echo "# (c) Copyright 2009-2023, Cornell University" >> rapd.shrc
   echo "" >> rapd.shrc
   echo "# Add rapd bin to the path" >> rapd.shrc
-  echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
+  echo "PATH=$BIN_DIR:\$PATH" >> rapd.shrc
   echo "export PATH" >> rapd.shrc
   echo "# Set environmental variable" >> rapd.shrc
   echo "RAPD_HOME=$PREFIX" >> rapd.shrc
@@ -361,7 +254,7 @@ if [ $INSTALL_INIT == 1 ]; then
   echo "echo '==================================================='" >> rapd.shrc
   echo "echo''" >> rapd.shrc
 
-  # Create the rapd.shrc script
+  # Create the rapd.cshrc script
   printf "  Creating rapd.cshrc\n"
   cd $PREFIX
   if [[ -e $PREFIX"/rapd.cshrc" ]]; then
@@ -369,16 +262,10 @@ if [ $INSTALL_INIT == 1 ]; then
   fi
   echo "# $PREFIX/rapd.cshrc -- bash initialization script for RAPD2" > rapd.cshrc
   echo "#" >> rapd.cshrc
-  echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.cshrc
-  echo "" >> rapd.cshrc
-  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
-  echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
-  echo "" >> rapd.cshrc
-  echo "# Setup paths for cctbx" >> rapd.cshrc
-  echo "source $PREFIX/share/cctbx/build/setpaths.csh" >> rapd.cshrc
+  echo "# (c) Copyright 2009-2023, Cornell University" >> rapd.cshrc
   echo "" >> rapd.cshrc
   echo "# Add rapd bin to the path" >> rapd.cshrc
-  echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
+  echo "setenv PATH $BIN_DIR:\$PATH" >> rapd.cshrc
   echo "# Set environmental variable" >> rapd.cshrc
   echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
   echo "" >> rapd.cshrc
@@ -390,127 +277,29 @@ if [ $INSTALL_INIT == 1 ]; then
   echo "echo '==================================================='" >> rapd.cshrc
   echo "echo''" >> rapd.cshrc
 
+  cd $INSTALL_DIR
   printf "\033[92mRAPD initialization scripts install complete.\033[0m\n"
 fi
 
-if [ $INSTALL_PYTHON == 1 ]; then
-  printf "\n\033[94mInstalling rapd.python \033[0m\n"
-
-  # Create the bin directory
-  BINDIR=$PREFIX"/bin"
-  if [ ! -d $BINDIR ]; then
-    mkdir $BINDIR
-  fi
-
-  # Create a script for calling rapd.python
-  SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
-
-  cd $BINDIR
-  printf "  Creating rapd.python\n"
-   sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
-       -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/cctbx\/build/" \
-       -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
-       $PREFIX/share/cctbx/build/bin/cctbx.python > ./rapd.python
-  chmod +x ./rapd.python
-
-  export PYTHONPATH=""
-  source $PREFIX/rapd.shrc > /dev/null
-  cd $SRC_DIR/python
-
-  printf "  Installing pip"
-
-  # Remove pip if there
-  if [[ $PLATFORM == "Darwin" ]]; then
-    rm $PREFIX/share/cctbx/build/bin/cctbx.pip > /dev/null
-    rm $PREFIX/bin/rapd.pip > /dev/null
-    rm $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip > /dev/null
-  elif [[ $PLATFORM == "Linux" ]]; then
-    rm $PREFIX/share/cctbx/build/bin/cctbx.pip > /dev/null
-    rm $PREFIX/bin/rapd.pip > /dev/null
-    rm $PREFIX/share/cctbx/base/bin/pip > /dev/null
-  fi
-
-  # Install pip
-  rapd.python get-pip.py --force-reinstall
-
-  # Make useful links
-  if [[ $PLATFORM == "Darwin" ]]; then
-    ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
-    ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
-  elif [[ $PLATFORM == "Linux" ]]; then
-    ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
-    ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/bin/rapd.pip
-  fi
-
-  # Modules
-  printf "  Installing python modules needed by RAPD"
-
-  rapd.pip install crypto
-  if [[ $PLATFORM == "Darwin" ]]; then
-    rapd.pip install pyopenssl
-  fi
-  rapd.pip install pycrypto
-  rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
-  rapd.pip install pyasn1
-  rapd.pip install redis
-  rapd.pip install pymysql
-  rapd.pip install pymongo
-  rapd.pip install drmaa
-  rapd.pip install paramiko
-  rapd.pip install fabio
-  rapd.pip install scipy
-  rapd.pip install mysolr
-  # Get the up arrow working in the CLI
-  if [[ $PLATFORM == "Linux" ]]; then
-    if [[ $LINUX_FLAVOR == "CentOS" ]]; then
-      if [[ $CENTOS_VERSION_MAJOR == "7" ]]; then
-        if [ ! -e /lib64/libncurses.so ]; then
-          if [ "$EUID" -ne 0 ]; then
-            printf "\033[31mreadline python module needs /lib64/libncurses.so\n \033[0m"
-            printf "\033[31mYou can enable readline with the following commands\n\033[0m"
-            printf "  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so\n"
-            printf "  > rapd.pip install readline\n"
-          else
-            printf "  Making libncurses softlink to enable readline"
-            ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
-            rapd.pip install readline
-          fi
-        else
-          rapd.pip install readline
-        fi
-      else
-        rapd.pip install readline
-      fi
-    else
-      rapd.pip install readline
-    fi
-  else
-    rapd.pip install readline
-  fi
-
-  printf "\033[92mRAPD python install complete.\033[0m\n"
-fi
 
 if [ $INSTALL_SCRIPTS == 1 ]; then
   printf "\n\033[94mInstalling RAPD executable scripts\033[0m\n"
 
   # Create the bin directory
-  BINDIR=$PREFIX"/bin"
-  if [ ! -d $BINDIR ]
+  if [ ! -d $BIN_DIR ]
   then
-    mkdir $BINDIR
+    mkdir $BIN_DIR
   fi
 
   # Create scripts
   RAPD_HOME=$PREFIX
   export RAPD_HOME
-  cd $THIS_DIR
+  cd $INSTALL_DIR
   ./create_min_scripts.sh
   ./create_scripts.sh
 
   printf "\033[92mRAPD executable scripts install complete.\033[0m\n"
 fi
-
 
 
 if [ $INSTALL_INIT == 1 ]; then
@@ -529,6 +318,6 @@ if [ $INSTALL_INIT == 1 ]; then
 
 fi
 
+cd $INSTALL_DIR
 printf "\n\033[92mRAPD installation is complete\033[0m\n\n"
-
 exit 0

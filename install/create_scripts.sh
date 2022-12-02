@@ -26,7 +26,9 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.h5_to_cbf
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/convert_hdf5_cbf.py \"\$@\"" >>$RAPD_HOME/bin/rapd.h5_to_cbf
   chmod +x $RAPD_HOME/bin/rapd.h5_to_cbf
+  rm $RAPD_HOME/bin/rapd.hdf5_to_cbf
   ln -s $RAPD_HOME/bin/rapd.h5_to_cbf $RAPD_HOME/bin/rapd.hdf5_to_cbf
+  rm $RAPD_HOME/bin/rapd.eiger_to_cbf
   ln -s $RAPD_HOME/bin/rapd.h5_to_cbf $RAPD_HOME/bin/rapd.eiger_to_cbf
 
   # Index
