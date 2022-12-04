@@ -15,6 +15,7 @@ rapd.shrc
 phenix-installer-*
 cache
 package-lock.json
+tmp
 
 # Archives
 *.tar
