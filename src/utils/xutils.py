@@ -5,7 +5,7 @@ rapd_utils has a number of useful dicts and functions used in rapd
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2018, Cornell University
+Copyright (C) 2009-2023, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -39,9 +39,11 @@ from utils.text import json
 from utils.processes import local_subprocess
 from bson.objectid import ObjectId
 
-from iotbx import mtz as iotbx_mtz
+# from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
+# from iotbx import reflection_file_reader
 import iotbx.pdb.mmcif as iotbx_mmcif
+from iotbx.data_manager import DataManager
 
 # RAPD imports
 #import plugins.subcontractors.parse as Parse
@@ -1116,9 +1118,9 @@ def convertUnicode(self,inp=False):
   return(out)
 
 def convert_unicode(inp):
-  """
+  '''
   Convert unicode to Python string for Phenix.
-  """
+  '''
 
   if isinstance(inp, str):
     out = inp.encode('utf8')
@@ -2152,28 +2154,39 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
       return(sg, cell, cell2, 0)
 
 def get_mtz_info(datafile):
-    """
+    '''
     Get unit cell and SG from input mtz
-    """
+    '''
+    print(f'get_mtz_info {datafile=}')
 
     sg = False
     cell = False
     vol = False
 
     # Convert from unicode
-    datafile = convert_unicode(datafile)
+    # datafile = str(convert_unicode(datafile))
 
     # Read datafile
-    data = iotbx_mtz.object(datafile)
+    # data = iotbx_mtz.object(datafile)
+    dm = DataManager()
+    # print(os.getcwd())
+    array_labels = dm.get_miller_array_labels(datafile)
+    data = dm.get_reflection_file_server(filenames=[datafile], labels=[array_labels])
+    # miller_arrays=dm.get_miller_arrays() 
 
     # Derive space group from datafile
-    sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
+    #TODO
+    # sg = fix_R3_sg(data.space_group_name().replace(' ', ''))
+    sg = fix_R3_sg(data.crystal_symmetry.as_str().split('group:')[1].split('(')[0].strip())
+    # sg = data.crystal_symmetry.space_group()
 
     # Wrangle the cell parameters
-    cell = [round(x,3) for x in data.crystals()[0].unit_cell_parameters() ]
+    # cell = [round(x,3) for x in data.crystals()[0].unit_cell_parameters() ]
+    cell = [round(x,3) for x in data.crystal_symmetry.unit_cell().parameters()]
 
     # The volume
-    vol = data.crystals()[0].unit_cell().volume()
+    # vol = data.crystals()[0].unit_cell().volume()
+    vol = round(data.crystal_symmetry.unit_cell().volume(), 3)
 
     return (sg, cell, vol)
 
@@ -2622,13 +2635,14 @@ def getRes_OLD(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
-def get_res_OLD(datafile):
-    """Return resolution limit of dataset"""
+#TODO
+# def get_res_OLD(datafile):
+#     """Return resolution limit of dataset"""
 
-    datafile = convert_unicode(datafile)
-    data = iotbx_mtz.object(datafile)
+#     datafile = convert_unicode(datafile)
+#     data = iotbx_mtz.object(datafile)
 
-    return float(data.max_min_resolution()[-1])
+#     return float(data.max_min_resolution()[-1])
 
 def get_detector(image, load=False):
     """
@@ -3938,3 +3952,11 @@ def XDS2Shelx(self,inp,output=False):
 
   #except:
   #  self.logger.exception('**ERROR in Utils.XDS2Shelx**')
+
+if __name__ == '__main__':
+
+    print('-----------------------')
+    print(' rapd2 utils/xutils.py ')
+    print('-----------------------')
+
+    print(get_mtz_info('/Users/fmurphy/workspace/rapd/src/utils/tests/thaum1_01s-01d_1_mergable.mtz'))

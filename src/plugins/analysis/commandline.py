@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2017-2023, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ def construct_command(commandline_args):
     # The task to be carried out
     command = {
         "command": "ANALYSIS",
-        "process_id": uuid.uuid1().get_hex(),
+        "process_id": uuid.uuid1().hex,
         }
 
     # Working directory

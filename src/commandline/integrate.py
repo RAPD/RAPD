@@ -143,7 +143,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
     # The task to be carried out
     command = {
         "command": "XDS", #"INTEGRATE",
-        "process_id": uuid.uuid1().get_hex()
+        "process_id": uuid.uuid1().hex
         }
 
     # Where to do the work

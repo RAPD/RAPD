@@ -45,7 +45,7 @@ import subprocess
 import time
 import urllib.request, urllib.error, urllib.parse
 # Used for PDBe searches
-from mysolr import Solr
+# from mysolr import Solr
 
 # RAPD imports
 # import commandline_utils
@@ -615,7 +615,8 @@ class PDBERepository():
         """Do the solr search and pass back results"""
         output_dict = {}
         # Setup connections
-        solr = Solr(self.server,version=4)
+        #TODO
+        # solr = Solr(self.server,version=4)
         #UNLIMITED_ROWS = 10000000 # necessary because default in mysolr is mere 10
         # Run the search
         search_results = solr.search(**query)

@@ -5,7 +5,7 @@ Detector utilities
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016-2018 Cornell University
+Copyright (C) 2016-2023 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -36,15 +36,15 @@ import sys
 import tempfile
 
 # CCTBX imports
-from dxtbx.format.Registry import Registry
+# from dxtbx.format.Registry import Registry
+from dxtbx.format import Registry
 import h5py
 from iotbx.detectors import ImageFactory
 
 # RAPD imports
+import detectors.detector_list as detector_list
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.text as text
-from . import detector_list
-
 
 parameters_to_get = (
     "beam_center_x",
@@ -103,7 +103,7 @@ parameters_to_get = (
     "y_pixels_in_detector",
 )
 
-def print_detector_info(image):
+def print_detector_info(image: str) -> None:
     """
     Print out information on the detector given an image
     """
@@ -136,7 +136,7 @@ def print_detector_info(image):
     for key, val in i.parameters.items():
         print("%20s::%s" % (key, val))
 
-def print_detector_info2(image):
+def print_detector_info2(image: str) -> None:
     """
     Print out information on the detector given an image
     """
@@ -202,7 +202,7 @@ def get_detector_files():
 
     return possible_files
 
-def get_detector_file(image):
+def get_detector_file(image: str):
     """
     Returns the RAPD detector file given an image file
     """
