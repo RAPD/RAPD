@@ -24,6 +24,7 @@ __status__ = 'Development'
 
 from collections import OrderedDict
 import json as system_json
+from pprint import pprint
 import sys
 from typing import Any
 
@@ -61,13 +62,33 @@ def color(requested_color: str = 'default') -> str:
 aring = chr(197).encode('utf-8')
 deg = chr(176).encode('utf-8')
 
+def key_to_json(data: Any) -> Any:
+    if data is None or isinstance(data, (bool, int, float, str)):
+        return data
+    if isinstance(data, (tuple, frozenset, bytes)):
+        return str(data)
+    print(type(data), data)
+    raise TypeError
+
+def to_json(data: Any) -> Any:
+    # pprint(data)
+    if data is None or isinstance(data, (bool, int, float, tuple, range, str, list)):
+        return data
+    if isinstance(data, (set, frozenset, bytes)):
+        return sorted(data)
+    if isinstance(data, dict):
+        return {key_to_json(key): to_json(data[key]) for key in data}
+    print(type(data), data)
+    raise TypeError
+
 class json(object):
     '''Provide methods like the system json, but wrapped for rapd'''
 
     @staticmethod
     def dumps(input: Any) -> str:
+        # pprint(input)
         '''Just like json.dumps'''
-        return system_json.dumps(input, default=json_util.default)
+        return system_json.dumps(to_json(input), default=json_util.default)
 
     @staticmethod
     def loads(input: str) -> object:

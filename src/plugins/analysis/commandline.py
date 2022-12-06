@@ -25,7 +25,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import argparse
+from argparse import ArgumentParser
 import multiprocessing
 import os
 import sys
@@ -98,14 +98,14 @@ def construct_command(commandline_args):
 
     return command
 
-def get_commandline():
+def get_commandline() -> ArgumentParser:
     """Grabs the commandline"""
 
     # print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Launch analysis plugin"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
+    my_parser = ArgumentParser(description=commandline_description)
 
     # A True/False flag
     my_parser.add_argument("-l", "--logging-off",

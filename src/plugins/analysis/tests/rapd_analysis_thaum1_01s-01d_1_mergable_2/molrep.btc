@@ -1,0 +1,7 @@
+# --------------------------------
+/opt/sbgrid/i386-mac/ccp4/7.0/ccp4-7.0/bin/molrep -f /Users/fmurphy/workspace/rapd/test_data/thaum1_01s-01d_1_mergable.mtz -i <<stop
+# --------------------------------
+_DOC   Y
+_RESMAX  4
+_RESMIN  9
+stop

@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017-2018, Cornell University
+Copyright (C) 2017-2023, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2017-05-10"
-__maintainer__ = "Your name"
-__email__ = "Your email"
+__maintainer__ = "Frank Murphy"
+__email__ = "fvm3@cornell.edu"
 __status__ = "Development"
 
 # Standard imports
@@ -275,8 +275,8 @@ def local_subprocess(command,
     if logfile:
         try:
             with open(logfile, "w") as out_file:
-                out_file.write(stdout)
-                out_file.write(stderr)
+                out_file.write(str(stdout))
+                out_file.write(str(stderr))
         # Found that jobs not getting effectively killed by multiprocess Pool at times
         except IOError:
             pass

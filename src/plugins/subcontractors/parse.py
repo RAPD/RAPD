@@ -5,7 +5,7 @@ Parsing methods for multiple core functions
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2011, Cornell University
+Copyright (C) 2011-2023, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -2117,14 +2117,14 @@ def parse_phaser_ncs_output(raw_output):
     plots = {}
 
     # Look for graphs
-    for index, line in enumerate(raw_output.split("\n")):
+    for index, line in enumerate(raw_output.split(b'\n')):
         # print index, line
         temp.append(line)
-        if "$$ loggraph $$" in line:
+        if b'$$ loggraph $$' in line:
             start.append(index)
-            table_labels.append(raw_output.split("\n")[index-1].split())
-        elif "$TABLE" in line:
-            table_titles.append(line.split(":")[1].strip())
+            table_labels.append(raw_output.split(b'\n')[index-1].split())
+        elif b'$TABLE' in line:
+            table_titles.append(line.split(b':')[1].strip())
 
     # pprint(start)
 
@@ -2156,7 +2156,7 @@ def parse_phaser_ncs_output(raw_output):
 
             for line in temp[start[index]+1:]:
                 # print line
-                if "$$" in line:
+                if b"$$" in line:
                     break
                 #if len(line.split()) == len(temp[start[i]+1].split()):
                 else:

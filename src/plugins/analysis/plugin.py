@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2011-2018, Cornell University
+Copyright (C) 2011-2023, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -33,9 +33,10 @@ PLUGIN_SUBTYPE = "CORE"
 # A unique UUID for this handler (uuid.uuid1().hex[:4])
 ID = "f068"
 # Version of this plugin
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 # Standard imports
+import argparse
 import base64
 from distutils.spawn import find_executable
 import logging
@@ -73,12 +74,14 @@ import plugins.pdbquery.plugin
 
 # Software dependencies
 VERSIONS = {
-    "gnuplot": (
-        "gnuplot 4.2",
-        "gnuplot 5.0",
+    'gnuplot': (
+        b'gnuplot 4.2',
+        b'gnuplot 5.0',
+        b'gnuplot 5.4',
     ),
-    "phenix": (
-        "Version: 1.11.1",
+    'phenix': (
+        b'Version: 1.11.1',
+        b'Version: 1.16'
     )
 }
 # Setup multiprocessing.Pool to launch jobs
@@ -123,11 +126,10 @@ class RapdPlugin(Process):
     #xtriage_output_raw = None
     #molrep_output_raw = None
     #phaser_results = None
-    
+
     redis = False
 
     jobs = {}
-
 
     results = {
         "command": None,
@@ -354,7 +356,7 @@ calculation",
             self.redis.publish("RAPD_RESULTS", json_results)
 
     
-    def update_status(self):
+    def update_status(self) -> None:
         """Update the status and send back results."""
         if self.status == 1:
             self.status = 25
@@ -364,7 +366,7 @@ calculation",
             self.status = 90
         self.results["process"]["status"] = self.status
 
-    def process(self):
+    def process(self) -> None:
         """Run plugin action"""
         if self.verbose and self.logger:
             self.logger.debug("preprocess")
@@ -382,7 +384,7 @@ calculation",
 
         self.jobs_monitor()
 
-    def postprocess(self):
+    def postprocess(self) -> None:
         """Clean up after plugin action"""
         if self.verbose and self.logger:
             self.logger.debug("postprocess")
@@ -412,7 +414,7 @@ calculation",
         # Message in logger
         self.logger.debug('Analysis finished')
 
-    def jobs_monitor(self):
+    def jobs_monitor(self) -> None:
         """Monitor running jobs and finsh them when they complete."""
         timed_out = False
         timer = 0
@@ -466,7 +468,7 @@ calculation",
                 self.logger.debug('AutoStats Queue finished.')
 
 
-    def run_xtriage(self):
+    def run_xtriage(self) -> None:
         """
         Run Xtriage and the parse the output
 
@@ -491,7 +493,7 @@ calculation",
         self.jobs[job] = {'name': 'xtriage',
                           'pid': pid_queue.get()}
 
-    def finish_xtriage(self):
+    def finish_xtriage(self) -> None:
         if self.verbose and self.logger:
             self.logger.debug('finish_xtriage')
         # Read raw output
@@ -514,7 +516,7 @@ calculation",
         # return results
         self.send_results()
 
-    def run_molrep(self):
+    def run_molrep(self) -> None:
         """Run Molrep to calculate self rotation function"""
         if self.verbose and self.logger:
             self.logger.debug("run_molrep")
@@ -538,7 +540,7 @@ calculation",
             self.jobs[job] = {'name': 'molrep',
                               'pid': molrep_queue.get()}
 
-    def finish_molrep(self):
+    def finish_molrep(self) -> None:
         """Get Molrep results"""
         if self.verbose and self.logger:
             self.logger.debug('finish_molrep')
@@ -599,7 +601,7 @@ calculation",
                                 # read in the image and encode
                                 with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
                                     encoded_string = base64.b64encode(image_file.read())
-                                    parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+                                    parsed_molrep_results["self_rotation_image_%s" % label] = b"data:image/jpeg;base64,"+encoded_string
                 # Break out of the loop trying multiple convert executables
                 if parsed_molrep_results["self_rotation_images"]:
                     break
@@ -615,18 +617,19 @@ calculation",
         # return results
         self.send_results()
 
-    def run_phaser_ncs_NEW(self): # USe module in plugins.subcontractors.python_phaser
-        """Run Phaser tNCS and anisotropy correction
-           This Python version is having problems generating a readable loggraph
-        """
+    def run_phaser_ncs_NEW(self) -> None: # Use module in plugins.subcontractors.python_phaser
+        '''
+        Run Phaser tNCS and anisotropy correction
+        This Python version is having problems generating a readable loggraph
+        '''
         if self.verbose and self.logger:
-            self.logger.debug("run_phaser_ncs")
+            self.logger.debug('run_phaser_ncs')
 
         if self.do_phaser:
 
-            self.tprint("  Analyzing NCS and anisotropy",
+            self.tprint('  Analyzing NCS and anisotropy',
                         level=30,
-                        color="white")
+                        color='white')
 
             self.phaser_queue = Queue()
             job = Process(target=run_phaser_module, kwargs={'data_file': self.data_file,
@@ -636,39 +639,40 @@ calculation",
             self.jobs[job] = {'name': 'NCS',
                               'pid': job.pid}
 
-    def run_phaser_ncs(self): # USe module in plugins.subcontractors.python_phaser
-        """Run Phaser tNCS and anisotropy correction"""
+    def run_phaser_ncs(self) -> None: # USe module in plugins.subcontractors.python_phaser
+        '''Run Phaser tNCS and anisotropy correction'''
         if self.verbose and self.logger:
-            self.logger.debug("run_phaser_ncs")
+            self.logger.debug('run_phaser_ncs')
 
         if self.do_phaser:
 
-            self.tprint("  Analyzing NCS and anisotropy",
+            self.tprint('  Analyzing NCS and anisotropy',
                         level=30,
-                        color="white")
+                        color='white')
 
-            command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
+            command = 'phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n' % \
                       self.data_file
-            
+            # print(command)
             self.phaser_queue = Queue()
             job = Process(target=local_subprocess, kwargs={'command': command,
                                                            'result_queue': self.phaser_queue,
-                                                           'logfile' : "phaser_ncs.log",
+                                                           'logfile' : 'phaser_ncs.log',
                                                            'pid_queue':self.phaser_queue,
                                                            'shell': True})
             job.start()
             self.jobs[job] = {'name': 'NCS',
                               'pid': self.phaser_queue.get()}
 
-    def finish_phaser_ncs(self):
+    def finish_phaser_ncs(self) -> None:
         if self.verbose and self.logger:
             self.logger.debug('finish_phaser_ncs')
 
         # Store raw output
         output = self.phaser_queue.get()
-        self.results["results"]["raw"]["phaser"] = output['stdout'].split("\n")
+        # pprint(output['stdout'])
+        self.results['results']['raw']['phaser'] = output['stdout'].split(b'\n')
 
-        self.results["results"]["parsed"]["phaser"] = parse.parse_phaser_ncs_output(output['stdout'])
+        self.results['results']['parsed']['phaser'] = parse.parse_phaser_ncs_output(output['stdout'])
 
         # Update the status number and return results
         self.update_status()
@@ -683,7 +687,7 @@ calculation",
     #             "run":
     #         }], output=None, logger=self.logger)
 
-    def clean_up(self):
+    def clean_up(self) -> None:
         """Clean up the working directory"""
 
         self.logger.debug("clean_up")
@@ -702,7 +706,7 @@ calculation",
             # for target in files_to_clean:
             #     shutil.rmtree(target)
 
-    def handle_return_OLD(self):
+    def handle_return_OLD(self) -> None:
         """Output data to consumer"""
 
         self.logger.debug("handle_return")
@@ -726,13 +730,13 @@ calculation",
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
 
-    def print_results(self):
+    def print_results(self) -> None:
         """Print the results to the commandline"""
 
         self.print_xtriage_results()
         self.print_plots()
 
-    def write_json(self):
+    def write_json(self) -> None:
         """Output JSON-formatted results to terminal"""
 
         json_results = json.dumps(self.results)
@@ -745,7 +749,7 @@ calculation",
         if self.preferences.get("run_mode") == "json":
             print(json_results)
 
-    def print_xtriage_results(self):
+    def print_xtriage_results(self) -> None:
         """Print out the xtriage results"""
 
         xtriage_results = self.results["results"]["parsed"]["xtriage"]
@@ -799,7 +803,7 @@ calculation",
         else:
             self.tprint("\nNo Xtriage results", level=99, color="red")
 
-    def print_plots(self):
+    def print_plots(self) -> None:
         """Print plots to the terminal"""
 
         if "interactive" in self.preferences.get("run_mode"):
@@ -873,27 +877,31 @@ calculation",
                         if plot_label == "Measurability of Anomalous signal":
                             y_max = max(0.055, y_max)
 
-                        gnuplot = subprocess.Popen(["gnuplot"],
+                        gnuplot = subprocess.Popen(['gnuplot'],
                                                    stdin=subprocess.PIPE,
                                                    stderr=subprocess.PIPE)
 
-                        gnuplot.stdin.write("""set term dumb %d,%d
-                                               set title '%s'
-                                               set xlabel '%s'
-                                               set ylabel '%s' rotate by 90 \n""" %
-                                            (int(term_size[1])-20,
-                                             30,
-                                             plot_title,
-                                             x_axis_label,
-                                             y_axis_label))
+                        # gnuplot.stdin.write(b'''set term dumb %d,%d
+                        #                        set title '%s'
+                        #                        set xlabel '%s'
+                        #                        set ylabel '%s' rotate by 90 \n''' %
+                        #                     (int(term_size[1])-20,
+                        #                      30,
+                        #                      plot_title,
+                        #                      x_axis_label,
+                        #                      y_axis_label))
+                        gnuplot_command = f"set term dumb {int(term_size[1])-20},30, set title '{plot_title}' set xlabel '{x_axis_label}' set ylabel '{y_axis_label}' rotate by 90 \n"
+                        gnuplot.stdin.write(bytes(source=gnuplot_command, encoding='utf8'))
 
                         # Create the plot string
                         if reverse:
-                            plot_string = "plot [%f:%f] [%f:%f] " \
-                                              % (x_max, x_min, y_min, y_max)
+                            # plot_string = "plot [%f:%f] [%f:%f] " \
+                            #                   % (x_max, x_min, y_min, y_max)
+                            plot_string = f'plot [{x_max:f}:{x_min:f}] [{y_min:f}:{y_max:f}]'
                         else:
-                            plot_string = "plot [%f:%f] [%f:%f] " \
-                                              % (x_min, x_max, y_min, y_max)
+                            # plot_string = "plot [%f:%f] [%f:%f] " \
+                            #                   % (x_min, x_max, y_min, y_max)
+                            plot_string = f'plot [{x_min:f}:{x_max:f}] [{y_min:f}:{y_max:f}]'
                         # Mark the minimum measurability
                         if plot_label == "Measurability of Anomalous signal":
                             plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
@@ -911,7 +919,7 @@ calculation",
                         else:
                             plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
 
-                        gnuplot.stdin.write(plot_string)
+                        gnuplot.stdin.write(bytes(source=plot_string, encoding='utf8'))
 
 
                         # Mark the minimum measurability
@@ -922,21 +930,25 @@ calculation",
                                 ys = plot["series"][0]["ys"]
                                 # Minimal impact line
                                 for x_val, y_val in zip(xs, y2s):
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                                gnuplot.stdin.write("e\n")
+                                    plot_string = f'{x_val:f} {y_val:f}\n'
+                                    gnuplot.stdin.write(bytes(source=plot_string, encoding='utf8'))
+                                gnuplot.stdin.write(b'e\n')
                                 # Experimental line
                                 for x_val, y_val in zip(xs, ys):
                                     # print x_val, y_val, y2_val
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                                gnuplot.stdin.write("e\n")
+                                    # gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                    plot_string = f'{x_val:f} {y_val:f}\n'
+                                    gnuplot.stdin.write(bytes(source=plot_string, encoding='utf8'))
+                                gnuplot.stdin.write(b'e\n')
                         else:
                             # Run through the data and add to gnuplot
                             for plot in plot_data:
                                 xs = plot["series"][0]["xs"]
                                 ys = plot["series"][0]["ys"]
                                 for x_val, y_val in zip(xs, ys):
-                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                                gnuplot.stdin.write("e\n")
+                                    plot_string = f'{x_val:f} {y_val:f}\n'
+                                    gnuplot.stdin.write(bytes(source=plot_string, encoding='utf8'))
+                                gnuplot.stdin.write(b'e\n')
 
                         # Now plot!
                         gnuplot.stdin.flush()
@@ -945,7 +957,7 @@ calculation",
                 else:
                     self.tprint("\nSorry, no plots", level=99, color="red")
 
-    def print_credits(self):
+    def print_credits(self) -> None:
         """Print information on programs used to the terminal"""
 
         self.tprint(rcredits.HEADER.replace("RAPD", "RAPD analysis"),
@@ -957,7 +969,7 @@ calculation",
 
         self.tprint(info_string, level=99, color="white")
 
-def get_commandline():
+def get_commandline() -> argparse.Namespace:
     """Grabs the commandline"""
 
     print("get_commandline")

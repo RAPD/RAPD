@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ASCII" standalone="yes"?>
+<!-- MR_START output  -->
+<MR_START>
+Error <err_level>         0</err_level>
+Message <err_message>normal run</err_message>
+Job <job>MR_START</job>
+vers <vers>11.7.02</vers>
+nmon_solution <n_solution>         0</n_solution>
+mr_score <mr_score>    0.0000</mr_score>
+mr_score_previous <mr_score_previous>    0.0000</mr_score_previous>
+mr_zscore <mr_zscore>    0.0000</mr_zscore>
+mr_zscore_previous <mr_zscore_previous>    0.0000</mr_zscore_previous>
+<solution sol_file="none"/>
+<found dimer_file="none"/>
+Time_elapsed <tel>     0h  0m  2s</tel>
+Time_remained <trm>null</trm>
+</MR_START>

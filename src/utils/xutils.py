@@ -34,6 +34,7 @@ import sys
 import stat
 import shlex
 import time
+from typing import Iterable
 
 from utils.text import json
 from utils.processes import local_subprocess
@@ -99,8 +100,6 @@ for key, val in xds_bravais_types.items():
         if not sg in intl_to_xds_bravais_type:
             intl_to_xds_bravais_type[sg] = ()
         intl_to_xds_bravais_type[sg] += (key,)
-
-
 
 subgroups = {  'None' : [],
                '1'    : [],
@@ -217,34 +216,15 @@ months = { 'Jan' : '01',
            'Nov' : '11',
            'Dec' : '12'}
 
-def zerofillday(day_in):
-    #print day_in
-    intday = int(day_in)
-    #print intday
-    strday = str(intday)
-    #print strday
-    if len(strday) == 2:
-        return(strday)
-    else:
-        return('0'+strday)
-
-def date_adsc_to_sql(datetime_in):
-    #print datetime_in
+def date_adsc_to_sql(datetime_in: str) -> str:
+    '''Convert to SQL-friendly format'''
     spldate = datetime_in.split()
-    #print spldate
-    time  = spldate[3]
-    #print time
-    year  = spldate[4]
-    #print year
-    month = months[spldate[1]]
-    #print month
-    day   = zerofillday(spldate[2])
-    #print day
-
-    date = '-'.join((year,month,day))
-    #print date
-    #print ' '.join((date,time))
-    return('T'.join((date,time)))
+    time =    spldate[3]
+    year =    spldate[4]
+    month =   months[spldate[1]]
+    day =     f'{int(spldate[2]):02}'
+    date =    '-'.join((year,month,day))
+    return 'T'.join((date,time))
 
 def calc_ADF_map(data_file, phaser_mtz, phaser_pdb):
     """
@@ -2153,11 +2133,10 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
   else:
       return(sg, cell, cell2, 0)
 
-def get_mtz_info(datafile):
+def get_mtz_info(datafile: str) -> Iterable:
     '''
     Get unit cell and SG from input mtz
     '''
-    print(f'get_mtz_info {datafile=}')
 
     sg = False
     cell = False
