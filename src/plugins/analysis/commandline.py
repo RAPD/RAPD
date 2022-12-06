@@ -25,7 +25,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-from argparse import ArgumentParser
+import argparse
 import multiprocessing
 import os
 import sys
@@ -37,7 +37,7 @@ import utils.modules as modules
 import utils.text as text
 import utils.commandline_utils as commandline_utils
 
-def construct_command(commandline_args):
+def construct_command(commandline_args: argparse.Namespace) -> dict:
     """Put together the command for the plugin"""
 
     # The task to be carried out
@@ -98,14 +98,14 @@ def construct_command(commandline_args):
 
     return command
 
-def get_commandline() -> ArgumentParser:
+def get_commandline() -> argparse.Namespace:
     """Grabs the commandline"""
 
     # print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Launch analysis plugin"
-    my_parser = ArgumentParser(description=commandline_description)
+    my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # A True/False flag
     my_parser.add_argument("-l", "--logging-off",
@@ -229,7 +229,7 @@ def get_commandline() -> ArgumentParser:
 
     return args
 
-def print_welcome_message(printer):
+def print_welcome_message(printer) -> None:
     """Print a welcome message to the terminal"""
     message = """
 -------------
@@ -237,7 +237,7 @@ RAPD Analysis
 -------------"""
     printer(message, 50, color="blue")
 
-def main():
+def main() -> None:
     """
     The main process
     Setup logging and instantiate the model"""

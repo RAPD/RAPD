@@ -31,9 +31,9 @@ import argparse
 # import glob
 # import json
 # import logging
-# import multiprocessing
+import multiprocessing
 # import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -47,8 +47,10 @@ from distutils.spawn import find_executable
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
-# import utils
+import utils
+import plugins.analysis.commandline as commandline
 import plugins.analysis.plugin as plugin
+
 
 def test_dependencies() -> None:
     '''Test to see if required packages are present'''
@@ -83,7 +85,54 @@ def test_dependencies() -> None:
             break
     assert found == True
 
+def test_action() -> None:
+    '''Test to see if plugin performs its action'''
+
+    # Get the commandline args
+    # commandline_args = commandline.get_commandline()
+    class commandline_args():
+        clean = False
+        data_file = '../../../../test_data/thaum1_01s-01d_1_free.mtz'
+        db_settings = False
+        exchange_dir = False
+        json = True
+        logging = False
+        no_color = True
+        show_plots = True
+        nproc = max(1, multiprocessing.cpu_count() - 1)
+        pdbquery = False
+        progress = False
+        quite = False
+        run_mode = 'interactive'
+        sample_type = 'protein'
+        test = False
+    pprint(commandline_args)
+
+    # Set up terminal printing
+    tprint = utils.log.get_terminal_printer(verbosity=100,
+                                            no_color=True,
+                                            progress=False)
+
+    # Get the environmental variables
+    environmental_vars = utils.site.get_environmental_variables()
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
+
+    # Construct the command
+    command = commandline.construct_command(commandline_args=commandline_args)
+    print(command)
+
+    plugin = utils.modules.load_module(seek_module="plugin",
+                                       directories=["plugins.analysis"],
+                                       logger=False)
+    plugin_instance = plugin.RapdPlugin(command=command, processed_results=False, tprint=tprint, logger=False)
+    plugin_instance.start()
 
 
 if __name__ == '__main__':
     test_dependencies()
+    test_action()

@@ -36,7 +36,6 @@ ID = "f068"
 VERSION = "2.1.0"
 
 # Standard imports
-import argparse
 import base64
 from distutils.spawn import find_executable
 import logging
@@ -963,49 +962,7 @@ calculation",
         self.tprint(rcredits.HEADER.replace("RAPD", "RAPD analysis"),
                     level=99,
                     color="blue")
-
         programs = ["CCTBX", "MOLREP", "PHENIX", "PHASER"]
         info_string = rcredits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
-
-def get_commandline() -> argparse.Namespace:
-    """Grabs the commandline"""
-
-    print("get_commandline")
-
-    # Parse the commandline arguments
-    commandline_description = "Test analysis plugin"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
-
-    # A True/False flag
-    my_parser.add_argument("-q", "--quiet",
-                           action="store_false",
-                           dest="verbose",
-                           help="Reduce output")
-
-    args = my_parser.parse_args()
-
-    # Insert logic to check or modify args here
-
-    return args
-
-def main(args):
-    """
-    The main process docstring
-    This function is called when this module is invoked from
-    the commandline
-    """
-
-    if args.verbose:
-        verbosity = 2
-    else:
-        verbosity = 1
-
-    unittest.main(verbosity=verbosity)
-
-    if __name__ == "__main__":
-
-        commandline_args = get_commandline()
-
-        main(args=commandline_args)
