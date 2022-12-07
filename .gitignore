@@ -23,7 +23,7 @@ tmp
 *.tgz
 Python-*
 
-# Test data
+# Testing
 test_data
 *.log
 ramdisk 
@@ -31,6 +31,8 @@ test.py
 junk.sh
 /src/test.py
 /src/test2.py
+.coverage*
+
 
 # Just there for local reference
 

@@ -32,12 +32,12 @@ import argparse
 # import json
 # import logging
 import multiprocessing
-# import os
+import os
 from pprint import pprint
 # import pymongo
 # import re
 # import redis
-# import shutil
+import shutil
 import subprocess
 import sys
 import time
@@ -88,6 +88,9 @@ def test_dependencies() -> None:
 def test_action() -> None:
     '''Test to see if plugin performs its action'''
 
+    # Make sure there is no interfering directory present
+    shutil.rmtree('./rapd_analysis_thaum1_01s-01d_1_free')
+
     # Get the commandline args
     # commandline_args = commandline.get_commandline()
     class commandline_args():
@@ -98,7 +101,7 @@ def test_action() -> None:
         json = True
         logging = False
         no_color = True
-        show_plots = True
+        show_plots = False
         nproc = max(1, multiprocessing.cpu_count() - 1)
         pdbquery = False
         progress = False
@@ -106,10 +109,9 @@ def test_action() -> None:
         run_mode = 'interactive'
         sample_type = 'protein'
         test = False
-    pprint(commandline_args)
 
     # Set up terminal printing
-    tprint = utils.log.get_terminal_printer(verbosity=100,
+    tprint = utils.log.get_terminal_printer(verbosity=1,
                                             no_color=True,
                                             progress=False)
 
@@ -124,15 +126,16 @@ def test_action() -> None:
 
     # Construct the command
     command = commandline.construct_command(commandline_args=commandline_args)
-    print(command)
+    # print(command)
 
     plugin = utils.modules.load_module(seek_module="plugin",
                                        directories=["plugins.analysis"],
                                        logger=False)
     plugin_instance = plugin.RapdPlugin(command=command, processed_results=False, tprint=tprint, logger=False)
     plugin_instance.start()
+    plugin_instance.join()
 
-
-if __name__ == '__main__':
-    test_dependencies()
-    test_action()
+    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free')
+    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/xtriage.log')
+    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/molrep_rf_90.jpg')
+    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/result.json')

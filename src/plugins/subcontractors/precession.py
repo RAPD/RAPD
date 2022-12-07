@@ -36,9 +36,10 @@ from . import parse as Parse
 from utils.communicate import rapd_send
 from utils.modules import load_module
 import utils.xutils as Utils
+import utils.types as rapd_types
 
 class LabelitPP(Process):
-    def __init__(self, input, output=None, logger=None):
+    def __init__(self, input, output=None, logger: rapd_types.bool_logger = None) -> None:
         logger.info("LabelitPP.__init__")
         self.st = time.time()
         self.input = input
@@ -105,7 +106,7 @@ class LabelitPP(Process):
         Process.__init__(self, name="LabelitPP")
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         """
         Convoluted path of modules to run.
         """
@@ -129,7 +130,7 @@ class LabelitPP(Process):
         # Finish everything up
         self.postprocess()
 
-    def preprocess(self):
+    def preprocess(self) -> None:
         """
         Things to do before the main process runs
         1. Change to the correct directory
@@ -141,7 +142,7 @@ class LabelitPP(Process):
         #print out recognition of the program being used
         self.print_info()
 
-    def preprocess_labelit(self):
+    def preprocess_labelit(self) -> None:
         """
         Setup input dict for RunLabelit.
         """
@@ -205,7 +206,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**ERROR in LabelitPP.preprocess_labelit**")
 
-    def process_labelit(self, inp=False):
+    def process_labelit(self, inp=False) -> None:
         """
         Initiate Labelit runs.
         """
@@ -239,7 +240,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**Error in LabelitPP.process_labelit**")
 
-    def process_labelit_precession(self):
+    def process_labelit_precession(self) -> None:
         """
         Run labelit.precession_photo on dataset.
         """
@@ -275,7 +276,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**Error in LabelitPP.process_labelit_precession**")
 
-    def postprocess_labelit_precession(self, iteration):
+    def postprocess_labelit_precession(self, iteration) -> None:
         """
         convert pdf's and copy to working dir.
         """
@@ -301,7 +302,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**ERROR in LabelitPP.postprocessPP**")
 
-    def postprocess(self):
+    def postprocess(self) -> None:
         """
         Pass info back to the core.
         """
@@ -394,7 +395,7 @@ class LabelitPP(Process):
             print("Total elapsed time: %s seconds" % t)
             print("-------------------------------------")
 
-    def run_queue(self, run_before=False):
+    def run_queue(self, run_before=False) -> None:
         """
         Run queue for Labelit.
         """
@@ -457,7 +458,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**Error in LabelitPP.run_queue**")
 
-    def labelit_sort(self):
+    def labelit_sort(self) -> None:
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
         Labelit does not find a solution, finish up the pipeline.
@@ -532,7 +533,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**ERROR in LabelitPP.labelit_sort**")
 
-    def print_info(self):
+    def print_info(self) -> None:
         """
         Print information regarding programs utilized by RAPD
         """
@@ -559,7 +560,7 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**Error in LabelitPP.print_info**")
 
-    def html_summary_pp(self):
+    def html_summary_pp(self) -> None:
         """
         Create HTML/php files for Labelit.precession_photo output results.
         """

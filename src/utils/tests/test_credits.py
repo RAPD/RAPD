@@ -1,7 +1,5 @@
 import utils.credits as credits
 
-# import pytest
-
 def test_header() -> None:
     '''Test header value'''
     assert credits.HEADER == '\nRAPD depends on the work of others'

@@ -48,6 +48,7 @@ import shutil
 import subprocess
 import sys
 import time
+from typing import Callable, Union
 import unittest
 import numpy
 import shlex
@@ -56,7 +57,7 @@ import importlib
 # RAPD imports
 import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
-# import plugins.subcontractors.precession as precession
+import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
 #from plugins.subcontractors.rapd_cctbx import get_pdb_info
 from plugins.subcontractors.rapd_phaser import run_phaser_module
@@ -67,6 +68,7 @@ from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
 from utils.processes import local_subprocess
+from utils.types import bool_callable, bool_dict, bool_int, bool_logger
 from . import info
 import plugins.pdbquery.commandline
 import plugins.pdbquery.plugin
@@ -74,15 +76,16 @@ import plugins.pdbquery.plugin
 # Software dependencies
 VERSIONS = {
     'gnuplot': (
-        b'gnuplot 4.2',
-        b'gnuplot 5.0',
+        # b'gnuplot 4.2',
+        # b'gnuplot 5.0',
         b'gnuplot 5.4',
     ),
     'phenix': (
-        b'Version: 1.11.1',
+        # b'Version: 1.11.1',
         b'Version: 1.16'
     )
 }
+
 # Setup multiprocessing.Pool to launch jobs
 #POOL = process.mp_pool(4)
 
@@ -137,7 +140,12 @@ class RapdPlugin(Process):
         "process": {}
     }
 
-    def __init__(self, command, processed_results=False, tprint=False, logger=False, verbosity=False):
+    def __init__(self,
+                 command: dict, 
+                 processed_results: bool_dict = False, 
+                 tprint: bool_callable = False, 
+                 logger: bool_logger = False, 
+                 verbosity: bool_int = False):
         """Initialize the plugin"""
 
         # Keep track of start time
@@ -183,14 +191,14 @@ class RapdPlugin(Process):
         # Start up processing
         Process.__init__(self, name="analysis")
 
-    def run(self):
+    def run(self) -> None:
         """Execution path of the plugin"""
         #self.finish_phaser_ncs()
         self.preprocess()
         self.process()
         self.postprocess()
 
-    def preprocess(self):
+    def preprocess(self) -> None:
         """Set up for plugin action"""
 
         # self.tprint("preprocess")
@@ -245,7 +253,7 @@ class RapdPlugin(Process):
         # Check for dependency problems
         self.check_dependencies()
 
-    def check_dependencies(self):
+    def check_dependencies(self) -> None:
         """Make sure dependencies are all available"""
 
         # If no gnuplot turn off printing
@@ -281,7 +289,7 @@ calculation",
                         color="red")
             self.do_phaser = False
 
-    def construct_results(self):
+    def construct_results(self) -> None:
         """Create the self.results dict"""
 
         # Copy over details of this run
@@ -319,7 +327,7 @@ calculation",
             "version":VERSION
         }
     
-    def connect_to_redis(self):
+    def connect_to_redis(self) -> None:
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.redis_adapter')
@@ -328,7 +336,7 @@ calculation",
         self.redis = redis_database.Database(settings=self.db_settings,
                                              logger=self.logger)
 
-    def send_results(self):
+    def send_results(self) -> None:
         """Let everyone know we are working on this"""
 
         self.logger.debug("send_results")
@@ -366,20 +374,21 @@ calculation",
         self.results["process"]["status"] = self.status
 
     def process(self) -> None:
-        """Run plugin action"""
+        '''Run plugin action'''
         if self.verbose and self.logger:
-            self.logger.debug("preprocess")
+            self.logger.debug('preprocess')
 
-        self.tprint("\nAnalyzing the data file", level=30, color="blue")
+        self.tprint('\nAnalyzing the data file', level=30, color='blue')
         
         self.run_xtriage()
-        self.tprint(arg=10, level="progress")
+        self.tprint(arg=10, level='progress')
         self.run_molrep()
-        self.tprint(arg=20, level="progress")
+        self.tprint(arg=20, level='progress')
         self.run_phaser_ncs()
-        self.tprint(arg=30, level="progress")
+        self.tprint(arg=30, level='progress')
+        #TODO
         # self.run_labelit_precession()
-        # self.tprint(arg=40, level="progress")
+        # self.tprint(arg=40, level='progress')
 
         self.jobs_monitor()
 
@@ -678,13 +687,11 @@ calculation",
         # return results
         self.send_results()
 
-    # def run_labelit_precession(self):
-    #     """Run labelit to make precession photos"""
-    #
-    #     precession.LabelitPP(input=[
-    #         {
-    #             "run":
-    #         }], output=None, logger=self.logger)
+    # def run_labelit_precession(self) -> None:
+    #     '''Run labelit to make precession photos'''
+    #     # pprint(se)
+    #     # args=(self.command_input, self.pp_output, self.logger)
+    #     precession.LabelitPP(, output=None, logger=self.logger)
 
     def clean_up(self) -> None:
         """Clean up the working directory"""
