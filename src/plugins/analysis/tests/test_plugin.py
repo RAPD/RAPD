@@ -88,15 +88,18 @@ def test_dependencies() -> None:
 def test_action() -> None:
     '''Test to see if plugin performs its action'''
 
-    # Make sure there is no interfering directory present
-    shutil.rmtree('./rapd_analysis_thaum1_01s-01d_1_free')
+    try:
+        shutil.rmtree('./rapd_analysis_test_free')
+    except FileNotFoundError:
+        pass 
 
     # Get the commandline args
     # commandline_args = commandline.get_commandline()
     class commandline_args():
         clean = False
-        data_file = '../../../../test_data/thaum1_01s-01d_1_free.mtz'
+        data_file = '../../../../test_data/test_free.mtz'
         db_settings = False
+        dir_up = False
         exchange_dir = False
         json = True
         logging = False
@@ -115,15 +118,6 @@ def test_action() -> None:
                                             no_color=True,
                                             progress=False)
 
-    # Get the environmental variables
-    environmental_vars = utils.site.get_environmental_variables()
-
-    # Should working directory go up or down?
-    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
-        commandline_args.dir_up = True
-    else:
-        commandline_args.dir_up = False
-
     # Construct the command
     command = commandline.construct_command(commandline_args=commandline_args)
     # print(command)
@@ -135,7 +129,12 @@ def test_action() -> None:
     plugin_instance.start()
     plugin_instance.join()
 
-    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free')
-    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/xtriage.log')
-    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/molrep_rf_90.jpg')
-    assert os.path.exists('./rapd_analysis_thaum1_01s-01d_1_free/result.json')
+    # assert os.path.exists('./rapd_analysis.log')
+    assert os.path.exists('./rapd_analysis_test_free')
+    assert os.path.exists('./rapd_analysis_test_free/xtriage.log')
+    assert os.path.exists('./rapd_analysis_test_free/molrep_rf_90.jpg')
+    assert os.path.exists('./rapd_analysis_test_free/result.json')
+
+    # Make sure there is no interfering directory present
+    shutil.rmtree('./rapd_analysis_test_free')
+    # shutil.rmtree('./rapd_analysis.log')
