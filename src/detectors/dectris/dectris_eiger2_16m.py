@@ -37,8 +37,8 @@ import tempfile
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 
-DETECTOR = "dectris_eiger2-16m"
-VENDROTYPE = "DECTRIS"
+DETECTOR = "dectris_eiger2_16m"
+VENDORTYPE = "DECTRIS"
 
 # Taken from Dectris data
 XDS_FLIP_BEAM = True
