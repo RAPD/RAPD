@@ -37,7 +37,7 @@ import time
 # from rapd_utils import print_dict, date_adsc_to_sql
 
 DETECTOR = "dectris_pilatus6m"
-VENDROTYPE = "DECTRIS"
+VENDORTYPE = "DECTRIS"
 
 # XDS input information
 XDS_FLIP_BEAM = True

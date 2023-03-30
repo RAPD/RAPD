@@ -44,6 +44,9 @@ DETECTORS = {
         "detector": "lscat_dectris_eiger9m",
         # "site": 'lscat_21idd'
         },
+    ("Eiger2-16M", "Dectris EIGER2 Si 16M E-32-0128"): {
+        "detector": "lscat_dectris_eiger2_16m"
+        },
     ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0104"): {
         "detector": "aps_gmca_dectris_eiger16m",
     },

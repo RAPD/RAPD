@@ -28,9 +28,11 @@ Current site detectors supported (more are coming):
 - APS
     - aps_gmca_dectris_eiger16m
     - lscat_dectris_eiger9m
+    - lscat_dectris_eiger2_16m
     - lscat_rayonix_mx300
     - necat_dectris_eiger16m
     - necat_dectris_pilatus6mf
+    - necat_dectris_eiger2_16m
     - sercat_rayonix_mx300hs
 
 
