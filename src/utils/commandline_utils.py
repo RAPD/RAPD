@@ -366,7 +366,7 @@ def analyze_data_sources(sources,
         # If inputting an h5 dataset or single image
         if len(sources) == 1 and os.path.abspath(sources[0]).endswith(".h5"):
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
-                                master_file=os.path.abspath(sources[0]),
+                                main_file=os.path.abspath(sources[0]),
                                 output_dir="cbf_files",
                                 image_range=hdf5_image_range,
                                 wedge_range=hdf5_wedge_range,
@@ -400,7 +400,7 @@ def analyze_data_sources(sources,
                                 return_data["hdf5_files"].append(source_abspath)
 
                             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
-                                master_file=source_abspath,
+                                main_file=source_abspath,
                                 output_dir="cbf_files",
                                 #start_image=len(return_data["hdf5_files"]),
                                 #end_image=len(return_data["hdf5_files"]),
@@ -461,7 +461,7 @@ def analyze_data_sources(sources,
                 image_range = 'all'
 
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
-                master_file=source_abspath,
+                main_file=source_abspath,
                 output_dir="cbf_files",
                 #prefix=prefix,
                 #start_image=start_image,
@@ -546,7 +546,7 @@ if __name__ == "__main__":
 
     #print "commandline_utils.py"
     os.chdir('/gpfs6/users/necat/Jon/RAPD_test/Output')
-    s = ['/gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h.001_master.h5']
+    s = ['/gpfs6/users/necat/Jon/RAPD_test/Images/LSCAT/Ni-edge-n59d-kda28cl36cf57h.001_main.h5']
     analyze_data_sources(s, 'index', )
 
     """

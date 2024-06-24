@@ -969,11 +969,11 @@ class DISTL_Freeagent(threading.Thread):
 		if self.beamline == 'T':
 			red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 									  sentinel_port=26379,
-									  master_name="remote_master")
+									  main_name="remote_main")
 		else:
 			red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 								      sentinel_port=26379,
-						              master_name="remote_master")
+						              main_name="remote_main")
 
 		# Create pubsub & subscribe to file creation
 		red.subscribe('filecreate:%s' % self.beamline)
@@ -1179,7 +1179,7 @@ if __name__ == '__main__':
 	if beamline == 'T':
 		_RedisClient1 =  pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 								sentinel_port=26379,
-								master_name="remote_master")
+								main_name="remote_main")
 		_RedisBeamline = redis.Redis(secret_settings[beamline]['redis_ip'])
 
 	else:
@@ -1190,10 +1190,10 @@ if __name__ == '__main__':
 		"""
 		_RedisClient1 =  pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 								sentinel_port=26379,
-								master_name="remote_master")
+								main_name="remote_main")
 		#_RedisClient2 =  pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 		#						sentinel_port=26379,
-		#						master_name="remote_master")
+		#						main_name="remote_main")
 		_RedisBeamline = redis.Redis(secret_settings[beamline]['redis_ip'])
 
 

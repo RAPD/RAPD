@@ -51,7 +51,7 @@ class SentinelWatcher(threading.Thread):
     def __init__(self,
                  host="127.0.0.1",
                  port=26379,
-                 name="testmaster",
+                 name="testmain",
                  password=False,
                  on_error=None):
 
@@ -99,9 +99,9 @@ class SentinelListener(threading.Thread):
     def __init__(self,
                  host="127.0.0.1",
                  port=26379,
-                 name="testmaster",
+                 name="testmain",
                  password=False,
-                 on_master=None):
+                 on_main=None):
 
         print "SentinelListener.__init__ host:%s port:%d name:%s password:%s" % (host,port,name,password)
 
@@ -110,7 +110,7 @@ class SentinelListener(threading.Thread):
         self.port = port
         self.name = name
         self.password = password
-        self.on_master = on_master
+        self.on_main = on_main
 
         self.GO = True
 
@@ -132,11 +132,11 @@ class SentinelListener(threading.Thread):
             message = pubsub.get_message()
             if message:
                 # print "[SentinelListener]",time.time(),message
-                if message["channel"] == "+switch-master":
+                if message["channel"] == "+switch-main":
                     name,old_ip,old_port,new_ip,new_port = message["data"].split()
                     print "NEW MASTER"
-                    if self.on_master:
-                        self.on_master()
+                    if self.on_main:
+                        self.on_main()
             time.sleep(0.1)
         print "Exiting SentinelListener main loop"
 
@@ -150,7 +150,7 @@ def executePipelineCommand(func):
     """
     Decorator that will cause the function to be executed on the proper
     redis node. In the case of a Connection failure, it will attempt to find
-    a new master node and perform the action there.
+    a new main node and perform the action there.
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -161,7 +161,7 @@ def executePipelineCommand(func):
         except redis.ConnectionError:
             # if it fails a second time, then sentinel hasn't caught up, so
             # we have no choice but to fail for real.
-            self.master_conn = False
+            self.main_conn = False
             nodeFunc = getattr(self.get_pipeline_connection(), func.__name__)
             return nodeFunc(*args, **kwargs)
     return wrapper
@@ -175,7 +175,7 @@ def executeRedisPubsubCommand(func):
     """
     Decorator that will cause the function to be executed on the proper
     redis node. In the case of a Connection failure, it will attempt to find
-    a new master node and perform the action there.
+    a new main node and perform the action there.
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -188,7 +188,7 @@ def executeRedisPubsubCommand(func):
             print "AttributeError"
             return None
 
-        #master_conn is down or has gone down in the middle of this transaction
+        #main_conn is down or has gone down in the middle of this transaction
         except (redis.ConnectionError):
             print "redis.ConnectionError"
             return None
@@ -204,16 +204,16 @@ def executeRedisCommand(func):
     """
     Decorator that will cause the function to be executed on the proper
     redis node. In the case of a Connection failure, it will attempt to find
-    a new master node and perform the action there.
+    a new main node and perform the action there.
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         try:
-            nodeFunc = getattr(self.get_master_connection(), func.__name__)
+            nodeFunc = getattr(self.get_main_connection(), func.__name__)
             #print nodeFunc,args,kwargs
             return nodeFunc(*args, **kwargs)
 
-        # master_conn is not up
+        # main_conn is not up
         except (AttributeError):
             print "AttributeError"
             if self.status == "starting":
@@ -228,7 +228,7 @@ def executeRedisCommand(func):
                 self.command_queue.put((func.__name__,args,kwargs),False)
             return False
 
-        # master_conn is down or has gone down in the middle of this transaction
+        # main_conn is down or has gone down in the middle of this transaction
         except (redis.ConnectionError):
             print "redis.ConnectionError",self.status
             if self.status == "down":
@@ -251,8 +251,8 @@ class RedisManager():
     def __init__(self,
                  sentinel_host=False,
                  sentinel_port=False,
-                 master_name=False,
-                 master_password=False,
+                 main_name=False,
+                 main_password=False,
                  verbose=False):
 
         self.verbose = verbose
@@ -262,13 +262,13 @@ class RedisManager():
 
         self.sentinel_host =   False
         self.sentinel_port =   False
-        self.master_name =     False
-        self.master_password = False
+        self.main_name =     False
+        self.main_password = False
 
         self.sentinel =        False
         self.sentinels =       []
 
-        self.master_conn =       False
+        self.main_conn =       False
         self.pubsub_conn =       False
         self.sentinel_watcher =  False
         self.sentinel_listener = False
@@ -280,26 +280,26 @@ class RedisManager():
         if (sentinel_host and sentinel_port):
             self.add_sentinel(sentinel_host=sentinel_host,
                               sentinel_port=sentinel_port,
-                              master_name=master_name,
-                              master_password=master_password)
+                              main_name=main_name,
+                              main_password=main_password)
 
 
 
     def add_sentinel(self,
                      sentinel_host="127.0.0.1",
                      sentinel_port=36379,
-                     master_name="testmaster",
-                     master_password="foobared"):
+                     main_name="testmain",
+                     main_password="foobared"):
 
         if self.verbose:
             print "RedisManager.add_sentinel host:%s port:%d name:%s pass:%s" % (
-                  master_password,sentinel_port,master_name,master_password)
+                  main_password,sentinel_port,main_name,main_password)
 
         # Save sentinel info
         self.sentinel_host =    sentinel_host
         self.sentinel_port =    sentinel_port
-        self.master_name =      master_name
-        self.master_password =  master_password
+        self.main_name =      main_name
+        self.main_password =  main_password
 
         # Connect to sentinel
         self.sentinel = redis.Redis(self.sentinel_host,self.sentinel_port)
@@ -328,18 +328,18 @@ class RedisManager():
         # Start SentinelWatcher & SentinelListener
         self.sentinel_watcher = SentinelWatcher(sentinel_host,
                                                 sentinel_port,
-                                                master_name,
-                                                master_password,
+                                                main_name,
+                                                main_password,
                                                 self.connect_to_alternate_sentinel)
         # Start SentinelListener
         self.sentinel_listener = SentinelListener(sentinel_host,
                                                   sentinel_port,
-                                                  master_name,
-                                                  master_password,
-                                                  self.reconnect_master_connection)
+                                                  main_name,
+                                                  main_password,
+                                                  self.reconnect_main_connection)
 
-        # Connect to master redis instance
-        self.reconnect_master_connection()
+        # Connect to main redis instance
+        self.reconnect_main_connection()
 
         return True
 
@@ -376,8 +376,8 @@ class RedisManager():
         for sentinel in self.sentinels:
             status = self.add_sentinel(sentinel["ip"],
                                        sentinel["port"],
-                                       self.master_name,
-                                       self.master_password)
+                                       self.main_name,
+                                       self.main_password)
             if status:
                 break
 
@@ -393,7 +393,7 @@ class RedisManager():
 
         self.sentinels = []
         try:
-            for sentinel in self.sentinel.sentinel("sentinels",self.master_name):
+            for sentinel in self.sentinel.sentinel("sentinels",self.main_name):
                 self.sentinels.append(sentinel)
         # There are no alternate sentinels yet...
         except TypeError:
@@ -402,13 +402,13 @@ class RedisManager():
 
         return True
 
-    def on_master_down(self):
+    def on_main_down(self):
         """
-        Handle the inability of the sentinel instance to find a suitable master
+        Handle the inability of the sentinel instance to find a suitable main
         instance
         """
 
-        print "RedisManager.on_master_down"
+        print "RedisManager.on_main_down"
 
         # Set the status
         if self.status != "down":
@@ -418,11 +418,11 @@ class RedisManager():
             counter = 0
             while counter < RECONNECT_TRIES:
 
-                # Try to get a master from the Sentinel instance
+                # Try to get a main from the Sentinel instance
                 try:
-                    status = self.reconnect_master_connection()
+                    status = self.reconnect_main_connection()
                 except redis.ConnectionError:
-                    print "Error connecting to master. Will try %d more times" % (RECONNECT_TRIES-counter)
+                    print "Error connecting to main. Will try %d more times" % (RECONNECT_TRIES-counter)
                     status = False
                 if status:
                     print "Reconnected - breaking loop"
@@ -436,14 +436,14 @@ class RedisManager():
 
 
 
-    def reconnect_master_connection(self):
-        """Reconnect the master connection.
+    def reconnect_main_connection(self):
+        """Reconnect the main connection.
         To be used to refresh the connction, ex. when the sentinel reports a
-        new master
+        new main
         """
 
         if self.verbose:
-            print "RedisManager.reconnect_master_connection"
+            print "RedisManager.reconnect_main_connection"
 
         # Look for pubsub subscriptions
         patterns = False
@@ -454,40 +454,40 @@ class RedisManager():
             if self.pubsub_conn.channels:
                 channels = self.pubsub_conn.channels.copy()
 
-        # Get rid of reference to previous master
-        self.master_conn = False
+        # Get rid of reference to previous main
+        self.main_conn = False
 
         if not self.sentinel:
             raise(AttributeError("RedisManager has no sentinel"))
 
-        # Get the master address from the sentinel
+        # Get the main address from the sentinel
         try:
-            master_address = self.sentinel.sentinel_get_master_addr_by_name(self.master_name)
+            main_address = self.sentinel.sentinel_get_main_addr_by_name(self.main_name)
         except redis.exceptions.ConnectionError:
             print "Cannot contact sentinel"
             status = self.connect_to_alternate_sentinel()
             if status:
-                return self.get_master_connection()
+                return self.get_main_connection()
             else:
                 raise redis.exceptions.ConnectionError("Cannot connect to alternate sentinel instance")
 
-        # Connect to master
-        print "Connecting to master"
-        if self.master_password:
-            self.master_conn = RedisConnection(master_address[0],master_address[1],password=self.master_password)
+        # Connect to main
+        print "Connecting to main"
+        if self.main_password:
+            self.main_conn = RedisConnection(main_address[0],main_address[1],password=self.main_password)
         else:
-            self.master_conn = RedisConnection(master_address[0],master_address[1])
+            self.main_conn = RedisConnection(main_address[0],main_address[1])
         try:
-            self.master_conn.ping()
+            self.main_conn.ping()
         except redis.ConnectionError:
-            print "Cannot connect to master"
-            self.master_conn = False
+            print "Cannot connect to main"
+            self.main_conn = False
             self.status = "down"
             raise redis.ConnectionError
 
         # Make pubsub connection
         print "Connecting to pubsub"
-        self.pubsub_conn = PubsubConnection(connection_pool=self.master_conn.connection_pool)
+        self.pubsub_conn = PubsubConnection(connection_pool=self.main_conn.connection_pool)
         #                                    ignore_subscribe_messages=True)
 
 
@@ -516,26 +516,26 @@ class RedisManager():
         return True
 
 
-    def get_master_connection(self):
+    def get_main_connection(self):
 
         if self.verbose:
-            print "RedisManager.get_master_connection"
+            print "RedisManager.get_main_connection"
 
         # Have a connection - return it
         if self.status == "up":
-        #if self.master_conn:
-            #print "  self.master_conn is not False"
-            return self.master_conn
+        #if self.main_conn:
+            #print "  self.main_conn is not False"
+            return self.main_conn
 
-        # No master - connect and return new connection
+        # No main - connect and return new connection
         else:
             return False
             """
             # Connect
-            status = self.reconnect_master_connection()
+            status = self.reconnect_main_connection()
 
             if status:
-                return self.master_conn
+                return self.main_conn
             else:
                 return False
             """
@@ -562,7 +562,7 @@ class RedisManager():
         # No connection - connect and return new connection
         else:
             # Connect
-            status = self.reconnect_master_connection()
+            status = self.reconnect_main_connection()
 
             if status:
                 return self.pubsub_conn
@@ -591,7 +591,7 @@ class RedisManager():
             self.pubsub_conn.close()
 
         # Close the redis connection
-        del(self.master_conn)
+        del(self.main_conn)
 
         return True
 
@@ -633,7 +633,7 @@ class RedisManager():
 
     def pubsub(self, **kwargs):
         """
-        Return a new instance of RedisManager with the current sentinel, master
+        Return a new instance of RedisManager with the current sentinel, main
         and set pubsub. Ready for use as a traditional redis.pubsub return
         would be.
         """
@@ -754,19 +754,19 @@ class RedisManager():
         "Redis Sentinel's SENTINEL command"
 
     @executeRedisCommand
-    def sentinel_masters(self):
-        "Returns a dictionary containing the master's state."
+    def sentinel_mains(self):
+        "Returns a dictionary containing the main's state."
 
     @executeRedisCommand
-    def sentinel_slaves(self, service_name):
-        "Returns a list of slaves for service_name"
+    def sentinel_subordinates(self, service_name):
+        "Returns a list of subordinates for service_name"
 
     @executeRedisCommand
     def sentinel_sentinels(self, service_name):
         "Returns a list of sentinels for service_name"
 
     @executeRedisCommand
-    def sentinel_get_master_addr_by_name(self, service_name):
+    def sentinel_get_main_addr_by_name(self, service_name):
         "Returns a (host, port) pair for the given service_name"
 
     @executeRedisCommand
@@ -774,11 +774,11 @@ class RedisManager():
         "Shutdown the server"
 
     @executeRedisCommand
-    def slaveof(self, host=None, port=None):
+    def subordinateof(self, host=None, port=None):
         """
-        Set the server to be a replicated slave of the instance identified
+        Set the server to be a replicated subordinate of the instance identified
         by the host and port. If called without arguments, the
-        instance is promoted to a master instead.
+        instance is promoted to a main instead.
         """
 
     @executeRedisCommand
@@ -1671,7 +1671,7 @@ if __name__ == "__main__":
 
   host = "127.0.0.1"
   port = 36379
-  name = "testmaster"
+  name = "testmain"
   password = "foobared"
 
   # Handle commandline args

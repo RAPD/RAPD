@@ -70,7 +70,7 @@ class hdf5_to_cbf_converter(object):
     second_image_number = False
 
     def __init__(self,
-                 master_file,
+                 main_file,
                  output_dir=False,
                  prefix=False,
                  image_range=False,
@@ -85,7 +85,7 @@ class hdf5_to_cbf_converter(object):
         Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
         Not sure I need multiprocessing.Pool, but used as saftety.
 
-        master_file -- master file of data to be converted to cbf
+        main_file -- main file of data to be converted to cbf
         output_dir -- output directory
         prefix -- new image prefix
         image_range -- image numbers to convert
@@ -98,7 +98,7 @@ class hdf5_to_cbf_converter(object):
         #if logger:
         #    logger.debug("Utilities::convert_hdf5_cbf")
 
-        self.master_file = master_file
+        self.main_file = main_file
         self.output_dir = output_dir
         self.prefix = prefix
         self.image_range = image_range.replace(':', '-').split(',')
@@ -126,9 +126,9 @@ class hdf5_to_cbf_converter(object):
     def preprocess(self):
         """Set up the conversion"""
 
-        # Only master file
-        if not "master" in self.master_file:
-            raise Exception("Convert needs to be passed a master file")
+        # Only main file
+        if not "main" in self.main_file:
+            raise Exception("Convert needs to be passed a main file")
 
         # Check directory
         if not self.output_dir:
@@ -139,7 +139,7 @@ class hdf5_to_cbf_converter(object):
 
         # Check prefix
         if not self.prefix:
-            self.prefix = get_prefix(self.master_file)
+            self.prefix = get_prefix(self.main_file)
 
         # Multiprocessing
         if not self.nproc:
@@ -183,9 +183,9 @@ class hdf5_to_cbf_converter(object):
             print "Converting images %d - %d" % (start_image, end_image)
 
         # The base eiger2cbf command
-        command0 = "eiger2cbf %s" % self.master_file
+        command0 = "eiger2cbf %s" % self.main_file
 
-        # Single image in master file
+        # Single image in main file
         if start_image == end_image:
             # Renumber image in pair so root name is same for Labelit.
             if self.renumber_image:
@@ -297,8 +297,8 @@ class hdf5_to_cbf_converter(object):
                     self.image_range.insert(x, new)
 
     def get_number_of_images(self):
-        """Query the master file for the number of images in the data set"""
-        stdout, stderr = run_process(("eiger2cbf %s" % self.master_file, self.verbose), output=True)
+        """Query the main file for the number of images in the data set"""
+        stdout, stderr = run_process(("eiger2cbf %s" % self.main_file, self.verbose), output=True)
         #number_of_images = int(stdout.split("\n")[-2])
         number_of_images = int(stdout.split("\n")[-2])
         if self.verbose:
@@ -360,8 +360,8 @@ class hdf5_to_cbf_converter(object):
 
 def get_prefix(img_path):
     """Return the image prefix"""
-    # get rid of '_master.h5' and any extra '.' which will screw up Labelit.
-    return os.path.basename(img_path).replace("_master.h5", "").replace('.', '_')
+    # get rid of '_main.h5' and any extra '.' which will screw up Labelit.
+    return os.path.basename(img_path).replace("_main.h5", "").replace('.', '_')
 
 def main(args):
     """
@@ -437,11 +437,11 @@ def get_commandline():
                         default=False,
                         help="Prefix for cbf files (including run number)")
 
-    # Input HDF5 master file
+    # Input HDF5 main file
     parser.add_argument(action="store",
-                        dest="master_file",
+                        dest="main_file",
                         #nargs=1,
-                        help="Name of input HDF5 master file")
+                        help="Name of input HDF5 main file")
 
     return parser.parse_args()
 

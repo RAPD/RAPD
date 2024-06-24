@@ -223,12 +223,12 @@ def zerofillday(day_in):
 #                 print 'Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip']
 #             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 # 									       sentinel_port=26379,
-# 									       master_name="remote_master")
+# 									       main_name="remote_main")
 #         #if the assigned beamline is not in the settings, use the localhost
 #         else:
 #             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
 # 									       sentinel_port=26379,
-# 									       master_name="remote_master")
+# 									       main_name="remote_main")
 #
 #         #except:
 #         #    if (self.logger):

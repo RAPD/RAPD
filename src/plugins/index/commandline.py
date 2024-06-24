@@ -68,7 +68,7 @@ def construct_command(image_headers, commandline_args, detector_module):
         if "hdf5_source" in header:
             if h5:
                 h5 += "_"
-            h5 += os.path.basename(header["hdf5_source"]).replace("_master.h5", "")
+            h5 += os.path.basename(header["hdf5_source"]).replace("_main.h5", "")
     image_numbers.sort()
 
     if h5:
@@ -521,7 +521,7 @@ def main():
                                                                        site_module.BEAM_INFO.get(site.upper(), {}))
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
-            # If this image is derived from an hdf5 master file, tag it
+            # If this image is derived from an hdf5 main file, tag it
             if "hdf5_files" in data_files:
                 if len(data_files["hdf5_files"]) == len(data_files["files"]):
                     image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]

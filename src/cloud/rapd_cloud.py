@@ -144,9 +144,9 @@ class CloudMonitor(threading.Thread):
                 #                      self.logger)
                 #
                 # # Spreadsheet uploading does not pass IP, so check it next.
-                # # Upon new spreadsheet upload, update the master puck list for console.
+                # # Upon new spreadsheet upload, update the main puck list for console.
                 # elif request["request_type"] == "newsheet":
-                #     self.logger.debug("New Spreadsheet Uploaded.  Change Master Puck List.")
+                #     self.logger.debug("New Spreadsheet Uploaded.  Change Main Puck List.")
                 #     self.logger.debug(request)
                 #     __ = SheetHandler(request,
                 #                       self.database,
@@ -387,7 +387,7 @@ class CloudMonitor(threading.Thread):
 #
 # class SheetHandler(threading.Thread):
 #     """
-#     Creates and sends the Master Puck List to console.
+#     Creates and sends the Main Puck List to console.
 #     """
 #
 #     def __init__(self,request,database,settings,reply_settings,logger=None):
@@ -431,7 +431,7 @@ class CloudMonitor(threading.Thread):
 #         #mark that the request has been addressed
 #         self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
 #
-#         #get the master puck list
+#         #get the main puck list
 #         all_pucks = self.DATABASE.getAllPucks(self.Secret_Settings["puck_cutoff"])
 #         for puck in all_pucks:
 #             puck.update(select=0)
@@ -446,7 +446,7 @@ class CloudMonitor(threading.Thread):
 #                         if puck["PuckID"] == current_pucks[0][puck]:
 #                             puck.update(select=1)
 #
-#             TransferMasterPuckListToBeamline(beamline, all_pucks)
+#             TransferMainPuckListToBeamline(beamline, all_pucks)
 #
 #         #mark that the request has been addressed
 #         self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"complete")

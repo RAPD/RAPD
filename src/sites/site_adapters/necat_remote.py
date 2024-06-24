@@ -67,7 +67,7 @@ class Adapter(object):
         if self.settings["REDIS_CLUSTER"]:
             self.redis = pysent.RedisManager(sentinel_host=self.settings["SENTINEL_HOST"],
                                              sentinel_port=self.settings["SENTINEL_PORT"],
-                                             master_name=self.settings["REDIS_MASTER_NAME"])
+                                             main_name=self.settings["REDIS_MASTER_NAME"])
         else:
             self.redis = redis.Redis(self.settings["REDIS_HOST"], self.settings["REDIS_PORT"])
             # raise Exception("No connection to redis cluster")

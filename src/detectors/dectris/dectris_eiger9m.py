@@ -225,7 +225,7 @@ def main(args):
 
         tmp_dir = tempfile.mkdtemp()
 
-        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
+        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(main_file=test_image,
                                                            output_dir=tmp_dir,
                                                            prefix="tmp",
                                                            start_image=1,

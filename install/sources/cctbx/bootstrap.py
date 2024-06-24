@@ -54,7 +54,7 @@ envs = {
   "OE_LICENSE"          : ["oe_license.txt"], # needed for license
 }
 
-# Utility function to be executed on slave machine or called directly by standalone bootstrap script
+# Utility function to be executed on subordinate machine or called directly by standalone bootstrap script
 def tar_extract(workdir, archive, modulename=None):
   try:
     # delete tar target folder if it exists
@@ -476,7 +476,7 @@ class Toolbox(object):
           # This may fail for unclean trees and merge problems. In this case manual
           # user intervention will be required.
           # For the record, you can clean up the tree and *discard ALL changes* with
-          #   git reset --hard origin/master
+          #   git reset --hard origin/main
           #   git clean -dffx
           return ShellCommand(
             command=['git', 'pull', '--rebase'], workdir=destination, silent=False, haltOnFailure=True).run()
@@ -1052,10 +1052,10 @@ class Builder(object):
     else:
       self.cleanup(['dist', 'tests', 'tmp'])
 
-    if self.platform and 'windows' in self.platform: # only executed by buildbot master
+    if self.platform and 'windows' in self.platform: # only executed by buildbot main
       from buildbot.steps.transfer import FileDownload
-      # download us to folder above modules on slave so we can run the utility functions defined above
-      self.add_step(FileDownload(mastersrc="bootstrap.py", slavedest="../bootstrap.py"))
+      # download us to folder above modules on subordinate so we can run the utility functions defined above
+      self.add_step(FileDownload(mainsrc="bootstrap.py", subordinatedest="../bootstrap.py"))
 
     # Add 'hot' sources
     if hot:
@@ -1101,8 +1101,8 @@ class Builder(object):
       self.add_dispatchers()
       self.add_refresh()
 
-    if self.platform and 'windows' in self.platform: # only executed by buildbot master
-      self.add_rm_bootstrap_on_slave()
+    if self.platform and 'windows' in self.platform: # only executed by buildbot main
+      self.add_rm_bootstrap_on_subordinate()
 
   def isPlatformWindows(self):
     if self.platform and 'windows' in self.platform:
@@ -1198,7 +1198,7 @@ class Builder(object):
     else:
       self.add_step(cleanup_dirs(dirs, "modules"))
 
-  def add_rm_bootstrap_on_slave(self):
+  def add_rm_bootstrap_on_subordinate(self):
     # if file is not found error flag is set. Mask it with cmd shell
     cmd=['cmd', '/c', 'del', '/Q', "bootstrap.py*", '&', 'set', 'ERRORLEVEL=0']
     self.add_step(self.shell(
@@ -1404,7 +1404,7 @@ class Builder(object):
 
   def _check_for_Windows_prerequisites(self):
     if self.isPlatformWindows():
-      # platform specific checks cannot run on buildbot master so add to build steps to run on slaves
+      # platform specific checks cannot run on buildbot main so add to build steps to run on subordinates
       self.add_step(self.shell(command=[
          "python","-c","import sys; sys.path.append('..'); import bootstrap; \
           bootstrap.CheckWindowsPrerequisites()"],
@@ -2255,7 +2255,7 @@ class PhenixExternalRegression(PhenixBuilder):
     # AFITT
     env = self.get_environment()
     self.write_environment(env)
-    # not universal but works because only slave running this is same as master
+    # not universal but works because only subordinate running this is same as main
     for name, command, workdir in [
         ['AFITT - untar',
          ['tar', 'xvf', '%s.gz' % afitt_version],
